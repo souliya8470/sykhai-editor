@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.22
-// APP_VERSION_PREV : 1.21
-// APP_VERSION_PREV_OLDER : 1.20
+// APP_VERSION  : 1.23
+// APP_VERSION_PREV : 1.22
+// APP_VERSION_PREV_OLDER : 1.21
+// 1.23 : iPhone fix — Safari on iOS lets only one un-muted video play at a time, stacked layers fought each other (play/pause ping-pong, sync 40-60 ms). Now only the loudest layer is un-muted on iOS; play() retries throttled; HUD shows paused/muted/play errors
 // 1.22 : performance overlay (tap the version text while playing): loop rate, render/sync/ui ms, per-video decoded frames/s, dropped frames, drift
 // 1.21 : player bar shows the proxy state next to the version (⚡ light copies in use / total, plus reason code); tapping it retries
 // 1.20 : proxy copies already on the server are used even when the server has no ffmpeg (can be placed by hand)
@@ -28,7 +29,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.22';
+const APP_VERSION = '1.23';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];

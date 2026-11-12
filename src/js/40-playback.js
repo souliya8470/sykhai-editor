@@ -191,11 +191,18 @@ function isVoice(it, t) {
 
 function setGain(g, v) { if (!g || !AC) return; try { g.gain.setTargetAtTime(v, AC.currentTime, 0.02); } catch (e) { g.gain.value = v; } }
 
+// iPhone/iPad Safari lets only ONE un-muted video play at a time: starting a second one pauses the first, so two stacked layers
+// ping-pong (play/pause every frame, 40–60 ms per tick, video falls behind). Fix: only the loudest active layer stays un-muted.
+const ONE_AUDIO = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) || (() => { try { return localStorage.getItem('sk_oneaudio') === '1'; } catch (e) { return false; } })();
 function syncMedia(force) {
   const t = PB.t;
   const now = performance.now(); const dt = Math.min(.1, (now - (PB.lastTick || now)) / 1000); PB.lastTick = now;
   // --- video ---
-  const activeIds = new Set(); let voice = false;
+  const activeIds = new Set(); let voice = false; let primary = null;
+  if (ONE_AUDIO && PB.playing && !PB.exporting) {
+    let best = -1; for (const it of D.items) { if (it.type !== 'video' || !(t >= it.start - 1e-6 && t < it.start + it.dur - 1e-6)) continue; const g = videoGain(it, t) + (it.id === (PB.prim || '') ? .02 : 0); if (g > best) { best = g; primary = it.id; } }
+    PB.prim = primary;
+  }
   for (const it of D.items) {
     if (it.type !== 'video') continue;
     const active = t >= it.start - 1e-6 && t < it.start + it.dur - 1e-6;
@@ -215,8 +222,9 @@ function syncMedia(force) {
     const target = timelineToSrc(it, t);
     const m = MEDIA.get(it.mediaId); const maxT = (m && m.duration) ? Math.max(0, m.duration - 0.04) : target;
     const tt = Math.min(target, maxT);
+    if (ONE_AUDIO && PB.playing && !PB.exporting) { const mu = it.id !== primary; if (el.muted !== mu) el.muted = mu; } else if (el.muted) el.muted = false;
     if (PB.playing) {
-      if (el.paused && target <= maxT) el.play().catch(() => { });
+      if (el.paused && target <= maxT && now - (r.lastPlay || 0) > 350) { r.lastPlay = now; PD.plays = (PD.plays || 0) + 1; el.play().catch(e => { r.playErr = e && e.name; }); }
       if (Math.abs(el.currentTime - tt) > 0.35 && now - (r.lastSeek || 0) > 1200) { r.lastSeek = now; try { el.currentTime = tt; } catch (e) { } }
     } else {
       if (!el.paused) el.pause();
@@ -273,14 +281,14 @@ function perfOverlay(now) {
   const L = [`loop ${Math.round(PD.tk / dt)}/s  render ${Math.round(PD.rn / dt)}/s  q${Math.round(PERF.q * 100)}%`, `ms: render ${PERF.ema.toFixed(0)} sync ${PD.sync.toFixed(0)} vu ${PD.vu.toFixed(0)} ui ${PD.ui.toFixed(0)} tick ${PD.tot.toFixed(0)}`];
   PD.tk = 0; PD.rn = 0; let k = 0;
   for (const [id, r] of POOL) {
-    const el = r.el; if (!el || el.paused || k >= 3) continue; k++;
+    const el = r.el; if (!el || k >= 3) continue; const it0 = getItem(id); if (!it0 || !(PB.t >= it0.start - 0.05 && PB.t < it0.start + it0.dur)) continue; k++;
     if (!el._rv && el.requestVideoFrameCallback) { el._rv = 1; el._rvn = 0; const f = () => { el._rvn++; el.requestVideoFrameCallback(f); }; el.requestVideoFrameCallback(f); }
     const prev = PD.last.get(el) || { n: el._rvn || 0 }; const fps = ((el._rvn || 0) - prev.n) / dt; PD.last.set(el, { n: el._rvn || 0 });
     let q = null; try { q = el.getVideoPlaybackQuality && el.getVideoPlaybackQuality(); } catch (e) { }
     const it = getItem(id), want = it ? clamp(PB.t - it.start + (it.in || 0), 0, 1e6) : 0;
-    L.push(`v${k} ${el.videoWidth}x${el.videoHeight} ${fps.toFixed(0)}f/s drop ${q ? q.droppedVideoFrames : '?'}/${q ? q.totalVideoFrames : '?'} rs${el.readyState} drift ${(el.currentTime - want).toFixed(2)}`);
+    L.push(`v${k}${el.paused ? ' PAUSED' : ''}${el.muted ? ' M' : ''}${r.playErr ? ' ' + r.playErr : ''} ${el.videoWidth}x${el.videoHeight} ${fps.toFixed(0)}f/s drop ${q ? q.droppedVideoFrames : '?'}/${q ? q.totalVideoFrames : '?'} rs${el.readyState} drift ${(el.currentTime - want).toFixed(2)}`);
   }
-  L.push(proxyTag().trim());
+  L.push((ONE_AUDIO ? '1audio ' : '') + 'play()/s ' + Math.round((PD.plays || 0) / dt) + ' ' + proxyTag().trim()); PD.plays = 0;
   PD.el.textContent = L.join('\n');
 }
 function tick() {
