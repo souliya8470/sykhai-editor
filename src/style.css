@@ -130,3 +130,4 @@ dialog h3{margin:0 0 10px}
 .pact{position:absolute;top:12px;right:12px;display:none;gap:4px}.pcard:hover .pact{display:flex}
 .pact button{padding:2px 7px;background:rgba(18,19,22,.85)}
 #homeFoot{margin-top:18px}
+#srvBadge{background:var(--p2);border:1px solid var(--ln);border-radius:20px;padding:3px 10px;color:var(--ac);font-size:12px}#srvBadge.off{color:var(--mu)}

@@ -72,7 +72,7 @@ async function projSaveNow() {
   clearTimeout(PS.timer); PS.timer = 0;
   if (!D || !D.pid || HOME.open) return;
   if (!D.items.length && !PS.known.has(D.pid)) return;
-  return projPut(projRec(D));
+  const rec = projRec(D); const ok = await projPut(rec); if (ok && typeof srvSync === 'function') srvSync(rec); return ok;
 }
 function projSaveSoon() { clearTimeout(PS.timer); PS.timer = setTimeout(projSaveNow, 700); }
 on('doc', l => { if (l && l !== 'init' && l !== 'open') projSaveSoon(); });

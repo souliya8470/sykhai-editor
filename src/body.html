@@ -6,6 +6,7 @@
     <button id="btnUndo" title="ย้อนกลับ (⌘Z)">↶</button>
     <button id="btnRedo" title="ทำซ้ำ (⌘⇧Z)">↷</button>
     <span class="sp"></span>
+    <span id="srvBadge" hidden>☁</span>
     <span id="costBadge" title="ค่า AI เดือนนี้ / เพดาน">AI $0.00</span>
     <button id="btnSettings">⚙ ตั้งค่า</button>
     <button id="btnSave" title="โหลดไฟล์โปรเจกต์ (.json) เก็บสำรอง — โปรเจกต์บันทึกอัตโนมัติอยู่แล้ว">💾 สำรองไฟล์</button>
@@ -52,7 +53,7 @@
 
 <div id="home">
   <div class="hwrap">
-    <div class="hhead"><div class="brand big">Sykhai <b>Editor</b></div><span class="sp"></span><button id="hmBack" hidden>← กลับไปแก้ไขต่อ</button><button id="hmImport">📂 นำเข้าไฟล์โปรเจกต์</button><button id="hmNew" class="primary">+ โปรเจกต์ใหม่</button></div>
+    <div class="hhead"><div class="brand big">Sykhai <b>Editor</b></div><span class="sp"></span><button id="hmSync" hidden title="ส่งโปรเจกต์/ไฟล์ขึ้นเซิร์ฟเวอร์ และดึงโปรเจกต์ใหม่ลงเครื่องนี้">☁ ซิงค์เซิร์ฟเวอร์</button><button id="hmBack" hidden>← กลับไปแก้ไขต่อ</button><button id="hmImport">📂 นำเข้าไฟล์โปรเจกต์</button><button id="hmNew" class="primary">+ โปรเจกต์ใหม่</button></div>
     <div class="htitle">โปรเจกต์ของฉัน</div>
     <div id="homeList"></div>
     <div id="homeFoot" class="hint small"></div>
@@ -64,6 +65,10 @@
   <div class="fld col"><label>Anthropic API key (Claude — ใช้เลือกประโยคเด่น / แปล / ทำ 3-4 แบบ)</label><input id="keyClaude" type="password" placeholder="sk-ant-..." autocomplete="off"></div>
   <div class="fld col"><label>Gemini API key (Google AI Studio — ใช้ถอดเสียงภาษาลาว)</label><input id="keyGemini" type="password" placeholder="AIza..." autocomplete="off"></div>
   <div class="fld"><label>เพดานงบ AI ต่อเดือน (USD)</label><input id="capUsd" type="number" min="1" step="1" value="50" class="num"></div>
+  <hr>
+  <div class="fld col"><label>เซิร์ฟเวอร์เก็บไฟล์ที่ร้าน — ที่อยู่ (เว้นว่าง = ไม่ใช้)</label><input id="srvUrl" placeholder="https://ชื่อเครื่อง.xxxx.ts.net:8787  หรือ  http://192.168.1.10:8787" autocomplete="off"></div>
+  <div class="fld col"><label>รหัสผ่านเซิร์ฟเวอร์</label><input id="srvToken" type="password" autocomplete="off"></div>
+  <div class="row"><button id="srvTest">ทดสอบเชื่อมต่อ</button><span id="srvTestMsg" class="hint small"></span></div>
   <div class="hint small">คีย์เก็บในเครื่องนี้เท่านั้น (localStorage ของเบราว์เซอร์) ไม่ถูกส่งไปที่อื่นนอกจากเรียกใช้ API ของ Anthropic/Google โดยตรง</div>
   <div class="row"><span class="sp"></span><button id="setCancel">ปิด</button><button id="setSave" class="primary">บันทึก</button></div>
 </dialog>

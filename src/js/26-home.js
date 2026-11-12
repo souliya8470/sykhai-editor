@@ -7,7 +7,7 @@ const fmtDur = t => { t = Math.round(t || 0); return Math.floor(t / 60) + ':' + 
 async function showHome() {
   pause(); await projSaveNow();
   HOME.open = true; $('#home').hidden = false;
-  $('#hmBack').hidden = !HOME.started;
+  $('#hmBack').hidden = !HOME.started; $('#hmSync').hidden = !srvOn();
   await renderHome();
 }
 function hideHome() { HOME.open = false; $('#home').hidden = true; HOME.started = true; }
@@ -30,7 +30,8 @@ async function renderHome() {
   }).join('');
   try {
     const e = await navigator.storage.estimate();
-    $('#homeFoot').textContent = `พื้นที่ในเครื่องนี้ที่ใช้ไป ${(e.usage / 1e9).toFixed(2)} GB จาก ${(e.quota / 1e9).toFixed(0)} GB · ${list.length} โปรเจกต์ · โปรเจกต์ถูกบันทึกอัตโนมัติทุกครั้งที่แก้ไข`;
+    const sv = SRV.info && SRV.info.free != null ? ` · เซิร์ฟเวอร์ว่าง ${(SRV.info.free / 1e9).toFixed(0)} GB` : '';
+    $('#homeFoot').textContent = `พื้นที่ในเครื่องนี้ที่ใช้ไป ${(e.usage / 1e9).toFixed(2)} GB จาก ${(e.quota / 1e9).toFixed(0)} GB · ${list.length} โปรเจกต์ · โปรเจกต์ถูกบันทึกอัตโนมัติทุกครั้งที่แก้ไข${sv}`;
   } catch (e) { $('#homeFoot').textContent = list.length + ' โปรเจกต์ · บันทึกอัตโนมัติ'; }
 }
 
@@ -50,26 +51,30 @@ async function openById(id) {
   D = doc; await ensureSfx();
   resetDoc(D); hideHome();
   const miss = [...new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => mediaNameFromId(i.mediaId)))];
-  if (miss.length) toast('ไฟล์เหล่านี้หายจากเครื่องนี้ ต้องนำเข้าใหม่: ' + miss.join(', '), 7000);
+  const missIds = [...new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => i.mediaId))];
+  if (missIds.length && srvOn()) { await srvFetchMissing(missIds); renderMediaBin(); renderTimeline(); window.onFrame(); }
+  const still = [...new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => mediaNameFromId(i.mediaId)))];
+  if (still.length) toast('ไฟล์เหล่านี้หายจากเครื่องนี้ ต้องนำเข้าใหม่: ' + still.join(', '), 7000);
+  else srvQueueMedia([...new Set(D.items.map(i => i.mediaId).filter(Boolean))]);
 }
 async function homeAction(id, a) {
   const rec = await projGet(id); if (!rec) return renderHome();
   if (a === 'rename') {
     const n = prompt('ชื่อโปรเจกต์', rec.name); if (n == null || !n.trim()) return;
-    const doc = JSON.parse(rec.doc); doc.name = n.trim(); rec.doc = JSON.stringify(doc); rec.name = doc.name; rec.updated = Date.now(); await projPut(rec);
+    const doc = JSON.parse(rec.doc); doc.name = n.trim(); rec.doc = JSON.stringify(doc); rec.name = doc.name; rec.updated = Date.now(); await projPut(rec); srvPushProject(rec);
   } else if (a === 'dup') {
     const doc = JSON.parse(rec.doc); doc.pid = uid(); doc.created = Date.now(); doc.name = rec.name + ' (สำเนา)';
-    const r2 = Object.assign({}, rec, { id: doc.pid, name: doc.name, doc: JSON.stringify(doc), created: doc.created, updated: Date.now() }); await projPut(r2);
+    const r2 = Object.assign({}, rec, { id: doc.pid, name: doc.name, doc: JSON.stringify(doc), created: doc.created, updated: Date.now() }); await projPut(r2); srvPushProject(r2);
   } else if (a === 'del') {
     if (!confirm(`ลบโปรเจกต์ “${rec.name}” ?\n(ไฟล์วิดีโอที่นำเข้าไว้ไม่ถูกลบ)`)) return;
-    await projDel(id);
+    await projDel(id); srvDeleteProject(id);
     if (D && D.pid === id) { D = newDoc(); SEL = null; HIST = []; HPOS = -1; commit('init'); emit('sel'); HOME.started = false; }
   }
   renderHome();
 }
 function initHome() {
   $('#hmNew').onclick = newProject;
-  $('#hmBack').onclick = hideHome;
+  $('#hmBack').onclick = hideHome; $('#hmSync').onclick = srvSyncAll;
   $('#btnHome').onclick = showHome;
   $('#hmImport').onclick = () => { const i = document.createElement('input'); i.type = 'file'; i.accept = '.json'; i.onchange = async () => { if (i.files[0]) { const ok = await openProject(i.files[0]); if (ok) hideHome(); } }; i.click(); };
   $('#homeList').addEventListener('click', e => {

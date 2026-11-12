@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.03</title>
+<title>Sykhai Editor v1.04</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -137,6 +137,7 @@ dialog h3{margin:0 0 10px}
 .pact{position:absolute;top:12px;right:12px;display:none;gap:4px}.pcard:hover .pact{display:flex}
 .pact button{padding:2px 7px;background:rgba(18,19,22,.85)}
 #homeFoot{margin-top:18px}
+#srvBadge{background:var(--p2);border:1px solid var(--ln);border-radius:20px;padding:3px 10px;color:var(--ac);font-size:12px}#srvBadge.off{color:var(--mu)}
 
 </style></head>
 <body>
@@ -148,6 +149,7 @@ dialog h3{margin:0 0 10px}
     <button id="btnUndo" title="ย้อนกลับ (⌘Z)">↶</button>
     <button id="btnRedo" title="ทำซ้ำ (⌘⇧Z)">↷</button>
     <span class="sp"></span>
+    <span id="srvBadge" hidden>☁</span>
     <span id="costBadge" title="ค่า AI เดือนนี้ / เพดาน">AI $0.00</span>
     <button id="btnSettings">⚙ ตั้งค่า</button>
     <button id="btnSave" title="โหลดไฟล์โปรเจกต์ (.json) เก็บสำรอง — โปรเจกต์บันทึกอัตโนมัติอยู่แล้ว">💾 สำรองไฟล์</button>
@@ -194,7 +196,7 @@ dialog h3{margin:0 0 10px}
 
 <div id="home">
   <div class="hwrap">
-    <div class="hhead"><div class="brand big">Sykhai <b>Editor</b></div><span class="sp"></span><button id="hmBack" hidden>← กลับไปแก้ไขต่อ</button><button id="hmImport">📂 นำเข้าไฟล์โปรเจกต์</button><button id="hmNew" class="primary">+ โปรเจกต์ใหม่</button></div>
+    <div class="hhead"><div class="brand big">Sykhai <b>Editor</b></div><span class="sp"></span><button id="hmSync" hidden title="ส่งโปรเจกต์/ไฟล์ขึ้นเซิร์ฟเวอร์ และดึงโปรเจกต์ใหม่ลงเครื่องนี้">☁ ซิงค์เซิร์ฟเวอร์</button><button id="hmBack" hidden>← กลับไปแก้ไขต่อ</button><button id="hmImport">📂 นำเข้าไฟล์โปรเจกต์</button><button id="hmNew" class="primary">+ โปรเจกต์ใหม่</button></div>
     <div class="htitle">โปรเจกต์ของฉัน</div>
     <div id="homeList"></div>
     <div id="homeFoot" class="hint small"></div>
@@ -206,6 +208,10 @@ dialog h3{margin:0 0 10px}
   <div class="fld col"><label>Anthropic API key (Claude — ใช้เลือกประโยคเด่น / แปล / ทำ 3-4 แบบ)</label><input id="keyClaude" type="password" placeholder="sk-ant-..." autocomplete="off"></div>
   <div class="fld col"><label>Gemini API key (Google AI Studio — ใช้ถอดเสียงภาษาลาว)</label><input id="keyGemini" type="password" placeholder="AIza..." autocomplete="off"></div>
   <div class="fld"><label>เพดานงบ AI ต่อเดือน (USD)</label><input id="capUsd" type="number" min="1" step="1" value="50" class="num"></div>
+  <hr>
+  <div class="fld col"><label>เซิร์ฟเวอร์เก็บไฟล์ที่ร้าน — ที่อยู่ (เว้นว่าง = ไม่ใช้)</label><input id="srvUrl" placeholder="https://ชื่อเครื่อง.xxxx.ts.net:8787  หรือ  http://192.168.1.10:8787" autocomplete="off"></div>
+  <div class="fld col"><label>รหัสผ่านเซิร์ฟเวอร์</label><input id="srvToken" type="password" autocomplete="off"></div>
+  <div class="row"><button id="srvTest">ทดสอบเชื่อมต่อ</button><span id="srvTestMsg" class="hint small"></span></div>
   <div class="hint small">คีย์เก็บในเครื่องนี้เท่านั้น (localStorage ของเบราว์เซอร์) ไม่ถูกส่งไปที่อื่นนอกจากเรียกใช้ API ของ Anthropic/Google โดยตรง</div>
   <div class="row"><span class="sp"></span><button id="setCancel">ปิด</button><button id="setSave" class="primary">บันทึก</button></div>
 </dialog>
@@ -234,14 +240,15 @@ dialog h3{margin:0 0 10px}
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.03
-// APP_VERSION_PREV : 1.02
-// APP_VERSION_PREV_OLDER : 1.01
+// APP_VERSION  : 1.04
+// APP_VERSION_PREV : 1.03
+// APP_VERSION_PREV_OLDER : 1.02
+// 1.04 : home file server (server/server.js): projects + source media + finished videos stored on shop server; manual sync; auto-download missing media on open
 // 1.03 : Home page (project list), per-project autosave in IndexedDB, rename/duplicate/delete
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.03';
+const APP_VERSION = '1.04';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -1107,7 +1114,7 @@ async function projSaveNow() {
   clearTimeout(PS.timer); PS.timer = 0;
   if (!D || !D.pid || HOME.open) return;
   if (!D.items.length && !PS.known.has(D.pid)) return;
-  return projPut(projRec(D));
+  const rec = projRec(D); const ok = await projPut(rec); if (ok && typeof srvSync === 'function') srvSync(rec); return ok;
 }
 function projSaveSoon() { clearTimeout(PS.timer); PS.timer = setTimeout(projSaveNow, 700); }
 on('doc', l => { if (l && l !== 'init' && l !== 'open') projSaveSoon(); });
@@ -1124,7 +1131,7 @@ const fmtDur = t => { t = Math.round(t || 0); return Math.floor(t / 60) + ':' + 
 async function showHome() {
   pause(); await projSaveNow();
   HOME.open = true; $('#home').hidden = false;
-  $('#hmBack').hidden = !HOME.started;
+  $('#hmBack').hidden = !HOME.started; $('#hmSync').hidden = !srvOn();
   await renderHome();
 }
 function hideHome() { HOME.open = false; $('#home').hidden = true; HOME.started = true; }
@@ -1147,7 +1154,8 @@ async function renderHome() {
   }).join('');
   try {
     const e = await navigator.storage.estimate();
-    $('#homeFoot').textContent = `พื้นที่ในเครื่องนี้ที่ใช้ไป ${(e.usage / 1e9).toFixed(2)} GB จาก ${(e.quota / 1e9).toFixed(0)} GB · ${list.length} โปรเจกต์ · โปรเจกต์ถูกบันทึกอัตโนมัติทุกครั้งที่แก้ไข`;
+    const sv = SRV.info && SRV.info.free != null ? ` · เซิร์ฟเวอร์ว่าง ${(SRV.info.free / 1e9).toFixed(0)} GB` : '';
+    $('#homeFoot').textContent = `พื้นที่ในเครื่องนี้ที่ใช้ไป ${(e.usage / 1e9).toFixed(2)} GB จาก ${(e.quota / 1e9).toFixed(0)} GB · ${list.length} โปรเจกต์ · โปรเจกต์ถูกบันทึกอัตโนมัติทุกครั้งที่แก้ไข${sv}`;
   } catch (e) { $('#homeFoot').textContent = list.length + ' โปรเจกต์ · บันทึกอัตโนมัติ'; }
 }
 
@@ -1167,32 +1175,145 @@ async function openById(id) {
   D = doc; await ensureSfx();
   resetDoc(D); hideHome();
   const miss = [...new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => mediaNameFromId(i.mediaId)))];
-  if (miss.length) toast('ไฟล์เหล่านี้หายจากเครื่องนี้ ต้องนำเข้าใหม่: ' + miss.join(', '), 7000);
+  const missIds = [...new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => i.mediaId))];
+  if (missIds.length && srvOn()) { await srvFetchMissing(missIds); renderMediaBin(); renderTimeline(); window.onFrame(); }
+  const still = [...new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => mediaNameFromId(i.mediaId)))];
+  if (still.length) toast('ไฟล์เหล่านี้หายจากเครื่องนี้ ต้องนำเข้าใหม่: ' + still.join(', '), 7000);
+  else srvQueueMedia([...new Set(D.items.map(i => i.mediaId).filter(Boolean))]);
 }
 async function homeAction(id, a) {
   const rec = await projGet(id); if (!rec) return renderHome();
   if (a === 'rename') {
     const n = prompt('ชื่อโปรเจกต์', rec.name); if (n == null || !n.trim()) return;
-    const doc = JSON.parse(rec.doc); doc.name = n.trim(); rec.doc = JSON.stringify(doc); rec.name = doc.name; rec.updated = Date.now(); await projPut(rec);
+    const doc = JSON.parse(rec.doc); doc.name = n.trim(); rec.doc = JSON.stringify(doc); rec.name = doc.name; rec.updated = Date.now(); await projPut(rec); srvPushProject(rec);
   } else if (a === 'dup') {
     const doc = JSON.parse(rec.doc); doc.pid = uid(); doc.created = Date.now(); doc.name = rec.name + ' (สำเนา)';
-    const r2 = Object.assign({}, rec, { id: doc.pid, name: doc.name, doc: JSON.stringify(doc), created: doc.created, updated: Date.now() }); await projPut(r2);
+    const r2 = Object.assign({}, rec, { id: doc.pid, name: doc.name, doc: JSON.stringify(doc), created: doc.created, updated: Date.now() }); await projPut(r2); srvPushProject(r2);
   } else if (a === 'del') {
     if (!confirm(`ลบโปรเจกต์ “${rec.name}” ?\n(ไฟล์วิดีโอที่นำเข้าไว้ไม่ถูกลบ)`)) return;
-    await projDel(id);
+    await projDel(id); srvDeleteProject(id);
     if (D && D.pid === id) { D = newDoc(); SEL = null; HIST = []; HPOS = -1; commit('init'); emit('sel'); HOME.started = false; }
   }
   renderHome();
 }
 function initHome() {
   $('#hmNew').onclick = newProject;
-  $('#hmBack').onclick = hideHome;
+  $('#hmBack').onclick = hideHome; $('#hmSync').onclick = srvSyncAll;
   $('#btnHome').onclick = showHome;
   $('#hmImport').onclick = () => { const i = document.createElement('input'); i.type = 'file'; i.accept = '.json'; i.onchange = async () => { if (i.files[0]) { const ok = await openProject(i.files[0]); if (ok) hideHome(); } }; i.click(); };
   $('#homeList').addEventListener('click', e => {
     const c = e.target.closest('.pcard'); if (!c) return; const b = e.target.closest('button[data-a]');
     if (b) { e.stopPropagation(); homeAction(c.dataset.id, b.dataset.a); } else openById(c.dataset.id);
   });
+}
+
+// ---- 27-remote.js ----
+// ============================================================
+//  Home file server (v1.04) — stores projects, source media and finished videos on the
+//  shop server's disk. Talks to server/server.js. No polling: syncs only when saving,
+//  opening a project, exporting, or when you press the Home "sync" button.
+// ============================================================
+const SRV = { up: false, sizes: new Map(), q: [], busy: false, prog: null, label: '', err: '', info: null };
+const srvCfg = () => { try { return JSON.parse(localStorage.getItem('sk_srv') || '{}'); } catch (e) { return {}; } };
+const srvOn = () => { const c = srvCfg(); return !!(c.url && c.token); };
+const srvUrl = p => srvCfg().url.trim().replace(/\/+$/, '') + p;
+const srvFetch = (p, o = {}) => fetch(srvUrl(p), Object.assign({}, o, { headers: Object.assign({ 'x-token': srvCfg().token }, o.headers) }));
+const srvId = id => encodeURIComponent(id);
+
+function updateSrvBadge() {
+  const b = $('#srvBadge'); if (!b) return;
+  if (!srvOn()) { b.hidden = true; return; }
+  b.hidden = false; b.classList.toggle('off', !SRV.up);
+  b.textContent = SRV.prog != null ? `☁ ${SRV.label} ${Math.round(SRV.prog * 100)}%` : SRV.q.length ? `☁ รอส่ง ${SRV.q.length} ไฟล์` : SRV.up ? '☁ เซิร์ฟเวอร์พร้อม' : '☁ ออฟไลน์';
+  b.title = SRV.up ? 'เชื่อมต่อเซิร์ฟเวอร์ที่ร้านอยู่' : ('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้' + (SRV.err ? ': ' + SRV.err : ''));
+}
+async function srvPing() {
+  if (!srvOn()) { SRV.up = false; updateSrvBadge(); return false; }
+  try { const r = await srvFetch('/ping'); if (!r.ok) throw new Error(r.status === 401 ? 'รหัสผ่านไม่ถูก' : 'HTTP ' + r.status); SRV.info = await r.json(); SRV.up = true; SRV.err = ''; }
+  catch (e) { SRV.up = false; SRV.info = null; SRV.err = e.message === 'Failed to fetch' ? 'ติดต่อไม่ได้ (ที่อยู่ผิด / เซิร์ฟเวอร์ปิด / https-http ไม่ตรงกัน)' : e.message; }
+  updateSrvBadge(); return SRV.up;
+}
+async function srvLoadSizes() {
+  try { const r = await srvFetch('/media'); if (r.ok) { SRV.sizes = new Map((await r.json()).map(m => [m.id, m.size])); } } catch (e) { }
+}
+function xhrPut(path, body, headers, onp) {
+  return new Promise((res, rej) => {
+    const x = new XMLHttpRequest(); x.open('PUT', srvUrl(path)); x.setRequestHeader('x-token', srvCfg().token);
+    for (const k in headers) x.setRequestHeader(k, headers[k]);
+    x.upload.onprogress = e => onp && onp(e.loaded / (e.total || 1));
+    x.onload = () => x.status < 300 ? res() : rej(new Error('HTTP ' + x.status)); x.onerror = () => rej(new Error('Failed to fetch')); x.send(body);
+  });
+}
+// ----- uploads of source media (sequential queue) -----
+function srvQueueMedia(ids) {
+  if (!srvOn()) return;
+  for (const id of ids) { const m = MEDIA.get(id); if (m && m.file && !m.builtin && !m.hidden && SRV.sizes.get(id) !== m.file.size && !SRV.q.includes(id)) SRV.q.push(id); }
+  updateSrvBadge(); srvRun();
+}
+async function srvRun() {
+  if (SRV.busy) return; SRV.busy = true;
+  try {
+    while (SRV.q.length) {
+      if (!SRV.up && !(await srvPing())) { SRV.q = []; break; }
+      const id = SRV.q[0], m = MEDIA.get(id);
+      if (m && m.file) {
+        SRV.label = m.name.length > 14 ? m.name.slice(0, 12) + '…' : m.name; SRV.prog = 0; updateSrvBadge();
+        try { await xhrPut('/media/' + srvId(id), m.file, { 'x-name': encodeURIComponent(m.name), 'x-type': m.file.type || 'application/octet-stream' }, p => { SRV.prog = p; updateSrvBadge(); }); SRV.sizes.set(id, m.file.size); }
+        catch (e) { SRV.up = false; SRV.err = e.message; toast('ส่งไฟล์ขึ้นเซิร์ฟเวอร์ไม่สำเร็จ: ' + m.name, 5000); SRV.q = []; break; }
+      }
+      SRV.q.shift();
+    }
+  } finally { SRV.busy = false; SRV.prog = null; updateSrvBadge(); }
+}
+// ----- projects -----
+async function srvPushProject(rec) {
+  if (!srvOn()) return false;
+  try {
+    const r = await srvFetch('/projects/' + srvId(rec.id), { method: 'PUT', body: JSON.stringify(rec) });
+    if (r.status === 409) { toast('โปรเจกต์ “' + rec.name + '” บนเซิร์ฟเวอร์ใหม่กว่า — ไม่เขียนทับ (กดซิงค์ในหน้าโปรเจกต์เพื่อดึง)', 6000); return false; }
+    SRV.up = r.ok; updateSrvBadge(); return r.ok;
+  } catch (e) { SRV.up = false; SRV.err = 'ติดต่อไม่ได้'; updateSrvBadge(); return false; }
+}
+async function srvSync(rec) {          // called after every local autosave
+  if (!srvOn()) return;
+  if (!SRV.sizes.size && !SRV.up) await srvPing() && await srvLoadSizes();
+  if (await srvPushProject(rec)) srvQueueMedia(rec.mids || []);
+}
+async function srvDeleteProject(id) { if (srvOn()) { try { await srvFetch('/projects/' + srvId(id), { method: 'DELETE' }); } catch (e) { } } }
+async function srvSyncAll() {          // manual button on Home
+  if (!srvOn()) { toast('ยังไม่ได้ตั้งค่าเซิร์ฟเวอร์ — เปิด ⚙ ตั้งค่า'); return; }
+  toast('กำลังซิงค์กับเซิร์ฟเวอร์…', 8000);
+  if (!await srvPing()) { toast('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้: ' + SRV.err, 7000); return; }
+  await srvLoadSizes();
+  let remote = []; try { remote = await (await srvFetch('/projects')).json(); } catch (e) { toast('อ่านรายการจากเซิร์ฟเวอร์ไม่ได้'); return; }
+  const local = await projAll(); const lm = new Map(local.map(r => [r.id, r])), rm = new Map(remote.map(r => [r.id, r]));
+  let down = 0, up = 0;
+  for (const r of remote) { const l = lm.get(r.id); if (!l || l.updated < r.updated) { try { const full = await (await srvFetch('/projects/' + srvId(r.id))).json(); if (await projPut(full)) down++; } catch (e) { } } }
+  for (const l of local) { const r = rm.get(l.id); if (!r || r.updated > 0 && r.updated < l.updated) { if (await srvPushProject(l)) up++; } srvQueueMedia(l.mids || []); }
+  toast(`ซิงค์แล้ว — ดึงลงเครื่อง ${down} โปรเจกต์ · ส่งขึ้นเซิร์ฟเวอร์ ${up} โปรเจกต์` + (SRV.q.length ? ` · กำลังส่งไฟล์วิดีโอ ${SRV.q.length} ไฟล์` : ''), 6000);
+  renderHome();
+}
+// ----- download media that this computer doesn't have yet -----
+async function srvFetchMissing(ids) {
+  if (!srvOn() || !ids.length) return 0;
+  if (!SRV.up && !(await srvPing())) return 0;
+  let n = 0, i = 0;
+  for (const id of ids) {
+    i++; try {
+      toast(`กำลังโหลดไฟล์จากเซิร์ฟเวอร์ (${i}/${ids.length}) ${mediaNameFromId(id)}`, 60000);
+      const r = await srvFetch('/media/' + srvId(id)); if (!r.ok) continue;
+      const name = decodeURIComponent(r.headers.get('x-name') || '') || mediaNameFromId(id); const blob = await r.blob();
+      await importFiles([new File([blob], name, { type: blob.type })]); if (MEDIA.has(id)) n++;
+    } catch (e) { console.warn('srvFetchMissing', e); }
+  }
+  toast(n ? `โหลดไฟล์จากเซิร์ฟเวอร์แล้ว ${n} ไฟล์` : 'ไม่พบไฟล์บนเซิร์ฟเวอร์', 4000);
+  return n;
+}
+async function srvPushOut(blob, name) {
+  if (!srvOn()) return;
+  try { SRV.label = 'วิดีโอ'; SRV.prog = 0; updateSrvBadge(); await xhrPut('/out/' + srvId(name), blob, { 'x-type': blob.type }, p => { SRV.prog = p; updateSrvBadge(); }); toast('เก็บวิดีโอที่ตัดเสร็จไว้ในเซิร์ฟเวอร์แล้ว: ' + name, 5000); }
+  catch (e) { toast('ส่งวิดีโอขึ้นเซิร์ฟเวอร์ไม่สำเร็จ (ไฟล์ยังโหลดลงเครื่องแล้ว)', 5000); }
+  SRV.prog = null; updateSrvBadge();
 }
 
 // ---- 30-panels.js ----
@@ -1742,7 +1863,8 @@ async function runExport(opts) {
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = (D.name || 'video') + '.' + ext; document.body.appendChild(a); a.click(); setTimeout(() => { a.remove(); }, 2000);
   }
   if (bar) bar.style.width = '100%'; if (msg) msg.textContent = `เสร็จแล้ว ✔ (${(blob.size / 1048576).toFixed(1)} MB, .${ext})` + (ext === 'webm' ? ' — เบราว์เซอร์ไม่รองรับ mp4 จึงได้ .webm' : '');
-  EXP.blob = blob; return blob;
+  EXP.blob = blob; if (!opts.noDownload && typeof srvPushOut === 'function') srvPushOut(blob, (D.name || 'video').replace(/[\\/:*?"<>|]/g, '_') + '.' + ext);
+  return blob;
 }
 
 // ---- 60-ai.js ----
@@ -2237,9 +2359,10 @@ async function init() {
   $('#btnOpen').onclick = () => { const i = document.createElement('input'); i.type = 'file'; i.accept = '.json'; i.onchange = () => i.files[0] && openProject(i.files[0]); i.click(); };
   $('#projName').oninput = e => { D.name = e.target.value; }; $('#projName').onchange = () => commit('rename');
   // settings
-  $('#btnSettings').onclick = () => { const k = loadKeys(); $('#keyClaude').value = k.claude || ''; $('#keyGemini').value = k.gemini || ''; $('#capUsd').value = loadCap(); $('#dlgSettings').showModal(); };
+  $('#btnSettings').onclick = () => { const k = loadKeys(); $('#keyClaude').value = k.claude || ''; $('#keyGemini').value = k.gemini || ''; $('#capUsd').value = loadCap(); const sc = srvCfg(); $('#srvUrl').value = sc.url || ''; $('#srvToken').value = sc.token || ''; $('#srvTestMsg').textContent = ''; $('#dlgSettings').showModal(); };
+  $('#srvTest').onclick = async () => { localStorage.setItem('sk_srv', JSON.stringify({ url: $('#srvUrl').value.trim(), token: $('#srvToken').value.trim() })); $('#srvTestMsg').textContent = 'กำลังทดสอบ…'; const ok = await srvPing(); $('#srvTestMsg').textContent = ok ? `✔ เชื่อมต่อได้ · พื้นที่ว่าง ${SRV.info.free != null ? (SRV.info.free / 1e9).toFixed(0) + ' GB' : '-'}` : '✖ ' + SRV.err; };
   $('#setCancel').onclick = () => $('#dlgSettings').close();
-  $('#setSave').onclick = () => { saveKeys({ claude: $('#keyClaude').value.trim(), gemini: $('#keyGemini').value.trim() }); localStorage.setItem('sk_cap', String(parseFloat($('#capUsd').value) || 50)); updateCostBadge(); $('#dlgSettings').close(); toast('บันทึกการตั้งค่าแล้ว'); };
+  $('#setSave').onclick = () => { saveKeys({ claude: $('#keyClaude').value.trim(), gemini: $('#keyGemini').value.trim() }); localStorage.setItem('sk_cap', String(parseFloat($('#capUsd').value) || 50)); localStorage.setItem('sk_srv', JSON.stringify({ url: $('#srvUrl').value.trim(), token: $('#srvToken').value.trim() })); srvPing().then(ok => ok && srvLoadSizes()); updateCostBadge(); $('#dlgSettings').close(); toast('บันทึกการตั้งค่าแล้ว'); };
   // export
   $('#btnExport').onclick = () => { $('#expBar').style.width = '0'; $('#expMsg').textContent = ''; $('#expGo').disabled = false; $('#dlgExport').showModal(); };
   $('#expCancel').onclick = () => { if (EXP.running) EXP.cancel = true; $('#dlgExport').close(); };
@@ -2265,7 +2388,7 @@ async function init() {
     else if (e.key === 'ArrowRight') { pause(); seek(PB.t + (e.shiftKey ? 1 : 1 / 30)); }
     else if (e.key === 'Home') { pause(); seek(0); }
   });
-  initHome(); await showHome();
+  initHome(); await showHome(); if (srvOn()) srvPing().then(ok => ok && srvLoadSizes());
   tick();
   window.__ready = true;
 }
