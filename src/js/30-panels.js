@@ -59,7 +59,7 @@ function showTab(id) {
 }
 function renderAudioList() {
   const box = $('#audioList'); if (!box) return; const arr = [...MEDIA.values()].filter(m => m.type === 'audio');
-  box.innerHTML = arr.length ? arr.map(m => `<div class="arow"><span title="${esc(m.name)}">♪ ${esc(m.name)}</span><button data-aadd="A1" data-id="${m.id}">เพลง</button><button data-aadd="A2" data-id="${m.id}">เอฟเฟกต์</button></div>`).join('') : '<div class="empty">ยังไม่มีไฟล์เสียง</div>';
+  box.innerHTML = arr.length ? arr.map(m => `<div class="arow"><span translate="no" title="${esc(m.name)}">♪ ${esc(m.name)}</span><button data-aadd="A1" data-id="${m.id}">เพลง</button><button data-aadd="A2" data-id="${m.id}">เอฟเฟกต์</button></div>`).join('') : '<div class="empty">ยังไม่มีไฟล์เสียง</div>';
 }
 on('media', renderAudioList); on('media-added', renderAudioList);
 
@@ -198,7 +198,7 @@ function renderInspector() {
     if (it.kind === 'emoji') h += `<div class="fld"><label>อีโมจิ</label><input data-p="text" value="${esc(it.text)}" maxlength="4"></div>`;
     h += S('เข้า', 'anim.in', ANIM_IN.slice(0, 8), it) + S('ออก', 'anim.out', [['none', 'ไม่มี'], ['fade', 'เลือนหาย']], it);
   } else if (it.type === 'audio') {
-    const m = MEDIA.get(it.mediaId); h += `<div class="hint">${esc(m ? m.name : '')}</div>` + R('ระดับเสียง', 'vol', 0, 1.5, .01, it) + R('ค่อยๆ ดังขึ้น (วิ)', 'fadeIn', 0, 5, .1, it) + R('ค่อยๆ เบาลง (วิ)', 'fadeOut', 0, 5, .1, it) + K('ลดเสียงอัตโนมัติเมื่อมีคนพูด (ducking)', 'duck', it, false) + K('วนซ้ำจนจบช่วง', 'loop', it, false) + `<div class="fld"><label>เริ่มจากวินาทีที่</label><input type="number" step="0.1" min="0" data-p="in" value="${(it.in || 0).toFixed(1)}" class="num"></div>`;
+    const m = MEDIA.get(it.mediaId); h += `<div class="hint" translate="no">${esc(m ? m.name : '')}</div>` + R('ระดับเสียง', 'vol', 0, 1.5, .01, it) + R('ค่อยๆ ดังขึ้น (วิ)', 'fadeIn', 0, 5, .1, it) + R('ค่อยๆ เบาลง (วิ)', 'fadeOut', 0, 5, .1, it) + K('ลดเสียงอัตโนมัติเมื่อมีคนพูด (ducking)', 'duck', it, false) + K('วนซ้ำจนจบช่วง', 'loop', it, false) + `<div class="fld"><label>เริ่มจากวินาทีที่</label><input type="number" step="0.1" min="0" data-p="in" value="${(it.in || 0).toFixed(1)}" class="num"></div>`;
   }
   box.innerHTML = h; bindInspector(it);
 }

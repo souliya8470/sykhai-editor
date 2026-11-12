@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.08</title>
+<title>Sykhai Editor v1.09</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -103,7 +103,7 @@ dialog h3{margin:0 0 10px}
 .progress{height:8px;background:var(--p1);border-radius:6px;overflow:hidden;margin:10px 0 4px}#expBar{height:100%;width:0;background:var(--ac)}
 #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#000e;color:#fff;padding:9px 16px;border-radius:20px;opacity:0;transition:.25s;z-index:99;pointer-events:none;font-size:13px;max-width:80vw;border:1px solid var(--ln)}
 #toast.on{opacity:1;transform:translateX(-50%)}
-.drop #stage::after,.drop #left::after{content:"วางไฟล์ที่นี่";position:absolute;inset:0;background:rgba(46,230,197,.15);border:2px dashed var(--ac);display:flex;align-items:center;justify-content:center;font-size:20px;z-index:20}
+.drop #stage::after,.drop #left::after{content:var(--droptxt,"วางไฟล์ที่นี่");position:absolute;inset:0;background:rgba(46,230,197,.15);border:2px dashed var(--ac);display:flex;align-items:center;justify-content:center;font-size:20px;z-index:20}
 .aicard{background:var(--p2);border:1px solid var(--ln);border-radius:8px;padding:9px;margin:7px 0}
 .aicard h4{margin:0 0 4px;font-size:13px}
 .aitbl{width:100%;border-collapse:collapse;font-size:12px}.aitbl td,.aitbl th{border-bottom:1px solid var(--ln);padding:3px 4px;text-align:left;vertical-align:top}
@@ -169,6 +169,9 @@ body.resizing{user-select:none}body.resizing *{cursor:inherit!important}
 /* level meter */
 #vu{display:inline-block;width:56px;height:8px;background:#0c0e12;border:1px solid var(--ln);border-radius:4px;overflow:hidden;flex:none}
 #vu i{display:block;height:100%;width:0;background:linear-gradient(90deg,#2ee6c5 0 60%,#ffd60a 60% 85%,#ff4d5e 85%)}
+
+html[lang=lo] body,html[lang=lo] button,html[lang=lo] input,html[lang=lo] select,html[lang=lo] textarea{font-family:"Noto Sans Lao","Prompt","Noto Sans Thai",system-ui,sans-serif}
+select.uilang{max-width:130px}
 
 </style></head>
 <body>
@@ -315,13 +318,14 @@ function i18nNode(n) {
     const v = n.nodeValue; if (!TH_RE.test(v) || _skip(n.parentElement)) return;
     const t = T(v); if (t !== v) n.nodeValue = t;
   } else if (n.nodeType === 1) {
+    if (!n.closest('[translate="no"],script,style')) for (const a of _I18N_ATTRS) { const v = n.getAttribute(a); if (v && TH_RE.test(v)) { const t = T(v); if (t !== v) n.setAttribute(a, t); } }
     if (_skip(n)) return;
-    for (const a of _I18N_ATTRS) { const v = n.getAttribute(a); if (v && TH_RE.test(v)) { const t = T(v); if (t !== v) n.setAttribute(a, t); } }
     for (const c of n.childNodes) i18nNode(c);
   }
 }
 function i18nStart() {
   document.documentElement.lang = UI;
+  document.documentElement.style.setProperty('--droptxt', JSON.stringify(T('วางไฟล์ที่นี่')));
   if (UI === 'th') return;
   document.title = T(document.title);
   i18nNode(document.body);
@@ -544,14 +548,317 @@ I18N_ROWS.push(
   ['โปรเจกต์เดิม', 'Previous project', 'ໂປຣເຈັກເດີມ']
 );
 
+// ---- 00-2-i18n-b.js ----
+'use strict';
+// i18n rows B — left tabs, panels, inspector (30-panels.js, 35-previews.js).  [thai, english, lao]
+I18N_ROWS.push(
+  ['ลากเพื่อปรับความกว้าง', 'Drag to resize the width', 'ລາກເພື່ອປັບຄວາມກວ້າງ'],
+  ['ลากเพื่อปรับความสูงของไทม์ไลน์', 'Drag to resize the timeline height', 'ລາກເພື່ອປັບຄວາມສູງຂອງໄທມ໌ໄລນ໌'],
+  ['ลากเพื่อปรับความสูงของแถว', 'Drag to resize the track height', 'ລາກເພື່ອປັບຄວາມສູງຂອງແຖວ'],
+  // ---- tabs ----
+  ['สื่อ', 'Media', 'ສື່'],
+  ['ข้อความ', 'Text', 'ຂໍ້ຄວາມ'],
+  ['สติกเกอร์', 'Stickers', 'ສະຕິກເກີ'],
+  ['ทรานสิชัน', 'Transitions', 'ທຣານຊິຊັນ'],
+  ['เอฟเฟกต์', 'Effects', 'ເອັບເຟັກ'],
+  ['เสียง', 'Audio', 'ສຽງ'],
+  // ---- look presets ----
+  ['ต้นฉบับ', 'Original', 'ຕົ້ນສະບັບ'],
+  ['สดใส', 'Vivid', 'ສົດໃສ'],
+  ['อบอุ่น', 'Warm', 'ອົບອຸ່ນ'],
+  ['เย็นสดชื่น', 'Cool & fresh', 'ເຢັນສົດຊື່ນ'],
+  ['ผิวขาวใส', 'Bright skin', 'ຜິວຂາວໃສ'],
+  ['ซีนีมา + มุมมืด', 'Cinema + vignette', 'ຊີເນມາ + ມຸມມືດ'],
+  ['ขาวดำ', 'Black & white', 'ຂາວດຳ'],
+  ['ขาวดำ + แดงเรืองแสง', 'B&W + glowing red', 'ຂາວດຳ + ແດງເຮືອງແສງ'],
+  ['เบลอ', 'Blur', 'ເບລີ'],
+  ['คมชัด', 'Sharp', 'ຄົມຊັດ'],
+  ['คมชัดมาก + ลดนอยส์', 'Extra sharp + denoise', 'ຄົມຊັດຫຼາຍ + ຫຼຸດນອຍສ໌'],
+  // ---- stickers ----
+  ['ถูกต้อง ✔', 'Correct ✔', 'ຖືກຕ້ອງ ✔'],
+  ['เตือน ⚠', 'Warning ⚠', 'ເຕືອນ ⚠'],
+  ['มือชี้', 'Pointing hand', 'ມືຊີ້'],
+  ['กรอบโฟกัส', 'Focus frame', 'ກອບໂຟກັສ'],
+  ['ลูกศร', 'Arrow', 'ລູກສອນ'],
+  ['ดาว', 'Star', 'ດາວ'],
+  ['ขีดเส้นใต้', 'Underline', 'ຂີດເສັ້ນໃຕ້'],
+  ['วงรีวง', 'Ring', 'ວົງຮີ'],
+  // ---- masks ----
+  ['วงกลม', 'Circle', 'ວົງມົນ'],
+  ['มุมมน', 'Rounded', 'ມຸມມົນ'],
+  ['การ์ดกรอบขาว', 'White-frame card', 'ກາດກອບຂາວ'],
+  ['ฟุ้งขอบบน', 'Feather top', 'ຟຸ້ງຂອບເທິງ'],
+  ['ฟุ้งขอบล่าง', 'Feather bottom', 'ຟຸ້ງຂອບລຸ່ມ'],
+  ['ฟุ้งรอบด้าน', 'Feather all sides', 'ຟຸ້ງຮອບດ້ານ'],
+  // ---- text / sticker / transitions / audio panes ----
+  ['กดเพื่อเพิ่มข้อความที่ตำแหน่งหัวอ่าน (เส้นแดง) — ใช้ *คำ* เพื่อทำตัวเหลือง/เน้น', 'Click to add text at the playhead (red line) — use *word* for yellow / emphasis', 'ກົດເພື່ອເພີ່ມຂໍ້ຄວາມທີ່ຕຳແໜ່ງເສັ້ນຫຼິ້ນ (ເສັ້ນແດງ) — ໃຊ້ *ຄຳ* ເພື່ອເຮັດຕົວເຫຼືອງ/ເນັ້ນ'],
+  ['+ ใส่ข้อความท้ายจอตลอดคลิป', '+ Add a footer text across the whole clip', '+ ໃສ່ຂໍ້ຄວາມທ້າຍຈໍຕະຫຼອດຄລິບ'],
+  ['+ อีโมจิ', '+ Emoji', '+ ອີໂມຈິ'],
+  ['เอาเมาส์ชี้เพื่อดูตัวอย่าง · ลากไปวาง “ตรงรอยต่อระหว่างคลิป” บนไทม์ไลน์ หรือเลือกคลิปแล้วกด', 'Hover to preview · drag onto a “junction between clips” on the timeline, or select a clip and click', 'ເອົາເມົ້າຊີ້ເພື່ອເບິ່ງຕົວຢ່າງ · ລາກໄປວາງ “ຕົງຮອຍຕໍ່ລະຫວ່າງຄລິບ” ເທິງໄທມ໌ໄລນ໌ ຫຼື ເລືອກຄລິບແລ້ວກົດ'],
+  ['เอาเมาส์ชี้เพื่อดูตัวอย่าง · ลากไปวางบนคลิป หรือเลือกคลิปแล้วกด (ปรับละเอียดได้ที่แผงขวา)', 'Hover to preview · drag onto a clip, or select a clip and click (fine-tune in the right panel)', 'ເອົາເມົ້າຊີ້ເພື່ອເບິ່ງຕົວຢ່າງ · ລາກໄປວາງເທິງຄລິບ ຫຼື ເລືອກຄລິບແລ້ວກົດ (ປັບລະອຽດໄດ້ທີ່ແຜງຂວາ)'],
+  ['รูปทรง / กรอบ / ซูม', 'Shapes / frames / zoom', 'ຮູບຮ່າງ / ກອບ / ຊູມ'],
+  ['นำเข้าไฟล์เพลง/เสียงจากปุ่ม “สื่อ” (mp3, wav, m4a) แล้วกดใส่เป็นเพลง/เอฟเฟกต์ได้ที่นี่', 'Import music / audio files from “Media” (mp3, wav, m4a), then add them here as music / effects', 'ນຳເຂົ້າໄຟລ໌ເພງ/ສຽງຈາກປຸ່ມ “ສື່” (mp3, wav, m4a) ແລ້ວກົດໃສ່ເປັນເພງ/ເອັບເຟັກໄດ້ບ່ອນນີ້'],
+  ['เสียงเอฟเฟกต์ในตัว (กดเพื่อใส่ที่หัวอ่าน)', 'Built-in sound effects (click to place at the playhead)', 'ສຽງເອັບເຟັກໃນຕົວ (ກົດເພື່ອໃສ່ທີ່ເສັ້ນຫຼິ້ນ)'],
+  ['วูช (ผ่าน)', 'Whoosh', 'ວູຊ (ຜ່ານ)'],
+  ['สวิป', 'Swipe', 'ສະວິບ'],
+  ['ป๊อป', 'Pop', 'ປ໊ອບ'],
+  ['ติ๊ง', 'Ding', 'ຕິງ'],
+  ['คลิก', 'Click', 'ຄລິກ'],
+  ['ตูม', 'Boom', 'ຕູມ'],
+  ['ยังไม่มีไฟล์เสียง', 'No audio files yet', 'ຍັງບໍ່ມີໄຟລ໌ສຽງ'],
+  ['เลือกคลิปวิดีโอ/ภาพบนไทม์ไลน์ก่อน', 'Select a video / image clip on the timeline first', 'ເລືອກຄລິບວິດີໂອ/ຮູບເທິງໄທມ໌ໄລນ໌ກ່ອນ'],
+  ['เลือกคลิปวิดีโอ/ภาพก่อน', 'Select a video / image clip first', 'ເລືອກຄລິບວິດີໂອ/ຮູບກ່ອນ'],
+  // ---- inspector ----
+  ['คีย์เฟรม', 'Keyframe', 'ຄີເຟຣມ'],
+  ['เลือน', 'Fade', 'ຄ່ອຍໆເລືອນ'],
+  ['เด้ง', 'Bounce', 'ເດັ້ງ'],
+  ['ลอยขึ้น', 'Float up', 'ລອຍຂຶ້ນ'],
+  ['สไลด์จากซ้าย', 'Slide from left', 'ສະໄລດ໌ຈາກຊ້າຍ'],
+  ['ตกลงมา', 'Drop down', 'ຕົກລົງມາ'],
+  ['พิมพ์ทีละตัว', 'Typewriter', 'ພິມທີລະຕົວ'],
+  ['คลิปวิดีโอ', 'Video clip', 'ຄລິບວິດີໂອ'],
+  ['รูปภาพ', 'Image', 'ຮູບພາບ'],
+  ['ทำซ้ำ', 'Duplicate', 'ເຮັດຊ້ຳ'],
+  ['เริ่ม', 'Start', 'ເລີ່ມ'],
+  ['ยาว', 'Length', 'ຍາວ'],
+  ['ตำแหน่ง / ขนาด', 'Position / size', 'ຕຳແໜ່ງ / ຂະໜາດ'],
+  ['ซ้าย-ขวา', 'Left–right', 'ຊ້າຍ-ຂວາ'],
+  ['บน-ล่าง', 'Up–down', 'ເທິງ-ລຸ່ມ'],
+  ['ขนาด', 'Size', 'ຂະໜາດ'],
+  ['หมุน', 'Rotate', 'ໝຸນ'],
+  ['ความโปร่งใส', 'Opacity', 'ຄວາມໂປ່ງໃສ'],
+  ['การแสดงผล', 'Display', 'ການສະແດງຜົນ'],
+  ['เต็มจอ 9:16 (ครอป)', 'Fill 9:16 (crop)', 'ເຕັມຈໍ 9:16 (ຄຣອບ)'],
+  ['ทั้งภาพ (มีขอบ)', 'Whole image (with bars)', 'ທັງຮູບ (ມີຂອບ)'],
+  ['ความเร็ว / เสียง', 'Speed / audio', 'ຄວາມໄວ / ສຽງ'],
+  ['ความเร็ว', 'Speed', 'ຄວາມໄວ'],
+  ['ระดับเสียง', 'Volume', 'ລະດັບສຽງ'],
+  ['ปรับระดับเสียงอัตโนมัติ', 'Auto-level volume', 'ປັບລະດັບສຽງອັດຕະໂນມັດ'],
+  ['ปิดเสียงคลิปนี้', 'Mute this clip', 'ປິດສຽງຄລິບນີ້'],
+  ['เสียงที่ปิดไว้', 'Muted sections', 'ສຽງທີ່ປິດໄວ້'],
+  ['ช่วง', 'sections', 'ຊ່ວງ'],
+  ['ล้าง', 'Clear', 'ລ້າງ'],
+  ['สี / เอฟเฟกต์', 'Color / effects', 'ສີ / ເອັບເຟັກ'],
+  ['สว่าง', 'Brightness', 'ຄວາມສະຫວ່າງ'],
+  ['คอนทราสต์', 'Contrast', 'ຄອນທຣາສ'],
+  ['ความสด', 'Saturation', 'ຄວາມສົດ'],
+  ['โทนอุ่น (ซีเปีย)', 'Warm tone (sepia)', 'ໂທນອຸ່ນ (ຊີເປຍ)'],
+  ['เปลี่ยนสี', 'Hue shift', 'ປ່ຽນສີ'],
+  ['มุมมืด', 'Vignette', 'ມຸມມືດ'],
+  ['ความคมชัด', 'Sharpness', 'ຄວາມຄົມຊັດ'],
+  ['คม', 'Sharp', 'ຄົມ'],
+  ['คมมาก', 'Very sharp', 'ຄົມຫຼາຍ'],
+  ['ลดนอยส์', 'Denoise', 'ຫຼຸດນອຍສ໌'],
+  ['แสงแดง: X', 'Red glow: X', 'ແສງແດງ: X'],
+  ['แสงแดง: Y', 'Red glow: Y', 'ແສງແດງ: Y'],
+  ['แสงแดง: ขนาด', 'Red glow: size', 'ແສງແດງ: ຂະໜາດ'],
+  ['กรอบ / มาสก์', 'Frame / mask', 'ກອບ / ມາສກ໌'],
+  ['รูปทรง', 'Shape', 'ຮູບຮ່າງ'],
+  ['ขนาดวง', 'Circle size', 'ຂະໜາດວົງ'],
+  ['ขอบ', 'Border', 'ຂອບ'],
+  ['สีขอบ', 'Border color', 'ສີຂອບ'],
+  ['ความโค้ง', 'Corner radius', 'ຄວາມໂຄ້ງ'],
+  ['ขอบขาว', 'White border', 'ຂອບຂາວ'],
+  ['ความฟุ้ง', 'Feather', 'ຄວາມຟຸ້ງ'],
+  ['แพน', 'Pan', 'ແພນ'],
+  ['ทรานสิชัน (ตอนเริ่มคลิป)', 'Transition (at clip start)', 'ທຣານຊິຊັນ (ຕອນເລີ່ມຄລິບ)'],
+  ['ชนิด', 'Type', 'ຊະນິດ'],
+  ['ความยาว (วิ)', 'Length (s)', 'ຄວາມຍາວ (ວິນາທີ)'],
+  ['✨ ปรับภาพให้สวย/ชัดอัตโนมัติ', '✨ Auto-enhance image', '✨ ປັບພາບໃຫ້ງາມ/ຊັດອັດຕະໂນມັດ'],
+  ['✂ ตัดช่วงเงียบ', '✂ Cut silences', '✂ ຕັດຊ່ວງງຽບ'],
+  ['🎙 วิเคราะห์เสียงคลิปนี้', '🎙 Analyse this clip’s audio', '🎙 ວິເຄາະສຽງຄລິບນີ້'],
+  ['ข้อความ (บรรทัดใหม่ = Enter, *คำ* = เน้นเหลือง)', 'Text (new line = Enter, *word* = yellow emphasis)', 'ຂໍ້ຄວາມ (ແຖວໃໝ່ = Enter, *ຄຳ* = ເນັ້ນເຫຼືອງ)'],
+  ['🌐 แปลไทย→ลาว', '🌐 Translate Thai→Lao', '🌐 ແປໄທ→ລາວ'],
+  ['สไตล์สำเร็จรูป', 'Preset styles', 'ສະໄຕລ໌ສຳເລັດຮູບ'],
+  ['ตำแหน่ง', 'Position', 'ຕຳແໜ່ງ'],
+  ['แนวตั้ง (0=บน, 1=ล่าง)', 'Vertical (0=top, 1=bottom)', 'ແນວຕັ້ງ (0=ເທິງ, 1=ລຸ່ມ)'],
+  ['ขยับขึ้น-ลง', 'Move up–down', 'ຂະຫຍັບຂຶ້ນ-ລົງ'],
+  ['ขนาดซูม', 'Zoom size', 'ຂະໜາດຊູມ'],
+  ['ความกว้างสูงสุด', 'Max width', 'ຄວາມກວ້າງສູງສຸດ'],
+  ['รูปแบบตัวอักษร', 'Font style', 'ຮູບແບບຕົວອັກສອນ'],
+  ['น้ำหนัก', 'Weight', 'ນ້ຳໜັກ'],
+  ['สีบรรทัด 1', 'Line 1 color', 'ສີແຖວ 1'],
+  ['สีบรรทัด 2 / เน้น', 'Line 2 / emphasis color', 'ສີແຖວ 2 / ເນັ້ນ'],
+  ['สีขอบตัวอักษร', 'Text outline color', 'ສີຂອບຕົວອັກສອນ'],
+  ['ความหนาขอบ', 'Outline thickness', 'ຄວາມໜາຂອບ'],
+  ['เงา', 'Shadow', 'ເງົາ'],
+  ['กรอบพื้นหลัง', 'Background box', 'ກອບພື້ນຫຼັງ'],
+  ['แถบต่อบรรทัด', 'Bar per line', 'ແຖບຕໍ່ແຖວ'],
+  ['แถบ: บรรทัดล่างสีต่าง', 'Bar: bottom line in another color', 'ແຖບ: ແຖວລຸ່ມສີຕ່າງ'],
+  ['ป้ายก้อนเดียว', 'Single label block', 'ປ້າຍກ້ອນດຽວ'],
+  ['สีพื้น', 'Fill color', 'ສີພື້ນ'],
+  ['สีแถบบรรทัด 2', 'Line 2 bar color', 'ສີແຖບແຖວ 2'],
+  ['แอนิเมชัน', 'Animation', 'ແອນິເມຊັນ'],
+  ['เข้า', 'In', 'ເຂົ້າ'],
+  ['ออก', 'Out', 'ອອກ'],
+  ['เลือนหาย', 'Fade out', 'ຄ່ອຍໆຈາງຫາຍ'],
+  ['ตกลง', 'OK', 'ຕົກລົງ'],
+  ['ความเร็ว (วิ)', 'Speed (s)', 'ຄວາມໄວ (ວິນາທີ)'],
+  ['บรรทัด 2 ตามมาหลัง (วิ)', 'Line 2 follows after (s)', 'ແຖວ 2 ຕາມມາຫຼັງ (ວິນາທີ)'],
+  ['เอฟเฟกต์เงาตามหลัง', 'Trailing shadow effect', 'ເອັບເຟັກເງົາຕາມຫຼັງ'],
+  ['แนวตั้ง', 'Vertical', 'ແນວຕັ້ງ'],
+  ['สี', 'Color', 'ສີ'],
+  ['อีโมจิ', 'Emoji', 'ອີໂມຈິ'],
+  ['ค่อยๆ ดังขึ้น (วิ)', 'Fade in (s)', 'ຄ່ອຍໆດັງຂຶ້ນ (ວິນາທີ)'],
+  ['ค่อยๆ เบาลง (วิ)', 'Fade out (s)', 'ຄ່ອຍໆເບົາລົງ (ວິນາທີ)'],
+  ['ลดเสียงอัตโนมัติเมื่อมีคนพูด (ducking)', 'Auto-lower when someone speaks (ducking)', 'ຫຼຸດສຽງອັດຕະໂນມັດເມື່ອມີຄົນເວົ້າ (ducking)'],
+  ['วนซ้ำจนจบช่วง', 'Loop until the end', 'ວົນຊ້ຳຈົນຈົບຊ່ວງ'],
+  ['เริ่มจากวินาทีที่', 'Start from second', 'ເລີ່ມຈາກວິນາທີທີ'],
+  ['ขนาดวิดีโอ 1080×1920 (9:16) · ความยาวรวม', 'Video size 1080×1920 (9:16) · total length', 'ຂະໜາດວິດີໂອ 1080×1920 (9:16) · ຄວາມຍາວລວມ'],
+  ['ระดับเสียงเพลงตอนมีคนพูด', 'Music volume while someone speaks', 'ລະດັບສຽງເພງຕອນມີຄົນເວົ້າ'],
+  ['ทางลัด', 'Shortcuts', 'ທາງລັດ'],
+  ['ชิดคลิปวิดีโอ 1 (ลบช่องว่าง)', 'Close gaps on Video 1', 'ຊິດຄລິບວິດີໂອ 1 (ລຶບຊ່ອງຫວ່າງ)'],
+  ['ปุ่มลัด: Space เล่น/หยุด · S ตัด · Delete ลบ · Shift+Delete ลบแล้วดึงคลิปตามมา · ⌘Z ย้อนกลับ · ⌘⇧Z ทำซ้ำ · ←/→ ขยับ 1 เฟรม · ⌘+ลูกกลิ้ง ซูมไทม์ไลน์', 'Shortcuts: Space play/pause · S split · Delete delete · Shift+Delete delete & close gap · ⌘Z undo · ⌘⇧Z redo · ←/→ move 1 frame · ⌘+scroll zoom timeline', 'ປຸ່ມລັດ: Space ຫຼິ້ນ/ຢຸດ · S ຕັດ · Delete ລຶບ · Shift+Delete ລຶບແລ້ວດຶງຄລິບຕາມມາ · ⌘Z ຍ້ອນກັບ · ⌘⇧Z ເຮັດຊ້ຳ · ←/→ ຂະຫຍັບ 1 ເຟຣມ · ⌘+ລໍ້ເມົ້າ ຊູມໄທມ໌ໄລນ໌'],
+  ['วงกลมมุมขวาล่าง', 'Circle, bottom-right corner', 'ວົງມົນມຸມຂວາລຸ່ມ'],
+  ['วางไฟล์ที่นี่', 'Drop files here', 'ວາງໄຟລ໌ບ່ອນນີ້']
+);
+
+// ---- 00-3-i18n-c.js ----
+'use strict';
+// i18n rows C — AI tab and dialogs (60-ai.js).  [thai, english, lao]
+I18N_ROWS.push(
+  ['งบ AI เดือนนี้ครบเพดาน $', 'This month’s AI budget cap reached: $', 'ງົບ AI ເດືອນນີ້ຄົບວົງເງິນສູງສຸດ $'],
+  ['แล้ว (ใช้ไป $', 'already (used $', 'ແລ້ວ (ໃຊ້ໄປ $'],
+  [') — ปรับเพดานได้ที่ ตั้งค่า', ') — you can change the cap in Settings', ') — ປັບວົງເງິນໄດ້ທີ່ ຕັ້ງຄ່າ'],
+  ['ยังไม่ได้ใส่ Claude API key (กดปุ่ม ⚙ ตั้งค่า)', 'No Claude API key yet (press ⚙ Settings)', 'ຍັງບໍ່ໄດ້ໃສ່ Claude API key (ກົດປຸ່ມ ⚙ ຕັ້ງຄ່າ)'],
+  ['งบ AI ครบเพดาน', 'AI budget cap reached', 'ງົບ AI ຄົບວົງເງິນສູງສຸດ'],
+  ['ยังไม่ได้ใส่ Gemini API key (กดปุ่ม ⚙ ตั้งค่า)', 'No Gemini API key yet (press ⚙ Settings)', 'ຍັງບໍ່ໄດ້ໃສ່ Gemini API key (ກົດປຸ່ມ ⚙ ຕັ້ງຄ່າ)'],
+  ['AI ตอบกลับในรูปแบบที่อ่านไม่ได้', 'The AI replied in a format that cannot be read', 'AI ຕອບກັບໃນຮູບແບບທີ່ອ່ານບໍ່ໄດ້'],
+  ['AI กำลังทำงาน…', 'The AI is working…', 'AI ກຳລັງເຮັດວຽກ…'],
+  ['เกิดข้อผิดพลาด', 'An error occurred', 'ເກີດຂໍ້ຜິດພາດ'],
+  ['ดาวน์โหลดโมเดลถอดเสียงไทย (ครั้งแรกครั้งเดียว ~300MB):', 'Downloading the Thai transcription model (first time only, ~300MB):', 'ດາວໂຫຼດໂມເດວຖອດສຽງໄທ (ຄັ້ງທຳອິດຄັ້ງດຽວ ~300MB):'],
+  ['คลิปนี้ไม่มีเสียง หรือยังวิเคราะห์เสียงไม่เสร็จ', 'This clip has no audio, or its audio has not been analysed yet', 'ຄລິບນີ້ບໍ່ມີສຽງ ຫຼື ຍັງວິເຄາະສຽງບໍ່ແລ້ວ'],
+  ['กำลังโหลดโมเดลถอดเสียง…', 'Loading the transcription model…', 'ກຳລັງໂຫຼດໂມເດວຖອດສຽງ…'],
+  ['กำลังถอดเสียงไทย…', 'Transcribing Thai speech…', 'ກຳລັງຖອດສຽງໄທ…'],
+  ['กำลังถอดเสียง (Gemini)', 'Transcribing (Gemini)', 'ກຳລັງຖອດສຽງ (Gemini)'],
+  ['วิ…', 's…', 'ວິນາທີ…'],
+  ['วิ', 's', 'ວິນາທີ'],
+  ['ถอดเสียง', 'Transcribe', 'ຖອດສຽງ'],
+  ['เลือกคลิปก่อน', 'Select a clip first', 'ເລືອກຄລິບກ່ອນ'],
+  ['ข้อความที่ถอดได้:', 'Transcript:', 'ຂໍ້ຄວາມທີ່ຖອດໄດ້:'],
+  ['ประโยค ·', 'sentences ·', 'ປະໂຫຍກ ·'],
+  ['ถอดเสียงคลิปนี้ก่อน (ปุ่มที่ 1)', 'Transcribe this clip first (button 1)', 'ຖອດສຽງຄລິບນີ້ກ່ອນ (ປຸ່ມທີ 1)'],
+  ['AI กำลังหาช่วงที่พูดราคา…', 'The AI is looking for the parts where a price is spoken…', 'AI ກຳລັງຊອກຊ່ວງທີ່ເວົ້າລາຄາ…'],
+  ['หาราคา', 'Find prices', 'ຊອກລາຄາ'],
+  ['ราคา', 'Price', 'ລາຄາ'],
+  ['ไม่พบช่วงที่พูดราคาในคลิปนี้', 'No spoken price found in this clip', 'ບໍ່ພົບຊ່ວງທີ່ເວົ້າລາຄາໃນຄລິບນີ້'],
+  ['ตำแหน่งโดยประมาณ', 'Approximate position', 'ຕຳແໜ່ງໂດຍປະມານ'],
+  ['ตัดออก', 'Cut out', 'ຕັດອອກ'],
+  ['ปิดเสียง', 'Mute', 'ປິດສຽງ'],
+  ['ไม่แตะเสียง', 'Leave audio', 'ບໍ່ແຕະສຽງ'],
+  ['เช่น 299,000 ກີບ', 'e.g. 299,000 kip', 'ເຊັ່ນ 299,000 ກີບ'],
+  ['พบราคาที่พูดในคลิป', 'Spoken prices found in the clip', 'ພົບລາຄາທີ່ເວົ້າໃນຄລິບ'],
+  ['เลือกวิธีจัดการ และพิมพ์ราคากีบที่จะแสดงบนจอ (เว้นว่าง = ไม่ใส่ข้อความ) · ต้องวางคลิปนี้ในไทม์ไลน์ก่อน', 'Choose what to do and type the kip price to show on screen (empty = no text) · the clip must be on the timeline first', 'ເລືອກວິທີຈັດການ ແລະ ພິມລາຄາກີບທີ່ຈະສະແດງເທິງຈໍ (ປ່ອຍຫວ່າງ = ບໍ່ໃສ່ຂໍ້ຄວາມ) · ຕ້ອງວາງຄລິບນີ້ໃນໄທມ໌ໄລນ໌ກ່ອນ'],
+  ['ราคาที่พูด', 'Spoken price', 'ລາຄາທີ່ເວົ້າ'],
+  ['เวลา', 'Time', 'ເວລາ'],
+  ['ราคากีบบนจอ', 'Kip price on screen', 'ລາຄາກີບເທິງຈໍ'],
+  ['ทำตามที่เลือก', 'Apply selection', 'ເຮັດຕາມທີ່ເລືອກ'],
+  ['จัดการราคาแล้ว', 'Prices handled:', 'ຈັດການລາຄາແລ້ວ'],
+  ['จุด', 'items', 'ຈຸດ'],
+  ['AI กำลังเลือกประโยคเด่น…', 'The AI is picking key sentences…', 'AI ກຳລັງເລືອກປະໂຫຍກເດັ່ນ…'],
+  ['ประโยคเด่น', 'Key sentences', 'ປະໂຫຍກເດັ່ນ'],
+  ['ประโยคเด่นที่ AI เลือก', 'Key sentences picked by the AI', 'ປະໂຫຍກເດັ່ນທີ່ AI ເລືອກ'],
+  ['แก้ข้อความได้ (บรรทัดบน = ตัวขาว, *คำ* = เหลือง, บรรทัดล่าง = เหลือง) แล้วกดใส่เข้าไทม์ไลน์ — จะขึ้นตอนที่พูดประโยคนั้น', 'You can edit the text (top line = white, *word* = yellow, bottom line = yellow), then add it to the timeline — it appears when that sentence is spoken', 'ແກ້ຂໍ້ຄວາມໄດ້ (ແຖວເທິງ = ຕົວຂາວ, *ຄຳ* = ເຫຼືອງ, ແຖວລຸ່ມ = ເຫຼືອງ) ແລ້ວກົດໃສ່ເຂົ້າໄທມ໌ໄລນ໌ — ຈະຂຶ້ນຕອນທີ່ເວົ້າປະໂຫຍກນັ້ນ'],
+  ['สไตล์ข้อความ', 'Text style', 'ສະໄຕລ໌ຂໍ້ຄວາມ'],
+  ['ขาว + เหลือง', 'White + yellow', 'ຂາວ + ເຫຼືອງ'],
+  ['กล่องดำ', 'Black box', 'ກ່ອງດຳ'],
+  ['ป้ายเขียว', 'Green label', 'ປ້າຍຂຽວ'],
+  ['หัวข้อใหญ่', 'Big headline', 'ຫົວຂໍ້ໃຫຍ່'],
+  ['ใส่เข้าไทม์ไลน์', 'Add to timeline', 'ໃສ່ເຂົ້າໄທມ໌ໄລນ໌'],
+  ['ใส่ข้อความ', 'Added text:', 'ໃສ່ຂໍ້ຄວາມ'],
+  ['จุดแล้ว', 'items', 'ຈຸດແລ້ວ'],
+  ['ไม่ได้ใส่ — วางคลิปนี้ในไทม์ไลน์ก่อน', 'Not added — place this clip on the timeline first', 'ບໍ່ໄດ້ໃສ່ — ວາງຄລິບນີ້ໃນໄທມ໌ໄລນ໌ກ່ອນ'],
+  ['กำลังแปล…', 'Translating…', 'ກຳລັງແປ…'],
+  ['แปลข้อความ', 'Translate text', 'ແປຂໍ້ຄວາມ'],
+  ['เลือกคลิปที่มีเสียงก่อน', 'Select a clip that has audio first', 'ເລືອກຄລິບທີ່ມີສຽງກ່ອນ'],
+  ['วางคลิปนี้ในไทม์ไลน์ก่อน', 'Place this clip on the timeline first', 'ວາງຄລິບນີ້ໃນໄທມ໌ໄລນ໌ກ່ອນ'],
+  ['ตัดช่วงเงียบ', 'Cut silences', 'ຕັດຊ່ວງງຽບ'],
+  ['ตัดช่วงที่ไม่มีเสียงพูดออกและดึงคลิปต่อกัน (ข้อความ/สติกเกอร์เลื่อนตาม)', 'Remove parts without speech and join the clips (text / stickers move along)', 'ຕັດຊ່ວງທີ່ບໍ່ມີສຽງເວົ້າອອກ ແລະ ດຶງຄລິບຕໍ່ກັນ (ຂໍ້ຄວາມ/ສະຕິກເກີເລື່ອນຕາມ)'],
+  ['เงียบนานกว่า (วิ)', 'Silent longer than (s)', 'ງຽບດົນກວ່າ (ວິນາທີ)'],
+  ['เว้นหัวท้าย (วิ)', 'Keep padding (s)', 'ເວັ້ນຫົວທ້າຍ (ວິນາທີ)'],
+  ['ตัดเลย', 'Cut now', 'ຕັດເລີຍ'],
+  ['พบช่วงเงียบ', 'Silent parts found:', 'ພົບຊ່ວງງຽບ'],
+  ['จุด รวม', 'parts, total', 'ຈຸດ ລວມ'],
+  ['วินาที', 'seconds', 'ວິນາທີ'],
+  ['ตัดแล้ว', 'Cut:', 'ຕັດແລ້ວ'],
+  ['AI กำลังหาเทคที่พูดซ้ำ/พูดผิด…', 'The AI is looking for repeated / wrong takes…', 'AI ກຳລັງຊອກເທກທີ່ເວົ້າຊ້ຳ/ເວົ້າຜິດ…'],
+  ['หาเทคซ้ำ', 'Find repeated takes', 'ຊອກເທກຊ້ຳ'],
+  ['เทคซ้ำ', 'Repeated takes', 'ເທກຊ້ຳ'],
+  ['ไม่พบเทคที่ควรตัดทิ้ง', 'No takes found that should be cut', 'ບໍ່ພົບເທກທີ່ຄວນຕັດຖິ້ມ'],
+  ['เทคที่แนะนำให้ตัดทิ้ง', 'Takes recommended to cut', 'ເທກທີ່ແນະນຳໃຫ້ຕັດຖິ້ມ'],
+  ['ตัดที่เลือก', 'Cut selected', 'ຕັດທີ່ເລືອກ'],
+  ['ภาพค่อนข้างมืด → เพิ่มความสว่าง', 'Image rather dark → increase brightness', 'ພາບຄ່ອນຂ້າງມືດ → ເພີ່ມຄວາມສະຫວ່າງ'],
+  ['ภาพสว่างจัด → ลดความสว่าง', 'Image very bright → reduce brightness', 'ພາບສະຫວ່າງຈັດ → ຫຼຸດຄວາມສະຫວ່າງ'],
+  ['คอนทราสต์ต่ำ → เพิ่มคอนทราสต์', 'Low contrast → increase contrast', 'ຄອນທຣາສຕ່ຳ → ເພີ່ມຄອນທຣາສ'],
+  ['สีซีด → เพิ่มความสด', 'Pale colors → increase saturation', 'ສີຊີດ → ເພີ່ມຄວາມສົດ'],
+  ['ภาพนุ่ม/ไม่คมมาก → เพิ่มความคมชัดมาก', 'Soft / not sharp → increase sharpness a lot', 'ພາບນຸ່ມ/ບໍ່ຄົມຫຼາຍ → ເພີ່ມຄວາມຄົມຊັດຫຼາຍ'],
+  ['ภาพไม่คมเต็มที่ → เพิ่มความคมเล็กน้อย', 'Not fully sharp → increase sharpness slightly', 'ພາບບໍ່ຄົມເຕັມທີ່ → ເພີ່ມຄວາມຄົມເລັກນ້ອຍ'],
+  ['มีนอยส์ → ลดนอยส์', 'Noisy → denoise', 'ມີນອຍສ໌ → ຫຼຸດນອຍສ໌'],
+  ['ภาพดีอยู่แล้ว ไม่ต้องปรับ', 'The image is already good — no adjustment needed', 'ພາບດີຢູ່ແລ້ວ ບໍ່ຕ້ອງປັບ'],
+  ['วางคลิปในไทม์ไลน์ก่อน', 'Place the clip on the timeline first', 'ວາງຄລິບໃນໄທມ໌ໄລນ໌ກ່ອນ'],
+  ['กำลังวิเคราะห์ภาพ…', 'Analysing the image…', 'ກຳລັງວິເຄາະພາບ…'],
+  ['ผลวิเคราะห์ภาพ', 'Image analysis result', 'ຜົນວິເຄາະພາບ'],
+  ['ความสว่างเฉลี่ย', 'Average brightness', 'ຄວາມສະຫວ່າງສະເລ່ຍ'],
+  ['ช่วงคอนทราสต์', 'Contrast range', 'ຊ່ວງຄອນທຣາສ'],
+  ['ความสดของสี', 'Color saturation', 'ຄວາມສົດຂອງສີ'],
+  ['ความคมชัด (ยิ่งสูงยิ่งคม)', 'Sharpness (higher = sharper)', 'ຄວາມຄົມຊັດ (ຍິ່ງສູງຍິ່ງຄົມ)'],
+  ['นอยส์', 'Noise', 'ນອຍສ໌'],
+  ['ใช้กับคลิปนี้', 'Apply to this clip', 'ໃຊ້ກັບຄລິບນີ້'],
+  ['ใช้กับทุกคลิปในไทม์ไลน์', 'Apply to every clip in the timeline', 'ໃຊ້ກັບທຸກຄລິບໃນໄທມ໌ໄລນ໌'],
+  ['กำลังปรับทุกคลิป…', 'Adjusting every clip…', 'ກຳລັງປັບທຸກຄລິບ…'],
+  ['ปรับภาพทุกคลิปแล้ว', 'Image adjusted on all clips', 'ປັບພາບທຸກຄລິບແລ້ວ'],
+  ['นำเข้าคลิปวิดีโอก่อน', 'Import video clips first', 'ນຳເຂົ້າຄລິບວິດີໂອກ່ອນ'],
+  ['ต้องใส่ Claude API key ก่อน (⚙ ตั้งค่า)', 'A Claude API key is required first (⚙ Settings)', 'ຕ້ອງໃສ່ Claude API key ກ່ອນ (⚙ ຕັ້ງຄ່າ)'],
+  ['ถอดเสียงคลิป', 'Transcribing clip', 'ຖອດສຽງຄລິບ'],
+  ['กำลังดูภาพคลิป', 'Looking at the frames of clip', 'ກຳລັງເບິ່ງພາບຄລິບ'],
+  ['AI กำลังตัดต่อ 4 แบบ…', 'The AI is making 4 edits…', 'AI ກຳລັງຕັດຕໍ່ 4 ແບບ…'],
+  ['ตัดต่อ 4 แบบ', '4 edit variants', 'ຕັດຕໍ່ 4 ແບບ'],
+  ['ผลลัพธ์', 'Results', 'ຜົນລັບ'],
+  ['AI ไม่ได้ส่งแบบที่ใช้ได้กลับมา ลองใหม่อีกครั้ง', 'The AI did not return a usable variant — please try again', 'AI ບໍ່ໄດ້ສົ່ງແບບທີ່ໃຊ້ໄດ້ກັບມາ ລອງໃໝ່ອີກຄັ້ງ'],
+  ['ช่วง · ข้อความ', 'segments · text', 'ຊ່ວງ · ຂໍ້ຄວາມ'],
+  ['ใช้แบบนี้', 'Use this one', 'ໃຊ້ແບບນີ້'],
+  ['เลือกแบบที่ต้องการ', 'Choose a variant', 'ເລືອກແບບທີ່ຕ້ອງການ'],
+  ['กด “ใช้แบบนี้” เพื่อโหลดเข้าไทม์ไลน์ (ดูแล้วไม่ชอบ กด ↶ ย้อนกลับ แล้วเปิดหน้านี้เลือกใหม่ได้) — ระบบจดจำว่าทีมเลือกแบบไหน', 'Press “Use this one” to load it into the timeline (if you don’t like it, press ↶ Undo and choose again) — the app remembers which one the team picks', 'ກົດ “ໃຊ້ແບບນີ້” ເພື່ອໂຫຼດເຂົ້າໄທມ໌ໄລນ໌ (ເບິ່ງແລ້ວບໍ່ມັກ ກົດ ↶ ຍ້ອນກັບ ແລ້ວເປີດໜ້ານີ້ເລືອກໃໝ່ໄດ້) — ລະບົບຈື່ວ່າທີມເລືອກແບບໃດ'],
+  ['ใส่ข้อความท้ายจอ', 'Add footer text', 'ໃສ່ຂໍ້ຄວາມທ້າຍຈໍ'],
+  ['ใส่เพลงพื้นหลังที่นำเข้าไว้ (ถ้ามี)', 'Add the imported background music (if any)', 'ໃສ່ເພງພື້ນຫຼັງທີ່ນຳເຂົ້າໄວ້ (ຖ້າມີ)'],
+  ['โหลดแบบ “', 'Loaded variant “', 'ໂຫຼດແບບ “'],
+  ['” แล้ว — ✂ แก้ต่อได้เลย', '” — ✂ you can keep editing', '” ແລ້ວ — ✂ ແກ້ຕໍ່ໄດ້ເລີຍ'],
+  ['ขั้นตอนแนะนำ: ① ถอดเสียง → ② ราคา → ③ ประโยคเด่น → ④ ตัดช่วงเงียบ/เทคซ้ำ → ⑤ ปรับภาพ หรือกด ⑥ ให้ AI ตัดต่อให้ 4 แบบจากทุกคลิป', 'Suggested steps: ① transcribe → ② prices → ③ key sentences → ④ cut silences / repeated takes → ⑤ enhance image, or press ⑥ to let the AI make 4 edits from all clips', 'ຂັ້ນຕອນແນະນຳ: ① ຖອດສຽງ → ② ລາຄາ → ③ ປະໂຫຍກເດັ່ນ → ④ ຕັດຊ່ວງງຽບ/ເທກຊ້ຳ → ⑤ ປັບພາບ ຫຼື ກົດ ⑥ ໃຫ້ AI ຕັດຕໍ່ໃຫ້ 4 ແບບຈາກທຸກຄລິບ'],
+  ['คลิปที่ใช้', 'Clip to use', 'ຄລິບທີ່ໃຊ້'],
+  ['(ยังไม่มีคลิป)', '(no clips yet)', '(ຍັງບໍ່ມີຄລິບ)'],
+  ['ภาษาในคลิป', 'Language in the clip', 'ພາສາໃນຄລິບ'],
+  ['ลาว (Gemini)', 'Lao (Gemini)', 'ລາວ (Gemini)'],
+  ['ไทย', 'Thai', 'ໄທ'],
+  ['ตัวถอดเสียงไทย', 'Thai transcriber', 'ຕົວຖອດສຽງໄທ'],
+  ['Whisper ในเครื่อง (ฟรี แม่น)', 'Whisper on this device (free, accurate)', 'Whisper ໃນເຄື່ອງ (ຟຣີ ແມ່ນຍຳ)'],
+  ['① ถอดเสียง', '① Transcribe', '① ຖອດສຽງ'],
+  ['ถอดเสียงคลิปนี้', 'Transcribe this clip', 'ຖອດສຽງຄລິບນີ້'],
+  ['② ราคาที่พูด', '② Spoken prices', '② ລາຄາທີ່ເວົ້າ'],
+  ['ตัด/ปิดเสียงราคาบาท แล้วใส่ราคากีบที่พิมพ์เอง', 'Cut / mute baht prices, then add kip prices that you type', 'ຕັດ/ປິດສຽງລາຄາບາດ ແລ້ວໃສ່ລາຄາກີບທີ່ພິມເອງ'],
+  ['ตรวจจับราคา', 'Detect prices', 'ກວດຈັບລາຄາ'],
+  ['③ ประโยคเด่นขึ้นจอ', '③ Key sentences on screen', '③ ປະໂຫຍກເດັ່ນຂຶ້ນຈໍ'],
+  ['เลือกจุดขาย แล้วขึ้นข้อความตอนที่พูด (ไม่ใช่ซับทั้งหมด)', 'Pick the selling points and show them when spoken (not full subtitles)', 'ເລືອກຈຸດຂາຍ ແລ້ວຂຶ້ນຂໍ້ຄວາມຕອນທີ່ເວົ້າ (ບໍ່ແມ່ນຄຳບັນຍາຍທັງໝົດ)'],
+  ['เลือกประโยคเด่น', 'Pick key sentences', 'ເລືອກປະໂຫຍກເດັ່ນ'],
+  ['④ ตัดช่วงเงียบ / เทคซ้ำ', '④ Cut silences / repeated takes', '④ ຕັດຊ່ວງງຽບ / ເທກຊ້ຳ'],
+  ['ตัดเทคซ้ำ (AI)', 'Cut repeated takes (AI)', 'ຕັດເທກຊ້ຳ (AI)'],
+  ['⑤ ปรับภาพให้ชัด/สวย', '⑤ Make the image sharp / nice', '⑤ ປັບພາບໃຫ້ຊັດ/ງາມ'],
+  ['วิเคราะห์และปรับอัตโนมัติ', 'Analyse and adjust automatically', 'ວິເຄາະ ແລະ ປັບອັດຕະໂນມັດ'],
+  ['⑥ ให้ AI ตัดต่อ 4 แบบ', '⑥ Let the AI make 4 edits', '⑥ ໃຫ້ AI ຕັດຕໍ່ 4 ແບບ'],
+  ['ใช้ทุกคลิปในรายการสื่อ แล้วให้พนักงานเลือกแบบที่ชอบ', 'Uses every clip in the media list, then the staff picks the one they like', 'ໃຊ້ທຸກຄລິບໃນລາຍການສື່ ແລ້ວໃຫ້ພະນັກງານເລືອກແບບທີ່ມັກ'],
+  ['สร้าง 4 แบบ', 'Create 4 variants', 'ສ້າງ 4 ແບບ'],
+  ['ใช้ AI เดือนนี้ $', 'AI used this month $', 'ໃຊ້ AI ເດືອນນີ້ $'],
+  ['จากเพดาน $', 'of the cap $', 'ຈາກວົງເງິນສູງສຸດ $']
+);
+
 // ---- 00-core.js ----
 'use strict';
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.08
-// APP_VERSION_PREV : 1.07
-// APP_VERSION_PREV_OLDER : 1.06
+// APP_VERSION  : 1.09
+// APP_VERSION_PREV : 1.08
+// APP_VERSION_PREV_OLDER : 1.07
+// 1.09 : UI language selector (Lao / Thai / English) in header + home; dictionary-based DOM translation, Noto Sans Lao for Lao; user content protected with translate=no
 // 1.08 : draggable panel splitters (left/right/timeline height, saved), draggable track heights, tall clips show waveform + draggable volume line, live level meter
 // 1.07 : click a file in the media bin to watch it in the preview in real time (play/pause/seek) before adding it to the timeline
 // 1.06 : editing style guide (paste notes from ChatGPT brainstorming) used by key-points + 4-variant AI
@@ -561,7 +868,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.08';
+const APP_VERSION = '1.09';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -570,6 +877,8 @@ const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const lerp = (a, b, t) => a + (b - a) * t;
 const fmt = (t) => { t = Math.max(0, t || 0); const m = Math.floor(t / 60), s = t % 60; return String(m).padStart(2, '0') + ':' + s.toFixed(1).padStart(4, '0'); };
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+// span that the UI-language translator must not touch (user content)
+const escN = (s) => '<span translate="no">' + esc(s) + '</span>';
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 const EASE = {
   lin: t => t,
@@ -600,7 +909,7 @@ const TRACKS = [
 const TRACK_KIND = Object.fromEntries(TRACKS.map(t => [t.id, t.kind]));
 const RENDER_ORDER = ['V1', 'V2', 'V3', 'T1', 'T2', 'T3'];
 
-function newDoc() { return { pid: uid(), created: Date.now(), name: 'โปรเจกต์ใหม่', w: 1080, h: 1920, fps: 30, items: [], duckLevel: 0.22, ver: 1 }; }
+function newDoc() { return { pid: uid(), created: Date.now(), name: T('โปรเจกต์ใหม่'), w: 1080, h: 1920, fps: 30, items: [], duckLevel: 0.22, ver: 1 }; }
 let D = newDoc();
 let SEL = null;             // selected item id
 const getItem = (id) => D.items.find(i => i.id === id);
@@ -653,17 +962,17 @@ function mkSticker(kind, start, dur, extra) {
 // ---------- text presets ----------
 const FONT_STACK = '"Prompt","Noto Sans Lao","Noto Sans Thai","Noto Sans Lao Looped",sans-serif';
 const TEXT_STYLES = [
-  { id: 'hl', label: 'ขาว + เหลือง (2 บรรทัด)', d: { size: 64, weight: 800, color: '#ffffff', color2: '#FFE14D', stroke: '#000000', strokeW: 9, box: 'none', bg: '', ay: .62, text: 'บรรทัดที่ 1\nบรรทัดที่ 2' } },
-  { id: 'clean', label: 'ขาว ขอบดำ', d: { size: 60, weight: 800, color: '#ffffff', color2: '#ffffff', stroke: '#000000', strokeW: 9, box: 'none', bg: '', ay: .62, text: 'ข้อความ' } },
-  { id: 'big', label: 'หัวข้อใหญ่ เหลือง', d: { size: 112, weight: 900, color: '#FFE14D', color2: '#ffffff', stroke: '#000000', strokeW: 14, box: 'none', bg: '', ay: .3, text: 'หัวข้อ' } },
-  { id: 'box', label: 'กล่องดำ ตัวขาว', d: { size: 44, weight: 700, color: '#ffffff', color2: '#FFE14D', stroke: '', strokeW: 0, box: 'line', bg: '#000000d9', ay: .1, text: 'ข้อความในกล่อง' } },
-  { id: 'boxred', label: 'กล่องดำ + แถบแดง', d: { size: 42, weight: 800, color: '#ffffff', color2: '#ffffff', stroke: '', strokeW: 0, box: 'line2', bg: '#000000d9', bg2: '#E02B3A', ay: .1, text: 'บรรทัดบน\nบรรทัดล่างแถบแดง' } },
-  { id: 'pill', label: 'ป้ายเขียวมุมโค้ง', d: { size: 44, weight: 800, color: '#ffffff', color2: '#ffffff', stroke: '', strokeW: 0, box: 'block', bg: '#0E7A5F', ay: .22, text: 'ป้ายข้อความ' } },
-  { id: 'promo', label: 'ป้ายโปรโมชันแดง', d: { size: 50, weight: 800, color: '#ffffff', color2: '#ffffff', stroke: '', strokeW: 0, box: 'block', bg: '#E0143C', ay: .2, text: 'โปรตอนนี้' } },
-  { id: 'price', label: 'ราคา (เหลืองใหญ่)', d: { size: 70, weight: 800, color: '#ffffff', color2: '#FFE14D', stroke: '#000000', strokeW: 10, box: 'none', bg: '', ay: .72, text: 'ซื้อ 1 แถม 2\n390,000 กีบ' } },
-  { id: 'blue', label: 'น้ำเงิน ขอบขาว', d: { size: 52, weight: 800, color: '#2B2BE0', color2: '#E02B3A', stroke: '#ffffff', strokeW: 9, box: 'none', bg: '', ay: .08, text: 'ข้อความสีน้ำเงิน' } },
-  { id: 'plain', label: 'ขาว เงานุ่ม', d: { size: 52, weight: 700, color: '#ffffff', color2: '#FFE14D', stroke: '', strokeW: 0, box: 'none', bg: '', shadow: true, ay: .8, text: 'ข้อความทั่วไป' } },
-  { id: 'footer', label: 'ข้อความท้ายจอ (เล็ก)', d: { size: 30, weight: 600, color: '#ffffffd9', color2: '#ffffffd9', stroke: '', strokeW: 0, box: 'none', bg: '', shadow: true, ay: .965, text: 'ผลลัพธ์ที่ได้ขึ้นอยู่กับแต่ละบุคคล' } },
+  { id: 'hl', label: 'ขาว + เหลือง (2 บรรทัด)', d: { size: 64, weight: 800, color: '#ffffff', color2: '#FFE14D', stroke: '#000000', strokeW: 9, box: 'none', bg: '', ay: .62, text: T('บรรทัดที่ 1\nบรรทัดที่ 2') } },
+  { id: 'clean', label: 'ขาว ขอบดำ', d: { size: 60, weight: 800, color: '#ffffff', color2: '#ffffff', stroke: '#000000', strokeW: 9, box: 'none', bg: '', ay: .62, text: T('ข้อความ') } },
+  { id: 'big', label: 'หัวข้อใหญ่ เหลือง', d: { size: 112, weight: 900, color: '#FFE14D', color2: '#ffffff', stroke: '#000000', strokeW: 14, box: 'none', bg: '', ay: .3, text: T('หัวข้อ') } },
+  { id: 'box', label: 'กล่องดำ ตัวขาว', d: { size: 44, weight: 700, color: '#ffffff', color2: '#FFE14D', stroke: '', strokeW: 0, box: 'line', bg: '#000000d9', ay: .1, text: T('ข้อความในกล่อง') } },
+  { id: 'boxred', label: 'กล่องดำ + แถบแดง', d: { size: 42, weight: 800, color: '#ffffff', color2: '#ffffff', stroke: '', strokeW: 0, box: 'line2', bg: '#000000d9', bg2: '#E02B3A', ay: .1, text: T('บรรทัดบน\nบรรทัดล่างแถบแดง') } },
+  { id: 'pill', label: 'ป้ายเขียวมุมโค้ง', d: { size: 44, weight: 800, color: '#ffffff', color2: '#ffffff', stroke: '', strokeW: 0, box: 'block', bg: '#0E7A5F', ay: .22, text: T('ป้ายข้อความ') } },
+  { id: 'promo', label: 'ป้ายโปรโมชันแดง', d: { size: 50, weight: 800, color: '#ffffff', color2: '#ffffff', stroke: '', strokeW: 0, box: 'block', bg: '#E0143C', ay: .2, text: T('โปรตอนนี้') } },
+  { id: 'price', label: 'ราคา (เหลืองใหญ่)', d: { size: 70, weight: 800, color: '#ffffff', color2: '#FFE14D', stroke: '#000000', strokeW: 10, box: 'none', bg: '', ay: .72, text: T('ซื้อ 1 แถม 2\n390,000 กีบ') } },
+  { id: 'blue', label: 'น้ำเงิน ขอบขาว', d: { size: 52, weight: 800, color: '#2B2BE0', color2: '#E02B3A', stroke: '#ffffff', strokeW: 9, box: 'none', bg: '', ay: .08, text: T('ข้อความสีน้ำเงิน') } },
+  { id: 'plain', label: 'ขาว เงานุ่ม', d: { size: 52, weight: 700, color: '#ffffff', color2: '#FFE14D', stroke: '', strokeW: 0, box: 'none', bg: '', shadow: true, ay: .8, text: T('ข้อความทั่วไป') } },
+  { id: 'footer', label: 'ข้อความท้ายจอ (เล็ก)', d: { size: 30, weight: 600, color: '#ffffffd9', color2: '#ffffffd9', stroke: '', strokeW: 0, box: 'none', bg: '', shadow: true, ay: .965, text: T('ผลลัพธ์ที่ได้ขึ้นอยู่กับแต่ละบุคคล') } },
 ];
 function mkText(styleId, text, start, dur, extra) {
   const st = TEXT_STYLES.find(s => s.id === styleId) || TEXT_STYLES[0];
@@ -1139,7 +1448,7 @@ function rulerTicks() {
 function clipLabel(it) {
   if (it.type === 'text') return (it.text || '').replace(/\*/g, '').replace(/\n/g, ' ');
   if (it.type === 'sticker') return { check: '✔', warning: '⚠', cursor: '☝', brackets: '▢', arrow: '⬇', star: '★', underline: '▁', circle: '◯', emoji: it.text || '😀' }[it.kind] + ' ' + it.kind;
-  const m = MEDIA.get(it.mediaId); return m ? m.name : '⚠ ไฟล์หาย: ' + mediaNameFromId(it.mediaId);
+  const m = MEDIA.get(it.mediaId); return m ? m.name : T('⚠ ไฟล์หาย: ') + mediaNameFromId(it.mediaId);
 }
 function renderTimeline() {
   const body = $('#tlbody'); if (!body) return;
@@ -1160,7 +1469,7 @@ function renderTimeline() {
     if (tall) { el.classList.add('tall'); el.style.setProperty('--wfh', wfh + 'px'); }
     if (hasWf) inner += `<canvas class="wf" style="height:${wfh}px"></canvas>`;
     if (hasWf && tall && m.hasAudio !== false) { const ch = trackH(TRACKS.find(t => t.id === it.track)) - 9; inner += `<div class="vl" style="top:${ch - wfh + wfh * (1 - clamp(it.vol ?? 1, 0, VOL_MAX) / VOL_MAX)}px"><u></u><b>${Math.round((it.vol ?? 1) * 100)}%</b></div>`; }
-    inner += `<span class="cl">${esc(clipLabel(it))}</span>`;
+    inner += `<span class="cl" translate="no">${esc(clipLabel(it))}</span>`;
     if (it.transIn && it.transIn.type !== 'none') inner += `<b class="trb" title="ทรานสิชัน: ${esc((TRANS[it.transIn.type] || {}).label || '')}" style="width:${Math.max(10, it.transIn.dur * TL.pps)}px">⇄</b>`;
     if (it.speed && it.speed !== 1) inner += `<em class="spd">${it.speed}x</em>`;
     if (it.kf) for (const k in it.kf) for (const p of it.kf[k]) inner += `<s class="kfd" style="left:${p.t * TL.pps}px"></s>`;
@@ -1326,13 +1635,13 @@ function renderMediaBin() {
   box.innerHTML = arr.length ? '' : '<div class="empty">ยังไม่มีไฟล์ — กดปุ่ม “นำเข้า” หรือลากไฟล์มาวางที่นี่</div>';
   for (const m of arr) {
     const d = document.createElement('div'); d.className = 'mi'; d.draggable = true; d.dataset.id = m.id;
-    d.innerHTML = `<div class="mth" style="${m.thumb ? `background-image:url(${m.thumb})` : ''}">${m.type === 'audio' ? '♪' : ''}<span class="dur">${m.type === 'image' ? 'ภาพ' : fmt(m.duration)}</span></div><div class="mn" title="${esc(m.name)}">${esc(m.name)}</div><div class="mb"><button data-act="add">+ ใส่ไทม์ไลน์</button><button data-act="del" title="ลบ">×</button></div>${m.type === 'video' ? `<div class="mtag">${m.w}×${m.h}${m.hasAudio === false ? ' · ไม่มีเสียง' : ''}</div>` : ''}`;
+    d.innerHTML = `<div class="mth" style="${m.thumb ? `background-image:url(${m.thumb})` : ''}">${m.type === 'audio' ? '♪' : ''}<span class="dur">${m.type === 'image' ? 'ภาพ' : fmt(m.duration)}</span></div><div class="mn" translate="no" title="${esc(m.name)}">${esc(m.name)}</div><div class="mb"><button data-act="add">+ ใส่ไทม์ไลน์</button><button data-act="del" title="ลบ">×</button></div>${m.type === 'video' ? `<div class="mtag">${m.w}×${m.h}${m.hasAudio === false ? ' · ไม่มีเสียง' : ''}</div>` : ''}`;
     d.addEventListener('dragstart', e => { e.dataTransfer.setData('text/mediaid', m.id); });
     d.addEventListener('click', e => { if (e.target.closest('button')) return; srcOpen(m.id); });
     d.addEventListener('dblclick', () => addMediaToTimeline(m.id));
     if (SRC.m && SRC.m.id === m.id) d.classList.add('sel');
     d.querySelector('[data-act="add"]').onclick = () => addMediaToTimeline(m.id);
-    d.querySelector('[data-act="del"]').onclick = () => { if (D.items.some(i => i.mediaId === m.id) && !confirm('ไฟล์นี้ถูกใช้ในไทม์ไลน์ — ลบคลิปที่ใช้ไฟล์นี้ด้วย?')) return; D.items = D.items.filter(i => i.mediaId !== m.id); MEDIA.delete(m.id); dbDel(m.id); commit('media'); renderMediaBin(); };
+    d.querySelector('[data-act="del"]').onclick = () => { if (D.items.some(i => i.mediaId === m.id) && !confirm(T('ไฟล์นี้ถูกใช้ในไทม์ไลน์ — ลบคลิปที่ใช้ไฟล์นี้ด้วย?'))) return; D.items = D.items.filter(i => i.mediaId !== m.id); MEDIA.delete(m.id); dbDel(m.id); commit('media'); renderMediaBin(); };
     box.appendChild(d);
   }
 }
@@ -1489,7 +1798,7 @@ window.addEventListener('pagehide', () => { projSaveNow(); });
 // ============================================================
 //  Home page — project list (like CapCut home)
 // ============================================================
-const fmtDate = ts => { try { return new Date(ts).toLocaleString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; } };
+const fmtDate = ts => { try { return new Date(ts).toLocaleString({ lo: 'lo-LA', en: 'en-GB', th: 'th-TH' }[UI] || 'th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; } };
 const fmtDur = t => { t = Math.round(t || 0); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
 
 async function showHome() {
@@ -1511,7 +1820,7 @@ async function renderHome() {
     const miss = (r.mids || []).filter(id => !have.has(id)).length;
     return `<div class="pcard" data-id="${esc(r.id)}">
       <div class="pthumb" style="${r.thumb ? `background-image:url(${r.thumb})` : ''}">${r.thumb ? '' : '<span class="pnone">🎬</span>'}<span class="pdur">${fmtDur(r.dur)}</span></div>
-      <div class="pname" title="${esc(r.name)}">${esc(r.name)}</div>
+      <div class="pname" translate="no" title="${esc(r.name)}">${esc(r.name)}</div>
       <div class="pmeta">${fmtDate(r.updated)} · ${r.n} คลิป${miss ? ` <span class="pwarn" title="ไฟล์วิดีโอในเครื่องนี้หาย ต้องนำเข้าใหม่">⚠ ไฟล์หาย ${miss}</span>` : ''}</div>
       <div class="pact"><button data-a="rename" title="เปลี่ยนชื่อ">✎</button><button data-a="dup" title="ทำสำเนา">⧉</button><button data-a="del" class="danger" title="ลบ">🗑</button></div>
     </div>`;
@@ -1548,13 +1857,13 @@ async function openById(id) {
 async function homeAction(id, a) {
   const rec = await projGet(id); if (!rec) return renderHome();
   if (a === 'rename') {
-    const n = prompt('ชื่อโปรเจกต์', rec.name); if (n == null || !n.trim()) return;
+    const n = prompt(T('ชื่อโปรเจกต์'), rec.name); if (n == null || !n.trim()) return;
     const doc = JSON.parse(rec.doc); doc.name = n.trim(); rec.doc = JSON.stringify(doc); rec.name = doc.name; rec.updated = Date.now(); await projPut(rec); srvPushProject(rec);
   } else if (a === 'dup') {
-    const doc = JSON.parse(rec.doc); doc.pid = uid(); doc.created = Date.now(); doc.name = rec.name + ' (สำเนา)';
+    const doc = JSON.parse(rec.doc); doc.pid = uid(); doc.created = Date.now(); doc.name = rec.name + T(' (สำเนา)');
     const r2 = Object.assign({}, rec, { id: doc.pid, name: doc.name, doc: JSON.stringify(doc), created: doc.created, updated: Date.now() }); await projPut(r2); srvPushProject(r2);
   } else if (a === 'del') {
-    if (!confirm(`ลบโปรเจกต์ “${rec.name}” ?\n(ไฟล์วิดีโอที่นำเข้าไว้ไม่ถูกลบ)`)) return;
+    if (!confirm(T('ลบโปรเจกต์ “') + rec.name + T('” ?\n(ไฟล์วิดีโอที่นำเข้าไว้ไม่ถูกลบ)'))) return;
     await projDel(id); srvDeleteProject(id);
     if (D && D.pid === id) { D = newDoc(); SEL = null; HIST = []; HPOS = -1; commit('init'); emit('sel'); HOME.started = false; }
   }
@@ -1743,7 +2052,7 @@ function showTab(id) {
 }
 function renderAudioList() {
   const box = $('#audioList'); if (!box) return; const arr = [...MEDIA.values()].filter(m => m.type === 'audio');
-  box.innerHTML = arr.length ? arr.map(m => `<div class="arow"><span title="${esc(m.name)}">♪ ${esc(m.name)}</span><button data-aadd="A1" data-id="${m.id}">เพลง</button><button data-aadd="A2" data-id="${m.id}">เอฟเฟกต์</button></div>`).join('') : '<div class="empty">ยังไม่มีไฟล์เสียง</div>';
+  box.innerHTML = arr.length ? arr.map(m => `<div class="arow"><span translate="no" title="${esc(m.name)}">♪ ${esc(m.name)}</span><button data-aadd="A1" data-id="${m.id}">เพลง</button><button data-aadd="A2" data-id="${m.id}">เอฟเฟกต์</button></div>`).join('') : '<div class="empty">ยังไม่มีไฟล์เสียง</div>';
 }
 on('media', renderAudioList); on('media-added', renderAudioList);
 
@@ -1882,7 +2191,7 @@ function renderInspector() {
     if (it.kind === 'emoji') h += `<div class="fld"><label>อีโมจิ</label><input data-p="text" value="${esc(it.text)}" maxlength="4"></div>`;
     h += S('เข้า', 'anim.in', ANIM_IN.slice(0, 8), it) + S('ออก', 'anim.out', [['none', 'ไม่มี'], ['fade', 'เลือนหาย']], it);
   } else if (it.type === 'audio') {
-    const m = MEDIA.get(it.mediaId); h += `<div class="hint">${esc(m ? m.name : '')}</div>` + R('ระดับเสียง', 'vol', 0, 1.5, .01, it) + R('ค่อยๆ ดังขึ้น (วิ)', 'fadeIn', 0, 5, .1, it) + R('ค่อยๆ เบาลง (วิ)', 'fadeOut', 0, 5, .1, it) + K('ลดเสียงอัตโนมัติเมื่อมีคนพูด (ducking)', 'duck', it, false) + K('วนซ้ำจนจบช่วง', 'loop', it, false) + `<div class="fld"><label>เริ่มจากวินาทีที่</label><input type="number" step="0.1" min="0" data-p="in" value="${(it.in || 0).toFixed(1)}" class="num"></div>`;
+    const m = MEDIA.get(it.mediaId); h += `<div class="hint" translate="no">${esc(m ? m.name : '')}</div>` + R('ระดับเสียง', 'vol', 0, 1.5, .01, it) + R('ค่อยๆ ดังขึ้น (วิ)', 'fadeIn', 0, 5, .1, it) + R('ค่อยๆ เบาลง (วิ)', 'fadeOut', 0, 5, .1, it) + K('ลดเสียงอัตโนมัติเมื่อมีคนพูด (ducking)', 'duck', it, false) + K('วนซ้ำจนจบช่วง', 'loop', it, false) + `<div class="fld"><label>เริ่มจากวินาทีที่</label><input type="number" step="0.1" min="0" data-p="in" value="${(it.in || 0).toFixed(1)}" class="num"></div>`;
   }
   box.innerHTML = h; bindInspector(it);
 }
@@ -2454,7 +2763,7 @@ async function aiTranscribeUI() {
   catch (e) { aiErr(e); }
 }
 function showTranscript(m, tr) {
-  aiDlg('ข้อความที่ถอดได้: ' + m.name, `<div class="hint">${tr.segs.length} ประโยค · ${tr.engine}</div><table class="aitbl">${tr.segs.map(s => `<tr><td style="width:96px">${fmt(s.a)}–${fmt(s.b)}</td><td>${esc(s.text)}</td></tr>`).join('')}</table>`);
+  aiDlg('ข้อความที่ถอดได้: ' + m.name, `<div class="hint">${tr.segs.length} ประโยค · ${tr.engine}</div><table class="aitbl">${tr.segs.map(s => `<tr><td style="width:96px">${fmt(s.a)}–${fmt(s.b)}</td><td>${escN(s.text)}</td></tr>`).join('')}</table>`);
 }
 
 // ============================================================
@@ -2482,7 +2791,7 @@ async function aiPriceUI() {
 }
 function showPrices(m, found) {
   if (!found.length) return aiDlg('ราคา', '<div class="hint">ไม่พบช่วงที่พูดราคาในคลิปนี้</div>');
-  const rows = found.map((p, i) => `<tr><td><input type="checkbox" data-i="${i}" checked></td><td>${esc(p.text)}${p.approx ? '<br><span class="mini">ตำแหน่งโดยประมาณ</span>' : ''}</td><td>${fmt(p.a)}–${fmt(p.b)}</td><td><select data-act="${i}"><option value="cut">ตัดออก</option><option value="mute">ปิดเสียง</option><option value="none">ไม่แตะเสียง</option></select></td><td><input data-kip="${i}" placeholder="เช่น 299,000 ກີບ" style="width:140px"></td></tr>`).join('');
+  const rows = found.map((p, i) => `<tr><td><input type="checkbox" data-i="${i}" checked></td><td>${escN(p.text)}${p.approx ? '<br><span class="mini">ตำแหน่งโดยประมาณ</span>' : ''}</td><td>${fmt(p.a)}–${fmt(p.b)}</td><td><select data-act="${i}"><option value="cut">ตัดออก</option><option value="mute">ปิดเสียง</option><option value="none">ไม่แตะเสียง</option></select></td><td><input data-kip="${i}" placeholder="เช่น 299,000 ກີບ" style="width:140px"></td></tr>`).join('');
   aiDlg('พบราคาที่พูดในคลิป', `<div class="hint">เลือกวิธีจัดการ และพิมพ์ราคากีบที่จะแสดงบนจอ (เว้นว่าง = ไม่ใส่ข้อความ) · ต้องวางคลิปนี้ในไทม์ไลน์ก่อน</div><table class="aitbl"><tr><th></th><th>ราคาที่พูด</th><th>เวลา</th><th>เสียง</th><th>ราคากีบบนจอ</th></tr>${rows}</table><div class="row"><span class="sp"></span><button class="primary" id="prApply">ทำตามที่เลือก</button></div>`, root => {
     $('#prApply', root).onclick = () => {
       const picks = found.map((p, i) => ({ p, i, on: $(`[data-i="${i}"]`, root).checked, act: $(`[data-act="${i}"]`, root).value, kip: $(`[data-kip="${i}"]`, root).value.trim() })).filter(x => x.on).sort((x, y) => y.p.a - x.p.a);
@@ -2509,7 +2818,7 @@ async function aiKeyPointsUI() {
     const txt = await claude({ system: sys, label: 'ประโยคเด่น', useStyle: true, max_tokens: 2500, estUsd: .04, content: `Transcript phrases ("index: text", language: ${tr.lang === 'lo' ? 'Lao' : 'Thai'}):\n${trText(tr)}\n\nPick 4-8 key selling points actually said (ingredients, benefits, results, how to use, promotion, guarantee, target problem). NOT full subtitles. For each, give the phrase index where it is spoken and the on-screen text WRITTEN IN LAO SCRIPT (translate if the speech is Thai), natural marketing Lao, very short: line1 (2-5 words, wrap the single most important word in *asterisks*) and optional line2 (short detail, may be empty). Prefer distinct points in speaking order. Return {"points":[{"seg":3,"line1":"...","line2":"...","kind":"benefit|ingredient|promo|usage|problem"}]}` });
     const j = parseJsonLoose(txt); AI.busy = false;
     const pts = (j.points || []).filter(p => tr.segs[p.seg | 0]);
-    const rows = pts.map((p, i) => { const s = tr.segs[p.seg | 0]; return `<tr><td><input type="checkbox" data-i="${i}" checked></td><td style="width:64px">${fmt(s.a)}</td><td><textarea data-t="${i}" rows="2">${esc(p.line1 + (p.line2 ? '\n' + p.line2 : ''))}</textarea><div class="mini">${esc(s.text)}</div></td></tr>`; }).join('');
+    const rows = pts.map((p, i) => { const s = tr.segs[p.seg | 0]; return `<tr><td><input type="checkbox" data-i="${i}" checked></td><td style="width:64px">${fmt(s.a)}</td><td><textarea data-t="${i}" rows="2">${esc(p.line1 + (p.line2 ? '\n' + p.line2 : ''))}</textarea><div class="mini">${escN(s.text)}</div></td></tr>`; }).join('');
     aiDlg('ประโยคเด่นที่ AI เลือก', `<div class="hint">แก้ข้อความได้ (บรรทัดบน = ตัวขาว, *คำ* = เหลือง, บรรทัดล่าง = เหลือง) แล้วกดใส่เข้าไทม์ไลน์ — จะขึ้นตอนที่พูดประโยคนั้น</div><table class="aitbl">${rows}</table>
       <div class="fld" style="margin-top:8px"><label>สไตล์ข้อความ</label><select id="kpStyle"><option value="hl">ขาว + เหลือง</option><option value="box">กล่องดำ</option><option value="boxred">กล่องดำ + แถบแดง</option><option value="pill">ป้ายเขียว</option><option value="big">หัวข้อใหญ่</option></select></div>
       <div class="row"><span class="sp"></span><button class="primary" id="kpApply">ใส่เข้าไทม์ไลน์</button></div>`, root => {
@@ -2551,7 +2860,7 @@ async function aiRetakeUI() {
     const txt = await claude({ system: 'You review raw takes of a spoken product video and find false starts, stumbles and repeated takes of the same sentence. Reply with JSON only.', label: 'หาเทคซ้ำ', max_tokens: 1500, estUsd: .03, content: `Phrases ("index: text", ${tr.lang === 'lo' ? 'Lao' : 'Thai'}), in recording order:\n${trText(tr)}\n\nFind phrases that should be DROPPED: incomplete/false starts, stumbles, and earlier attempts when the same sentence is repeated later (keep the best, most complete/fluent take — usually the last). Never drop the only occurrence of an idea. Return {"drop":[{"seg":2,"why":"short reason in Thai"}]}` });
     const j = parseJsonLoose(txt); AI.busy = false; const dr = (j.drop || []).filter(d => tr.segs[d.seg | 0]);
     if (!dr.length) return aiDlg('เทคซ้ำ', '<div class="hint">ไม่พบเทคที่ควรตัดทิ้ง</div>');
-    aiDlg('เทคที่แนะนำให้ตัดทิ้ง', `<table class="aitbl">${dr.map((d, i) => { const s = tr.segs[d.seg | 0]; return `<tr><td><input type="checkbox" data-i="${i}" checked></td><td style="width:92px">${fmt(s.a)}–${fmt(s.b)}</td><td>${esc(s.text)}<div class="mini">${esc(d.why || '')}</div></td></tr>`; }).join('')}</table><div class="row"><span class="sp"></span><button class="primary" id="rtGo">ตัดที่เลือก</button></div>`, root => {
+    aiDlg('เทคที่แนะนำให้ตัดทิ้ง', `<table class="aitbl">${dr.map((d, i) => { const s = tr.segs[d.seg | 0]; return `<tr><td><input type="checkbox" data-i="${i}" checked></td><td style="width:92px">${fmt(s.a)}–${fmt(s.b)}</td><td>${escN(s.text)}<div class="mini">${escN(d.why || '')}</div></td></tr>`; }).join('')}</table><div class="row"><span class="sp"></span><button class="primary" id="rtGo">ตัดที่เลือก</button></div>`, root => {
       $('#rtGo', root).onclick = () => { const rs = dr.filter((d, i) => $(`[data-i="${i}"]`, root).checked).map(d => { const s = tr.segs[d.seg | 0]; return [snapValley(m, s.a - .03, .15), snapValley(m, s.b + .05, .15)]; }); const n = cutSourceRanges(m.id, rs); commit('retake'); $('#dlgAi').close(); toast(`ตัดแล้ว ${n} จุด`); };
     });
   } catch (e) { aiErr(e); }
@@ -2649,7 +2958,7 @@ function buildVariantDoc(v, opts) {
 }
 function showVariants() {
   const vs = AI.variants; if (!vs.length) return aiDlg('ผลลัพธ์', '<div class="hint">AI ไม่ได้ส่งแบบที่ใช้ได้กลับมา ลองใหม่อีกครั้ง</div>');
-  const cards = vs.map((v, i) => `<div class="vcard" data-i="${i}"><div class="vt"><b>${i + 1}. ${esc(v.name || v.style)}</b> <span class="chip">${esc(v.style)}</span> <span class="chip">${v.len.toFixed(0)} วิ</span><div class="hint">${esc(v.why || '')}</div><div class="mini">${v.segs.length} ช่วง · ข้อความ ${(v.overlays || []).length} จุด</div></div><button data-use="${i}" class="primary">ใช้แบบนี้</button></div>`).join('');
+  const cards = vs.map((v, i) => `<div class="vcard" data-i="${i}"><div class="vt"><b>${i + 1}. ${escN(v.name || v.style)}</b> <span class="chip">${escN(v.style)}</span> <span class="chip">${v.len.toFixed(0)} วิ</span><div class="hint">${escN(v.why || '')}</div><div class="mini">${v.segs.length} ช่วง · ข้อความ ${(v.overlays || []).length} จุด</div></div><button data-use="${i}" class="primary">ใช้แบบนี้</button></div>`).join('');
   aiDlg('เลือกแบบที่ต้องการ', `<div class="hint">กด “ใช้แบบนี้” เพื่อโหลดเข้าไทม์ไลน์ (ดูแล้วไม่ชอบ กด ↶ ย้อนกลับ แล้วเปิดหน้านี้เลือกใหม่ได้) — ระบบจดจำว่าทีมเลือกแบบไหน</div>${cards}
     <div class="fld chk"><label><input type="checkbox" id="vFoot" checked> ใส่ข้อความท้ายจอ</label></div><div class="fld"><input id="vFootT" value="${esc(FOOTER_TEXT)}" style="flex:1"></div>
     <div class="fld chk"><label><input type="checkbox" id="vMus" checked> ใส่เพลงพื้นหลังที่นำเข้าไว้ (ถ้ามี)</label></div>`, root => {
@@ -2663,7 +2972,7 @@ function showVariants() {
 function renderAiPane() {
   const box = $('#pane-ai'); if (!box) return; const keep = $('#aiClip') ? $('#aiClip').value : ''; const vids = [...MEDIA.values()].filter(m => m.type === 'video'); const s = costState();
   box.innerHTML = `<div class="hint">ขั้นตอนแนะนำ: ① ถอดเสียง → ② ราคา → ③ ประโยคเด่น → ④ ตัดช่วงเงียบ/เทคซ้ำ → ⑤ ปรับภาพ หรือกด ⑥ ให้ AI ตัดต่อให้ 4 แบบจากทุกคลิป</div>
-  <div class="fld col"><label>คลิปที่ใช้</label><select id="aiClip">${vids.map(m => `<option value="${m.id}" ${m.id === keep ? 'selected' : ''}>${esc(m.name)}${getTr(m.id) ? ' ✔' : ''}</option>`).join('') || '<option value="">(ยังไม่มีคลิป)</option>'}</select></div>
+  <div class="fld col"><label>คลิปที่ใช้</label><select id="aiClip">${vids.map(m => `<option translate="no" value="${m.id}" ${m.id === keep ? 'selected' : ''}>${esc(m.name)}${getTr(m.id) ? ' ✔' : ''}</option>`).join('') || '<option value="">(ยังไม่มีคลิป)</option>'}</select></div>
   <div class="fld"><label>ภาษาในคลิป</label><select id="aiLang"><option value="lo">ลาว (Gemini)</option><option value="th">ไทย</option></select></div>
   <div class="fld"><label>ตัวถอดเสียงไทย</label><select id="aiEng"><option value="whisper">Whisper ในเครื่อง (ฟรี แม่น)</option><option value="gemini">Gemini</option></select></div>
   <div class="aicard"><h4>① ถอดเสียง</h4><button class="wide" id="ai1">ถอดเสียงคลิปนี้</button></div>

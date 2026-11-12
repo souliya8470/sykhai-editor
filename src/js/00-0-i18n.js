@@ -44,13 +44,14 @@ function i18nNode(n) {
     const v = n.nodeValue; if (!TH_RE.test(v) || _skip(n.parentElement)) return;
     const t = T(v); if (t !== v) n.nodeValue = t;
   } else if (n.nodeType === 1) {
+    if (!n.closest('[translate="no"],script,style')) for (const a of _I18N_ATTRS) { const v = n.getAttribute(a); if (v && TH_RE.test(v)) { const t = T(v); if (t !== v) n.setAttribute(a, t); } }
     if (_skip(n)) return;
-    for (const a of _I18N_ATTRS) { const v = n.getAttribute(a); if (v && TH_RE.test(v)) { const t = T(v); if (t !== v) n.setAttribute(a, t); } }
     for (const c of n.childNodes) i18nNode(c);
   }
 }
 function i18nStart() {
   document.documentElement.lang = UI;
+  document.documentElement.style.setProperty('--droptxt', JSON.stringify(T('วางไฟล์ที่นี่')));
   if (UI === 'th') return;
   document.title = T(document.title);
   i18nNode(document.body);

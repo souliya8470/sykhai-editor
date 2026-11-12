@@ -1,7 +1,7 @@
 // ============================================================
 //  Home page — project list (like CapCut home)
 // ============================================================
-const fmtDate = ts => { try { return new Date(ts).toLocaleString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; } };
+const fmtDate = ts => { try { return new Date(ts).toLocaleString({ lo: 'lo-LA', en: 'en-GB', th: 'th-TH' }[UI] || 'th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; } };
 const fmtDur = t => { t = Math.round(t || 0); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
 
 async function showHome() {
@@ -23,7 +23,7 @@ async function renderHome() {
     const miss = (r.mids || []).filter(id => !have.has(id)).length;
     return `<div class="pcard" data-id="${esc(r.id)}">
       <div class="pthumb" style="${r.thumb ? `background-image:url(${r.thumb})` : ''}">${r.thumb ? '' : '<span class="pnone">🎬</span>'}<span class="pdur">${fmtDur(r.dur)}</span></div>
-      <div class="pname" title="${esc(r.name)}">${esc(r.name)}</div>
+      <div class="pname" translate="no" title="${esc(r.name)}">${esc(r.name)}</div>
       <div class="pmeta">${fmtDate(r.updated)} · ${r.n} คลิป${miss ? ` <span class="pwarn" title="ไฟล์วิดีโอในเครื่องนี้หาย ต้องนำเข้าใหม่">⚠ ไฟล์หาย ${miss}</span>` : ''}</div>
       <div class="pact"><button data-a="rename" title="เปลี่ยนชื่อ">✎</button><button data-a="dup" title="ทำสำเนา">⧉</button><button data-a="del" class="danger" title="ลบ">🗑</button></div>
     </div>`;
@@ -60,13 +60,13 @@ async function openById(id) {
 async function homeAction(id, a) {
   const rec = await projGet(id); if (!rec) return renderHome();
   if (a === 'rename') {
-    const n = prompt('ชื่อโปรเจกต์', rec.name); if (n == null || !n.trim()) return;
+    const n = prompt(T('ชื่อโปรเจกต์'), rec.name); if (n == null || !n.trim()) return;
     const doc = JSON.parse(rec.doc); doc.name = n.trim(); rec.doc = JSON.stringify(doc); rec.name = doc.name; rec.updated = Date.now(); await projPut(rec); srvPushProject(rec);
   } else if (a === 'dup') {
-    const doc = JSON.parse(rec.doc); doc.pid = uid(); doc.created = Date.now(); doc.name = rec.name + ' (สำเนา)';
+    const doc = JSON.parse(rec.doc); doc.pid = uid(); doc.created = Date.now(); doc.name = rec.name + T(' (สำเนา)');
     const r2 = Object.assign({}, rec, { id: doc.pid, name: doc.name, doc: JSON.stringify(doc), created: doc.created, updated: Date.now() }); await projPut(r2); srvPushProject(r2);
   } else if (a === 'del') {
-    if (!confirm(`ลบโปรเจกต์ “${rec.name}” ?\n(ไฟล์วิดีโอที่นำเข้าไว้ไม่ถูกลบ)`)) return;
+    if (!confirm(T('ลบโปรเจกต์ “') + rec.name + T('” ?\n(ไฟล์วิดีโอที่นำเข้าไว้ไม่ถูกลบ)'))) return;
     await projDel(id); srvDeleteProject(id);
     if (D && D.pid === id) { D = newDoc(); SEL = null; HIST = []; HPOS = -1; commit('init'); emit('sel'); HOME.started = false; }
   }

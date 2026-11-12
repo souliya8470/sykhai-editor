@@ -170,7 +170,7 @@ async function aiTranscribeUI() {
   catch (e) { aiErr(e); }
 }
 function showTranscript(m, tr) {
-  aiDlg('ข้อความที่ถอดได้: ' + m.name, `<div class="hint">${tr.segs.length} ประโยค · ${tr.engine}</div><table class="aitbl">${tr.segs.map(s => `<tr><td style="width:96px">${fmt(s.a)}–${fmt(s.b)}</td><td>${esc(s.text)}</td></tr>`).join('')}</table>`);
+  aiDlg('ข้อความที่ถอดได้: ' + m.name, `<div class="hint">${tr.segs.length} ประโยค · ${tr.engine}</div><table class="aitbl">${tr.segs.map(s => `<tr><td style="width:96px">${fmt(s.a)}–${fmt(s.b)}</td><td>${escN(s.text)}</td></tr>`).join('')}</table>`);
 }
 
 // ============================================================
@@ -198,7 +198,7 @@ async function aiPriceUI() {
 }
 function showPrices(m, found) {
   if (!found.length) return aiDlg('ราคา', '<div class="hint">ไม่พบช่วงที่พูดราคาในคลิปนี้</div>');
-  const rows = found.map((p, i) => `<tr><td><input type="checkbox" data-i="${i}" checked></td><td>${esc(p.text)}${p.approx ? '<br><span class="mini">ตำแหน่งโดยประมาณ</span>' : ''}</td><td>${fmt(p.a)}–${fmt(p.b)}</td><td><select data-act="${i}"><option value="cut">ตัดออก</option><option value="mute">ปิดเสียง</option><option value="none">ไม่แตะเสียง</option></select></td><td><input data-kip="${i}" placeholder="เช่น 299,000 ກີບ" style="width:140px"></td></tr>`).join('');
+  const rows = found.map((p, i) => `<tr><td><input type="checkbox" data-i="${i}" checked></td><td>${escN(p.text)}${p.approx ? '<br><span class="mini">ตำแหน่งโดยประมาณ</span>' : ''}</td><td>${fmt(p.a)}–${fmt(p.b)}</td><td><select data-act="${i}"><option value="cut">ตัดออก</option><option value="mute">ปิดเสียง</option><option value="none">ไม่แตะเสียง</option></select></td><td><input data-kip="${i}" placeholder="เช่น 299,000 ກີບ" style="width:140px"></td></tr>`).join('');
   aiDlg('พบราคาที่พูดในคลิป', `<div class="hint">เลือกวิธีจัดการ และพิมพ์ราคากีบที่จะแสดงบนจอ (เว้นว่าง = ไม่ใส่ข้อความ) · ต้องวางคลิปนี้ในไทม์ไลน์ก่อน</div><table class="aitbl"><tr><th></th><th>ราคาที่พูด</th><th>เวลา</th><th>เสียง</th><th>ราคากีบบนจอ</th></tr>${rows}</table><div class="row"><span class="sp"></span><button class="primary" id="prApply">ทำตามที่เลือก</button></div>`, root => {
     $('#prApply', root).onclick = () => {
       const picks = found.map((p, i) => ({ p, i, on: $(`[data-i="${i}"]`, root).checked, act: $(`[data-act="${i}"]`, root).value, kip: $(`[data-kip="${i}"]`, root).value.trim() })).filter(x => x.on).sort((x, y) => y.p.a - x.p.a);
@@ -225,7 +225,7 @@ async function aiKeyPointsUI() {
     const txt = await claude({ system: sys, label: 'ประโยคเด่น', useStyle: true, max_tokens: 2500, estUsd: .04, content: `Transcript phrases ("index: text", language: ${tr.lang === 'lo' ? 'Lao' : 'Thai'}):\n${trText(tr)}\n\nPick 4-8 key selling points actually said (ingredients, benefits, results, how to use, promotion, guarantee, target problem). NOT full subtitles. For each, give the phrase index where it is spoken and the on-screen text WRITTEN IN LAO SCRIPT (translate if the speech is Thai), natural marketing Lao, very short: line1 (2-5 words, wrap the single most important word in *asterisks*) and optional line2 (short detail, may be empty). Prefer distinct points in speaking order. Return {"points":[{"seg":3,"line1":"...","line2":"...","kind":"benefit|ingredient|promo|usage|problem"}]}` });
     const j = parseJsonLoose(txt); AI.busy = false;
     const pts = (j.points || []).filter(p => tr.segs[p.seg | 0]);
-    const rows = pts.map((p, i) => { const s = tr.segs[p.seg | 0]; return `<tr><td><input type="checkbox" data-i="${i}" checked></td><td style="width:64px">${fmt(s.a)}</td><td><textarea data-t="${i}" rows="2">${esc(p.line1 + (p.line2 ? '\n' + p.line2 : ''))}</textarea><div class="mini">${esc(s.text)}</div></td></tr>`; }).join('');
+    const rows = pts.map((p, i) => { const s = tr.segs[p.seg | 0]; return `<tr><td><input type="checkbox" data-i="${i}" checked></td><td style="width:64px">${fmt(s.a)}</td><td><textarea data-t="${i}" rows="2">${esc(p.line1 + (p.line2 ? '\n' + p.line2 : ''))}</textarea><div class="mini">${escN(s.text)}</div></td></tr>`; }).join('');
     aiDlg('ประโยคเด่นที่ AI เลือก', `<div class="hint">แก้ข้อความได้ (บรรทัดบน = ตัวขาว, *คำ* = เหลือง, บรรทัดล่าง = เหลือง) แล้วกดใส่เข้าไทม์ไลน์ — จะขึ้นตอนที่พูดประโยคนั้น</div><table class="aitbl">${rows}</table>
       <div class="fld" style="margin-top:8px"><label>สไตล์ข้อความ</label><select id="kpStyle"><option value="hl">ขาว + เหลือง</option><option value="box">กล่องดำ</option><option value="boxred">กล่องดำ + แถบแดง</option><option value="pill">ป้ายเขียว</option><option value="big">หัวข้อใหญ่</option></select></div>
       <div class="row"><span class="sp"></span><button class="primary" id="kpApply">ใส่เข้าไทม์ไลน์</button></div>`, root => {
@@ -267,7 +267,7 @@ async function aiRetakeUI() {
     const txt = await claude({ system: 'You review raw takes of a spoken product video and find false starts, stumbles and repeated takes of the same sentence. Reply with JSON only.', label: 'หาเทคซ้ำ', max_tokens: 1500, estUsd: .03, content: `Phrases ("index: text", ${tr.lang === 'lo' ? 'Lao' : 'Thai'}), in recording order:\n${trText(tr)}\n\nFind phrases that should be DROPPED: incomplete/false starts, stumbles, and earlier attempts when the same sentence is repeated later (keep the best, most complete/fluent take — usually the last). Never drop the only occurrence of an idea. Return {"drop":[{"seg":2,"why":"short reason in Thai"}]}` });
     const j = parseJsonLoose(txt); AI.busy = false; const dr = (j.drop || []).filter(d => tr.segs[d.seg | 0]);
     if (!dr.length) return aiDlg('เทคซ้ำ', '<div class="hint">ไม่พบเทคที่ควรตัดทิ้ง</div>');
-    aiDlg('เทคที่แนะนำให้ตัดทิ้ง', `<table class="aitbl">${dr.map((d, i) => { const s = tr.segs[d.seg | 0]; return `<tr><td><input type="checkbox" data-i="${i}" checked></td><td style="width:92px">${fmt(s.a)}–${fmt(s.b)}</td><td>${esc(s.text)}<div class="mini">${esc(d.why || '')}</div></td></tr>`; }).join('')}</table><div class="row"><span class="sp"></span><button class="primary" id="rtGo">ตัดที่เลือก</button></div>`, root => {
+    aiDlg('เทคที่แนะนำให้ตัดทิ้ง', `<table class="aitbl">${dr.map((d, i) => { const s = tr.segs[d.seg | 0]; return `<tr><td><input type="checkbox" data-i="${i}" checked></td><td style="width:92px">${fmt(s.a)}–${fmt(s.b)}</td><td>${escN(s.text)}<div class="mini">${escN(d.why || '')}</div></td></tr>`; }).join('')}</table><div class="row"><span class="sp"></span><button class="primary" id="rtGo">ตัดที่เลือก</button></div>`, root => {
       $('#rtGo', root).onclick = () => { const rs = dr.filter((d, i) => $(`[data-i="${i}"]`, root).checked).map(d => { const s = tr.segs[d.seg | 0]; return [snapValley(m, s.a - .03, .15), snapValley(m, s.b + .05, .15)]; }); const n = cutSourceRanges(m.id, rs); commit('retake'); $('#dlgAi').close(); toast(`ตัดแล้ว ${n} จุด`); };
     });
   } catch (e) { aiErr(e); }
@@ -365,7 +365,7 @@ function buildVariantDoc(v, opts) {
 }
 function showVariants() {
   const vs = AI.variants; if (!vs.length) return aiDlg('ผลลัพธ์', '<div class="hint">AI ไม่ได้ส่งแบบที่ใช้ได้กลับมา ลองใหม่อีกครั้ง</div>');
-  const cards = vs.map((v, i) => `<div class="vcard" data-i="${i}"><div class="vt"><b>${i + 1}. ${esc(v.name || v.style)}</b> <span class="chip">${esc(v.style)}</span> <span class="chip">${v.len.toFixed(0)} วิ</span><div class="hint">${esc(v.why || '')}</div><div class="mini">${v.segs.length} ช่วง · ข้อความ ${(v.overlays || []).length} จุด</div></div><button data-use="${i}" class="primary">ใช้แบบนี้</button></div>`).join('');
+  const cards = vs.map((v, i) => `<div class="vcard" data-i="${i}"><div class="vt"><b>${i + 1}. ${escN(v.name || v.style)}</b> <span class="chip">${escN(v.style)}</span> <span class="chip">${v.len.toFixed(0)} วิ</span><div class="hint">${escN(v.why || '')}</div><div class="mini">${v.segs.length} ช่วง · ข้อความ ${(v.overlays || []).length} จุด</div></div><button data-use="${i}" class="primary">ใช้แบบนี้</button></div>`).join('');
   aiDlg('เลือกแบบที่ต้องการ', `<div class="hint">กด “ใช้แบบนี้” เพื่อโหลดเข้าไทม์ไลน์ (ดูแล้วไม่ชอบ กด ↶ ย้อนกลับ แล้วเปิดหน้านี้เลือกใหม่ได้) — ระบบจดจำว่าทีมเลือกแบบไหน</div>${cards}
     <div class="fld chk"><label><input type="checkbox" id="vFoot" checked> ใส่ข้อความท้ายจอ</label></div><div class="fld"><input id="vFootT" value="${esc(FOOTER_TEXT)}" style="flex:1"></div>
     <div class="fld chk"><label><input type="checkbox" id="vMus" checked> ใส่เพลงพื้นหลังที่นำเข้าไว้ (ถ้ามี)</label></div>`, root => {
@@ -379,7 +379,7 @@ function showVariants() {
 function renderAiPane() {
   const box = $('#pane-ai'); if (!box) return; const keep = $('#aiClip') ? $('#aiClip').value : ''; const vids = [...MEDIA.values()].filter(m => m.type === 'video'); const s = costState();
   box.innerHTML = `<div class="hint">ขั้นตอนแนะนำ: ① ถอดเสียง → ② ราคา → ③ ประโยคเด่น → ④ ตัดช่วงเงียบ/เทคซ้ำ → ⑤ ปรับภาพ หรือกด ⑥ ให้ AI ตัดต่อให้ 4 แบบจากทุกคลิป</div>
-  <div class="fld col"><label>คลิปที่ใช้</label><select id="aiClip">${vids.map(m => `<option value="${m.id}" ${m.id === keep ? 'selected' : ''}>${esc(m.name)}${getTr(m.id) ? ' ✔' : ''}</option>`).join('') || '<option value="">(ยังไม่มีคลิป)</option>'}</select></div>
+  <div class="fld col"><label>คลิปที่ใช้</label><select id="aiClip">${vids.map(m => `<option translate="no" value="${m.id}" ${m.id === keep ? 'selected' : ''}>${esc(m.name)}${getTr(m.id) ? ' ✔' : ''}</option>`).join('') || '<option value="">(ยังไม่มีคลิป)</option>'}</select></div>
   <div class="fld"><label>ภาษาในคลิป</label><select id="aiLang"><option value="lo">ลาว (Gemini)</option><option value="th">ไทย</option></select></div>
   <div class="fld"><label>ตัวถอดเสียงไทย</label><select id="aiEng"><option value="whisper">Whisper ในเครื่อง (ฟรี แม่น)</option><option value="gemini">Gemini</option></select></div>
   <div class="aicard"><h4>① ถอดเสียง</h4><button class="wide" id="ai1">ถอดเสียงคลิปนี้</button></div>

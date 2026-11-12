@@ -20,7 +20,7 @@ function rulerTicks() {
 function clipLabel(it) {
   if (it.type === 'text') return (it.text || '').replace(/\*/g, '').replace(/\n/g, ' ');
   if (it.type === 'sticker') return { check: '✔', warning: '⚠', cursor: '☝', brackets: '▢', arrow: '⬇', star: '★', underline: '▁', circle: '◯', emoji: it.text || '😀' }[it.kind] + ' ' + it.kind;
-  const m = MEDIA.get(it.mediaId); return m ? m.name : '⚠ ไฟล์หาย: ' + mediaNameFromId(it.mediaId);
+  const m = MEDIA.get(it.mediaId); return m ? m.name : T('⚠ ไฟล์หาย: ') + mediaNameFromId(it.mediaId);
 }
 function renderTimeline() {
   const body = $('#tlbody'); if (!body) return;
@@ -41,7 +41,7 @@ function renderTimeline() {
     if (tall) { el.classList.add('tall'); el.style.setProperty('--wfh', wfh + 'px'); }
     if (hasWf) inner += `<canvas class="wf" style="height:${wfh}px"></canvas>`;
     if (hasWf && tall && m.hasAudio !== false) { const ch = trackH(TRACKS.find(t => t.id === it.track)) - 9; inner += `<div class="vl" style="top:${ch - wfh + wfh * (1 - clamp(it.vol ?? 1, 0, VOL_MAX) / VOL_MAX)}px"><u></u><b>${Math.round((it.vol ?? 1) * 100)}%</b></div>`; }
-    inner += `<span class="cl">${esc(clipLabel(it))}</span>`;
+    inner += `<span class="cl" translate="no">${esc(clipLabel(it))}</span>`;
     if (it.transIn && it.transIn.type !== 'none') inner += `<b class="trb" title="ทรานสิชัน: ${esc((TRANS[it.transIn.type] || {}).label || '')}" style="width:${Math.max(10, it.transIn.dur * TL.pps)}px">⇄</b>`;
     if (it.speed && it.speed !== 1) inner += `<em class="spd">${it.speed}x</em>`;
     if (it.kf) for (const k in it.kf) for (const p of it.kf[k]) inner += `<s class="kfd" style="left:${p.t * TL.pps}px"></s>`;
@@ -207,13 +207,13 @@ function renderMediaBin() {
   box.innerHTML = arr.length ? '' : '<div class="empty">ยังไม่มีไฟล์ — กดปุ่ม “นำเข้า” หรือลากไฟล์มาวางที่นี่</div>';
   for (const m of arr) {
     const d = document.createElement('div'); d.className = 'mi'; d.draggable = true; d.dataset.id = m.id;
-    d.innerHTML = `<div class="mth" style="${m.thumb ? `background-image:url(${m.thumb})` : ''}">${m.type === 'audio' ? '♪' : ''}<span class="dur">${m.type === 'image' ? 'ภาพ' : fmt(m.duration)}</span></div><div class="mn" title="${esc(m.name)}">${esc(m.name)}</div><div class="mb"><button data-act="add">+ ใส่ไทม์ไลน์</button><button data-act="del" title="ลบ">×</button></div>${m.type === 'video' ? `<div class="mtag">${m.w}×${m.h}${m.hasAudio === false ? ' · ไม่มีเสียง' : ''}</div>` : ''}`;
+    d.innerHTML = `<div class="mth" style="${m.thumb ? `background-image:url(${m.thumb})` : ''}">${m.type === 'audio' ? '♪' : ''}<span class="dur">${m.type === 'image' ? 'ภาพ' : fmt(m.duration)}</span></div><div class="mn" translate="no" title="${esc(m.name)}">${esc(m.name)}</div><div class="mb"><button data-act="add">+ ใส่ไทม์ไลน์</button><button data-act="del" title="ลบ">×</button></div>${m.type === 'video' ? `<div class="mtag">${m.w}×${m.h}${m.hasAudio === false ? ' · ไม่มีเสียง' : ''}</div>` : ''}`;
     d.addEventListener('dragstart', e => { e.dataTransfer.setData('text/mediaid', m.id); });
     d.addEventListener('click', e => { if (e.target.closest('button')) return; srcOpen(m.id); });
     d.addEventListener('dblclick', () => addMediaToTimeline(m.id));
     if (SRC.m && SRC.m.id === m.id) d.classList.add('sel');
     d.querySelector('[data-act="add"]').onclick = () => addMediaToTimeline(m.id);
-    d.querySelector('[data-act="del"]').onclick = () => { if (D.items.some(i => i.mediaId === m.id) && !confirm('ไฟล์นี้ถูกใช้ในไทม์ไลน์ — ลบคลิปที่ใช้ไฟล์นี้ด้วย?')) return; D.items = D.items.filter(i => i.mediaId !== m.id); MEDIA.delete(m.id); dbDel(m.id); commit('media'); renderMediaBin(); };
+    d.querySelector('[data-act="del"]').onclick = () => { if (D.items.some(i => i.mediaId === m.id) && !confirm(T('ไฟล์นี้ถูกใช้ในไทม์ไลน์ — ลบคลิปที่ใช้ไฟล์นี้ด้วย?'))) return; D.items = D.items.filter(i => i.mediaId !== m.id); MEDIA.delete(m.id); dbDel(m.id); commit('media'); renderMediaBin(); };
     box.appendChild(d);
   }
 }

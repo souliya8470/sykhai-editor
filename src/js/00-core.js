@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.08
-// APP_VERSION_PREV : 1.07
-// APP_VERSION_PREV_OLDER : 1.06
+// APP_VERSION  : 1.09
+// APP_VERSION_PREV : 1.08
+// APP_VERSION_PREV_OLDER : 1.07
+// 1.09 : UI language selector (Lao / Thai / English) in header + home; dictionary-based DOM translation, Noto Sans Lao for Lao; user content protected with translate=no
 // 1.08 : draggable panel splitters (left/right/timeline height, saved), draggable track heights, tall clips show waveform + draggable volume line, live level meter
 // 1.07 : click a file in the media bin to watch it in the preview in real time (play/pause/seek) before adding it to the timeline
 // 1.06 : editing style guide (paste notes from ChatGPT brainstorming) used by key-points + 4-variant AI
@@ -14,7 +15,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.08';
+const APP_VERSION = '1.09';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -23,6 +24,8 @@ const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const lerp = (a, b, t) => a + (b - a) * t;
 const fmt = (t) => { t = Math.max(0, t || 0); const m = Math.floor(t / 60), s = t % 60; return String(m).padStart(2, '0') + ':' + s.toFixed(1).padStart(4, '0'); };
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+// span that the UI-language translator must not touch (user content)
+const escN = (s) => '<span translate="no">' + esc(s) + '</span>';
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 const EASE = {
   lin: t => t,
@@ -53,7 +56,7 @@ const TRACKS = [
 const TRACK_KIND = Object.fromEntries(TRACKS.map(t => [t.id, t.kind]));
 const RENDER_ORDER = ['V1', 'V2', 'V3', 'T1', 'T2', 'T3'];
 
-function newDoc() { return { pid: uid(), created: Date.now(), name: 'โปรเจกต์ใหม่', w: 1080, h: 1920, fps: 30, items: [], duckLevel: 0.22, ver: 1 }; }
+function newDoc() { return { pid: uid(), created: Date.now(), name: T('โปรเจกต์ใหม่'), w: 1080, h: 1920, fps: 30, items: [], duckLevel: 0.22, ver: 1 }; }
 let D = newDoc();
 let SEL = null;             // selected item id
 const getItem = (id) => D.items.find(i => i.id === id);
@@ -106,17 +109,17 @@ function mkSticker(kind, start, dur, extra) {
 // ---------- text presets ----------
 const FONT_STACK = '"Prompt","Noto Sans Lao","Noto Sans Thai","Noto Sans Lao Looped",sans-serif';
 const TEXT_STYLES = [
-  { id: 'hl', label: 'ขาว + เหลือง (2 บรรทัด)', d: { size: 64, weight: 800, color: '#ffffff', color2: '#FFE14D', stroke: '#000000', strokeW: 9, box: 'none', bg: '', ay: .62, text: 'บรรทัดที่ 1\nบรรทัดที่ 2' } },
-  { id: 'clean', label: 'ขาว ขอบดำ', d: { size: 60, weight: 800, color: '#ffffff', color2: '#ffffff', stroke: '#000000', strokeW: 9, box: 'none', bg: '', ay: .62, text: 'ข้อความ' } },
-  { id: 'big', label: 'หัวข้อใหญ่ เหลือง', d: { size: 112, weight: 900, color: '#FFE14D', color2: '#ffffff', stroke: '#000000', strokeW: 14, box: 'none', bg: '', ay: .3, text: 'หัวข้อ' } },
-  { id: 'box', label: 'กล่องดำ ตัวขาว', d: { size: 44, weight: 700, color: '#ffffff', color2: '#FFE14D', stroke: '', strokeW: 0, box: 'line', bg: '#000000d9', ay: .1, text: 'ข้อความในกล่อง' } },
-  { id: 'boxred', label: 'กล่องดำ + แถบแดง', d: { size: 42, weight: 800, color: '#ffffff', color2: '#ffffff', stroke: '', strokeW: 0, box: 'line2', bg: '#000000d9', bg2: '#E02B3A', ay: .1, text: 'บรรทัดบน\nบรรทัดล่างแถบแดง' } },
-  { id: 'pill', label: 'ป้ายเขียวมุมโค้ง', d: { size: 44, weight: 800, color: '#ffffff', color2: '#ffffff', stroke: '', strokeW: 0, box: 'block', bg: '#0E7A5F', ay: .22, text: 'ป้ายข้อความ' } },
-  { id: 'promo', label: 'ป้ายโปรโมชันแดง', d: { size: 50, weight: 800, color: '#ffffff', color2: '#ffffff', stroke: '', strokeW: 0, box: 'block', bg: '#E0143C', ay: .2, text: 'โปรตอนนี้' } },
-  { id: 'price', label: 'ราคา (เหลืองใหญ่)', d: { size: 70, weight: 800, color: '#ffffff', color2: '#FFE14D', stroke: '#000000', strokeW: 10, box: 'none', bg: '', ay: .72, text: 'ซื้อ 1 แถม 2\n390,000 กีบ' } },
-  { id: 'blue', label: 'น้ำเงิน ขอบขาว', d: { size: 52, weight: 800, color: '#2B2BE0', color2: '#E02B3A', stroke: '#ffffff', strokeW: 9, box: 'none', bg: '', ay: .08, text: 'ข้อความสีน้ำเงิน' } },
-  { id: 'plain', label: 'ขาว เงานุ่ม', d: { size: 52, weight: 700, color: '#ffffff', color2: '#FFE14D', stroke: '', strokeW: 0, box: 'none', bg: '', shadow: true, ay: .8, text: 'ข้อความทั่วไป' } },
-  { id: 'footer', label: 'ข้อความท้ายจอ (เล็ก)', d: { size: 30, weight: 600, color: '#ffffffd9', color2: '#ffffffd9', stroke: '', strokeW: 0, box: 'none', bg: '', shadow: true, ay: .965, text: 'ผลลัพธ์ที่ได้ขึ้นอยู่กับแต่ละบุคคล' } },
+  { id: 'hl', label: 'ขาว + เหลือง (2 บรรทัด)', d: { size: 64, weight: 800, color: '#ffffff', color2: '#FFE14D', stroke: '#000000', strokeW: 9, box: 'none', bg: '', ay: .62, text: T('บรรทัดที่ 1\nบรรทัดที่ 2') } },
+  { id: 'clean', label: 'ขาว ขอบดำ', d: { size: 60, weight: 800, color: '#ffffff', color2: '#ffffff', stroke: '#000000', strokeW: 9, box: 'none', bg: '', ay: .62, text: T('ข้อความ') } },
+  { id: 'big', label: 'หัวข้อใหญ่ เหลือง', d: { size: 112, weight: 900, color: '#FFE14D', color2: '#ffffff', stroke: '#000000', strokeW: 14, box: 'none', bg: '', ay: .3, text: T('หัวข้อ') } },
+  { id: 'box', label: 'กล่องดำ ตัวขาว', d: { size: 44, weight: 700, color: '#ffffff', color2: '#FFE14D', stroke: '', strokeW: 0, box: 'line', bg: '#000000d9', ay: .1, text: T('ข้อความในกล่อง') } },
+  { id: 'boxred', label: 'กล่องดำ + แถบแดง', d: { size: 42, weight: 800, color: '#ffffff', color2: '#ffffff', stroke: '', strokeW: 0, box: 'line2', bg: '#000000d9', bg2: '#E02B3A', ay: .1, text: T('บรรทัดบน\nบรรทัดล่างแถบแดง') } },
+  { id: 'pill', label: 'ป้ายเขียวมุมโค้ง', d: { size: 44, weight: 800, color: '#ffffff', color2: '#ffffff', stroke: '', strokeW: 0, box: 'block', bg: '#0E7A5F', ay: .22, text: T('ป้ายข้อความ') } },
+  { id: 'promo', label: 'ป้ายโปรโมชันแดง', d: { size: 50, weight: 800, color: '#ffffff', color2: '#ffffff', stroke: '', strokeW: 0, box: 'block', bg: '#E0143C', ay: .2, text: T('โปรตอนนี้') } },
+  { id: 'price', label: 'ราคา (เหลืองใหญ่)', d: { size: 70, weight: 800, color: '#ffffff', color2: '#FFE14D', stroke: '#000000', strokeW: 10, box: 'none', bg: '', ay: .72, text: T('ซื้อ 1 แถม 2\n390,000 กีบ') } },
+  { id: 'blue', label: 'น้ำเงิน ขอบขาว', d: { size: 52, weight: 800, color: '#2B2BE0', color2: '#E02B3A', stroke: '#ffffff', strokeW: 9, box: 'none', bg: '', ay: .08, text: T('ข้อความสีน้ำเงิน') } },
+  { id: 'plain', label: 'ขาว เงานุ่ม', d: { size: 52, weight: 700, color: '#ffffff', color2: '#FFE14D', stroke: '', strokeW: 0, box: 'none', bg: '', shadow: true, ay: .8, text: T('ข้อความทั่วไป') } },
+  { id: 'footer', label: 'ข้อความท้ายจอ (เล็ก)', d: { size: 30, weight: 600, color: '#ffffffd9', color2: '#ffffffd9', stroke: '', strokeW: 0, box: 'none', bg: '', shadow: true, ay: .965, text: T('ผลลัพธ์ที่ได้ขึ้นอยู่กับแต่ละบุคคล') } },
 ];
 function mkText(styleId, text, start, dur, extra) {
   const st = TEXT_STYLES.find(s => s.id === styleId) || TEXT_STYLES[0];
