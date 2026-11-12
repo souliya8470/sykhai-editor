@@ -19,14 +19,18 @@ Object.values(DIRS).forEach(d => fs.mkdirSync(d, { recursive: true }));
 //  copy into ./tools by itself (Windows). Originals are never touched; export still uses the originals.
 // ------------------------------------------------------------
 const { spawn, spawnSync } = require('child_process'), os = require('os'), { pipeline } = require('stream/promises'), { Readable } = require('stream');
-const TOOLS = path.join(__dirname, 'tools'); fs.mkdirSync(TOOLS, { recursive: true });
+const TOOLS = path.join(ROOT, 'tools');   // on the data drive (the code folder may be OneDrive-synced, which makes big .exe files unusable) fs.mkdirSync(TOOLS, { recursive: true });
 const exeName = n => n + (process.platform === 'win32' ? '.exe' : '');
 const PX = { ff: null, hasZ: false, q: [], cur: null, failed: new Set(), note: 'checking', t0: 0 };
 const proxyFile = key => path.join(DIRS.media, key + '.proxy.mp4');
 function findFfmpeg() {
   for (const c of [process.env.SK_FFMPEG, path.join(TOOLS, exeName('ffmpeg')), 'ffmpeg']) {
     if (!c) continue;
-    try { const r = spawnSync(c, ['-hide_banner', '-filters'], { timeout: 20000, encoding: 'utf8', windowsHide: true }); if (r.status === 0) return { bin: c, hasZ: /\bzscale\b/.test(r.stdout || '') && /\btonemap\b/.test(r.stdout || '') }; } catch (e) { }
+    try {
+      const r = spawnSync(c, ['-hide_banner', '-filters'], { timeout: 120000, encoding: 'utf8', windowsHide: true, maxBuffer: 20e6 });
+      if (r.status === 0) return { bin: c, hasZ: /\bzscale\b/.test(r.stdout || '') && /\btonemap\b/.test(r.stdout || '') };
+      if (c !== 'ffmpeg') console.log('proxy: ทดสอบ ' + c + ' ไม่ผ่าน (status ' + r.status + (r.error ? ', ' + r.error.message : '') + ')');
+    } catch (e) { console.log('proxy: ' + e.message); }
   }
   return null;
 }
@@ -50,11 +54,11 @@ async function downloadFfmpeg() {
 async function initProxy() {
   try {
     PX.ff = findFfmpeg();
-    if (!PX.ff) { await downloadFfmpeg(); PX.ff = findFfmpeg(); }
+    if (!PX.ff && !fs.existsSync(path.join(TOOLS, exeName('ffmpeg')))) { await downloadFfmpeg(); PX.ff = findFfmpeg(); }
     if (!PX.ff) throw new Error('ffmpeg ใช้งานไม่ได้');
     PX.note = 'ready'; console.log('proxy: ffmpeg พร้อม (' + PX.ff.bin + (PX.ff.hasZ ? ', HDR tone-map' : ', ไม่มี tone-map') + ')');
     pxScan();
-  } catch (e) { PX.ff = null; PX.note = 'ffmpeg: ' + (e.message || e); console.log('proxy ปิดอยู่ — ' + PX.note); }
+  } catch (e) { PX.ff = null; PX.note = 'ffmpeg: ' + (e.message || e); console.log('proxy ปิดอยู่ — ' + PX.note + ' (จะลองใหม่ใน 1 นาที)'); setTimeout(initProxy, 60000); }
 }
 const isVideoMeta = m => m && (/^video\//i.test(m.type || '') || /\.(mov|mp4|m4v|webm)$/i.test(m.name || ''));
 function pxScan() {   // queue every uploaded video that has no proxy yet (newest first)
