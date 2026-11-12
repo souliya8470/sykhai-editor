@@ -76,7 +76,29 @@ function apoolRelease(id) { const r = APOOL.get(id); if (!r) return; try { r.el.
 
 // ---------- transport state ----------
 const PB = { playing: false, t: 0, t0: 0, wall0: 0, exporting: false, duck: 1, lastTick: 0 };
-const PW = 540, PH = 960;
+let PW = 540, PH = 960;
+const ASPECTS = [['9:16', 1080, 1920], ['1:1', 1080, 1080], ['4:5', 1080, 1350], ['16:9', 1920, 1080], ['4:3', 1440, 1080]];
+function aspectName(w, h) { const a = ASPECTS.find(x => x[1] === w && x[2] === h); return a ? a[0] : w + '×' + h; }
+function fitStage() {
+  const c = $('#center'), st = $('#stage'); if (!c || !st || !c.clientWidth) return;
+  const cs = getComputedStyle(c), w = D.w || 1080, h = D.h || 1920;
+  st.style.flex = 'none'; st.style.width = '0px'; st.style.height = '0px';
+  const kids = [...c.children].filter(k => k.offsetParent !== null || k === st);
+  const gap = parseFloat(cs.rowGap) || 0; let used = gap * (kids.length - 1);
+  for (const k of kids) if (k !== st) used += k.offsetHeight;
+  const aw = c.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  const ah = c.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - used;
+  const k = Math.max(0, Math.min(aw / w, ah / h));
+  st.style.width = Math.floor(w * k) + 'px'; st.style.height = Math.floor(h * k) + 'px';
+}
+function applyAspect() {
+  const w = D.w || 1080, h = D.h || 1920; PW = Math.round(w / 2); PH = Math.round(h / 2);
+  for (const id of ['#pv', '#ov']) { const c = $(id); if (c && (c.width !== PW || c.height !== PH)) { c.width = PW; c.height = PH; } }
+  const st = $('#stage'); if (st) st.style.aspectRatio = w + ' / ' + h;
+  const sel = $('#ratioSel'); if (sel) sel.value = aspectName(w, h);
+  const rs = $('#expRes'); if (rs) rs.textContent = w + '×' + h;
+  DIRTY = true; if (typeof fitStage === 'function') fitStage();
+}
 let PCANVAS = null, PCTX = null;
 const durEnd = () => Math.max(0.1, projectEnd());
 
@@ -241,6 +263,7 @@ function tick() {
   if (SRC.m) { srcFrame(); }
   else if (!PB.exporting) {
     syncMedia(false);
+    if (PW * 2 !== D.w || PH * 2 !== D.h) applyAspect();
     if (DIRTY || PB.playing) { renderFrame(PCTX, PW, PH, PB.t); DIRTY = false; if (window.onFrame) window.onFrame(); }
   }
   requestAnimationFrame(tick);

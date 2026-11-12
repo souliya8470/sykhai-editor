@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.13</title>
+<title>Sykhai Editor v1.14</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -268,6 +268,10 @@ main{padding:0}
 #tlbar button{border-radius:8px}
 .clip{border-radius:6px}
 
+/* v1.14 aspect ratio selector */
+select.ratio{appearance:none;-webkit-appearance:none;border:1px solid var(--ln);color:var(--tx);cursor:pointer;padding:3px 22px 3px 10px;background:var(--p3) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23999' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 7px center}
+select.ratio:hover{border-color:var(--ac)}
+
 </style></head>
 <body>
 <div id="app">
@@ -306,7 +310,7 @@ main{padding:0}
       </div>
     </aside>
     <section id="center">
-      <div class="ptitle"><b>เครื่องเล่น</b><span class="ratio">9:16</span></div>
+      <div class="ptitle"><b>เครื่องเล่น</b><select id="ratioSel" class="ratio" title="สัดส่วนจอ" translate="no"><option>9:16</option><option>1:1</option><option>4:5</option><option>16:9</option><option>4:3</option></select></div>
       <div id="stage"><canvas id="pv" width="540" height="960"></canvas><canvas id="ov" width="540" height="960"></canvas><div id="srcBadge" hidden><span>ดูตัวอย่างไฟล์ — <b id="srcName" translate="no"></b></span><button id="srcClose" title="กลับไปดูไทม์ไลน์">กลับไทม์ไลน์</button></div></div>
       <div id="transport">
         <div class="tpl"><span id="tpTime">00:00.0 / 00:00.0</span><span id="vu" title="ระดับเสียง"><i></i></span></div>
@@ -364,7 +368,7 @@ main{padding:0}
 </dialog>
 <dialog id="dlgExport">
   <h3>ส่งออกวิดีโอ MP4</h3>
-  <div class="hint">1080×1920 · 30fps · ไม่มีลายน้ำ — ระบบเล่นไทม์ไลน์แบบเรียลไทม์เพื่อบันทึก (คลิปยาว 60 วิ = ใช้เวลา ~60 วิ) <b>ห้ามปิด/สลับแท็บขณะส่งออก</b></div>
+  <div class="hint"><span id="expRes" translate="no">1080×1920</span> · 30fps · ไม่มีลายน้ำ — ระบบเล่นไทม์ไลน์แบบเรียลไทม์เพื่อบันทึก (คลิปยาว 60 วิ = ใช้เวลา ~60 วิ) <b>ห้ามปิด/สลับแท็บขณะส่งออก</b></div>
   <div class="fld"><label>คุณภาพ</label><select id="expQ"><option value="12000000">สูง (12 Mbps)</option><option value="8000000" selected>มาตรฐาน (8 Mbps)</option><option value="5000000">ประหยัด (5 Mbps)</option></select></div>
   <div class="progress"><div id="expBar"></div></div><div id="expMsg" class="hint"></div>
   <div class="row"><span class="sp"></span><button id="expCancel">ปิด</button><button id="expGo" class="primary">เริ่มส่งออก</button></div>
@@ -1163,7 +1167,12 @@ I18N_ROWS.push(
   ['เครื่องเล่น', 'Player', 'ເຄື່ອງຫຼິ້ນ'],
   ['ทั้งหมด', 'All', 'ທັງໝົດ'],
   ['รูปภาพ', 'Images', 'ຮູບພາບ'],
-  ['ไฟล์', 'files', 'ໄຟລ໌']
+  ['ไฟล์', 'files', 'ໄຟລ໌'],
+  // v1.14 aspect ratio
+  ['ขนาดวิดีโอ', 'Video size', 'ຂະໜາດວິດີໂອ'],
+  ['ความยาวรวม', 'total length', 'ຄວາມຍາວລວມ'],
+  ['สัดส่วนจอ', 'Aspect ratio', 'ສັດສ່ວນຈໍ'],
+  [' · 30fps · ไม่มีลายน้ำ — ระบบเล่นไทม์ไลน์แบบเรียลไทม์เพื่อบันทึก (คลิปยาว 60 วิ = ใช้เวลา ~60 วิ)', ' · 30fps · no watermark — the timeline is played in real time to record it (a 60 s video takes ~60 s)', ' · 30fps · ບໍ່ມີລາຍນ້ຳ — ລະບົບຫຼິ້ນໄທມ໌ໄລນ໌ແບບເຣຍລທາຍເພື່ອບັນທຶກ (ຄລິບຍາວ 60 ວິນາທີ = ໃຊ້ເວລາ ~60 ວິນາທີ)']
 );
 
 // ---- 00-core.js ----
@@ -1171,9 +1180,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.13
-// APP_VERSION_PREV : 1.12
-// APP_VERSION_PREV_OLDER : 1.11
+// APP_VERSION  : 1.14
+// APP_VERSION_PREV : 1.13
+// APP_VERSION_PREV_OLDER : 1.12
+// 1.14 : aspect ratio selector in the player (9:16, 1:1, 4:5, 16:9, 4:3) — preview, overlay handles and MP4 export follow the project size; text/blur scale by the short side
 // 1.13 : MyCut-style look — rounded card panels, icon tabs on the left, media filter (all/video/image/audio), teal timecode + big round play button, inspector sections as cards with their own reset button
 // 1.12 : CapCut-style clip look (teal, thumbnails, timecode label), fade in/out handles on clips, tabbed inspector (Video/Audio/Speed/Animation/Adjust), number boxes + reset on every slider, blend/canvas/chroma key/masks, voice changer, clip animations, curves/colour wheel/HSL
 // 1.11 : CapCut-style timeline toolbar (import, undo/redo, split, trim left/right Q/W, delete, ripple delete, markers M, magnet on Video 1, snapping toggle, zoom fit/in/out)
@@ -1188,7 +1198,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.13';
+const APP_VERSION = '1.14';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -1441,7 +1451,7 @@ function drawMediaContent(ctx, it, t, W, H, extra) {
   const [sw0, sh0] = srcSize(src);
   const lt = t - it.start;
   const s = prop(it, 's', t), x = prop(it, 'x', t), y = prop(it, 'y', t); let r = prop(it, 'r', t); const o = prop(it, 'o', t);
-  const A = mediaAnim(it, lt); if (A) { r += A.r; extra = Object.assign({}, extra, { alpha: (extra.alpha ?? 1) * A.a, blur: (extra.blur || 0) + A.blur * W / 1080, dx: (extra.dx || 0) + A.dx * W, dy: (extra.dy || 0) + A.dy * H }); }
+  const A = mediaAnim(it, lt); if (A) { r += A.r; extra = Object.assign({}, extra, { alpha: (extra.alpha ?? 1) * A.a, blur: (extra.blur || 0) + A.blur * Math.min(W, H) / 1080, dx: (extra.dx || 0) + A.dx * W, dy: (extra.dy || 0) + A.dy * H }); }
   let fw = W, fh = H, sx = 0, sy = 0, sw = sw0, sh = sh0;
   if (it.fit === 'contain') {
     const k = Math.min(W / sw0, H / sh0); fw = sw0 * k; fh = sh0 * k;
@@ -1463,7 +1473,7 @@ function drawMediaContent(ctx, it, t, W, H, extra) {
     if (it.bg === 'color') { ctx.fillStyle = it.bgColor || '#000000'; ctx.fillRect(0, 0, W, H); }
     else {
       const ka = W / H, sa = sw0 / sh0; let bx = 0, by = 0, bw = sw0, bh = sh0; if (sa > ka) { bw = sh0 * ka; bx = (sw0 - bw) / 2; } else { bh = sw0 / ka; by = (sh0 - bh) / 2; }
-      ctx.filter = `blur(${(22 * W / 1080).toFixed(1)}px) brightness(.72)`; ctx.drawImage(src, bx, by, bw, bh, -W * .06, -H * .06, W * 1.12, H * 1.12); ctx.filter = 'none';
+      ctx.filter = `blur(${(22 * Math.min(W, H) / 1080).toFixed(1)}px) brightness(.72)`; ctx.drawImage(src, bx, by, bw, bh, -W * .06, -H * .06, W * 1.12, H * 1.12); ctx.filter = 'none';
     }
     ctx.restore();
   }
@@ -1477,8 +1487,8 @@ function drawMediaContent(ctx, it, t, W, H, extra) {
     ctx.save(); rrPath(ctx, -w / 2, -h / 2, w, h, Math.min(w, h) * (mk.r ?? 0.06)); ctx.clip();
   } else if (mk.type === 'frame') {
     const b = (mk.ring ?? 0.014) * W * (mk.scale ?? 1);
-    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 18 * (W / 1080); ctx.fillStyle = '#fff';
-    rrPath(ctx, -w / 2 - b, -h / 2 - b, w + 2 * b, h + 2 * b, 6 * W / 1080); ctx.fill(); ctx.restore();
+    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 18 * (Math.min(W, H) / 1080); ctx.fillStyle = '#fff';
+    rrPath(ctx, -w / 2 - b, -h / 2 - b, w + 2 * b, h + 2 * b, 6 * Math.min(W, H) / 1080); ctx.fill(); ctx.restore();
     ctx.save(); ctx.beginPath(); ctx.rect(-w / 2, -h / 2, w, h); ctx.clip();
   } else if (mk.type === 'star' || mk.type === 'heart') {
     ctx.save(); ctx.beginPath(); const R0 = Math.min(w, h) / 2 * (mk.size || 1);
@@ -1488,7 +1498,7 @@ function drawMediaContent(ctx, it, t, W, H, extra) {
   } else { ctx.save(); }
   ctx.filter = filterString(it, extra.blur);
   ctx.drawImage(src, sx, sy, sw, sh, -w / 2, -h / 2, w, h);
-  if ((it.fx || {}).soften > 0) { const ga = ctx.globalAlpha; ctx.globalAlpha = ga * clamp(it.fx.soften, 0, 1) * .75; ctx.filter = `blur(${(5 * W / 540).toFixed(1)}px) brightness(1.04)`; ctx.drawImage(src, sx, sy, sw, sh, -w / 2, -h / 2, w, h); ctx.globalAlpha = ga; }
+  if ((it.fx || {}).soften > 0) { const ga = ctx.globalAlpha; ctx.globalAlpha = ga * clamp(it.fx.soften, 0, 1) * .75; ctx.filter = `blur(${(5 * Math.min(W, H) / 540).toFixed(1)}px) brightness(1.04)`; ctx.drawImage(src, sx, sy, sw, sh, -w / 2, -h / 2, w, h); ctx.globalAlpha = ga; }
   ctx.filter = 'none';
   ctx.restore();
   if (mk.type === 'circle') {
@@ -1675,7 +1685,7 @@ function applyTrans(ctx, T, p, W, H, ex) {
   const e = EASE.out(p);
   switch (T) {
     case 'fade': ctx.globalAlpha *= p; break;
-    case 'blur': ctx.globalAlpha *= p; ex.blur = (1 - p) * 22 * (W / 1080); break;
+    case 'blur': ctx.globalAlpha *= p; ex.blur = (1 - p) * 22 * (Math.min(W, H) / 1080); break;
     case 'slideL': ctx.translate((1 - e) * W, 0); break;
     case 'slideR': ctx.translate(-(1 - e) * W, 0); break;
     case 'slideU': ctx.translate(0, (1 - e) * H); break;
@@ -1723,7 +1733,7 @@ function drawMediaItem0(ctx, it, t, W, H) {
   }
   // buffered path
   const buf = getBuf(0, W, H);
-  if (!drawMediaContent(buf.ctx, it, t, W, H, T === 'blur' ? { blur: (1 - p) * 22 * W / 1080 } : {})) return;
+  if (!drawMediaContent(buf.ctx, it, t, W, H, T === 'blur' ? { blur: (1 - p) * 22 * Math.min(W, H) / 1080 } : {})) return;
   postFx(buf, it, t, W, H);
   ctx.save();
   if (T && T.startsWith('wipe')) {
@@ -1737,10 +1747,10 @@ function drawMediaItem0(ctx, it, t, W, H) {
     if (e <= 0) { g = null; }
     if (g) { g.addColorStop(0, 'rgba(0,0,0,1)'); c.fillStyle = g; c.fillRect(0, 0, W, H); } else { c.clearRect(0, 0, W, H); }
     c.restore();
-    if (T === 'wipeBlur') { ctx.filter = `blur(${((1 - p) * 8 * W / 1080).toFixed(1)}px)`; }
+    if (T === 'wipeBlur') { ctx.filter = `blur(${((1 - p) * 8 * Math.min(W, H) / 1080).toFixed(1)}px)`; }
     ctx.drawImage(buf, 0, 0); ctx.filter = 'none';
   } else if (T === 'card3d') {
-    const card = getBuf(1, W, H), cc = card.ctx; const k = .9, b = 14 * W / 1080;
+    const card = getBuf(1, W, H), cc = card.ctx; const k = .9, b = 14 * Math.min(W, H) / 1080;
     cc.save(); cc.translate(W / 2, H / 2); cc.shadowColor = 'rgba(0,0,0,.4)'; cc.shadowBlur = 20; cc.fillStyle = '#fff';
     rrPath(cc, -W * k / 2 - b, -H * k / 2 - b, W * k + 2 * b, H * k + 2 * b, 10); cc.fill(); cc.shadowBlur = 0;
     cc.beginPath(); cc.rect(-W * k / 2, -H * k / 2, W * k, H * k); cc.clip(); cc.drawImage(buf, -W * k / 2, -H * k / 2, W * k, H * k); cc.restore();
@@ -1770,7 +1780,7 @@ function parseRuns(line) {  // *highlight* markers
   return runs.length ? runs : [{ s: '', hl: false }];
 }
 function layoutText(ctx, it, W) {
-  const size = it.size * W / 1080; ctx.font = `${it.weight || 700} ${size}px ${it.font || FONT_STACK}`;
+  const size = it.size * Math.min(W, H) / 1080; ctx.font = `${it.weight || 700} ${size}px ${it.font || FONT_STACK}`;
   const maxW = (it.maxW || .88) * W;
   const rows = [];   // each: {li, toks:[{s,hl,w}], w}
   const srcLines = String(it.text || '').split('\n');
@@ -1846,7 +1856,7 @@ function drawText(ctx, it, t, W, H) {
         ctx.textAlign = 'left';
         ctx.save(); ctx.globalAlpha *= rowAlpha;
         if (it.shadow && ei === 0) { ctx.shadowColor = 'rgba(0,0,0,.65)'; ctx.shadowBlur = size * .18; ctx.shadowOffsetY = size * .05; }
-        if (it.stroke && it.strokeW) { ctx.lineWidth = it.strokeW * W / 1080; ctx.strokeStyle = it.stroke; ctx.strokeText(str, x, y); ctx.shadowColor = 'transparent'; }
+        if (it.stroke && it.strokeW) { ctx.lineWidth = it.strokeW * Math.min(W, H) / 1080; ctx.strokeStyle = it.stroke; ctx.strokeText(str, x, y); ctx.shadowColor = 'transparent'; }
         ctx.fillStyle = col; ctx.fillText(str, x, y); ctx.restore();
         x += k.w;
       });
@@ -1861,7 +1871,7 @@ function drawText(ctx, it, t, W, H) {
 function drawSticker(ctx, it, t, W, H) {
   const lt = t - it.start; if (lt < 0) return;
   const ap = textAnimParams(it, lt, W, H);
-  const S = it.size * W / 1080; const xs = prop(it, 's', t), xx = prop(it, 'x', t), yy = prop(it, 'y', t), rr = prop(it, 'r', t), oo = prop(it, 'o', t);
+  const S = it.size * Math.min(W, H) / 1080; const xs = prop(it, 's', t), xx = prop(it, 'x', t), yy = prop(it, 'y', t), rr = prop(it, 'r', t), oo = prop(it, 'o', t);
   const cx = W / 2 + xx * W + ap.dx, cy = (it.ay ?? .5) * H + yy * H + ap.dy;
   BOUNDS[it.id] = { cx, cy, w: S, h: S, rot: rr };
   ctx.save(); ctx.globalAlpha *= clamp(ap.a * oo, 0, 1); ctx.translate(cx, cy); ctx.rotate(rr * Math.PI / 180); const sc = ap.s * xs; ctx.scale(sc, sc);
@@ -2757,7 +2767,7 @@ function renderInspector() {
   box.innerHTML = cardify(h); bindInspector(it);
 }
 function projectInspector() {
-  return `<div class="ihead"><b>โปรเจกต์</b></div><div class="hint">ขนาดวิดีโอ 1080×1920 (9:16) · ความยาวรวม ${fmt(projectEnd())}</div>
+  return `<div class="ihead"><b>โปรเจกต์</b></div><div class="hint">ขนาดวิดีโอ <span translate="no">${D.w}×${D.h} (${aspectName(D.w, D.h)})</span> · ความยาวรวม ${fmt(projectEnd())}</div>
   ${R('ระดับเสียงเพลงตอนมีคนพูด', 'duckLevel', .05, 1, .01, D)}
   <div class="sec">ทางลัด</div><div class="btnrow"><button data-act="gaps">ชิดคลิปวิดีโอ 1 (ลบช่องว่าง)</button></div>
   <div class="hint small">ปุ่มลัด: Space เล่น/หยุด · S ตัด · Delete ลบ · Shift+Delete ลบแล้วดึงคลิปตามมา · ⌘Z ย้อนกลับ · ⌘⇧Z ทำซ้ำ · ←/→ ขยับ 1 เฟรม · ⌘+ลูกกลิ้ง ซูมไทม์ไลน์</div>`;
@@ -3207,7 +3217,29 @@ function apoolRelease(id) { const r = APOOL.get(id); if (!r) return; try { r.el.
 
 // ---------- transport state ----------
 const PB = { playing: false, t: 0, t0: 0, wall0: 0, exporting: false, duck: 1, lastTick: 0 };
-const PW = 540, PH = 960;
+let PW = 540, PH = 960;
+const ASPECTS = [['9:16', 1080, 1920], ['1:1', 1080, 1080], ['4:5', 1080, 1350], ['16:9', 1920, 1080], ['4:3', 1440, 1080]];
+function aspectName(w, h) { const a = ASPECTS.find(x => x[1] === w && x[2] === h); return a ? a[0] : w + '×' + h; }
+function fitStage() {
+  const c = $('#center'), st = $('#stage'); if (!c || !st || !c.clientWidth) return;
+  const cs = getComputedStyle(c), w = D.w || 1080, h = D.h || 1920;
+  st.style.flex = 'none'; st.style.width = '0px'; st.style.height = '0px';
+  const kids = [...c.children].filter(k => k.offsetParent !== null || k === st);
+  const gap = parseFloat(cs.rowGap) || 0; let used = gap * (kids.length - 1);
+  for (const k of kids) if (k !== st) used += k.offsetHeight;
+  const aw = c.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  const ah = c.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - used;
+  const k = Math.max(0, Math.min(aw / w, ah / h));
+  st.style.width = Math.floor(w * k) + 'px'; st.style.height = Math.floor(h * k) + 'px';
+}
+function applyAspect() {
+  const w = D.w || 1080, h = D.h || 1920; PW = Math.round(w / 2); PH = Math.round(h / 2);
+  for (const id of ['#pv', '#ov']) { const c = $(id); if (c && (c.width !== PW || c.height !== PH)) { c.width = PW; c.height = PH; } }
+  const st = $('#stage'); if (st) st.style.aspectRatio = w + ' / ' + h;
+  const sel = $('#ratioSel'); if (sel) sel.value = aspectName(w, h);
+  const rs = $('#expRes'); if (rs) rs.textContent = w + '×' + h;
+  DIRTY = true; if (typeof fitStage === 'function') fitStage();
+}
 let PCANVAS = null, PCTX = null;
 const durEnd = () => Math.max(0.1, projectEnd());
 
@@ -3372,6 +3404,7 @@ function tick() {
   if (SRC.m) { srcFrame(); }
   else if (!PB.exporting) {
     syncMedia(false);
+    if (PW * 2 !== D.w || PH * 2 !== D.h) applyAspect();
     if (DIRTY || PB.playing) { renderFrame(PCTX, PW, PH, PB.t); DIRTY = false; if (window.onFrame) window.onFrame(); }
   }
   requestAnimationFrame(tick);
@@ -3422,7 +3455,7 @@ async function runExport(opts) {
   const bar = $('#expBar'), msg = $('#expMsg');
   if (!D.items.length) { toast('ยังไม่มีอะไรในไทม์ไลน์'); return null; }
   EXP.running = true; EXP.cancel = false; pause(); ensureAudio(); await AC.resume();
-  const W = opts.w || 1080, H = opts.h || 1920, FPS = 30, total = durEnd();
+  const W = opts.w || D.w || 1080, H = opts.h || D.h || 1920, FPS = 30, total = durEnd();
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const ctx = cv.getContext('2d', { alpha: false });
   const mime = pickMime(); const ext = mime.startsWith('video/mp4') ? 'mp4' : 'webm';
   const stream = cv.captureStream(FPS); const at = EXPDEST.stream.getAudioTracks()[0]; if (at) stream.addTrack(at);
@@ -3939,6 +3972,9 @@ async function ensureSfx() {
 async function init() {
   $('#verTag').textContent = 'v' + APP_VERSION;
   PCANVAS = $('#pv'); PCTX = PCANVAS.getContext('2d');
+  $('#ratioSel').onchange = e => { const a = ASPECTS.find(x => x[0] === e.target.value); if (!a) return; D.w = a[1]; D.h = a[2]; applyAspect(); commit('ratio'); renderInspector && renderInspector(); };
+  try { new ResizeObserver(() => fitStage()).observe($('#center')); } catch (e) { }
+  window.addEventListener('resize', fitStage); applyAspect();
   buildLeft(); initTimelineEvents(); initPreviewInteraction();
   try { await Promise.race([Promise.all(['800 40px Prompt', '700 40px "Noto Sans Lao"', '700 40px "Noto Sans Thai"'].map(f => document.fonts.load(f, 'กຂaA'))), sleep(4000)]); } catch (e) { }
   try { const n = await restoreMedia(); if (n) toast(`กู้คืนไฟล์ที่นำเข้าไว้ ${n} ไฟล์`); } catch (e) { console.warn(e); }

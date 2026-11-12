@@ -260,3 +260,7 @@ main{padding:0}
 .icard .fld input[type=range]{height:4px}
 #tlbar button{border-radius:8px}
 .clip{border-radius:6px}
+
+/* v1.14 aspect ratio selector */
+select.ratio{appearance:none;-webkit-appearance:none;border:1px solid var(--ln);color:var(--tx);cursor:pointer;padding:3px 22px 3px 10px;background:var(--p3) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23999' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 7px center}
+select.ratio:hover{border-color:var(--ac)}

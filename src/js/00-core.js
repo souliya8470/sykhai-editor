@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.13
-// APP_VERSION_PREV : 1.12
-// APP_VERSION_PREV_OLDER : 1.11
+// APP_VERSION  : 1.14
+// APP_VERSION_PREV : 1.13
+// APP_VERSION_PREV_OLDER : 1.12
+// 1.14 : aspect ratio selector in the player (9:16, 1:1, 4:5, 16:9, 4:3) — preview, overlay handles and MP4 export follow the project size; text/blur scale by the short side
 // 1.13 : MyCut-style look — rounded card panels, icon tabs on the left, media filter (all/video/image/audio), teal timecode + big round play button, inspector sections as cards with their own reset button
 // 1.12 : CapCut-style clip look (teal, thumbnails, timecode label), fade in/out handles on clips, tabbed inspector (Video/Audio/Speed/Animation/Adjust), number boxes + reset on every slider, blend/canvas/chroma key/masks, voice changer, clip animations, curves/colour wheel/HSL
 // 1.11 : CapCut-style timeline toolbar (import, undo/redo, split, trim left/right Q/W, delete, ripple delete, markers M, magnet on Video 1, snapping toggle, zoom fit/in/out)
@@ -19,7 +20,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.13';
+const APP_VERSION = '1.14';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];

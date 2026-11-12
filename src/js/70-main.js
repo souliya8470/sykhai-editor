@@ -75,6 +75,9 @@ async function ensureSfx() {
 async function init() {
   $('#verTag').textContent = 'v' + APP_VERSION;
   PCANVAS = $('#pv'); PCTX = PCANVAS.getContext('2d');
+  $('#ratioSel').onchange = e => { const a = ASPECTS.find(x => x[0] === e.target.value); if (!a) return; D.w = a[1]; D.h = a[2]; applyAspect(); commit('ratio'); renderInspector && renderInspector(); };
+  try { new ResizeObserver(() => fitStage()).observe($('#center')); } catch (e) { }
+  window.addEventListener('resize', fitStage); applyAspect();
   buildLeft(); initTimelineEvents(); initPreviewInteraction();
   try { await Promise.race([Promise.all(['800 40px Prompt', '700 40px "Noto Sans Lao"', '700 40px "Noto Sans Thai"'].map(f => document.fonts.load(f, 'กຂaA'))), sleep(4000)]); } catch (e) { }
   try { const n = await restoreMedia(); if (n) toast(`กู้คืนไฟล์ที่นำเข้าไว้ ${n} ไฟล์`); } catch (e) { console.warn(e); }

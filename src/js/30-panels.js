@@ -205,7 +205,7 @@ function renderInspector() {
   box.innerHTML = cardify(h); bindInspector(it);
 }
 function projectInspector() {
-  return `<div class="ihead"><b>โปรเจกต์</b></div><div class="hint">ขนาดวิดีโอ 1080×1920 (9:16) · ความยาวรวม ${fmt(projectEnd())}</div>
+  return `<div class="ihead"><b>โปรเจกต์</b></div><div class="hint">ขนาดวิดีโอ <span translate="no">${D.w}×${D.h} (${aspectName(D.w, D.h)})</span> · ความยาวรวม ${fmt(projectEnd())}</div>
   ${R('ระดับเสียงเพลงตอนมีคนพูด', 'duckLevel', .05, 1, .01, D)}
   <div class="sec">ทางลัด</div><div class="btnrow"><button data-act="gaps">ชิดคลิปวิดีโอ 1 (ลบช่องว่าง)</button></div>
   <div class="hint small">ปุ่มลัด: Space เล่น/หยุด · S ตัด · Delete ลบ · Shift+Delete ลบแล้วดึงคลิปตามมา · ⌘Z ย้อนกลับ · ⌘⇧Z ทำซ้ำ · ←/→ ขยับ 1 เฟรม · ⌘+ลูกกลิ้ง ซูมไทม์ไลน์</div>`;

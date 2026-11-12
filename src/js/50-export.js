@@ -20,7 +20,7 @@ async function runExport(opts) {
   const bar = $('#expBar'), msg = $('#expMsg');
   if (!D.items.length) { toast('ยังไม่มีอะไรในไทม์ไลน์'); return null; }
   EXP.running = true; EXP.cancel = false; pause(); ensureAudio(); await AC.resume();
-  const W = opts.w || 1080, H = opts.h || 1920, FPS = 30, total = durEnd();
+  const W = opts.w || D.w || 1080, H = opts.h || D.h || 1920, FPS = 30, total = durEnd();
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const ctx = cv.getContext('2d', { alpha: false });
   const mime = pickMime(); const ext = mime.startsWith('video/mp4') ? 'mp4' : 'webm';
   const stream = cv.captureStream(FPS); const at = EXPDEST.stream.getAudioTracks()[0]; if (at) stream.addTrack(at);

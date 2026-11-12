@@ -34,7 +34,7 @@
       </div>
     </aside>
     <section id="center">
-      <div class="ptitle"><b>เครื่องเล่น</b><span class="ratio">9:16</span></div>
+      <div class="ptitle"><b>เครื่องเล่น</b><select id="ratioSel" class="ratio" title="สัดส่วนจอ" translate="no"><option>9:16</option><option>1:1</option><option>4:5</option><option>16:9</option><option>4:3</option></select></div>
       <div id="stage"><canvas id="pv" width="540" height="960"></canvas><canvas id="ov" width="540" height="960"></canvas><div id="srcBadge" hidden><span>ดูตัวอย่างไฟล์ — <b id="srcName" translate="no"></b></span><button id="srcClose" title="กลับไปดูไทม์ไลน์">กลับไทม์ไลน์</button></div></div>
       <div id="transport">
         <div class="tpl"><span id="tpTime">00:00.0 / 00:00.0</span><span id="vu" title="ระดับเสียง"><i></i></span></div>
@@ -92,7 +92,7 @@
 </dialog>
 <dialog id="dlgExport">
   <h3>ส่งออกวิดีโอ MP4</h3>
-  <div class="hint">1080×1920 · 30fps · ไม่มีลายน้ำ — ระบบเล่นไทม์ไลน์แบบเรียลไทม์เพื่อบันทึก (คลิปยาว 60 วิ = ใช้เวลา ~60 วิ) <b>ห้ามปิด/สลับแท็บขณะส่งออก</b></div>
+  <div class="hint"><span id="expRes" translate="no">1080×1920</span> · 30fps · ไม่มีลายน้ำ — ระบบเล่นไทม์ไลน์แบบเรียลไทม์เพื่อบันทึก (คลิปยาว 60 วิ = ใช้เวลา ~60 วิ) <b>ห้ามปิด/สลับแท็บขณะส่งออก</b></div>
   <div class="fld"><label>คุณภาพ</label><select id="expQ"><option value="12000000">สูง (12 Mbps)</option><option value="8000000" selected>มาตรฐาน (8 Mbps)</option><option value="5000000">ประหยัด (5 Mbps)</option></select></div>
   <div class="progress"><div id="expBar"></div></div><div id="expMsg" class="hint"></div>
   <div class="row"><span class="sp"></span><button id="expCancel">ปิด</button><button id="expGo" class="primary">เริ่มส่งออก</button></div>

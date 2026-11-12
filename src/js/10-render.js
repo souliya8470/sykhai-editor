@@ -93,7 +93,7 @@ function drawMediaContent(ctx, it, t, W, H, extra) {
   const [sw0, sh0] = srcSize(src);
   const lt = t - it.start;
   const s = prop(it, 's', t), x = prop(it, 'x', t), y = prop(it, 'y', t); let r = prop(it, 'r', t); const o = prop(it, 'o', t);
-  const A = mediaAnim(it, lt); if (A) { r += A.r; extra = Object.assign({}, extra, { alpha: (extra.alpha ?? 1) * A.a, blur: (extra.blur || 0) + A.blur * W / 1080, dx: (extra.dx || 0) + A.dx * W, dy: (extra.dy || 0) + A.dy * H }); }
+  const A = mediaAnim(it, lt); if (A) { r += A.r; extra = Object.assign({}, extra, { alpha: (extra.alpha ?? 1) * A.a, blur: (extra.blur || 0) + A.blur * Math.min(W, H) / 1080, dx: (extra.dx || 0) + A.dx * W, dy: (extra.dy || 0) + A.dy * H }); }
   let fw = W, fh = H, sx = 0, sy = 0, sw = sw0, sh = sh0;
   if (it.fit === 'contain') {
     const k = Math.min(W / sw0, H / sh0); fw = sw0 * k; fh = sh0 * k;
@@ -115,7 +115,7 @@ function drawMediaContent(ctx, it, t, W, H, extra) {
     if (it.bg === 'color') { ctx.fillStyle = it.bgColor || '#000000'; ctx.fillRect(0, 0, W, H); }
     else {
       const ka = W / H, sa = sw0 / sh0; let bx = 0, by = 0, bw = sw0, bh = sh0; if (sa > ka) { bw = sh0 * ka; bx = (sw0 - bw) / 2; } else { bh = sw0 / ka; by = (sh0 - bh) / 2; }
-      ctx.filter = `blur(${(22 * W / 1080).toFixed(1)}px) brightness(.72)`; ctx.drawImage(src, bx, by, bw, bh, -W * .06, -H * .06, W * 1.12, H * 1.12); ctx.filter = 'none';
+      ctx.filter = `blur(${(22 * Math.min(W, H) / 1080).toFixed(1)}px) brightness(.72)`; ctx.drawImage(src, bx, by, bw, bh, -W * .06, -H * .06, W * 1.12, H * 1.12); ctx.filter = 'none';
     }
     ctx.restore();
   }
@@ -129,8 +129,8 @@ function drawMediaContent(ctx, it, t, W, H, extra) {
     ctx.save(); rrPath(ctx, -w / 2, -h / 2, w, h, Math.min(w, h) * (mk.r ?? 0.06)); ctx.clip();
   } else if (mk.type === 'frame') {
     const b = (mk.ring ?? 0.014) * W * (mk.scale ?? 1);
-    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 18 * (W / 1080); ctx.fillStyle = '#fff';
-    rrPath(ctx, -w / 2 - b, -h / 2 - b, w + 2 * b, h + 2 * b, 6 * W / 1080); ctx.fill(); ctx.restore();
+    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 18 * (Math.min(W, H) / 1080); ctx.fillStyle = '#fff';
+    rrPath(ctx, -w / 2 - b, -h / 2 - b, w + 2 * b, h + 2 * b, 6 * Math.min(W, H) / 1080); ctx.fill(); ctx.restore();
     ctx.save(); ctx.beginPath(); ctx.rect(-w / 2, -h / 2, w, h); ctx.clip();
   } else if (mk.type === 'star' || mk.type === 'heart') {
     ctx.save(); ctx.beginPath(); const R0 = Math.min(w, h) / 2 * (mk.size || 1);
@@ -140,7 +140,7 @@ function drawMediaContent(ctx, it, t, W, H, extra) {
   } else { ctx.save(); }
   ctx.filter = filterString(it, extra.blur);
   ctx.drawImage(src, sx, sy, sw, sh, -w / 2, -h / 2, w, h);
-  if ((it.fx || {}).soften > 0) { const ga = ctx.globalAlpha; ctx.globalAlpha = ga * clamp(it.fx.soften, 0, 1) * .75; ctx.filter = `blur(${(5 * W / 540).toFixed(1)}px) brightness(1.04)`; ctx.drawImage(src, sx, sy, sw, sh, -w / 2, -h / 2, w, h); ctx.globalAlpha = ga; }
+  if ((it.fx || {}).soften > 0) { const ga = ctx.globalAlpha; ctx.globalAlpha = ga * clamp(it.fx.soften, 0, 1) * .75; ctx.filter = `blur(${(5 * Math.min(W, H) / 540).toFixed(1)}px) brightness(1.04)`; ctx.drawImage(src, sx, sy, sw, sh, -w / 2, -h / 2, w, h); ctx.globalAlpha = ga; }
   ctx.filter = 'none';
   ctx.restore();
   if (mk.type === 'circle') {
@@ -327,7 +327,7 @@ function applyTrans(ctx, T, p, W, H, ex) {
   const e = EASE.out(p);
   switch (T) {
     case 'fade': ctx.globalAlpha *= p; break;
-    case 'blur': ctx.globalAlpha *= p; ex.blur = (1 - p) * 22 * (W / 1080); break;
+    case 'blur': ctx.globalAlpha *= p; ex.blur = (1 - p) * 22 * (Math.min(W, H) / 1080); break;
     case 'slideL': ctx.translate((1 - e) * W, 0); break;
     case 'slideR': ctx.translate(-(1 - e) * W, 0); break;
     case 'slideU': ctx.translate(0, (1 - e) * H); break;
@@ -375,7 +375,7 @@ function drawMediaItem0(ctx, it, t, W, H) {
   }
   // buffered path
   const buf = getBuf(0, W, H);
-  if (!drawMediaContent(buf.ctx, it, t, W, H, T === 'blur' ? { blur: (1 - p) * 22 * W / 1080 } : {})) return;
+  if (!drawMediaContent(buf.ctx, it, t, W, H, T === 'blur' ? { blur: (1 - p) * 22 * Math.min(W, H) / 1080 } : {})) return;
   postFx(buf, it, t, W, H);
   ctx.save();
   if (T && T.startsWith('wipe')) {
@@ -389,10 +389,10 @@ function drawMediaItem0(ctx, it, t, W, H) {
     if (e <= 0) { g = null; }
     if (g) { g.addColorStop(0, 'rgba(0,0,0,1)'); c.fillStyle = g; c.fillRect(0, 0, W, H); } else { c.clearRect(0, 0, W, H); }
     c.restore();
-    if (T === 'wipeBlur') { ctx.filter = `blur(${((1 - p) * 8 * W / 1080).toFixed(1)}px)`; }
+    if (T === 'wipeBlur') { ctx.filter = `blur(${((1 - p) * 8 * Math.min(W, H) / 1080).toFixed(1)}px)`; }
     ctx.drawImage(buf, 0, 0); ctx.filter = 'none';
   } else if (T === 'card3d') {
-    const card = getBuf(1, W, H), cc = card.ctx; const k = .9, b = 14 * W / 1080;
+    const card = getBuf(1, W, H), cc = card.ctx; const k = .9, b = 14 * Math.min(W, H) / 1080;
     cc.save(); cc.translate(W / 2, H / 2); cc.shadowColor = 'rgba(0,0,0,.4)'; cc.shadowBlur = 20; cc.fillStyle = '#fff';
     rrPath(cc, -W * k / 2 - b, -H * k / 2 - b, W * k + 2 * b, H * k + 2 * b, 10); cc.fill(); cc.shadowBlur = 0;
     cc.beginPath(); cc.rect(-W * k / 2, -H * k / 2, W * k, H * k); cc.clip(); cc.drawImage(buf, -W * k / 2, -H * k / 2, W * k, H * k); cc.restore();
@@ -422,7 +422,7 @@ function parseRuns(line) {  // *highlight* markers
   return runs.length ? runs : [{ s: '', hl: false }];
 }
 function layoutText(ctx, it, W) {
-  const size = it.size * W / 1080; ctx.font = `${it.weight || 700} ${size}px ${it.font || FONT_STACK}`;
+  const size = it.size * Math.min(W, H) / 1080; ctx.font = `${it.weight || 700} ${size}px ${it.font || FONT_STACK}`;
   const maxW = (it.maxW || .88) * W;
   const rows = [];   // each: {li, toks:[{s,hl,w}], w}
   const srcLines = String(it.text || '').split('\n');
@@ -498,7 +498,7 @@ function drawText(ctx, it, t, W, H) {
         ctx.textAlign = 'left';
         ctx.save(); ctx.globalAlpha *= rowAlpha;
         if (it.shadow && ei === 0) { ctx.shadowColor = 'rgba(0,0,0,.65)'; ctx.shadowBlur = size * .18; ctx.shadowOffsetY = size * .05; }
-        if (it.stroke && it.strokeW) { ctx.lineWidth = it.strokeW * W / 1080; ctx.strokeStyle = it.stroke; ctx.strokeText(str, x, y); ctx.shadowColor = 'transparent'; }
+        if (it.stroke && it.strokeW) { ctx.lineWidth = it.strokeW * Math.min(W, H) / 1080; ctx.strokeStyle = it.stroke; ctx.strokeText(str, x, y); ctx.shadowColor = 'transparent'; }
         ctx.fillStyle = col; ctx.fillText(str, x, y); ctx.restore();
         x += k.w;
       });
@@ -513,7 +513,7 @@ function drawText(ctx, it, t, W, H) {
 function drawSticker(ctx, it, t, W, H) {
   const lt = t - it.start; if (lt < 0) return;
   const ap = textAnimParams(it, lt, W, H);
-  const S = it.size * W / 1080; const xs = prop(it, 's', t), xx = prop(it, 'x', t), yy = prop(it, 'y', t), rr = prop(it, 'r', t), oo = prop(it, 'o', t);
+  const S = it.size * Math.min(W, H) / 1080; const xs = prop(it, 's', t), xx = prop(it, 'x', t), yy = prop(it, 'y', t), rr = prop(it, 'r', t), oo = prop(it, 'o', t);
   const cx = W / 2 + xx * W + ap.dx, cy = (it.ay ?? .5) * H + yy * H + ap.dy;
   BOUNDS[it.id] = { cx, cy, w: S, h: S, rot: rr };
   ctx.save(); ctx.globalAlpha *= clamp(ap.a * oo, 0, 1); ctx.translate(cx, cy); ctx.rotate(rr * Math.PI / 180); const sc = ap.s * xs; ctx.scale(sc, sc);
