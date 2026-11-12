@@ -2,7 +2,7 @@
 //  Timeline UI + media bin
 // ============================================================
 const TL = { pps: 56, labelW: 96 };
-const TRACK_H = { video: 58, text: 36, audio: 44 };
+const TRACK_H = { video: 58, text: 42, audio: 46 };
 let TH = {}; try { TH = JSON.parse(localStorage.getItem('sk_trh') || '{}') || {}; } catch (e) { }
 const trackH = tr => TH[tr.id] || (tr.id === 'V1' ? 84 : TRACK_H[tr.kind]);
 const VOL_MAX = 1.5;
@@ -23,11 +23,21 @@ function clipLabel(it) {
   if (it.type === 'sticker') return { check: '✔', warning: '⚠', cursor: '☝', brackets: '▢', arrow: '⬇', star: '★', underline: '▁', circle: '◯', emoji: it.text || '😀' }[it.kind] + ' ' + it.kind;
   const m = MEDIA.get(it.mediaId); return m ? m.name : T('⚠ ไฟล์หาย: ') + mediaNameFromId(it.mediaId);
 }
+const TIC = {
+  lock: ['<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>', '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 7.5-2"/>'],
+  hide: ['<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>', '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path d="M4 4l16 16"/>'],
+  mute: ['<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/>', '<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/>']
+};
+function trIcons(tr) {
+  const st = trSt(tr.id), ks = tr.kind === 'video' ? ['lock', 'hide', 'mute'] : tr.kind === 'text' ? ['lock', 'hide'] : ['lock', 'mute'];
+  const tip = { lock: ['ล็อกแถวนี้ (กันแก้ไขโดยไม่ตั้งใจ)', 'ปลดล็อกแถวนี้'], hide: ['ซ่อนภาพของแถวนี้', 'แสดงภาพของแถวนี้'], mute: ['ปิดเสียงของแถวนี้', 'เปิดเสียงของแถวนี้'] };
+  return `<div class="tic-row">` + ks.map(k => `<button class="tic${st[k] ? ' on' : ''}" data-tk="${k}" title="${tip[k][st[k] ? 1 : 0]}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${TIC[k][st[k] ? 1 : 0]}</svg></button>`).join('') + `</div>`;
+}
 function renderTimeline() {
   const body = $('#tlbody'); if (!body) return;
   const sx = body.scrollLeft, sy = body.scrollTop; const W = tlWidth();
   let h = `<div id="tlinner" style="width:${TL.labelW + W}px"><div id="ruler"><div class="corner"></div><div class="rt" style="width:${W}px">${rulerTicks()}${(D.markers || []).map(m => `<i class="mk" data-id="${m.id}" style="left:${m.t * TL.pps}px" title="${T('มาร์กเกอร์ — ดับเบิลคลิกเพื่อลบ')}">⚑</i>`).join('')}</div></div>`;
-  for (const tr of TRACKS) h += `<div class="trow ${tr.kind}" data-track="${tr.id}" style="height:${trackH(tr)}px"><div class="tlabel">${tr.label}</div><div class="tlane" style="width:${W}px"></div><div class="trh" title="ลากเพื่อปรับความสูงของแถว"></div></div>`;
+  for (const tr of TRACKS) h += `<div class="trow ${tr.kind}${trSt(tr.id).lock ? ' locked' : ''}${trSt(tr.id).hide ? ' hidt' : ''}${trSt(tr.id).mute ? ' mutet' : ''}" data-track="${tr.id}" style="height:${trackH(tr)}px"><div class="tlabel"><div class="tn">${tr.label}</div>${trIcons(tr)}</div><div class="tlane" style="width:${W}px"></div><div class="trh" title="ลากเพื่อปรับความสูงของแถว"></div></div>`;
   h += `<div id="playhead"><i></i></div></div>`;
   body.innerHTML = h;
   for (const it of D.items) {
@@ -112,6 +122,7 @@ function initTimelineEvents() {
   const body = $('#tlbody');
   body.addEventListener('pointerdown', e => {
     if (e.button !== 0) return;
+    const tkb = e.target.closest('.tic'); if (tkb) { e.preventDefault(); e.stopPropagation(); trToggle(tkb.closest('.trow').dataset.track, tkb.dataset.tk); return; }
     const jn = e.target.closest('.junc'); if (jn) { select(jn.dataset.id); showTab('trans'); return; }
     const trh = e.target.closest('.trh'); if (trh) { e.preventDefault(); rowResizeStart(e, trh.closest('.trow')); return; }
     const vlu = e.target.closest('.vl u'); if (vlu) { e.preventDefault(); e.stopPropagation(); volDragStart(e, vlu.closest('.clip')); return; }

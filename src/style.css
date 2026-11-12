@@ -281,3 +281,51 @@ button.vt span{display:block;padding:3px 4px 5px;font-size:10.5px;line-height:1.
 .tile.on{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac)}
 #leftTabs button{font-size:9px;white-space:nowrap}
 #leftTabs button span{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+
+/* v1.15 track controls */
+.tlabel{display:flex;flex-direction:column;gap:3px;padding:3px 6px}
+.tlabel .tn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.25}
+.tic-row{display:flex;gap:2px}
+button.tic{padding:1px 4px;line-height:0;background:transparent;border:0;color:var(--mu);border-radius:5px;cursor:pointer}
+button.tic:hover{background:var(--p3);color:var(--tx)}
+button.tic.on{color:#ff9f43}
+.trow.locked .clip{pointer-events:none;opacity:.55}
+.trow.locked .tlane{background-color:rgba(255,159,67,.05)}
+.trow.hidt .tlane{opacity:.4}
+.trow.mutet .clip .wf,.trow.mutet .clip canvas.wf{opacity:.3}
+
+/* v1.16 phone layout */
+#mnav{display:none}
+@media (max-width:820px){
+  #app{height:100vh;height:100dvh;width:100%;grid-template-columns:minmax(0,1fr);grid-template-rows:46px 40dvh minmax(0,1fr) 56px}
+  main{display:contents}
+  #top{grid-row:1;gap:6px;padding:0 8px}
+  #top .logo,#top .brand,#top #projName,#top #btnUndo,#top #btnRedo,#top #costBadge,#top #btnSave,#top #btnOpen,#top .ver,#top #srvBadge{display:none}
+  #top button{padding:7px 10px;font-size:13px;min-height:36px}
+  #top #btnHome,#top #btnSettings,#top #btnSaveNow{font-size:0;padding:7px 12px}
+  #top #btnHome::before{content:'🏠';font-size:18px}#top #btnSettings::before{content:'⚙';font-size:18px}#top #btnSaveNow::before{content:'✔';font-size:17px}
+  #top select{max-width:92px;font-size:12px}
+  #center{grid-row:2;grid-column:1;margin:0 8px;padding:0 6px 6px;gap:6px;min-height:0}
+  .ptitle{padding:6px 4px 2px}.ptitle b{display:none}.ptitle .ratio{margin-left:auto}
+  #transport{grid-template-columns:1fr auto 1fr;gap:4px}
+  #transport .tpr,#transport #vu,#transport #srcSeek{display:none}
+  #transport #tpTime{font-size:12px}
+  #tl{grid-row:3;grid-column:1;margin:6px 8px;min-height:0}
+  #left,#right{grid-row:3;grid-column:1;margin:6px 8px;display:none;min-height:0;z-index:5}
+  #app[data-m=media] #left{display:flex}#app[data-m=insp] #right{display:flex}
+  #app[data-m=media] #tl,#app[data-m=insp] #tl{display:none}
+  .split{display:none}
+  #mnav{display:flex;grid-row:4;grid-column:1;background:var(--p1);border-top:1px solid var(--ln);padding-bottom:env(safe-area-inset-bottom)}
+  #mnav button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:transparent;border:0;border-radius:0;color:var(--mu);font-size:11px;border-top:2px solid transparent}
+  #mnav button.on{color:var(--ac);border-top-color:var(--ac)}
+  #leftTabs{overflow-x:auto;justify-content:flex-start}
+  #leftTabs button{flex:0 0 66px;font-size:10.5px}
+  #tlbar{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}#tlbar button{flex:none;min-width:36px;min-height:36px}
+  #tlbody{touch-action:pan-x pan-y}.clip,.clip .th,.clip .fh{touch-action:none}
+  button,select,input{min-height:34px}button.tic{min-height:0;padding:2px 6px}
+  .vgrid{grid-template-columns:repeat(2,1fr)}.sk-grid{grid-template-columns:repeat(3,1fr)}
+  .tiles{grid-template-columns:repeat(3,1fr)}
+  .rr{flex-wrap:wrap}.rr input[type=range]{min-width:120px}
+}
+
+.tlabel .tn{font-size:10.5px}

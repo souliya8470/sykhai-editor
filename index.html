@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.15</title>
+<title>Sykhai Editor v1.16</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -289,6 +289,54 @@ button.vt span{display:block;padding:3px 4px 5px;font-size:10.5px;line-height:1.
 #leftTabs button{font-size:9px;white-space:nowrap}
 #leftTabs button span{max-width:100%;overflow:hidden;text-overflow:ellipsis}
 
+/* v1.15 track controls */
+.tlabel{display:flex;flex-direction:column;gap:3px;padding:3px 6px}
+.tlabel .tn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.25}
+.tic-row{display:flex;gap:2px}
+button.tic{padding:1px 4px;line-height:0;background:transparent;border:0;color:var(--mu);border-radius:5px;cursor:pointer}
+button.tic:hover{background:var(--p3);color:var(--tx)}
+button.tic.on{color:#ff9f43}
+.trow.locked .clip{pointer-events:none;opacity:.55}
+.trow.locked .tlane{background-color:rgba(255,159,67,.05)}
+.trow.hidt .tlane{opacity:.4}
+.trow.mutet .clip .wf,.trow.mutet .clip canvas.wf{opacity:.3}
+
+/* v1.16 phone layout */
+#mnav{display:none}
+@media (max-width:820px){
+  #app{height:100vh;height:100dvh;width:100%;grid-template-columns:minmax(0,1fr);grid-template-rows:46px 40dvh minmax(0,1fr) 56px}
+  main{display:contents}
+  #top{grid-row:1;gap:6px;padding:0 8px}
+  #top .logo,#top .brand,#top #projName,#top #btnUndo,#top #btnRedo,#top #costBadge,#top #btnSave,#top #btnOpen,#top .ver,#top #srvBadge{display:none}
+  #top button{padding:7px 10px;font-size:13px;min-height:36px}
+  #top #btnHome,#top #btnSettings,#top #btnSaveNow{font-size:0;padding:7px 12px}
+  #top #btnHome::before{content:'🏠';font-size:18px}#top #btnSettings::before{content:'⚙';font-size:18px}#top #btnSaveNow::before{content:'✔';font-size:17px}
+  #top select{max-width:92px;font-size:12px}
+  #center{grid-row:2;grid-column:1;margin:0 8px;padding:0 6px 6px;gap:6px;min-height:0}
+  .ptitle{padding:6px 4px 2px}.ptitle b{display:none}.ptitle .ratio{margin-left:auto}
+  #transport{grid-template-columns:1fr auto 1fr;gap:4px}
+  #transport .tpr,#transport #vu,#transport #srcSeek{display:none}
+  #transport #tpTime{font-size:12px}
+  #tl{grid-row:3;grid-column:1;margin:6px 8px;min-height:0}
+  #left,#right{grid-row:3;grid-column:1;margin:6px 8px;display:none;min-height:0;z-index:5}
+  #app[data-m=media] #left{display:flex}#app[data-m=insp] #right{display:flex}
+  #app[data-m=media] #tl,#app[data-m=insp] #tl{display:none}
+  .split{display:none}
+  #mnav{display:flex;grid-row:4;grid-column:1;background:var(--p1);border-top:1px solid var(--ln);padding-bottom:env(safe-area-inset-bottom)}
+  #mnav button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:transparent;border:0;border-radius:0;color:var(--mu);font-size:11px;border-top:2px solid transparent}
+  #mnav button.on{color:var(--ac);border-top-color:var(--ac)}
+  #leftTabs{overflow-x:auto;justify-content:flex-start}
+  #leftTabs button{flex:0 0 66px;font-size:10.5px}
+  #tlbar{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}#tlbar button{flex:none;min-width:36px;min-height:36px}
+  #tlbody{touch-action:pan-x pan-y}.clip,.clip .th,.clip .fh{touch-action:none}
+  button,select,input{min-height:34px}button.tic{min-height:0;padding:2px 6px}
+  .vgrid{grid-template-columns:repeat(2,1fr)}.sk-grid{grid-template-columns:repeat(3,1fr)}
+  .tiles{grid-template-columns:repeat(3,1fr)}
+  .rr{flex-wrap:wrap}.rr input[type=range]{min-width:120px}
+}
+
+.tlabel .tn{font-size:10.5px}
+
 </style></head>
 <body>
 <div id="app">
@@ -359,6 +407,11 @@ button.vt span{display:block;padding:3px 4px 5px;font-size:10.5px;line-height:1.
     </div>
     <div id="tlbody"></div>
   </footer>
+  <nav id="mnav">
+    <button data-m="media"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M10 9l5 3-5 3z"/></svg><span>เครื่องมือ</span></button>
+    <button data-m="tl" class="on"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h12M3 12h18M3 17h9"/></svg><span>ไทม์ไลน์</span></button>
+    <button data-m="insp"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M8 14v6"/></svg><span>ปรับแต่ง</span></button>
+  </nav>
   <div class="split v" id="spL" title="ลากเพื่อปรับความกว้าง"></div><div class="split v" id="spR" title="ลากเพื่อปรับความกว้าง"></div><div class="split h" id="spT" title="ลากเพื่อปรับความสูงของไทม์ไลน์"></div>
 </div>
 
@@ -1191,6 +1244,15 @@ I18N_ROWS.push(
   ['กดเพื่อเพิ่มที่หัวอ่าน · ลากบนจอเพื่อย้าย', 'Click to add at the playhead · drag on the screen to move', 'ກົດເພື່ອເພີ່ມທີ່ຫົວອ່ານ · ລາກເທິງຈໍເພື່ອຍ້າຍ'],
   ['เลือกคลิปบนไทม์ไลน์ แล้วกดเพื่อใส่แอนิเมชัน · เอาเมาส์ชี้เพื่อดูตัวอย่าง', 'Select a clip on the timeline, then click to apply · hover to preview', 'ເລືອກຄລິບເທິງໄທມ໌ລາຍ ແລ້ວກົດເພື່ອໃສ່ແອນິເມຊັນ · ເອົາເມົ້າຊີ້ເພື່ອເບິ່ງຕົວຢ່າງ'],
   ['หน้ายิ้ม', 'Smileys', 'ໜ້າຍິ້ມ'], ['หัวใจ', 'Hearts', 'ຫົວໃຈ'], ['มือ', 'Hands', 'ມື'], ['สัญลักษณ์', 'Symbols', 'ສັນຍາລັກ'], ['สัตว์', 'Animals', 'ສັດ'], ['อาหาร', 'Food', 'ອາຫານ'],
+  ['เครื่องมือ', 'Tools', 'ເຄື່ອງມື'],
+  // v1.15 track controls + filters
+  ['ล็อกแถวนี้ (กันแก้ไขโดยไม่ตั้งใจ)', 'Lock this track (prevents accidental edits)', 'ລັອກແຖວນີ້ (ກັນແກ້ໄຂໂດຍບໍ່ຕັ້ງໃຈ)'],
+  ['ปลดล็อกแถวนี้', 'Unlock this track', 'ປົດລັອກແຖວນີ້'],
+  ['ซ่อนภาพของแถวนี้', 'Hide the picture of this track', 'ເຊື່ອງພາບຂອງແຖວນີ້'],
+  ['แสดงภาพของแถวนี้', 'Show the picture of this track', 'ສະແດງພາບຂອງແຖວນີ້'],
+  ['ปิดเสียงของแถวนี้', 'Mute this track', 'ປິດສຽງຂອງແຖວນີ້'],
+  ['เปิดเสียงของแถวนี้', 'Unmute this track', 'ເປີດສຽງຂອງແຖວນີ້'],
+  ['วินเทจ', 'Vintage', 'ວິນເທຈ'], ['ซีดจาง', 'Faded', 'ສີຈາງ'], ['ดราม่า', 'Drama', 'ດຣາມາ'], ['ป๊อป', 'Pop', 'ປ໊ອບ'], ['โทนเย็น', 'Cool tone', 'ໂທນເຢັນ'],
   // v1.14 aspect ratio
   ['ขนาดวิดีโอ', 'Video size', 'ຂະໜາດວິດີໂອ'],
   ['ความยาวรวม', 'total length', 'ຄວາມຍາວລວມ'],
@@ -1203,9 +1265,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.15
-// APP_VERSION_PREV : 1.14
-// APP_VERSION_PREV_OLDER : 1.13
+// APP_VERSION  : 1.16
+// APP_VERSION_PREV : 1.15
+// APP_VERSION_PREV_OLDER : 1.14
+// 1.16 : per-track lock / hide picture / mute icons on the timeline (saved with the project, respected by playback and export); 5 more colour filters (vintage, faded, drama, pop, cool tone)
 // 1.15 : HOTFIX for 1.14 (text did not render: layoutText lacked H) + MyCut-style left panes — text styles and stickers drawn as real previews over the project's own footage, emoji categories, new Animation tab (in/out/combo) with live hover previews, tab order like MyCut
 // 1.14 : aspect ratio selector in the player (9:16, 1:1, 4:5, 16:9, 4:3) — preview, overlay handles and MP4 export follow the project size; text/blur scale by the short side
 // 1.13 : MyCut-style look — rounded card panels, icon tabs on the left, media filter (all/video/image/audio), teal timecode + big round play button, inspector sections as cards with their own reset button
@@ -1222,7 +1285,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.15';
+const APP_VERSION = '1.16';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -1261,6 +1324,12 @@ const TRACKS = [
   { id: 'A2', kind: 'audio', label: 'เสียงเอฟเฟกต์' },
 ];
 const TRACK_KIND = Object.fromEntries(TRACKS.map(t => [t.id, t.kind]));
+const trSt = id => (D && D.tst && D.tst[id]) || {};   // per-track state: lock / hide (picture) / mute (sound)
+function trToggle(id, k) {
+  D.tst = D.tst || {}; const st = D.tst[id] = D.tst[id] || {}; st[k] = !st[k];
+  if (k === 'lock' && st.lock && SEL) { const it = getItem(SEL); if (it && it.track === id) select(null); }
+  commit('track'); if (typeof DIRTY !== 'undefined') DIRTY = true; renderTimeline();
+}
 const RENDER_ORDER = ['V1', 'V2', 'V3', 'T1', 'T2', 'T3'];
 
 function newDoc() { return { pid: uid(), created: Date.now(), name: T('โปรเจกต์ใหม่'), w: 1080, h: 1920, fps: 30, items: [], markers: [], duckLevel: 0.22, ver: 1 }; }
@@ -1928,6 +1997,7 @@ function renderFrame(ctx, W, H, t) {
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.filter = 'none';
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
   for (const tr of RENDER_ORDER) {
+    if (trSt(tr).hide) continue;
     for (const it of activeAt(tr, t)) {
       if (it.hidden) continue;
       if (it.type === 'video' || it.type === 'image') drawMediaItem(ctx, it, t, W, H);
@@ -1942,7 +2012,7 @@ function renderFrame(ctx, W, H, t) {
 //  Timeline UI + media bin
 // ============================================================
 const TL = { pps: 56, labelW: 96 };
-const TRACK_H = { video: 58, text: 36, audio: 44 };
+const TRACK_H = { video: 58, text: 42, audio: 46 };
 let TH = {}; try { TH = JSON.parse(localStorage.getItem('sk_trh') || '{}') || {}; } catch (e) { }
 const trackH = tr => TH[tr.id] || (tr.id === 'V1' ? 84 : TRACK_H[tr.kind]);
 const VOL_MAX = 1.5;
@@ -1963,11 +2033,21 @@ function clipLabel(it) {
   if (it.type === 'sticker') return { check: '✔', warning: '⚠', cursor: '☝', brackets: '▢', arrow: '⬇', star: '★', underline: '▁', circle: '◯', emoji: it.text || '😀' }[it.kind] + ' ' + it.kind;
   const m = MEDIA.get(it.mediaId); return m ? m.name : T('⚠ ไฟล์หาย: ') + mediaNameFromId(it.mediaId);
 }
+const TIC = {
+  lock: ['<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>', '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 7.5-2"/>'],
+  hide: ['<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>', '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path d="M4 4l16 16"/>'],
+  mute: ['<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/>', '<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/>']
+};
+function trIcons(tr) {
+  const st = trSt(tr.id), ks = tr.kind === 'video' ? ['lock', 'hide', 'mute'] : tr.kind === 'text' ? ['lock', 'hide'] : ['lock', 'mute'];
+  const tip = { lock: ['ล็อกแถวนี้ (กันแก้ไขโดยไม่ตั้งใจ)', 'ปลดล็อกแถวนี้'], hide: ['ซ่อนภาพของแถวนี้', 'แสดงภาพของแถวนี้'], mute: ['ปิดเสียงของแถวนี้', 'เปิดเสียงของแถวนี้'] };
+  return `<div class="tic-row">` + ks.map(k => `<button class="tic${st[k] ? ' on' : ''}" data-tk="${k}" title="${tip[k][st[k] ? 1 : 0]}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${TIC[k][st[k] ? 1 : 0]}</svg></button>`).join('') + `</div>`;
+}
 function renderTimeline() {
   const body = $('#tlbody'); if (!body) return;
   const sx = body.scrollLeft, sy = body.scrollTop; const W = tlWidth();
   let h = `<div id="tlinner" style="width:${TL.labelW + W}px"><div id="ruler"><div class="corner"></div><div class="rt" style="width:${W}px">${rulerTicks()}${(D.markers || []).map(m => `<i class="mk" data-id="${m.id}" style="left:${m.t * TL.pps}px" title="${T('มาร์กเกอร์ — ดับเบิลคลิกเพื่อลบ')}">⚑</i>`).join('')}</div></div>`;
-  for (const tr of TRACKS) h += `<div class="trow ${tr.kind}" data-track="${tr.id}" style="height:${trackH(tr)}px"><div class="tlabel">${tr.label}</div><div class="tlane" style="width:${W}px"></div><div class="trh" title="ลากเพื่อปรับความสูงของแถว"></div></div>`;
+  for (const tr of TRACKS) h += `<div class="trow ${tr.kind}${trSt(tr.id).lock ? ' locked' : ''}${trSt(tr.id).hide ? ' hidt' : ''}${trSt(tr.id).mute ? ' mutet' : ''}" data-track="${tr.id}" style="height:${trackH(tr)}px"><div class="tlabel"><div class="tn">${tr.label}</div>${trIcons(tr)}</div><div class="tlane" style="width:${W}px"></div><div class="trh" title="ลากเพื่อปรับความสูงของแถว"></div></div>`;
   h += `<div id="playhead"><i></i></div></div>`;
   body.innerHTML = h;
   for (const it of D.items) {
@@ -2052,6 +2132,7 @@ function initTimelineEvents() {
   const body = $('#tlbody');
   body.addEventListener('pointerdown', e => {
     if (e.button !== 0) return;
+    const tkb = e.target.closest('.tic'); if (tkb) { e.preventDefault(); e.stopPropagation(); trToggle(tkb.closest('.trow').dataset.track, tkb.dataset.tk); return; }
     const jn = e.target.closest('.junc'); if (jn) { select(jn.dataset.id); showTab('trans'); return; }
     const trh = e.target.closest('.trh'); if (trh) { e.preventDefault(); rowResizeStart(e, trh.closest('.trow')); return; }
     const vlu = e.target.closest('.vl u'); if (vlu) { e.preventDefault(); e.stopPropagation(); volDragStart(e, vlu.closest('.clip')); return; }
@@ -2599,6 +2680,11 @@ const FX_PRESETS = [
   { id: 'glitch', label: 'กลิตช์', fx: { glitch: 1 } },
   { id: 'blur', label: 'เบลอ', fx: { blur: 6 } },
   { id: 'sharp', label: 'คมชัด', fx: { sharpen: 1 } },
+  { id: 'vintage', label: 'วินเทจ', fx: { sepia: .45, contrast: .92, saturate: .85, brightness: 1.02, vignette: .35 } },
+  { id: 'faded', label: 'ซีดจาง', fx: { contrast: .85, saturate: .7, brightness: 1.08 } },
+  { id: 'drama', label: 'ดราม่า', fx: { contrast: 1.3, saturate: .8, brightness: .95, vignette: .45 } },
+  { id: 'pop', label: 'ป๊อป', fx: { saturate: 1.7, contrast: 1.18, brightness: 1.02 } },
+  { id: 'cold', label: 'โทนเย็น', fx: { saturate: .9, hue: 16, brightness: .98, contrast: 1.08 } },
   { id: 'sharp2', label: 'คมชัดมาก + ลดนอยส์', fx: { sharpen: 2, denoise: 1 } },
 ];
 const STICKERS = [['check', 'ถูกต้อง ✔'], ['warning', 'เตือน ⚠'], ['cursor', 'มือชี้'], ['brackets', 'กรอบโฟกัส'], ['arrow', 'ลูกศร'], ['star', 'ดาว'], ['underline', 'ขีดเส้นใต้'], ['circle', 'วงรีวง']];
@@ -3413,7 +3499,7 @@ function nextOverlap(it) {   // later clip on same track that overlaps our tail 
 }
 function inMute(it, srcT) { return (it.mutes || []).some(m => srcT >= m.a && srcT < m.b); }
 function videoGain(it, t) {
-  if (it.hidden || it.muted) return 0;
+  if (it.hidden || it.muted || trSt(it.track).mute) return 0;
   const m = MEDIA.get(it.mediaId); if (!m || m.hasAudio === false) return 0;
   const lt = t - it.start; let env = 1;
   if (it.transIn && lt < it.transIn.dur) env = Math.min(env, lt / Math.max(.05, it.transIn.dur));
@@ -3423,7 +3509,7 @@ function videoGain(it, t) {
   return (it.vol ?? 1) * clamp(env, 0, 1) * (it.normalize !== false && m.norm ? m.norm : 1);
 }
 function isVoice(it, t) {
-  if (it.type !== 'video' || it.hidden || it.muted) return false;
+  if (it.type !== 'video' || it.hidden || it.muted || trSt(it.track).mute) return false;
   const m = MEDIA.get(it.mediaId); if (!m || m.hasAudio === false) return false;
   const src = timelineToSrc(it, t); if (inMute(it, src)) return false;
   if (it.voice && it.voice.length) return it.voice.some(v => src >= v.a - 0.1 && src <= v.b + 0.2);
@@ -3487,7 +3573,7 @@ function syncMedia(force) {
     if (diff > 0.3 && (!loop || diff < md - 0.3)) { try { r.el.currentTime = Math.min(target, md - 0.05); } catch (e) { } }
     let env = 1; if (it.fadeIn) env = Math.min(env, lt / it.fadeIn); if (it.fadeOut) env = Math.min(env, (it.dur - lt) / it.fadeOut);
     const muteSeg = (it.mutes || []).some(q => lt >= q.a && lt < q.b);
-    const g = muteSeg ? 0 : (it.vol ?? .5) * clamp(env, 0, 1) * (it.duck ? PB.duck : 1);
+    const g = (muteSeg || trSt(it.track).mute) ? 0 : (it.vol ?? .5) * clamp(env, 0, 1) * (it.duck ? PB.duck : 1);
     setGain(r.gain, g);
   }
   for (const [id] of APOOL) if (!getItem(id)) apoolRelease(id);
@@ -4072,6 +4158,8 @@ async function ensureSfx() {
 async function init() {
   $('#verTag').textContent = 'v' + APP_VERSION;
   PCANVAS = $('#pv'); PCTX = PCANVAS.getContext('2d');
+  $('#mnav').onclick = e => { const b = e.target.closest('button'); if (!b) return; $('#app').dataset.m = b.dataset.m; $$('#mnav button').forEach(x => x.classList.toggle('on', x === b)); setTimeout(() => { fitStage(); renderTimeline(); }, 30); };
+  $('#app').dataset.m = 'tl';
   $('#ratioSel').onchange = e => { const a = ASPECTS.find(x => x[0] === e.target.value); if (!a) return; D.w = a[1]; D.h = a[2]; applyAspect(); commit('ratio'); renderInspector && renderInspector(); };
   try { new ResizeObserver(() => fitStage()).observe($('#center')); } catch (e) { }
   window.addEventListener('resize', fitStage); applyAspect();

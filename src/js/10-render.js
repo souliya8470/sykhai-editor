@@ -546,6 +546,7 @@ function renderFrame(ctx, W, H, t) {
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.filter = 'none';
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
   for (const tr of RENDER_ORDER) {
+    if (trSt(tr).hide) continue;
     for (const it of activeAt(tr, t)) {
       if (it.hidden) continue;
       if (it.type === 'video' || it.type === 'image') drawMediaItem(ctx, it, t, W, H);

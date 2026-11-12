@@ -172,7 +172,7 @@ function nextOverlap(it) {   // later clip on same track that overlaps our tail 
 }
 function inMute(it, srcT) { return (it.mutes || []).some(m => srcT >= m.a && srcT < m.b); }
 function videoGain(it, t) {
-  if (it.hidden || it.muted) return 0;
+  if (it.hidden || it.muted || trSt(it.track).mute) return 0;
   const m = MEDIA.get(it.mediaId); if (!m || m.hasAudio === false) return 0;
   const lt = t - it.start; let env = 1;
   if (it.transIn && lt < it.transIn.dur) env = Math.min(env, lt / Math.max(.05, it.transIn.dur));
@@ -182,7 +182,7 @@ function videoGain(it, t) {
   return (it.vol ?? 1) * clamp(env, 0, 1) * (it.normalize !== false && m.norm ? m.norm : 1);
 }
 function isVoice(it, t) {
-  if (it.type !== 'video' || it.hidden || it.muted) return false;
+  if (it.type !== 'video' || it.hidden || it.muted || trSt(it.track).mute) return false;
   const m = MEDIA.get(it.mediaId); if (!m || m.hasAudio === false) return false;
   const src = timelineToSrc(it, t); if (inMute(it, src)) return false;
   if (it.voice && it.voice.length) return it.voice.some(v => src >= v.a - 0.1 && src <= v.b + 0.2);
@@ -246,7 +246,7 @@ function syncMedia(force) {
     if (diff > 0.3 && (!loop || diff < md - 0.3)) { try { r.el.currentTime = Math.min(target, md - 0.05); } catch (e) { } }
     let env = 1; if (it.fadeIn) env = Math.min(env, lt / it.fadeIn); if (it.fadeOut) env = Math.min(env, (it.dur - lt) / it.fadeOut);
     const muteSeg = (it.mutes || []).some(q => lt >= q.a && lt < q.b);
-    const g = muteSeg ? 0 : (it.vol ?? .5) * clamp(env, 0, 1) * (it.duck ? PB.duck : 1);
+    const g = (muteSeg || trSt(it.track).mute) ? 0 : (it.vol ?? .5) * clamp(env, 0, 1) * (it.duck ? PB.duck : 1);
     setGain(r.gain, g);
   }
   for (const [id] of APOOL) if (!getItem(id)) apoolRelease(id);

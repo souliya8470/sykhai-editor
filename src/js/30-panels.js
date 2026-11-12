@@ -13,6 +13,11 @@ const FX_PRESETS = [
   { id: 'glitch', label: 'กลิตช์', fx: { glitch: 1 } },
   { id: 'blur', label: 'เบลอ', fx: { blur: 6 } },
   { id: 'sharp', label: 'คมชัด', fx: { sharpen: 1 } },
+  { id: 'vintage', label: 'วินเทจ', fx: { sepia: .45, contrast: .92, saturate: .85, brightness: 1.02, vignette: .35 } },
+  { id: 'faded', label: 'ซีดจาง', fx: { contrast: .85, saturate: .7, brightness: 1.08 } },
+  { id: 'drama', label: 'ดราม่า', fx: { contrast: 1.3, saturate: .8, brightness: .95, vignette: .45 } },
+  { id: 'pop', label: 'ป๊อป', fx: { saturate: 1.7, contrast: 1.18, brightness: 1.02 } },
+  { id: 'cold', label: 'โทนเย็น', fx: { saturate: .9, hue: 16, brightness: .98, contrast: 1.08 } },
   { id: 'sharp2', label: 'คมชัดมาก + ลดนอยส์', fx: { sharpen: 2, denoise: 1 } },
 ];
 const STICKERS = [['check', 'ถูกต้อง ✔'], ['warning', 'เตือน ⚠'], ['cursor', 'มือชี้'], ['brackets', 'กรอบโฟกัส'], ['arrow', 'ลูกศร'], ['star', 'ดาว'], ['underline', 'ขีดเส้นใต้'], ['circle', 'วงรีวง']];
