@@ -263,8 +263,29 @@ function perfAdapt(ms, now) {
     const e = $('#verTag2'); if (e) e.textContent = `v${APP_VERSION} · ${Math.round(PERF.ema)}ms · ${Math.round(fps)}fps · ${Math.round(PERF.q * 100)}%` + proxyTag();
   }
 }
+const PD = { vu: 0, sync: 0, ui: 0, tot: 0, tk: 0, rn: 0, lastShow: 0, el: null, last: new Map() };
+const _ema = (o, k, v) => { o[k] = o[k] ? o[k] * .9 + v * .1 : v; };
+function perfOverlay(now) {
+  if (!PERF.hud) { if (PD.el) { PD.el.remove(); PD.el = null; } return; }
+  if (!PD.el) { const d = document.createElement('div'); d.id = 'perfHud'; d.style.cssText = 'position:fixed;left:6px;top:96px;z-index:99999;background:rgba(0,0,0,.78);color:#8ff;font:11px/1.35 monospace;padding:4px 6px;border-radius:6px;pointer-events:none;white-space:pre'; document.body.appendChild(d); PD.el = d; PD.lastShow = now; PD.tk = 0; PD.rn = 0; }
+  if (now - PD.lastShow < 700) return;
+  const dt = (now - PD.lastShow) / 1000; PD.lastShow = now;
+  const L = [`loop ${Math.round(PD.tk / dt)}/s  render ${Math.round(PD.rn / dt)}/s  q${Math.round(PERF.q * 100)}%`, `ms: render ${PERF.ema.toFixed(0)} sync ${PD.sync.toFixed(0)} vu ${PD.vu.toFixed(0)} ui ${PD.ui.toFixed(0)} tick ${PD.tot.toFixed(0)}`];
+  PD.tk = 0; PD.rn = 0; let k = 0;
+  for (const [id, r] of POOL) {
+    const el = r.el; if (!el || el.paused || k >= 3) continue; k++;
+    if (!el._rv && el.requestVideoFrameCallback) { el._rv = 1; el._rvn = 0; const f = () => { el._rvn++; el.requestVideoFrameCallback(f); }; el.requestVideoFrameCallback(f); }
+    const prev = PD.last.get(el) || { n: el._rvn || 0 }; const fps = ((el._rvn || 0) - prev.n) / dt; PD.last.set(el, { n: el._rvn || 0 });
+    let q = null; try { q = el.getVideoPlaybackQuality && el.getVideoPlaybackQuality(); } catch (e) { }
+    const it = getItem(id), want = it ? clamp(PB.t - it.start + (it.in || 0), 0, 1e6) : 0;
+    L.push(`v${k} ${el.videoWidth}x${el.videoHeight} ${fps.toFixed(0)}f/s drop ${q ? q.droppedVideoFrames : '?'}/${q ? q.totalVideoFrames : '?'} rs${el.readyState} drift ${(el.currentTime - want).toFixed(2)}`);
+  }
+  L.push(proxyTag().trim());
+  PD.el.textContent = L.join('\n');
+}
 function tick() {
-  vuUpdate();
+  const T0 = performance.now(); PD.tk++;
+  vuUpdate(); const T1 = performance.now(); _ema(PD, 'vu', T1 - T0);
   if (PB.playing && !PB.exporting) {
     PB.t = PB.t0 + (performance.now() - PB.wall0) / 1000;
     if (PB.t >= durEnd()) { PB.t = durEnd(); pause(); emit('ended'); }
@@ -272,7 +293,7 @@ function tick() {
   if (SRC.m && PB.exporting) srcExit();
   if (SRC.m) { srcFrame(); }
   else if (!PB.exporting) {
-    syncMedia(false);
+    const S0 = performance.now(); syncMedia(false); _ema(PD, 'sync', performance.now() - S0);
     if (PW * 2 !== D.w || PH * 2 !== D.h) applyAspect();
     if (DIRTY || PB.playing) {
       const nowR = performance.now();
@@ -280,11 +301,12 @@ function tick() {
         const q = PB.playing ? PERF.q : 1, rw = Math.round(PW * q), rh = Math.round(PH * q);
         if (PCANVAS.width !== rw || PCANVAS.height !== rh) { PCANVAS.width = rw; PCANVAS.height = rh; }
         BS = 1 / q; const a = performance.now(); renderFrame(PCTX, rw, rh, PB.t); BS = 1; const ms = performance.now() - a;
-        PERF.lastR = nowR; DIRTY = false; if (PB.playing) perfAdapt(ms, nowR);
+        PERF.lastR = nowR; DIRTY = false; PD.rn++; if (PB.playing) perfAdapt(ms, nowR);
       }
-      if (window.onFrame) window.onFrame();   // playhead / time move every screen refresh
+      const U0 = performance.now(); if (window.onFrame) window.onFrame(); _ema(PD, 'ui', performance.now() - U0);   // playhead / time move every screen refresh
     }
   }
+  const T2 = performance.now(); _ema(PD, 'tot', T2 - T0); perfOverlay(T2);
   requestAnimationFrame(tick);
 }
 

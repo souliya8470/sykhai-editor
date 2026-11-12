@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.21</title>
+<title>Sykhai Editor v1.22</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -1278,9 +1278,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.21
-// APP_VERSION_PREV : 1.20
-// APP_VERSION_PREV_OLDER : 1.19
+// APP_VERSION  : 1.22
+// APP_VERSION_PREV : 1.21
+// APP_VERSION_PREV_OLDER : 1.20
+// 1.22 : performance overlay (tap the version text while playing): loop rate, render/sync/ui ms, per-video decoded frames/s, dropped frames, drift
 // 1.21 : player bar shows the proxy state next to the version (⚡ light copies in use / total, plus reason code); tapping it retries
 // 1.20 : proxy copies already on the server are used even when the server has no ffmpeg (can be placed by hand)
 // 1.19 : proxy videos — shop server makes a light 540p SDR copy (ffmpeg, auto-installed) of every uploaded video; phones preview/download the copy instead of the 4K HDR original, export swaps back to the originals
@@ -1303,7 +1304,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.21';
+const APP_VERSION = '1.22';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -3672,8 +3673,29 @@ function perfAdapt(ms, now) {
     const e = $('#verTag2'); if (e) e.textContent = `v${APP_VERSION} · ${Math.round(PERF.ema)}ms · ${Math.round(fps)}fps · ${Math.round(PERF.q * 100)}%` + proxyTag();
   }
 }
+const PD = { vu: 0, sync: 0, ui: 0, tot: 0, tk: 0, rn: 0, lastShow: 0, el: null, last: new Map() };
+const _ema = (o, k, v) => { o[k] = o[k] ? o[k] * .9 + v * .1 : v; };
+function perfOverlay(now) {
+  if (!PERF.hud) { if (PD.el) { PD.el.remove(); PD.el = null; } return; }
+  if (!PD.el) { const d = document.createElement('div'); d.id = 'perfHud'; d.style.cssText = 'position:fixed;left:6px;top:96px;z-index:99999;background:rgba(0,0,0,.78);color:#8ff;font:11px/1.35 monospace;padding:4px 6px;border-radius:6px;pointer-events:none;white-space:pre'; document.body.appendChild(d); PD.el = d; PD.lastShow = now; PD.tk = 0; PD.rn = 0; }
+  if (now - PD.lastShow < 700) return;
+  const dt = (now - PD.lastShow) / 1000; PD.lastShow = now;
+  const L = [`loop ${Math.round(PD.tk / dt)}/s  render ${Math.round(PD.rn / dt)}/s  q${Math.round(PERF.q * 100)}%`, `ms: render ${PERF.ema.toFixed(0)} sync ${PD.sync.toFixed(0)} vu ${PD.vu.toFixed(0)} ui ${PD.ui.toFixed(0)} tick ${PD.tot.toFixed(0)}`];
+  PD.tk = 0; PD.rn = 0; let k = 0;
+  for (const [id, r] of POOL) {
+    const el = r.el; if (!el || el.paused || k >= 3) continue; k++;
+    if (!el._rv && el.requestVideoFrameCallback) { el._rv = 1; el._rvn = 0; const f = () => { el._rvn++; el.requestVideoFrameCallback(f); }; el.requestVideoFrameCallback(f); }
+    const prev = PD.last.get(el) || { n: el._rvn || 0 }; const fps = ((el._rvn || 0) - prev.n) / dt; PD.last.set(el, { n: el._rvn || 0 });
+    let q = null; try { q = el.getVideoPlaybackQuality && el.getVideoPlaybackQuality(); } catch (e) { }
+    const it = getItem(id), want = it ? clamp(PB.t - it.start + (it.in || 0), 0, 1e6) : 0;
+    L.push(`v${k} ${el.videoWidth}x${el.videoHeight} ${fps.toFixed(0)}f/s drop ${q ? q.droppedVideoFrames : '?'}/${q ? q.totalVideoFrames : '?'} rs${el.readyState} drift ${(el.currentTime - want).toFixed(2)}`);
+  }
+  L.push(proxyTag().trim());
+  PD.el.textContent = L.join('\n');
+}
 function tick() {
-  vuUpdate();
+  const T0 = performance.now(); PD.tk++;
+  vuUpdate(); const T1 = performance.now(); _ema(PD, 'vu', T1 - T0);
   if (PB.playing && !PB.exporting) {
     PB.t = PB.t0 + (performance.now() - PB.wall0) / 1000;
     if (PB.t >= durEnd()) { PB.t = durEnd(); pause(); emit('ended'); }
@@ -3681,7 +3703,7 @@ function tick() {
   if (SRC.m && PB.exporting) srcExit();
   if (SRC.m) { srcFrame(); }
   else if (!PB.exporting) {
-    syncMedia(false);
+    const S0 = performance.now(); syncMedia(false); _ema(PD, 'sync', performance.now() - S0);
     if (PW * 2 !== D.w || PH * 2 !== D.h) applyAspect();
     if (DIRTY || PB.playing) {
       const nowR = performance.now();
@@ -3689,11 +3711,12 @@ function tick() {
         const q = PB.playing ? PERF.q : 1, rw = Math.round(PW * q), rh = Math.round(PH * q);
         if (PCANVAS.width !== rw || PCANVAS.height !== rh) { PCANVAS.width = rw; PCANVAS.height = rh; }
         BS = 1 / q; const a = performance.now(); renderFrame(PCTX, rw, rh, PB.t); BS = 1; const ms = performance.now() - a;
-        PERF.lastR = nowR; DIRTY = false; if (PB.playing) perfAdapt(ms, nowR);
+        PERF.lastR = nowR; DIRTY = false; PD.rn++; if (PB.playing) perfAdapt(ms, nowR);
       }
-      if (window.onFrame) window.onFrame();   // playhead / time move every screen refresh
+      const U0 = performance.now(); if (window.onFrame) window.onFrame(); _ema(PD, 'ui', performance.now() - U0);   // playhead / time move every screen refresh
     }
   }
+  const T2 = performance.now(); _ema(PD, 'tot', T2 - T0); perfOverlay(T2);
   requestAnimationFrame(tick);
 }
 
