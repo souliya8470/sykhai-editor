@@ -86,9 +86,12 @@ function drawWave(cv, it, m) {
   }
 }
 function updatePlayhead() {
-  const ph = $('#playhead'); if (!ph) return; ph.style.left = (TL.labelW + PB.t * TL.pps) + 'px';
-  const body = $('#tlbody'); const x = PB.t * TL.pps;
-  if (PB.playing && (x < body.scrollLeft || x > body.scrollLeft + body.clientWidth - TL.labelW - 40)) body.scrollLeft = Math.max(0, x - 100);
+  const ph = $('#playhead'); if (!ph) return; const x = PB.t * TL.pps; ph.style.transform = `translate3d(${TL.labelW + x}px,0,0)`;
+  const body = $('#tlbody');
+  if (PB.playing) {   // follow smoothly: once the playhead reaches ~40% of the view it stays there and the timeline scrolls under it
+    const vis = body.clientWidth - TL.labelW, sx = body.scrollLeft;
+    if (x < sx) body.scrollLeft = Math.max(0, x - 100); else if (x - sx > vis * .4) body.scrollLeft = x - vis * .4;
+  }
 }
 
 // ---------- add items ----------

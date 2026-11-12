@@ -73,7 +73,7 @@ async function ensureSfx() {
 
 // ---------- init ----------
 async function init() {
-  $('#verTag').textContent = 'v' + APP_VERSION;
+  $('#verTag').textContent = 'v' + APP_VERSION; $('#verTag2').textContent = 'Sykhai Editor v' + APP_VERSION;
   PCANVAS = $('#pv'); PCTX = PCANVAS.getContext('2d');
   $('#mnav').onclick = e => { const b = e.target.closest('button'); if (!b) return; $('#app').dataset.m = b.dataset.m; $$('#mnav button').forEach(x => x.classList.toggle('on', x === b)); setTimeout(() => { fitStage(); renderTimeline(); }, 30); };
   $('#app').dataset.m = 'tl';
