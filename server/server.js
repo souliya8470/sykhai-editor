@@ -78,4 +78,8 @@ const server = http.createServer(async (req, res) => {
   } catch (e) { console.error(e); try { send(res, 500, String(e.message || e)); } catch (_) { } }
 });
 server.requestTimeout = 0; server.headersTimeout = 60000;
-server.listen(PORT, HOST, () => console.log(`Sykhai file server พร้อมแล้ว: http://${HOST}:${PORT}  เก็บไฟล์ที่ ${ROOT}`));
+server.listen(PORT, HOST, () => {
+  console.log(`Sykhai file server READY (port ${PORT}), files in ${ROOT}`);
+  const ips = Object.values(require('os').networkInterfaces()).flat().filter(i => i && i.family === 'IPv4' && !i.internal).map(i => i.address);
+  console.log('Use this address in the editor settings:'); ips.forEach(ip => console.log('   http://' + ip + ':' + PORT));
+});
