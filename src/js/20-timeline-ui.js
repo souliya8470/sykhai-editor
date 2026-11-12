@@ -211,8 +211,13 @@ function cmdCloseGaps(track) {
 }
 
 // ---------- media bin ----------
+let MF = 'all';
 function renderMediaBin() {
-  const box = $('#mediaList'); if (!box) return; const arr = [...MEDIA.values()].filter(m => !m.hidden);
+  const box = $('#mediaList'); if (!box) return; const all = [...MEDIA.values()].filter(m => !m.hidden); const arr = all.filter(m => MF === 'all' || m.type === MF);
+  const mfb = $('#mediaFilter'); if (mfb) {
+    mfb.innerHTML = `<div class="chips">` + [['all', 'ทั้งหมด'], ['video', 'วิดีโอ'], ['image', 'รูปภาพ'], ['audio', 'เสียง']].map(([k, l]) => `<button data-mf="${k}" class="${MF === k ? 'on' : ''}">${l}</button>`).join('') + `<span class="sp"></span><span class="mini">${all.length} <span>ไฟล์</span></span></div>`;
+    mfb.onclick = e => { const b = e.target.closest('[data-mf]'); if (b) { MF = b.dataset.mf; renderMediaBin(); } };
+  }
   box.innerHTML = arr.length ? '' : '<div class="empty">ยังไม่มีไฟล์ — กดปุ่ม “นำเข้า” หรือลากไฟล์มาวางที่นี่</div>';
   for (const m of arr) {
     const d = document.createElement('div'); d.className = 'mi'; d.draggable = true; d.dataset.id = m.id;

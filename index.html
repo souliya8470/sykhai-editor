@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.12</title>
+<title>Sykhai Editor v1.13</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#121316;--p1:#1b1d22;--p2:#23262d;--p3:#2c3039;--ln:#343944;--tx:#e9ebf0;--mu:#8e95a3;--ac:#2ee6c5;--ac2:#18b99e;--red:#ff4d5e;--ph:#ff3b4e}
+:root{--bg:#0e0f12;--p1:#191b20;--p2:#212329;--p3:#2a2d35;--ln:#30343d;--tx:#e9ebf0;--mu:#8e95a3;--ac:#2ee6c5;--ac2:#18b99e;--red:#ff4d5e;--ph:#ff3b4e}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:13px/1.35 "Prompt","Noto Sans Thai","Noto Sans Lao",system-ui,-apple-system,sans-serif;overflow:hidden}
 button,input,select,textarea{font:inherit;color:inherit}
@@ -219,12 +219,61 @@ select.uilang{max-width:130px}
 .wheels{display:flex;flex-direction:column;gap:12px}.wh{border:1px solid var(--ln);border-radius:8px;padding:8px}.wh b{font-size:12px;color:var(--ac)}
 canvas.wheel{display:block;width:120px;height:120px;margin:6px auto;touch-action:none;cursor:crosshair}
 
+/* ===== v1.13 — MyCut-style look: rounded cards, icon tabs, teal accents ===== */
+#top{background:transparent;border:0;padding:0 14px}
+.logo{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#3ff0d4,#18a8c9);color:#04251f;font-size:15px;font-weight:700}
+button{border-radius:9px}
+#btnExport{border-radius:20px;padding:6px 16px}
+main{padding:0}
+#left{margin:0 4px 0 8px;border:0;border-radius:14px;overflow:hidden}
+#center{margin:0 4px;border-radius:14px;background:var(--p1);padding:0 8px 8px}
+#right{margin:0 8px 0 4px;border:0;border-radius:14px;overflow:hidden}
+#tl{margin:8px;border:0;border-radius:14px}
+#tlbody{background:#14161a}
+.ptitle{display:flex;align-items:center;width:100%;padding:12px 6px 6px}.ptitle b{font-size:14px}
+.ratio{margin-left:auto;color:var(--mu);font-size:12px;background:var(--p3);border-radius:8px;padding:2px 9px}
+#stage{box-shadow:none;border-radius:4px}
+/* player controls */
+#transport{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;max-width:none}
+#transport .tpl{display:flex;align-items:center;gap:8px;min-width:0}
+#transport .tpc{display:flex;align-items:center;gap:6px;justify-content:center}
+#transport .tpr{display:flex;gap:5px;justify-content:flex-end;flex-wrap:wrap}
+#tpTime{color:var(--ac);font-size:13px;font-weight:500;white-space:nowrap}
+#tpPlay{width:42px;height:42px;border-radius:50%;padding:0;font-size:16px}
+#tpStart{background:transparent;border-color:transparent;color:var(--mu)}
+/* left tabs: icon over label */
+#leftTabs{display:flex;flex-wrap:nowrap;gap:0;padding:8px 2px 0;border-bottom:1px solid var(--ln);overflow:hidden}
+#leftTabs button{flex:1 1 0;min-width:0;overflow:hidden;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0 7px;font-size:10.5px;background:transparent;border:0;border-bottom:2px solid transparent;border-radius:0;color:var(--mu);white-space:nowrap}
+#leftTabs button svg{opacity:.9}
+#leftTabs button:hover{background:transparent;color:var(--tx)}
+#leftTabs button.on{background:transparent;color:var(--ac);border-bottom-color:var(--ac)}
+#mediaFilter{margin-top:8px}
+#mediaFilter .chips{align-items:center;margin:0}
+.mi{background:transparent;border:0;padding:0}
+.mth{height:92px;border-radius:9px}
+.mi:hover .mth{outline:2px solid var(--ac)}
+.mi .mb button{background:var(--p2);border-color:transparent}
+#btnImport{border-radius:10px;padding:8px 10px}
+/* inspector cards */
+#inspector{padding:8px 10px 14px}
+.icard{background:var(--p2);border-radius:12px;padding:10px 12px 8px;margin:10px 0}
+.ctitle{display:flex;align-items:center;margin-bottom:6px}.ctitle b{font-size:13px;font-weight:600;color:var(--tx)}
+.crst{margin-left:auto;background:transparent;border:0;padding:0 4px;color:var(--mu);font-size:15px}.crst:hover{color:var(--ac);background:transparent}
+.icard .sec{display:none}
+.itabs{margin:10px 0 4px}
+.isubs button,.chips button{border-radius:16px}
+.agrid button{background:var(--p3);border-color:transparent;border-radius:10px}
+.fld .nv{background:var(--p1)}
+.icard .fld input[type=range]{height:4px}
+#tlbar button{border-radius:8px}
+.clip{border-radius:6px}
+
 </style></head>
 <body>
 <div id="app">
   <header id="top">
     <button id="btnHome" title="กลับหน้าโปรเจกต์ทั้งหมด">🏠 โปรเจกต์</button>
-    <div class="brand">Sykhai <b>Editor</b></div>
+    <span class="logo" aria-hidden="true">✂</span><div class="brand">Sykhai <b>Editor</b></div>
     <input id="projName" value="โปรเจกต์ใหม่" spellcheck="false">
     <button id="btnUndo" title="ย้อนกลับ (⌘Z)">↶</button>
     <button id="btnRedo" title="ทำซ้ำ (⌘⇧Z)">↷</button>
@@ -245,6 +294,7 @@ canvas.wheel{display:block;width:120px;height:120px;margin:6px auto;touch-action
         <div class="lpane on" id="pane-media">
           <div class="row"><button id="btnImport" class="primary wide">+ นำเข้าไฟล์ (วิดีโอ / รูป / เสียง)</button></div>
           <input type="file" id="fileIn" multiple accept="video/*,image/*,audio/*,.mov,.mp4,.m4v" hidden>
+          <div id="mediaFilter"></div>
           <div id="mediaList"></div>
         </div>
         <div class="lpane" id="pane-text"></div>
@@ -256,15 +306,12 @@ canvas.wheel{display:block;width:120px;height:120px;margin:6px auto;touch-action
       </div>
     </aside>
     <section id="center">
+      <div class="ptitle"><b>เครื่องเล่น</b><span class="ratio">9:16</span></div>
       <div id="stage"><canvas id="pv" width="540" height="960"></canvas><canvas id="ov" width="540" height="960"></canvas><div id="srcBadge" hidden><span>ดูตัวอย่างไฟล์ — <b id="srcName" translate="no"></b></span><button id="srcClose" title="กลับไปดูไทม์ไลน์">กลับไทม์ไลน์</button></div></div>
       <div id="transport">
-        <button id="tpStart" title="กลับไปจุดเริ่ม">⏮</button>
-        <button id="tpPlay" class="primary" title="เล่น/หยุด (Space)">▶</button>
-        <input id="srcSeek" type="range" min="0" max="1000" value="0" hidden><span id="vu" title="ระดับเสียง"><i></i></span><span id="tpTime">00:00.0 / 00:00.0</span>
-        <span class="sp"></span>
-        <button id="tpSplit" title="ตัดที่หัวอ่าน (S)">✂ ตัด</button>
-        <button id="tpDel" title="ลบ (Delete)">🗑 ลบ</button>
-        <button id="tpRipple" title="ลบแล้วดึงคลิปตามมา (Shift+Delete)">🗑⇥</button>
+        <div class="tpl"><span id="tpTime">00:00.0 / 00:00.0</span><span id="vu" title="ระดับเสียง"><i></i></span></div>
+        <div class="tpc"><button id="tpStart" title="กลับไปจุดเริ่ม">⏮</button><button id="tpPlay" class="primary" title="เล่น/หยุด (Space)">▶</button><input id="srcSeek" type="range" min="0" max="1000" value="0" hidden></div>
+        <div class="tpr"><button id="tpSplit" title="ตัดที่หัวอ่าน (S)">✂ ตัด</button><button id="tpDel" title="ลบ (Delete)">🗑 ลบ</button><button id="tpRipple" title="ลบแล้วดึงคลิปตามมา (Shift+Delete)">🗑⇥</button></div>
       </div>
     </section>
     <aside id="right"><div id="inspector"></div></aside>
@@ -1111,7 +1158,12 @@ I18N_ROWS.push(
   ['เงา', 'Shadows', 'ເງົາ'], ['โทนกลาง', 'Midtones', 'ໂທນກາງ'], ['สว่าง', 'Light', 'ສະຫວ່າງ'], ['สี', 'Colour', 'ສີ'], ['รีเซ็ต', 'Reset', 'ຣີເຊັດ'],
   // AI tab
   ['สไตล์ AI (แปลงภาพเป็นการ์ตูน/สีน้ำ ฯลฯ) ใน CapCut ต้องใช้เซิร์ฟเวอร์ AI — ยังไม่มีในตัวแก้ไขนี้', 'AI styles (cartoon / watercolour, etc.) need an AI server in CapCut — not in this editor yet', 'ສະໄຕ AI (ແປງພາບເປັນກາຕູນ/ສີນ້ຳ ແລະອື່ນໆ) ໃນ CapCut ຕ້ອງໃຊ້ເຊີເວີ AI — ຍັງບໍ່ມີໃນໂປຣແກຣມນີ້'],
-  ['การ์ตูน', 'Cartoon', 'ກາຕູນ'], ['สีน้ำมัน', 'Oil painting', 'ສີນ້ຳມັນ'], ['ภาพวาดดินสอ', 'Pencil sketch', 'ພາບແຕ້ມສໍ'], ['อนิเมะ', 'Anime', 'ອະນິເມະ']
+  ['การ์ตูน', 'Cartoon', 'ກາຕູນ'], ['สีน้ำมัน', 'Oil painting', 'ສີນ້ຳມັນ'], ['ภาพวาดดินสอ', 'Pencil sketch', 'ພາບແຕ້ມສໍ'], ['อนิเมะ', 'Anime', 'ອະນິເມະ'],
+  // v1.13 layout
+  ['เครื่องเล่น', 'Player', 'ເຄື່ອງຫຼິ້ນ'],
+  ['ทั้งหมด', 'All', 'ທັງໝົດ'],
+  ['รูปภาพ', 'Images', 'ຮູບພາບ'],
+  ['ไฟล์', 'files', 'ໄຟລ໌']
 );
 
 // ---- 00-core.js ----
@@ -1119,9 +1171,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.12
-// APP_VERSION_PREV : 1.11
-// APP_VERSION_PREV_OLDER : 1.10
+// APP_VERSION  : 1.13
+// APP_VERSION_PREV : 1.12
+// APP_VERSION_PREV_OLDER : 1.11
+// 1.13 : MyCut-style look — rounded card panels, icon tabs on the left, media filter (all/video/image/audio), teal timecode + big round play button, inspector sections as cards with their own reset button
 // 1.12 : CapCut-style clip look (teal, thumbnails, timecode label), fade in/out handles on clips, tabbed inspector (Video/Audio/Speed/Animation/Adjust), number boxes + reset on every slider, blend/canvas/chroma key/masks, voice changer, clip animations, curves/colour wheel/HSL
 // 1.11 : CapCut-style timeline toolbar (import, undo/redo, split, trim left/right Q/W, delete, ripple delete, markers M, magnet on Video 1, snapping toggle, zoom fit/in/out)
 // 1.10 : Save-now button in the editor header; Settings button on the Home page (needed on phones to enter the server password); Home header wraps on narrow screens
@@ -1135,7 +1188,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.12';
+const APP_VERSION = '1.13';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -2064,8 +2117,13 @@ function cmdCloseGaps(track) {
 }
 
 // ---------- media bin ----------
+let MF = 'all';
 function renderMediaBin() {
-  const box = $('#mediaList'); if (!box) return; const arr = [...MEDIA.values()].filter(m => !m.hidden);
+  const box = $('#mediaList'); if (!box) return; const all = [...MEDIA.values()].filter(m => !m.hidden); const arr = all.filter(m => MF === 'all' || m.type === MF);
+  const mfb = $('#mediaFilter'); if (mfb) {
+    mfb.innerHTML = `<div class="chips">` + [['all', 'ทั้งหมด'], ['video', 'วิดีโอ'], ['image', 'รูปภาพ'], ['audio', 'เสียง']].map(([k, l]) => `<button data-mf="${k}" class="${MF === k ? 'on' : ''}">${l}</button>`).join('') + `<span class="sp"></span><span class="mini">${all.length} <span>ไฟล์</span></span></div>`;
+    mfb.onclick = e => { const b = e.target.closest('[data-mf]'); if (b) { MF = b.dataset.mf; renderMediaBin(); } };
+  }
   box.innerHTML = arr.length ? '' : '<div class="empty">ยังไม่มีไฟล์ — กดปุ่ม “นำเข้า” หรือลากไฟล์มาวางที่นี่</div>';
   for (const m of arr) {
     const d = document.createElement('div'); d.className = 'mi'; d.draggable = true; d.dataset.id = m.id;
@@ -2513,9 +2571,15 @@ const STICKERS = [['check', 'ถูกต้อง ✔'], ['warning', 'เตื
 const MASK_OPTS = [['none', 'ไม่มี'], ['circle', 'วงกลม'], ['round', 'มุมมน'], ['frame', 'การ์ดกรอบขาว'], ['featherTop', 'ฟุ้งขอบบน'], ['featherBottom', 'ฟุ้งขอบล่าง'], ['featherAll', 'ฟุ้งรอบด้าน']];
 
 // ---------- tabs ----------
-const TABS = [['media', 'สื่อ'], ['text', 'ข้อความ'], ['sticker', 'สติกเกอร์'], ['trans', 'ทรานสิชัน'], ['fx', 'เอฟเฟกต์'], ['audio', 'เสียง'], ['ai', 'AI ✨']];
+const TAB_ICONS = {
+  media: '<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M10 9l5 3-5 3z"/>', text: '<path d="M5 7V4h14v3M12 4v16M9 20h6"/>',
+  sticker: '<circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2.5 4 2.5S16 14 16 14M9 9.5h.01M15 9.5h.01"/>', trans: '<path d="M4 6l7 6-7 6zM20 6l-7 6 7 6z"/>',
+  fx: '<path d="M12 3l1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8zM18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z"/>',
+  audio: '<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>', ai: '<path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path d="M19 17v4M17 19h4"/>'
+};
+const TABS = [['media', 'สื่อ'], ['text', 'ข้อความ'], ['sticker', 'สติกเกอร์'], ['trans', 'ทรานสิชัน'], ['fx', 'เอฟเฟกต์'], ['audio', 'เสียง'], ['ai', 'AI']];
 function buildLeft() {
-  $('#leftTabs').innerHTML = TABS.map(([id, l], i) => `<button data-tab="${id}" class="${i ? '' : 'on'}">${l}</button>`).join('');
+  $('#leftTabs').innerHTML = TABS.map(([id, l], i) => `<button data-tab="${id}" class="${i ? '' : 'on'}"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${TAB_ICONS[id]}</svg><span>${l}</span></button>`).join('');
   $('#leftTabs').onclick = e => { const b = e.target.closest('button'); if (b) showTab(b.dataset.tab); };
   // text pane
   $('#pane-text').innerHTML = `<div class="hint">กดเพื่อเพิ่มข้อความที่ตำแหน่งหัวอ่าน (เส้นแดง) — ใช้ *คำ* เพื่อทำตัวเหลือง/เน้น</div>` +
@@ -2659,7 +2723,7 @@ const ANIM_IN = [['none', 'ไม่มี'], ['fade', 'เลือน'], ['pop
 
 function renderInspector() {
   const box = $('#inspector'); if (!box) return; const it = SEL ? getItem(SEL) : null;
-  if (!it) { box.innerHTML = projectInspector(); bindInspector(null); return; }
+  if (!it) { box.innerHTML = cardify(projectInspector()); bindInspector(null); return; }
   if (it.type === 'video' || it.type === 'image') { box.innerHTML = renderVideoInspector(it); bindInspector(it); ccPost(it); return; }
   let h = `<div class="ihead"><b>${{ video: 'คลิปวิดีโอ', image: 'รูปภาพ', text: 'ข้อความ', sticker: 'สติกเกอร์', audio: 'เสียง' }[it.type]}</b><span class="sp"></span><button data-act="dup">ทำซ้ำ</button><button data-act="del" class="danger">ลบ</button></div>`;
   h += `<div class="fld"><label>เริ่ม</label><input type="number" step="0.1" data-p="start" value="${it.start.toFixed(2)}" class="num"><label class="r">ยาว</label><input type="number" step="0.1" min="0.1" data-p="dur" value="${it.dur.toFixed(2)}" class="num"></div>`;
@@ -2690,7 +2754,7 @@ function renderInspector() {
   } else if (it.type === 'audio') {
     const m = MEDIA.get(it.mediaId); h += `<div class="hint" translate="no">${esc(m ? m.name : '')}</div>` + R('ระดับเสียง', 'vol', 0, 1.5, .01, it) + R('ค่อยๆ ดังขึ้น (วิ)', 'fadeIn', 0, 5, .1, it) + R('ค่อยๆ เบาลง (วิ)', 'fadeOut', 0, 5, .1, it) + K('ลดเสียงอัตโนมัติเมื่อมีคนพูด (ducking)', 'duck', it, false) + K('วนซ้ำจนจบช่วง', 'loop', it, false) + `<div class="fld"><label>เริ่มจากวินาทีที่</label><input type="number" step="0.1" min="0" data-p="in" value="${(it.in || 0).toFixed(1)}" class="num"></div>`;
   }
-  box.innerHTML = h; bindInspector(it);
+  box.innerHTML = cardify(h); bindInspector(it);
 }
 function projectInspector() {
   return `<div class="ihead"><b>โปรเจกต์</b></div><div class="hint">ขนาดวิดีโอ 1080×1920 (9:16) · ความยาวรวม ${fmt(projectEnd())}</div>
@@ -2850,7 +2914,7 @@ function ccSpeed(it) {
   const sb = INSP.sub.speed; let h = subs('speed', [['std', 'มาตรฐาน'], ['curve', 'เส้นโค้ง'], ['vel', 'เอฟเฟกต์ความเร็ว']]);
   if (sb === 'std') {
     const span = it.dur * (it.speed || 1);
-    h += `<div class="chips spd">` + [.25, .5, .75, 1, 1.5, 2, 3, 4].map(x => `<button data-act="spdset" data-v="${x}" class="${(it.speed || 1) === x ? 'on' : ''}">${x}x</button>`).join('') + `</div>`;
+    h += sec('ความเร็ว') + `<div class="chips spd">` + [.25, .5, .75, 1, 1.5, 2, 3, 4].map(x => `<button data-act="spdset" data-v="${x}" class="${(it.speed || 1) === x ? 'on' : ''}">${x}x</button>`).join('') + `</div>`;
     h += RR('ความเร็ว (เท่า)', 'speed', .1, 8, .05, it, { def: 1, dec: 2, span: span.toFixed(4) });
     h += `<div class="fld"><label>ความยาว (วิ)</label><input type="number" class="num" data-p="sdur" data-span="${span.toFixed(4)}" step="0.1" min="0.1" value="${it.dur.toFixed(2)}"></div>`;
     h += K('เปลี่ยนระดับเสียงตามความเร็ว', 'pitchShift', it, false) + `<div class="btnrow"><button data-act="spdreset">รีเซ็ตความเร็ว</button></div>`;
@@ -2897,10 +2961,16 @@ function renderVideoInspector(it) {
   let h = `<div class="ihead"><b>${it.type === 'video' ? 'คลิปวิดีโอ' : 'รูปภาพ'}</b><span class="sp"></span><button data-act="dup">ทำซ้ำ</button><button data-act="del" class="danger">ลบ</button></div>`;
   h += `<div class="fld"><label>เริ่ม</label><input type="number" step="0.1" data-p="start" value="${it.start.toFixed(2)}" class="num"><label class="r">ยาว</label><input type="number" step="0.1" min="0.1" data-p="dur" value="${it.dur.toFixed(2)}" class="num"></div>`;
   h += `<div class="itabs">` + tabs.map(([k, l]) => `<button data-act="itab" data-v="${k}" class="${INSP.tab === k ? 'on' : ''}">${l}</button>`).join('') + `</div>`;
-  h += `<div class="ibody">` + ({ video: ccVideo, audio: ccAudio, speed: ccSpeed, anim: ccAnim, adjust: ccAdjust, ai: ccAI }[INSP.tab])(it) + `</div>`;
+  h += `<div class="ibody">` + cardify(({ video: ccVideo, audio: ccAudio, speed: ccSpeed, anim: ccAnim, adjust: ccAdjust, ai: ccAI }[INSP.tab])(it)) + `</div>`;
   return h;
 }
 
+// ---------- cards (MyCut-style): every section becomes a rounded card with its own reset button ----------
+function cardify(html) {
+  const parts = html.split('<div class="sec">'); if (parts.length < 2) return html; let out = parts[0];
+  for (let i = 1; i < parts.length; i++) { const j = parts[i].indexOf('</div>'); const title = parts[i].slice(0, j), rest = parts[i].slice(j + 6); out += `<div class="icard"><div class="ctitle"><b>${title}</b><button class="crst" data-act="cardrst" title="รีเซ็ตเป็นค่าเริ่มต้น">↺</button></div>${rest}</div>`; }
+  return out;
+}
 // ---------- actions ----------
 function ccApplyAll(it, keys) {
   let n = 0; for (const o of D.items) { if (o.id === it.id || (o.type !== 'video' && o.type !== 'image')) continue; for (const k of keys) { const v = getPath(it, k); if (v === undefined) { delete o[k]; continue; } setPath(o, k, JSON.parse(JSON.stringify(v))); } n++; }
@@ -2911,6 +2981,7 @@ function ccPreview(it, g) {
   pause(); seek(t0); play(); const stop = g === 'combo' ? 2200 : 1500; setTimeout(() => { if (PB.playing && !PB.exporting) pause(); }, stop);
 }
 function ccAction(act, a, it) {
+  if (act === 'cardrst') { const card = a.closest('.icard'); if (card) $$('.rst.mod', card).forEach(b => b.click()); return true; }
   if (!it) return false; const v = a.dataset.v;
   switch (act) {
     case 'itab': INSP.tab = v; inspSave(); renderInspector(); return true;

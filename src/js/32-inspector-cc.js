@@ -100,7 +100,7 @@ function ccSpeed(it) {
   const sb = INSP.sub.speed; let h = subs('speed', [['std', 'มาตรฐาน'], ['curve', 'เส้นโค้ง'], ['vel', 'เอฟเฟกต์ความเร็ว']]);
   if (sb === 'std') {
     const span = it.dur * (it.speed || 1);
-    h += `<div class="chips spd">` + [.25, .5, .75, 1, 1.5, 2, 3, 4].map(x => `<button data-act="spdset" data-v="${x}" class="${(it.speed || 1) === x ? 'on' : ''}">${x}x</button>`).join('') + `</div>`;
+    h += sec('ความเร็ว') + `<div class="chips spd">` + [.25, .5, .75, 1, 1.5, 2, 3, 4].map(x => `<button data-act="spdset" data-v="${x}" class="${(it.speed || 1) === x ? 'on' : ''}">${x}x</button>`).join('') + `</div>`;
     h += RR('ความเร็ว (เท่า)', 'speed', .1, 8, .05, it, { def: 1, dec: 2, span: span.toFixed(4) });
     h += `<div class="fld"><label>ความยาว (วิ)</label><input type="number" class="num" data-p="sdur" data-span="${span.toFixed(4)}" step="0.1" min="0.1" value="${it.dur.toFixed(2)}"></div>`;
     h += K('เปลี่ยนระดับเสียงตามความเร็ว', 'pitchShift', it, false) + `<div class="btnrow"><button data-act="spdreset">รีเซ็ตความเร็ว</button></div>`;
@@ -147,10 +147,16 @@ function renderVideoInspector(it) {
   let h = `<div class="ihead"><b>${it.type === 'video' ? 'คลิปวิดีโอ' : 'รูปภาพ'}</b><span class="sp"></span><button data-act="dup">ทำซ้ำ</button><button data-act="del" class="danger">ลบ</button></div>`;
   h += `<div class="fld"><label>เริ่ม</label><input type="number" step="0.1" data-p="start" value="${it.start.toFixed(2)}" class="num"><label class="r">ยาว</label><input type="number" step="0.1" min="0.1" data-p="dur" value="${it.dur.toFixed(2)}" class="num"></div>`;
   h += `<div class="itabs">` + tabs.map(([k, l]) => `<button data-act="itab" data-v="${k}" class="${INSP.tab === k ? 'on' : ''}">${l}</button>`).join('') + `</div>`;
-  h += `<div class="ibody">` + ({ video: ccVideo, audio: ccAudio, speed: ccSpeed, anim: ccAnim, adjust: ccAdjust, ai: ccAI }[INSP.tab])(it) + `</div>`;
+  h += `<div class="ibody">` + cardify(({ video: ccVideo, audio: ccAudio, speed: ccSpeed, anim: ccAnim, adjust: ccAdjust, ai: ccAI }[INSP.tab])(it)) + `</div>`;
   return h;
 }
 
+// ---------- cards (MyCut-style): every section becomes a rounded card with its own reset button ----------
+function cardify(html) {
+  const parts = html.split('<div class="sec">'); if (parts.length < 2) return html; let out = parts[0];
+  for (let i = 1; i < parts.length; i++) { const j = parts[i].indexOf('</div>'); const title = parts[i].slice(0, j), rest = parts[i].slice(j + 6); out += `<div class="icard"><div class="ctitle"><b>${title}</b><button class="crst" data-act="cardrst" title="รีเซ็ตเป็นค่าเริ่มต้น">↺</button></div>${rest}</div>`; }
+  return out;
+}
 // ---------- actions ----------
 function ccApplyAll(it, keys) {
   let n = 0; for (const o of D.items) { if (o.id === it.id || (o.type !== 'video' && o.type !== 'image')) continue; for (const k of keys) { const v = getPath(it, k); if (v === undefined) { delete o[k]; continue; } setPath(o, k, JSON.parse(JSON.stringify(v))); } n++; }
@@ -161,6 +167,7 @@ function ccPreview(it, g) {
   pause(); seek(t0); play(); const stop = g === 'combo' ? 2200 : 1500; setTimeout(() => { if (PB.playing && !PB.exporting) pause(); }, stop);
 }
 function ccAction(act, a, it) {
+  if (act === 'cardrst') { const card = a.closest('.icard'); if (card) $$('.rst.mod', card).forEach(b => b.click()); return true; }
   if (!it) return false; const v = a.dataset.v;
   switch (act) {
     case 'itab': INSP.tab = v; inspSave(); renderInspector(); return true;

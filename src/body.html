@@ -1,7 +1,7 @@
 <div id="app">
   <header id="top">
     <button id="btnHome" title="กลับหน้าโปรเจกต์ทั้งหมด">🏠 โปรเจกต์</button>
-    <div class="brand">Sykhai <b>Editor</b></div>
+    <span class="logo" aria-hidden="true">✂</span><div class="brand">Sykhai <b>Editor</b></div>
     <input id="projName" value="โปรเจกต์ใหม่" spellcheck="false">
     <button id="btnUndo" title="ย้อนกลับ (⌘Z)">↶</button>
     <button id="btnRedo" title="ทำซ้ำ (⌘⇧Z)">↷</button>
@@ -22,6 +22,7 @@
         <div class="lpane on" id="pane-media">
           <div class="row"><button id="btnImport" class="primary wide">+ นำเข้าไฟล์ (วิดีโอ / รูป / เสียง)</button></div>
           <input type="file" id="fileIn" multiple accept="video/*,image/*,audio/*,.mov,.mp4,.m4v" hidden>
+          <div id="mediaFilter"></div>
           <div id="mediaList"></div>
         </div>
         <div class="lpane" id="pane-text"></div>
@@ -33,15 +34,12 @@
       </div>
     </aside>
     <section id="center">
+      <div class="ptitle"><b>เครื่องเล่น</b><span class="ratio">9:16</span></div>
       <div id="stage"><canvas id="pv" width="540" height="960"></canvas><canvas id="ov" width="540" height="960"></canvas><div id="srcBadge" hidden><span>ดูตัวอย่างไฟล์ — <b id="srcName" translate="no"></b></span><button id="srcClose" title="กลับไปดูไทม์ไลน์">กลับไทม์ไลน์</button></div></div>
       <div id="transport">
-        <button id="tpStart" title="กลับไปจุดเริ่ม">⏮</button>
-        <button id="tpPlay" class="primary" title="เล่น/หยุด (Space)">▶</button>
-        <input id="srcSeek" type="range" min="0" max="1000" value="0" hidden><span id="vu" title="ระดับเสียง"><i></i></span><span id="tpTime">00:00.0 / 00:00.0</span>
-        <span class="sp"></span>
-        <button id="tpSplit" title="ตัดที่หัวอ่าน (S)">✂ ตัด</button>
-        <button id="tpDel" title="ลบ (Delete)">🗑 ลบ</button>
-        <button id="tpRipple" title="ลบแล้วดึงคลิปตามมา (Shift+Delete)">🗑⇥</button>
+        <div class="tpl"><span id="tpTime">00:00.0 / 00:00.0</span><span id="vu" title="ระดับเสียง"><i></i></span></div>
+        <div class="tpc"><button id="tpStart" title="กลับไปจุดเริ่ม">⏮</button><button id="tpPlay" class="primary" title="เล่น/หยุด (Space)">▶</button><input id="srcSeek" type="range" min="0" max="1000" value="0" hidden></div>
+        <div class="tpr"><button id="tpSplit" title="ตัดที่หัวอ่าน (S)">✂ ตัด</button><button id="tpDel" title="ลบ (Delete)">🗑 ลบ</button><button id="tpRipple" title="ลบแล้วดึงคลิปตามมา (Shift+Delete)">🗑⇥</button></div>
       </div>
     </section>
     <aside id="right"><div id="inspector"></div></aside>

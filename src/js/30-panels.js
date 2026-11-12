@@ -19,9 +19,15 @@ const STICKERS = [['check', 'ถูกต้อง ✔'], ['warning', 'เตื
 const MASK_OPTS = [['none', 'ไม่มี'], ['circle', 'วงกลม'], ['round', 'มุมมน'], ['frame', 'การ์ดกรอบขาว'], ['featherTop', 'ฟุ้งขอบบน'], ['featherBottom', 'ฟุ้งขอบล่าง'], ['featherAll', 'ฟุ้งรอบด้าน']];
 
 // ---------- tabs ----------
-const TABS = [['media', 'สื่อ'], ['text', 'ข้อความ'], ['sticker', 'สติกเกอร์'], ['trans', 'ทรานสิชัน'], ['fx', 'เอฟเฟกต์'], ['audio', 'เสียง'], ['ai', 'AI ✨']];
+const TAB_ICONS = {
+  media: '<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M10 9l5 3-5 3z"/>', text: '<path d="M5 7V4h14v3M12 4v16M9 20h6"/>',
+  sticker: '<circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2.5 4 2.5S16 14 16 14M9 9.5h.01M15 9.5h.01"/>', trans: '<path d="M4 6l7 6-7 6zM20 6l-7 6 7 6z"/>',
+  fx: '<path d="M12 3l1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8zM18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z"/>',
+  audio: '<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>', ai: '<path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path d="M19 17v4M17 19h4"/>'
+};
+const TABS = [['media', 'สื่อ'], ['text', 'ข้อความ'], ['sticker', 'สติกเกอร์'], ['trans', 'ทรานสิชัน'], ['fx', 'เอฟเฟกต์'], ['audio', 'เสียง'], ['ai', 'AI']];
 function buildLeft() {
-  $('#leftTabs').innerHTML = TABS.map(([id, l], i) => `<button data-tab="${id}" class="${i ? '' : 'on'}">${l}</button>`).join('');
+  $('#leftTabs').innerHTML = TABS.map(([id, l], i) => `<button data-tab="${id}" class="${i ? '' : 'on'}"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${TAB_ICONS[id]}</svg><span>${l}</span></button>`).join('');
   $('#leftTabs').onclick = e => { const b = e.target.closest('button'); if (b) showTab(b.dataset.tab); };
   // text pane
   $('#pane-text').innerHTML = `<div class="hint">กดเพื่อเพิ่มข้อความที่ตำแหน่งหัวอ่าน (เส้นแดง) — ใช้ *คำ* เพื่อทำตัวเหลือง/เน้น</div>` +
@@ -165,7 +171,7 @@ const ANIM_IN = [['none', 'ไม่มี'], ['fade', 'เลือน'], ['pop
 
 function renderInspector() {
   const box = $('#inspector'); if (!box) return; const it = SEL ? getItem(SEL) : null;
-  if (!it) { box.innerHTML = projectInspector(); bindInspector(null); return; }
+  if (!it) { box.innerHTML = cardify(projectInspector()); bindInspector(null); return; }
   if (it.type === 'video' || it.type === 'image') { box.innerHTML = renderVideoInspector(it); bindInspector(it); ccPost(it); return; }
   let h = `<div class="ihead"><b>${{ video: 'คลิปวิดีโอ', image: 'รูปภาพ', text: 'ข้อความ', sticker: 'สติกเกอร์', audio: 'เสียง' }[it.type]}</b><span class="sp"></span><button data-act="dup">ทำซ้ำ</button><button data-act="del" class="danger">ลบ</button></div>`;
   h += `<div class="fld"><label>เริ่ม</label><input type="number" step="0.1" data-p="start" value="${it.start.toFixed(2)}" class="num"><label class="r">ยาว</label><input type="number" step="0.1" min="0.1" data-p="dur" value="${it.dur.toFixed(2)}" class="num"></div>`;
@@ -196,7 +202,7 @@ function renderInspector() {
   } else if (it.type === 'audio') {
     const m = MEDIA.get(it.mediaId); h += `<div class="hint" translate="no">${esc(m ? m.name : '')}</div>` + R('ระดับเสียง', 'vol', 0, 1.5, .01, it) + R('ค่อยๆ ดังขึ้น (วิ)', 'fadeIn', 0, 5, .1, it) + R('ค่อยๆ เบาลง (วิ)', 'fadeOut', 0, 5, .1, it) + K('ลดเสียงอัตโนมัติเมื่อมีคนพูด (ducking)', 'duck', it, false) + K('วนซ้ำจนจบช่วง', 'loop', it, false) + `<div class="fld"><label>เริ่มจากวินาทีที่</label><input type="number" step="0.1" min="0" data-p="in" value="${(it.in || 0).toFixed(1)}" class="num"></div>`;
   }
-  box.innerHTML = h; bindInspector(it);
+  box.innerHTML = cardify(h); bindInspector(it);
 }
 function projectInspector() {
   return `<div class="ihead"><b>โปรเจกต์</b></div><div class="hint">ขนาดวิดีโอ 1080×1920 (9:16) · ความยาวรวม ${fmt(projectEnd())}</div>
