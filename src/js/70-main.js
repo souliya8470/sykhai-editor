@@ -73,7 +73,7 @@ async function ensureSfx() {
 
 // ---------- init ----------
 async function init() {
-  $('#verTag').textContent = 'v' + APP_VERSION; $('#verTag2').textContent = 'Sykhai Editor v' + APP_VERSION; setInterval(() => { if (!PERF.hud) { const e = $('#verTag2'), t = verText(); if (e && e.textContent !== t) e.textContent = t; } }, 1500);
+  $('#verTag').textContent = 'v' + APP_VERSION; $('#verTag2').textContent = 'Sykhai Editor v' + APP_VERSION; setInterval(() => { if (!PERF.hud && !PD.cOn) { const e = $('#verTag2'), t = verText(); if (e && e.textContent !== t) e.textContent = t; } }, 1500);
   PCANVAS = $('#pv'); PCTX = PCANVAS.getContext('2d');
   $('#mnav').onclick = e => { const b = e.target.closest('button'); if (!b) return; $('#app').dataset.m = b.dataset.m; $$('#mnav button').forEach(x => x.classList.toggle('on', x === b)); setTimeout(() => { fitStage(); renderTimeline(); }, 30); };
   $('#app').dataset.m = 'tl';

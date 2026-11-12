@@ -273,8 +273,18 @@ function perfAdapt(ms, now) {
 }
 const PD = { vu: 0, sync: 0, ui: 0, tot: 0, tk: 0, rn: 0, lastShow: 0, el: null, last: new Map() };
 const _ema = (o, k, v) => { o[k] = o[k] ? o[k] * .9 + v * .1 : v; };
+const PHONE_HUD = () => matchMedia('(max-width:820px)').matches;
+function perfCompact(now) {
+  const e = $('#verTag2'); if (!e) return;
+  if (!PB.playing || PB.exporting) { if (PD.cOn) { PD.cOn = false; e.textContent = verText(); } return; }
+  if (now - (PD.cShow || 0) < 600) return; const dt = (now - (PD.cShow || now)) / 1000 || 1; PD.cShow = now; PD.cOn = true;
+  let v = '', k = 0, n = 0, pa = 0, mu = 0;
+  for (const [id, r] of POOL) { const it = getItem(id); if (!it || !(PB.t >= it.start - 0.05 && PB.t < it.start + it.dur)) continue; const el = r.el; n++; if (el.paused) pa++; if (el.muted) mu++; if (!k) { k = 1; if (!el._rv && el.requestVideoFrameCallback) { el._rv = 1; el._rvn = 0; const f = () => { el._rvn++; el.requestVideoFrameCallback(f); }; el.requestVideoFrameCallback(f); } const pv = PD.cLast || 0; v = ((el._rvn || 0) - pv) / dt; PD.cLast = el._rvn || 0; const it2 = it; v = Math.round(v) + 'f ' + (el.currentTime - clamp(PB.t - it2.start + (it2.in || 0), 0, 1e6)).toFixed(1); } }
+  const rr = Math.round((PD.rn - (PD._rn0 || 0)) / dt); PD._rn0 = PD.rn;
+  e.textContent = `r${rr}/s ${PERF.ema.toFixed(0)}ms s${PD.sync.toFixed(0)} t${PD.tot.toFixed(0)} v${v} L${n}${pa ? ' P' + pa : ''}${mu ? ' M' + mu : ''} q${Math.round(PERF.q * 100)}${proxyTag()}`;
+}
 function perfOverlay(now) {
-  if (!PERF.hud) { if (PD.el) { PD.el.remove(); PD.el = null; } return; }
+  if (!PERF.hud) { if (PHONE_HUD()) perfCompact(now); if (PD.el) { PD.el.remove(); PD.el = null; } return; }
   if (!PD.el) { const d = document.createElement('div'); d.id = 'perfHud'; d.style.cssText = 'position:fixed;left:6px;top:96px;z-index:99999;background:rgba(0,0,0,.78);color:#8ff;font:11px/1.35 monospace;padding:4px 6px;border-radius:6px;pointer-events:none;white-space:pre'; document.body.appendChild(d); PD.el = d; PD.lastShow = now; PD.tk = 0; PD.rn = 0; }
   if (now - PD.lastShow < 700) return;
   const dt = (now - PD.lastShow) / 1000; PD.lastShow = now;
