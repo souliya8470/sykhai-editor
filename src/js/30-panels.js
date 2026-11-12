@@ -38,18 +38,10 @@ function buildLeft() {
     const b = e.target.closest('.stk'); if (b) addSticker(b.dataset.k);
     if (e.target.id === 'addEmoji') addSticker('emoji', { text: $('#emojiIn').value || '🔥' });
   };
-  // transitions
-  $('#pane-trans').innerHTML = `<div class="hint">เลือกคลิป (วิดีโอ/ภาพ) บนไทม์ไลน์ก่อน แล้วกดชื่อทรานสิชัน — จะเล่นตอนคลิปนั้นเริ่ม</div><div class="grid2">` +
-    Object.entries(TRANS).map(([k, v]) => `<button class="trn" data-k="${k}">${v.label}</button>`).join('') + `</div>`;
-  $('#pane-trans').onclick = e => { const b = e.target.closest('.trn'); if (b) applyTransition(getItem(SEL), b.dataset.k); };
-  // fx
-  $('#pane-fx').innerHTML = `<div class="hint">เลือกคลิปก่อน แล้วกดเพื่อใส่ลุค/เอฟเฟกต์ (ปรับละเอียดได้ที่แผงขวา)</div><div class="grid2">` +
-    FX_PRESETS.map(p => `<button class="fxp" data-k="${p.id}">${p.label}</button>`).join('') + `</div><hr><div class="hint">รูปทรง / กรอบ</div><div class="grid2">` +
-    [['pip', 'วงกลมมุมขวาล่าง (PiP)'], ['card', 'การ์ดกรอบขาว (รูปแทรก)'], ['round', 'มุมมน'], ['fTop', 'ฟุ้งขอบบน'], ['fBot', 'ฟุ้งขอบล่าง'], ['fAll', 'ฟุ้งรอบด้าน'], ['kbIn', 'Ken Burns ซูมเข้า'], ['kbOut', 'Ken Burns ซูมออก'], ['kbPan', 'Ken Burns แพน']].map(([k, l]) => `<button class="mkp" data-k="${k}">${l}</button>`).join('') + `</div>`;
-  $('#pane-fx').onclick = e => {
-    const b = e.target.closest('.fxp'); if (b) applyFxPreset(getItem(SEL), b.dataset.k);
-    const c = e.target.closest('.mkp'); if (c) applyMaskPreset(getItem(SEL), c.dataset.k);
-  };
+  // transitions + effects: animated tiles (hover = preview, drag = drop onto timeline)
+  $('#pane-trans').innerHTML = `<div class="hint">เอาเมาส์ชี้เพื่อดูตัวอย่าง · ลากไปวาง “ตรงรอยต่อระหว่างคลิป” บนไทม์ไลน์ หรือเลือกคลิปแล้วกด</div><div class="tiles" id="tilesTrans"></div>`;
+  $('#pane-fx').innerHTML = `<div class="hint">เอาเมาส์ชี้เพื่อดูตัวอย่าง · ลากไปวางบนคลิป หรือเลือกคลิปแล้วกด (ปรับละเอียดได้ที่แผงขวา)</div><div class="tiles" id="tilesFx"></div><div class="hint" style="margin-top:12px">รูปทรง / กรอบ / ซูม</div><div class="tiles" id="tilesMk"></div>`;
+  buildTiles();
   // audio
   $('#pane-audio').innerHTML = `<div class="hint">นำเข้าไฟล์เพลง/เสียงจากปุ่ม “สื่อ” (mp3, wav, m4a) แล้วกดใส่เป็นเพลง/เอฟเฟกต์ได้ที่นี่</div><div id="audioList"></div><hr><div class="hint">เสียงเอฟเฟกต์ในตัว (กดเพื่อใส่ที่หัวอ่าน)</div><div class="grid2">` +
     [['whoosh', 'วูช (ผ่าน)'], ['swipe', 'สวิป'], ['pop', 'ป๊อป'], ['ding', 'ติ๊ง'], ['click', 'คลิก'], ['boom', 'ตูม']].map(([k, l]) => `<button class="sfx" data-k="${k}">${l}</button>`).join('') + `</div>`;
@@ -99,8 +91,7 @@ function applyFxPreset(it, k) {
   if (!it || (it.type !== 'video' && it.type !== 'image')) { toast('เลือกคลิปวิดีโอ/ภาพก่อน'); return; }
   const p = FX_PRESETS.find(x => x.id === k); it.fx = JSON.parse(JSON.stringify(p.fx)); commit('fx'); renderInspector();
 }
-function applyMaskPreset(it, k) {
-  if (!it || (it.type !== 'video' && it.type !== 'image')) { toast('เลือกคลิปวิดีโอ/ภาพก่อน'); return; }
+function applyMaskTo(it, k) {
   switch (k) {
     case 'pip': it.mask = { type: 'circle', ring: .01, size: 1, color: '#ffffff' }; it.xf.s = .36; it.xf.x = .26; it.xf.y = .3; it.fit = 'cover'; break;
     case 'card': it.mask = { type: 'frame', ring: .014, scale: 1 }; it.xf.s = .82; it.xf.x = 0; it.xf.y = 0; it.xf.r = -3; break;
@@ -110,7 +101,10 @@ function applyMaskPreset(it, k) {
     case 'fAll': it.mask = { type: 'featherAll', size: .35 }; break;
     case 'kbIn': it.kb = 'in'; break; case 'kbOut': it.kb = 'out'; break; case 'kbPan': it.kb = 'pan'; break;
   }
-  commit('mask'); renderInspector();
+}
+function applyMaskPreset(it, k) {
+  if (!it || (it.type !== 'video' && it.type !== 'image')) { toast('เลือกคลิปวิดีโอ/ภาพก่อน'); return; }
+  applyMaskTo(it, k); commit('mask'); renderInspector();
 }
 
 // ---------- built-in SFX ----------

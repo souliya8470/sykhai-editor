@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.00</title>
+<title>Sykhai Editor v1.01</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -110,6 +110,17 @@ dialog h3{margin:0 0 10px}
 .chip{display:inline-block;background:var(--p3);border-radius:10px;padding:1px 8px;font-size:11px;margin:1px}
 .vcard{display:flex;gap:8px;align-items:flex-start;border:1px solid var(--ln);border-radius:8px;padding:8px;margin:6px 0;background:var(--p1)}
 .vcard.pick{border-color:var(--ac)}.vcard .vt{flex:1}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.tile{position:relative;border-radius:8px;overflow:hidden;background:#000;cursor:grab;border:1px solid var(--ln)}
+.tile:hover{border-color:var(--ac)}
+.tile canvas{display:block;width:100%;aspect-ratio:9/16;background:#000}
+.tile span{position:absolute;left:0;right:0;bottom:0;padding:12px 3px 3px;font-size:10px;line-height:1.15;text-align:center;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.85));pointer-events:none}
+.junc{position:absolute;top:50%;transform:translate(-50%,-50%);width:20px;height:20px;border-radius:50%;background:#1b1d22;border:1px solid var(--ac);color:var(--ac);font-size:11px;line-height:18px;text-align:center;z-index:4;cursor:pointer;box-shadow:0 0 0 2px rgba(0,0,0,.4)}
+.junc.has{background:var(--ac);color:#000}
+.junc:hover{transform:translate(-50%,-50%) scale(1.25)}
+#dropMark{position:absolute;display:none;z-index:9;pointer-events:none}
+#dropMark.cut{background:var(--ac);box-shadow:0 0 12px var(--ac);border-radius:3px}
+#dropMark.clipm{border:2px solid var(--ac);background:rgba(46,230,197,.18);border-radius:6px}
 
 </style></head>
 <body>
@@ -199,10 +210,11 @@ dialog h3{margin:0 0 10px}
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
 // APP_VERSION  : 1.00
-// APP_VERSION_PREV : -
+// APP_VERSION_PREV : 1.00
 // APP_VERSION_PREV_OLDER : -
+// 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.00';
+const APP_VERSION = '1.01';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -803,6 +815,13 @@ function renderTimeline() {
     el.innerHTML = inner; lane.appendChild(el);
     const cv = $('canvas.wf', el); if (cv) drawWave(cv, it, m);
   }
+  for (const tr of TRACKS.filter(t => t.kind === 'video')) {
+    const lane = $(`.trow[data-track="${tr.id}"] .tlane`, body); const list = itemsOn(tr.id).filter(i => i.type === 'video' || i.type === 'image');
+    for (let i = 1; i < list.length; i++) {
+      const A = list[i - 1], B = list[i]; if (Math.abs(A.start + A.dur - B.start) > .06 && !(B.transIn && B.start < A.start + A.dur)) continue;
+      const j = document.createElement('div'); j.className = 'junc' + (B.transIn ? ' has' : ''); j.dataset.id = B.id; j.style.left = (B.start * TL.pps) + 'px'; j.textContent = B.transIn ? '⇄' : '+'; j.title = 'ลากทรานสิชัน/เอฟเฟกต์มาวางที่นี่ หรือกดเพื่อเลือก'; lane.appendChild(j);
+    }
+  }
   body.scrollLeft = sx; body.scrollTop = sy; updatePlayhead();
 }
 function drawWave(cv, it, m) {
@@ -851,6 +870,7 @@ function initTimelineEvents() {
   const body = $('#tlbody');
   body.addEventListener('pointerdown', e => {
     if (e.button !== 0) return;
+    const jn = e.target.closest('.junc'); if (jn) { select(jn.dataset.id); showTab('trans'); return; }
     const clipEl = e.target.closest('.clip');
     const rulerEl = e.target.closest('#ruler');
     if (rulerEl && !e.target.closest('.corner')) { scrubStart(e); return; }
@@ -891,11 +911,36 @@ function initTimelineEvents() {
     if (e.ctrlKey || e.metaKey) { e.preventDefault(); setZoom(TL.pps * (e.deltaY < 0 ? 1.15 : 0.87)); }
   }, { passive: false });
   // drag & drop from media bin
-  body.addEventListener('dragover', e => { if (e.dataTransfer.types.includes('text/mediaid')) e.preventDefault(); });
+  body.addEventListener('dragover', e => {
+    const ty = e.dataTransfer.types; if (ty.includes('text/mediaid')) { e.preventDefault(); return; }
+    if (ty.includes('text/trans') || ty.includes('text/fx')) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; showDropMark(dropTarget(e)); }
+  });
+  body.addEventListener('dragleave', e => { if (!body.contains(e.relatedTarget)) showDropMark(null); });
   body.addEventListener('drop', e => {
+    showDropMark(null);
+    if (DRAG && (e.dataTransfer.types.includes('text/trans') || e.dataTransfer.types.includes('text/fx'))) {
+      e.preventDefault(); const tg = dropTarget(e); const d = DRAG; DRAG = null; if (!tg) { toast('ปล่อยตรงรอยต่อหรือบนคลิปวิดีโอ/ภาพ'); return; }
+      select(tg.it.id); if (d.kind === 'trans') applyTransition(tg.it, d.key); else if (d.kind === 'fx') applyFxPreset(tg.it, d.key); else applyMaskPreset(tg.it, d.key); return;
+    }
     const id = e.dataTransfer.getData('text/mediaid'); if (!id) return; e.preventDefault();
     const row = e.target.closest('.trow'); addMediaToTimeline(id, row ? row.dataset.track : null, dropTimeFromEvent(e));
   });
+}
+function dropTarget(e) {
+  const el = document.elementFromPoint(e.clientX, e.clientY); const row = el && el.closest ? el.closest('.trow') : null;
+  if (!row || TRACK_KIND[row.dataset.track] !== 'video') return null;
+  const t = dropTimeFromEvent(e); const items = itemsOn(row.dataset.track).filter(i => i.type === 'video' || i.type === 'image');
+  const over = items.find(i => t >= i.start && t < i.start + i.dur);
+  if (DRAG && DRAG.kind === 'trans') { let best = null, bd = 20 / TL.pps; for (const it of items) { const d = Math.abs(it.start - t); if (d < bd) { bd = d; best = it; } } if (best) return { it: best, mode: 'cut', row }; }
+  return over ? { it: over, mode: 'clip', row } : null;
+}
+function showDropMark(tg) {
+  let m = $('#dropMark'); const inner = $('#tlinner'); if (!inner) return;
+  if (!tg) { if (m) m.style.display = 'none'; return; }
+  if (!m) { m = document.createElement('div'); m.id = 'dropMark'; inner.appendChild(m); } else if (!m.parentNode) inner.appendChild(m);
+  const top = tg.row.offsetTop, h = tg.row.offsetHeight; m.style.display = 'block'; m.style.top = top + 'px'; m.style.height = h + 'px';
+  if (tg.mode === 'cut') { m.className = 'cut'; m.style.left = (TL.labelW + tg.it.start * TL.pps - 3) + 'px'; m.style.width = '6px'; }
+  else { m.className = 'clipm'; m.style.left = (TL.labelW + tg.it.start * TL.pps) + 'px'; m.style.width = (tg.it.dur * TL.pps) + 'px'; }
 }
 function scrubStart(e, already) {
   const body = $('#tlbody'); const wasPlaying = PB.playing; pause();
@@ -921,7 +966,7 @@ function cmdCloseGaps(track) {
 
 // ---------- media bin ----------
 function renderMediaBin() {
-  const box = $('#mediaList'); if (!box) return; const arr = [...MEDIA.values()];
+  const box = $('#mediaList'); if (!box) return; const arr = [...MEDIA.values()].filter(m => !m.hidden);
   box.innerHTML = arr.length ? '' : '<div class="empty">ยังไม่มีไฟล์ — กดปุ่ม “นำเข้า” หรือลากไฟล์มาวางที่นี่</div>';
   for (const m of arr) {
     const d = document.createElement('div'); d.className = 'mi'; d.draggable = true; d.dataset.id = m.id;
@@ -1002,18 +1047,10 @@ function buildLeft() {
     const b = e.target.closest('.stk'); if (b) addSticker(b.dataset.k);
     if (e.target.id === 'addEmoji') addSticker('emoji', { text: $('#emojiIn').value || '🔥' });
   };
-  // transitions
-  $('#pane-trans').innerHTML = `<div class="hint">เลือกคลิป (วิดีโอ/ภาพ) บนไทม์ไลน์ก่อน แล้วกดชื่อทรานสิชัน — จะเล่นตอนคลิปนั้นเริ่ม</div><div class="grid2">` +
-    Object.entries(TRANS).map(([k, v]) => `<button class="trn" data-k="${k}">${v.label}</button>`).join('') + `</div>`;
-  $('#pane-trans').onclick = e => { const b = e.target.closest('.trn'); if (b) applyTransition(getItem(SEL), b.dataset.k); };
-  // fx
-  $('#pane-fx').innerHTML = `<div class="hint">เลือกคลิปก่อน แล้วกดเพื่อใส่ลุค/เอฟเฟกต์ (ปรับละเอียดได้ที่แผงขวา)</div><div class="grid2">` +
-    FX_PRESETS.map(p => `<button class="fxp" data-k="${p.id}">${p.label}</button>`).join('') + `</div><hr><div class="hint">รูปทรง / กรอบ</div><div class="grid2">` +
-    [['pip', 'วงกลมมุมขวาล่าง (PiP)'], ['card', 'การ์ดกรอบขาว (รูปแทรก)'], ['round', 'มุมมน'], ['fTop', 'ฟุ้งขอบบน'], ['fBot', 'ฟุ้งขอบล่าง'], ['fAll', 'ฟุ้งรอบด้าน'], ['kbIn', 'Ken Burns ซูมเข้า'], ['kbOut', 'Ken Burns ซูมออก'], ['kbPan', 'Ken Burns แพน']].map(([k, l]) => `<button class="mkp" data-k="${k}">${l}</button>`).join('') + `</div>`;
-  $('#pane-fx').onclick = e => {
-    const b = e.target.closest('.fxp'); if (b) applyFxPreset(getItem(SEL), b.dataset.k);
-    const c = e.target.closest('.mkp'); if (c) applyMaskPreset(getItem(SEL), c.dataset.k);
-  };
+  // transitions + effects: animated tiles (hover = preview, drag = drop onto timeline)
+  $('#pane-trans').innerHTML = `<div class="hint">เอาเมาส์ชี้เพื่อดูตัวอย่าง · ลากไปวาง “ตรงรอยต่อระหว่างคลิป” บนไทม์ไลน์ หรือเลือกคลิปแล้วกด</div><div class="tiles" id="tilesTrans"></div>`;
+  $('#pane-fx').innerHTML = `<div class="hint">เอาเมาส์ชี้เพื่อดูตัวอย่าง · ลากไปวางบนคลิป หรือเลือกคลิปแล้วกด (ปรับละเอียดได้ที่แผงขวา)</div><div class="tiles" id="tilesFx"></div><div class="hint" style="margin-top:12px">รูปทรง / กรอบ / ซูม</div><div class="tiles" id="tilesMk"></div>`;
+  buildTiles();
   // audio
   $('#pane-audio').innerHTML = `<div class="hint">นำเข้าไฟล์เพลง/เสียงจากปุ่ม “สื่อ” (mp3, wav, m4a) แล้วกดใส่เป็นเพลง/เอฟเฟกต์ได้ที่นี่</div><div id="audioList"></div><hr><div class="hint">เสียงเอฟเฟกต์ในตัว (กดเพื่อใส่ที่หัวอ่าน)</div><div class="grid2">` +
     [['whoosh', 'วูช (ผ่าน)'], ['swipe', 'สวิป'], ['pop', 'ป๊อป'], ['ding', 'ติ๊ง'], ['click', 'คลิก'], ['boom', 'ตูม']].map(([k, l]) => `<button class="sfx" data-k="${k}">${l}</button>`).join('') + `</div>`;
@@ -1063,8 +1100,7 @@ function applyFxPreset(it, k) {
   if (!it || (it.type !== 'video' && it.type !== 'image')) { toast('เลือกคลิปวิดีโอ/ภาพก่อน'); return; }
   const p = FX_PRESETS.find(x => x.id === k); it.fx = JSON.parse(JSON.stringify(p.fx)); commit('fx'); renderInspector();
 }
-function applyMaskPreset(it, k) {
-  if (!it || (it.type !== 'video' && it.type !== 'image')) { toast('เลือกคลิปวิดีโอ/ภาพก่อน'); return; }
+function applyMaskTo(it, k) {
   switch (k) {
     case 'pip': it.mask = { type: 'circle', ring: .01, size: 1, color: '#ffffff' }; it.xf.s = .36; it.xf.x = .26; it.xf.y = .3; it.fit = 'cover'; break;
     case 'card': it.mask = { type: 'frame', ring: .014, scale: 1 }; it.xf.s = .82; it.xf.x = 0; it.xf.y = 0; it.xf.r = -3; break;
@@ -1074,7 +1110,10 @@ function applyMaskPreset(it, k) {
     case 'fAll': it.mask = { type: 'featherAll', size: .35 }; break;
     case 'kbIn': it.kb = 'in'; break; case 'kbOut': it.kb = 'out'; break; case 'kbPan': it.kb = 'pan'; break;
   }
-  commit('mask'); renderInspector();
+}
+function applyMaskPreset(it, k) {
+  if (!it || (it.type !== 'video' && it.type !== 'image')) { toast('เลือกคลิปวิดีโอ/ภาพก่อน'); return; }
+  applyMaskTo(it, k); commit('mask'); renderInspector();
 }
 
 // ---------- built-in SFX ----------
@@ -1214,6 +1253,70 @@ function refreshInspectorValues() {
   $$('#inspector .kfb').forEach(b => b.classList.toggle('on', !!KF_ON(it, b.dataset.kf)));
 }
 on('sel', () => { renderInspector(); renderTimeline(); });
+
+// ---- 35-previews.js ----
+// ============================================================
+//  Animated preview tiles for transitions / effects (hover = play, drag = drop on timeline)
+// ============================================================
+const MK_PRESETS = [['pip', 'วงกลมมุมขวาล่าง'], ['card', 'การ์ดกรอบขาว'], ['round', 'มุมมน'], ['fTop', 'ฟุ้งขอบบน'], ['fBot', 'ฟุ้งขอบล่าง'], ['fAll', 'ฟุ้งรอบด้าน'], ['kbIn', 'ซูมเข้า'], ['kbOut', 'ซูมออก'], ['kbPan', 'แพน']];
+const PV = { W: 108, H: 192, ready: null, key: '', anim: null };
+let DRAG = null;
+
+function synthSample(kind) {
+  const c = document.createElement('canvas'); c.width = 180; c.height = 320; const x = c.getContext('2d');
+  const g = x.createLinearGradient(0, 0, 180, 320); if (kind === 'A') { g.addColorStop(0, '#2bb5c8'); g.addColorStop(1, '#2d4f9a'); } else { g.addColorStop(0, '#ffb347'); g.addColorStop(1, '#e0457b'); }
+  x.fillStyle = g; x.fillRect(0, 0, 180, 320);
+  x.fillStyle = 'rgba(255,255,255,.9)'; x.beginPath(); x.arc(90, 130, 42, 0, 7); x.fill(); x.beginPath(); x.ellipse(90, 290, 80, 100, 0, 0, 7); x.fill();
+  x.fillStyle = 'rgba(0,0,0,.35)'; x.font = '800 60px sans-serif'; x.textAlign = 'center'; x.fillText(kind, 90, 150); return c.toDataURL('image/png');
+}
+function loadImg(src) { return new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(i); i.src = src; }); }
+async function pvSamples() {
+  const meds = [...MEDIA.values()].filter(m => m.thumb && !m.hidden && m.type !== 'audio'); const key = meds.slice(0, 2).map(m => m.id).join('|');
+  if (PV.key === key && MEDIA.has('__pvA')) return;
+  const a = await loadImg(meds[0] ? meds[0].thumb : synthSample('A')), b = await loadImg(meds[1] ? meds[1].thumb : (meds[0] ? meds[0].thumb : synthSample('B')));
+  const mk = (id, img) => MEDIA.set(id, { id, name: id, type: 'image', img, w: img.naturalWidth || 180, h: img.naturalHeight || 320, duration: 0, hidden: true, hasAudio: false });
+  mk('__pvA', a); mk('__pvB', meds[1] ? b : await loadImg(synthSample('B'))); PV.key = key;
+}
+const pvItem = (id, media, start, dur, extra) => Object.assign({ id, track: 'V1', type: 'image', mediaId: media, start, dur, in: 0, speed: 1, vol: 1, xf: XF0(), kf: {}, fit: 'cover', fx: {}, mask: { type: 'none' }, transIn: null, kb: 'none' }, extra || {});
+function pvDraw(cv, kind, key, ph) {   // ph 0..1 position inside the loop
+  const ctx = cv.getContext('2d'); const prev = D; const W = cv.width, H = cv.height;
+  try {
+    if (kind === 'trans') {
+      const A = pvItem('__a', '__pvA', 0, 3), B = pvItem('__b', '__pvB', 1, 2, { transIn: key === 'none' ? null : { type: key, dur: 1 } });
+      D = { items: [A, B], duckLevel: .22 }; const t = key === 'none' ? (ph < .5 ? .6 : 1.4) : lerp(.55, 2.15, ph); renderFrame(ctx, W, H, t);
+    } else {
+      const it = pvItem('__a', '__pvA', 0, 2.4); if (kind === 'fx') it.fx = JSON.parse(JSON.stringify((FX_PRESETS.find(p => p.id === key) || { fx: {} }).fx)); else applyMaskTo(it, key);
+      D = { items: [it], duckLevel: .22 }; renderFrame(ctx, W, H, ph * 2.3);
+    }
+  } catch (e) { console.warn(e); } finally { D = prev; }
+}
+async function buildTiles() {
+  const fill = (id, kind, list) => {
+    const box = $(id); if (!box) return; box.innerHTML = '';
+    list.forEach(([key, label]) => {
+      const t = document.createElement('div'); t.className = 'tile'; t.draggable = true; t.dataset.key = key; t.dataset.kind = kind;
+      t.innerHTML = `<canvas width="${PV.W}" height="${PV.H}"></canvas><span>${esc(label)}</span>`; box.appendChild(t);
+      t.addEventListener('dragstart', e => { DRAG = { kind, key }; e.dataTransfer.setData(kind === 'trans' ? 'text/trans' : 'text/fx', kind + ':' + key); e.dataTransfer.effectAllowed = 'copy'; });
+      t.addEventListener('dragend', () => { DRAG = null; });
+      t.addEventListener('click', () => { const it = getItem(SEL); if (kind === 'trans') applyTransition(it, key); else if (kind === 'fx') applyFxPreset(it, key); else applyMaskPreset(it, key); });
+      t.addEventListener('mouseenter', () => pvStart(t)); t.addEventListener('mouseleave', () => pvStop(t));
+    });
+  };
+  fill('#tilesTrans', 'trans', Object.entries(TRANS).map(([k, v]) => [k, v.label]));
+  fill('#tilesFx', 'fx', FX_PRESETS.map(p => [p.id, p.label]));
+  fill('#tilesMk', 'mk', MK_PRESETS);
+  await pvSamples(); pvPosters();
+}
+function pvPosters() {
+  $$('.tile').forEach(t => pvDraw($('canvas', t), t.dataset.kind, t.dataset.key, t.dataset.kind === 'trans' ? .45 : .5));
+}
+function pvStart(t) {
+  pvStop(); const cv = $('canvas', t); const t0 = performance.now(); PV.anim = { t, raf: 0 };
+  const loop = now => { if (!PV.anim || PV.anim.t !== t) return; const ph = ((now - t0) % 2200) / 2200; pvDraw(cv, t.dataset.kind, t.dataset.key, ph); PV.anim.raf = requestAnimationFrame(loop); };
+  PV.anim.raf = requestAnimationFrame(loop);
+}
+function pvStop(t) { if (PV.anim) { cancelAnimationFrame(PV.anim.raf); const old = PV.anim.t; PV.anim = null; pvDraw($('canvas', old), old.dataset.kind, old.dataset.key, old.dataset.kind === 'trans' ? .45 : .5); } }
+let _pvT = 0; on('media-added', () => { clearTimeout(_pvT); _pvT = setTimeout(async () => { await pvSamples(); pvPosters(); }, 300); });
 
 // ---- 40-playback.js ----
 // ============================================================
@@ -1905,7 +2008,7 @@ on('doc', () => { poolPrune(); renderTimeline(); dirty(); const n = $('#projName
 
 // ---------- project I/O ----------
 function saveProject() {
-  const data = { app: 'sykhai-editor', version: APP_VERSION, doc: D, media: [...MEDIA.values()].filter(m => !m.builtin).map(m => ({ id: m.id, name: m.name, type: m.type })) };
+  const data = { app: 'sykhai-editor', version: APP_VERSION, doc: D, media: [...MEDIA.values()].filter(m => !m.builtin && !m.hidden).map(m => ({ id: m.id, name: m.name, type: m.type })) };
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: 'application/json' })); a.download = (D.name || 'project') + '.sykhai.json'; document.body.appendChild(a); a.click(); setTimeout(() => a.remove(), 1000);
   toast('บันทึกโปรเจกต์แล้ว (ไฟล์วิดีโอต้องนำเข้าซ้ำเมื่อเปิดใหม่)');
 }

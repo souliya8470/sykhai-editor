@@ -42,6 +42,13 @@ function renderTimeline() {
     el.innerHTML = inner; lane.appendChild(el);
     const cv = $('canvas.wf', el); if (cv) drawWave(cv, it, m);
   }
+  for (const tr of TRACKS.filter(t => t.kind === 'video')) {
+    const lane = $(`.trow[data-track="${tr.id}"] .tlane`, body); const list = itemsOn(tr.id).filter(i => i.type === 'video' || i.type === 'image');
+    for (let i = 1; i < list.length; i++) {
+      const A = list[i - 1], B = list[i]; if (Math.abs(A.start + A.dur - B.start) > .06 && !(B.transIn && B.start < A.start + A.dur)) continue;
+      const j = document.createElement('div'); j.className = 'junc' + (B.transIn ? ' has' : ''); j.dataset.id = B.id; j.style.left = (B.start * TL.pps) + 'px'; j.textContent = B.transIn ? '⇄' : '+'; j.title = 'ลากทรานสิชัน/เอฟเฟกต์มาวางที่นี่ หรือกดเพื่อเลือก'; lane.appendChild(j);
+    }
+  }
   body.scrollLeft = sx; body.scrollTop = sy; updatePlayhead();
 }
 function drawWave(cv, it, m) {
@@ -90,6 +97,7 @@ function initTimelineEvents() {
   const body = $('#tlbody');
   body.addEventListener('pointerdown', e => {
     if (e.button !== 0) return;
+    const jn = e.target.closest('.junc'); if (jn) { select(jn.dataset.id); showTab('trans'); return; }
     const clipEl = e.target.closest('.clip');
     const rulerEl = e.target.closest('#ruler');
     if (rulerEl && !e.target.closest('.corner')) { scrubStart(e); return; }
@@ -130,11 +138,36 @@ function initTimelineEvents() {
     if (e.ctrlKey || e.metaKey) { e.preventDefault(); setZoom(TL.pps * (e.deltaY < 0 ? 1.15 : 0.87)); }
   }, { passive: false });
   // drag & drop from media bin
-  body.addEventListener('dragover', e => { if (e.dataTransfer.types.includes('text/mediaid')) e.preventDefault(); });
+  body.addEventListener('dragover', e => {
+    const ty = e.dataTransfer.types; if (ty.includes('text/mediaid')) { e.preventDefault(); return; }
+    if (ty.includes('text/trans') || ty.includes('text/fx')) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; showDropMark(dropTarget(e)); }
+  });
+  body.addEventListener('dragleave', e => { if (!body.contains(e.relatedTarget)) showDropMark(null); });
   body.addEventListener('drop', e => {
+    showDropMark(null);
+    if (DRAG && (e.dataTransfer.types.includes('text/trans') || e.dataTransfer.types.includes('text/fx'))) {
+      e.preventDefault(); const tg = dropTarget(e); const d = DRAG; DRAG = null; if (!tg) { toast('ปล่อยตรงรอยต่อหรือบนคลิปวิดีโอ/ภาพ'); return; }
+      select(tg.it.id); if (d.kind === 'trans') applyTransition(tg.it, d.key); else if (d.kind === 'fx') applyFxPreset(tg.it, d.key); else applyMaskPreset(tg.it, d.key); return;
+    }
     const id = e.dataTransfer.getData('text/mediaid'); if (!id) return; e.preventDefault();
     const row = e.target.closest('.trow'); addMediaToTimeline(id, row ? row.dataset.track : null, dropTimeFromEvent(e));
   });
+}
+function dropTarget(e) {
+  const el = document.elementFromPoint(e.clientX, e.clientY); const row = el && el.closest ? el.closest('.trow') : null;
+  if (!row || TRACK_KIND[row.dataset.track] !== 'video') return null;
+  const t = dropTimeFromEvent(e); const items = itemsOn(row.dataset.track).filter(i => i.type === 'video' || i.type === 'image');
+  const over = items.find(i => t >= i.start && t < i.start + i.dur);
+  if (DRAG && DRAG.kind === 'trans') { let best = null, bd = 20 / TL.pps; for (const it of items) { const d = Math.abs(it.start - t); if (d < bd) { bd = d; best = it; } } if (best) return { it: best, mode: 'cut', row }; }
+  return over ? { it: over, mode: 'clip', row } : null;
+}
+function showDropMark(tg) {
+  let m = $('#dropMark'); const inner = $('#tlinner'); if (!inner) return;
+  if (!tg) { if (m) m.style.display = 'none'; return; }
+  if (!m) { m = document.createElement('div'); m.id = 'dropMark'; inner.appendChild(m); } else if (!m.parentNode) inner.appendChild(m);
+  const top = tg.row.offsetTop, h = tg.row.offsetHeight; m.style.display = 'block'; m.style.top = top + 'px'; m.style.height = h + 'px';
+  if (tg.mode === 'cut') { m.className = 'cut'; m.style.left = (TL.labelW + tg.it.start * TL.pps - 3) + 'px'; m.style.width = '6px'; }
+  else { m.className = 'clipm'; m.style.left = (TL.labelW + tg.it.start * TL.pps) + 'px'; m.style.width = (tg.it.dur * TL.pps) + 'px'; }
 }
 function scrubStart(e, already) {
   const body = $('#tlbody'); const wasPlaying = PB.playing; pause();
@@ -160,7 +193,7 @@ function cmdCloseGaps(track) {
 
 // ---------- media bin ----------
 function renderMediaBin() {
-  const box = $('#mediaList'); if (!box) return; const arr = [...MEDIA.values()];
+  const box = $('#mediaList'); if (!box) return; const arr = [...MEDIA.values()].filter(m => !m.hidden);
   box.innerHTML = arr.length ? '' : '<div class="empty">ยังไม่มีไฟล์ — กดปุ่ม “นำเข้า” หรือลากไฟล์มาวางที่นี่</div>';
   for (const m of arr) {
     const d = document.createElement('div'); d.className = 'mi'; d.draggable = true; d.dataset.id = m.id;

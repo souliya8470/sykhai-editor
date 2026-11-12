@@ -49,7 +49,7 @@ on('doc', () => { poolPrune(); renderTimeline(); dirty(); const n = $('#projName
 
 // ---------- project I/O ----------
 function saveProject() {
-  const data = { app: 'sykhai-editor', version: APP_VERSION, doc: D, media: [...MEDIA.values()].filter(m => !m.builtin).map(m => ({ id: m.id, name: m.name, type: m.type })) };
+  const data = { app: 'sykhai-editor', version: APP_VERSION, doc: D, media: [...MEDIA.values()].filter(m => !m.builtin && !m.hidden).map(m => ({ id: m.id, name: m.name, type: m.type })) };
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: 'application/json' })); a.download = (D.name || 'project') + '.sykhai.json'; document.body.appendChild(a); a.click(); setTimeout(() => a.remove(), 1000);
   toast('บันทึกโปรเจกต์แล้ว (ไฟล์วิดีโอต้องนำเข้าซ้ำเมื่อเปิดใหม่)');
 }

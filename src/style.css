@@ -103,3 +103,14 @@ dialog h3{margin:0 0 10px}
 .chip{display:inline-block;background:var(--p3);border-radius:10px;padding:1px 8px;font-size:11px;margin:1px}
 .vcard{display:flex;gap:8px;align-items:flex-start;border:1px solid var(--ln);border-radius:8px;padding:8px;margin:6px 0;background:var(--p1)}
 .vcard.pick{border-color:var(--ac)}.vcard .vt{flex:1}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.tile{position:relative;border-radius:8px;overflow:hidden;background:#000;cursor:grab;border:1px solid var(--ln)}
+.tile:hover{border-color:var(--ac)}
+.tile canvas{display:block;width:100%;aspect-ratio:9/16;background:#000}
+.tile span{position:absolute;left:0;right:0;bottom:0;padding:12px 3px 3px;font-size:10px;line-height:1.15;text-align:center;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.85));pointer-events:none}
+.junc{position:absolute;top:50%;transform:translate(-50%,-50%);width:20px;height:20px;border-radius:50%;background:#1b1d22;border:1px solid var(--ac);color:var(--ac);font-size:11px;line-height:18px;text-align:center;z-index:4;cursor:pointer;box-shadow:0 0 0 2px rgba(0,0,0,.4)}
+.junc.has{background:var(--ac);color:#000}
+.junc:hover{transform:translate(-50%,-50%) scale(1.25)}
+#dropMark{position:absolute;display:none;z-index:9;pointer-events:none}
+#dropMark.cut{background:var(--ac);box-shadow:0 0 12px var(--ac);border-radius:3px}
+#dropMark.clipm{border:2px solid var(--ac);background:rgba(46,230,197,.18);border-radius:6px}
