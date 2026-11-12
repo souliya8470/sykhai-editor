@@ -127,7 +127,7 @@ async function srvAdoptProxies() {                // phone has big local origina
   try {
     if (!SRV.up && !(await srvPing())) return; if (!SRV.sizes.size) await srvLoadSizes();
     const cand = [...MEDIA.values()].filter(m => m.type === 'video' && !m.proxyOnly && !m.purl && !m.builtin && !m.hidden && m.file && SRV.sizes.get(m.id) === m.file.size && Math.max(m.w || 0, m.h || 0) > 1300);
-    if (!cand.length) return; await srvLoadProxies(); if (!SRV.px.ffmpeg) { again = /download|unpack|checking/.test(SRV.px.note || ''); return; }
+    if (!cand.length) return; await srvLoadProxies(); if (!SRV.px.ffmpeg) again = /download|unpack|checking/.test(SRV.px.note || '');
     for (const m of cand) {
       if (SRV.px.ready.has(m.id)) { const f = await srvGetProxy(m.id, false); if (f) { m.pfile = f; m.purl = URL.createObjectURL(f); dbPut(m); n++; } else again = true; }
       else if (SRV.px.pending.has(m.id)) again = true;

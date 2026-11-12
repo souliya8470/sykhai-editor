@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.19</title>
+<title>Sykhai Editor v1.20</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -1278,9 +1278,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.19
-// APP_VERSION_PREV : 1.18
-// APP_VERSION_PREV_OLDER : 1.17
+// APP_VERSION  : 1.20
+// APP_VERSION_PREV : 1.19
+// APP_VERSION_PREV_OLDER : 1.18
+// 1.20 : proxy copies already on the server are used even when the server has no ffmpeg (can be placed by hand)
 // 1.19 : proxy videos — shop server makes a light 540p SDR copy (ffmpeg, auto-installed) of every uploaded video; phones preview/download the copy instead of the 4K HDR original, export swaps back to the originals
 // 1.18 : phone playback performance — preview capped at ~30 fps while playing, adaptive preview resolution (auto 100/75/50%), seek-thrash guard for heavy 4K clips, tap the version text in the player bar to show a live ms/fps/quality readout
 // 1.17 : smooth timeline follow while playing (continuous scroll instead of page jumps, GPU-moved playhead); version number shown in the player bar on phones
@@ -1301,7 +1302,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.19';
+const APP_VERSION = '1.20';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -2707,7 +2708,7 @@ async function srvAdoptProxies() {                // phone has big local origina
   try {
     if (!SRV.up && !(await srvPing())) return; if (!SRV.sizes.size) await srvLoadSizes();
     const cand = [...MEDIA.values()].filter(m => m.type === 'video' && !m.proxyOnly && !m.purl && !m.builtin && !m.hidden && m.file && SRV.sizes.get(m.id) === m.file.size && Math.max(m.w || 0, m.h || 0) > 1300);
-    if (!cand.length) return; await srvLoadProxies(); if (!SRV.px.ffmpeg) { again = /download|unpack|checking/.test(SRV.px.note || ''); return; }
+    if (!cand.length) return; await srvLoadProxies(); if (!SRV.px.ffmpeg) again = /download|unpack|checking/.test(SRV.px.note || '');
     for (const m of cand) {
       if (SRV.px.ready.has(m.id)) { const f = await srvGetProxy(m.id, false); if (f) { m.pfile = f; m.purl = URL.createObjectURL(f); dbPut(m); n++; } else again = true; }
       else if (SRV.px.pending.has(m.id)) again = true;
