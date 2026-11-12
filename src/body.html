@@ -32,11 +32,11 @@
       </div>
     </aside>
     <section id="center">
-      <div id="stage"><canvas id="pv" width="540" height="960"></canvas><canvas id="ov" width="540" height="960"></canvas></div>
+      <div id="stage"><canvas id="pv" width="540" height="960"></canvas><canvas id="ov" width="540" height="960"></canvas><div id="srcBadge" hidden><span>ดูตัวอย่างไฟล์ — <b id="srcName" translate="no"></b></span><button id="srcClose" title="กลับไปดูไทม์ไลน์">กลับไทม์ไลน์</button></div></div>
       <div id="transport">
         <button id="tpStart" title="กลับไปจุดเริ่ม">⏮</button>
         <button id="tpPlay" class="primary" title="เล่น/หยุด (Space)">▶</button>
-        <span id="tpTime">00:00.0 / 00:00.0</span>
+        <input id="srcSeek" type="range" min="0" max="1000" value="0" hidden><span id="tpTime">00:00.0 / 00:00.0</span>
         <span class="sp"></span>
         <button id="tpSplit" title="ตัดที่หัวอ่าน (S)">✂ ตัด</button>
         <button id="tpDel" title="ลบ (Delete)">🗑 ลบ</button>

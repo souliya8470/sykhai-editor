@@ -199,7 +199,9 @@ function renderMediaBin() {
     const d = document.createElement('div'); d.className = 'mi'; d.draggable = true; d.dataset.id = m.id;
     d.innerHTML = `<div class="mth" style="${m.thumb ? `background-image:url(${m.thumb})` : ''}">${m.type === 'audio' ? '♪' : ''}<span class="dur">${m.type === 'image' ? 'ภาพ' : fmt(m.duration)}</span></div><div class="mn" title="${esc(m.name)}">${esc(m.name)}</div><div class="mb"><button data-act="add">+ ใส่ไทม์ไลน์</button><button data-act="del" title="ลบ">×</button></div>${m.type === 'video' ? `<div class="mtag">${m.w}×${m.h}${m.hasAudio === false ? ' · ไม่มีเสียง' : ''}</div>` : ''}`;
     d.addEventListener('dragstart', e => { e.dataTransfer.setData('text/mediaid', m.id); });
+    d.addEventListener('click', e => { if (e.target.closest('button')) return; srcOpen(m.id); });
     d.addEventListener('dblclick', () => addMediaToTimeline(m.id));
+    if (SRC.m && SRC.m.id === m.id) d.classList.add('sel');
     d.querySelector('[data-act="add"]').onclick = () => addMediaToTimeline(m.id);
     d.querySelector('[data-act="del"]').onclick = () => { if (D.items.some(i => i.mediaId === m.id) && !confirm('ไฟล์นี้ถูกใช้ในไทม์ไลน์ — ลบคลิปที่ใช้ไฟล์นี้ด้วย?')) return; D.items = D.items.filter(i => i.mediaId !== m.id); MEDIA.delete(m.id); dbDel(m.id); commit('media'); renderMediaBin(); };
     box.appendChild(d);

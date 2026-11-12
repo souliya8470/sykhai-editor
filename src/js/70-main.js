@@ -83,7 +83,12 @@ async function init() {
   HIST = []; HPOS = -1; commit('init');
   renderMediaBin(); renderTimeline(); renderInspector(); updateCostBadge && updateCostBadge();
   $('#zoom').oninput = e => { TL.pps = Math.exp(parseFloat(e.target.value)); renderTimeline(); }; $('#zoom').value = Math.log(TL.pps);
-  $('#tpPlay').onclick = togglePlay; $('#tpStart').onclick = () => { pause(); seek(0); };
+  $('#tpPlay').onclick = togglePlay; $('#tpStart').onclick = () => { if (SRC.m) { if (SRC.el.pause) SRC.el.currentTime = 0; return; } pause(); seek(0); };
+  $('#srcClose').onclick = srcExit;
+  { const sk = $('#srcSeek'); sk.addEventListener('pointerdown', () => { sk._drag = true; }); sk.addEventListener('pointerup', () => { sk._drag = false; });
+    sk.addEventListener('input', () => { const el = SRC.el; if (el && el.duration) el.currentTime = el.duration * sk.value / 1000; }); }
+  $('#tlbody').addEventListener('pointerdown', () => srcExit(), true); $('#tlbar').addEventListener('pointerdown', () => srcExit(), true);
+  on('doc', () => srcExit());
   $('#tpSplit').onclick = cmdSplit; $('#tpDel').onclick = () => cmdDelete(false); $('#tpRipple').onclick = () => cmdDelete(true);
   $('#btnUndo').onclick = undo; $('#btnRedo').onclick = redo; $('#btnSave').onclick = saveProject;
   $('#btnOpen').onclick = () => { const i = document.createElement('input'); i.type = 'file'; i.accept = '.json'; i.onchange = () => i.files[0] && openProject(i.files[0]); i.click(); };
@@ -114,6 +119,8 @@ async function init() {
     else if (mod && e.key.toLowerCase() === 'd') { e.preventDefault(); if (SEL) { const b = duplicateItem(SEL); commit('dup'); select(b.id); } }
     else if (!mod && e.key.toLowerCase() === 's') { cmdSplit(); }
     else if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); cmdDelete(e.shiftKey); }
+    else if (e.key === 'ArrowLeft' && SRC.m) { srcSeekBy(e.shiftKey ? -1 : -1 / 30); }
+    else if (e.key === 'ArrowRight' && SRC.m) { srcSeekBy(e.shiftKey ? 1 : 1 / 30); }
     else if (e.key === 'ArrowLeft') { pause(); seek(PB.t - (e.shiftKey ? 1 : 1 / 30)); }
     else if (e.key === 'ArrowRight') { pause(); seek(PB.t + (e.shiftKey ? 1 : 1 / 30)); }
     else if (e.key === 'Home') { pause(); seek(0); }

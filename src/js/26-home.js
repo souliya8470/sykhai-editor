@@ -5,7 +5,7 @@ const fmtDate = ts => { try { return new Date(ts).toLocaleString('th-TH', { day:
 const fmtDur = t => { t = Math.round(t || 0); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
 
 async function showHome() {
-  pause(); await projSaveNow();
+  pause(); if (typeof srcExit === 'function') srcExit(); await projSaveNow();
   HOME.open = true; $('#home').hidden = false;
   $('#hmBack').hidden = !HOME.started; $('#hmSync').hidden = !srvOn();
   await renderHome();

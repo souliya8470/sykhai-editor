@@ -47,7 +47,46 @@ function pause() {
   for (const r of APOOL.values()) { try { r.el.pause(); } catch (e) { } }
   emit('transport');
 }
-function togglePlay() { PB.playing ? pause() : play(); }
+function togglePlay() { if (SRC.m) return srcToggle(); PB.playing ? pause() : play(); }
+
+// ---------- source preview (click a file in the media bin -> watch it in real time, like CapCut) ----------
+const SRC = { m: null, el: null };
+function srcExit() {
+  if (!SRC.m) return;
+  const el = SRC.el; SRC.m = null; SRC.el = null;
+  if (el && el.pause) { try { el.pause(); el.removeAttribute('src'); el.load(); } catch (e) { } }
+  const b = $('#srcBadge'); if (b) b.hidden = true; const sk = $('#srcSeek'); if (sk) sk.hidden = true;
+  $$('#mediaList .mi.sel').forEach(x => x.classList.remove('sel'));
+  $('#tpPlay').textContent = PB.playing ? '⏸' : '▶'; dirty(); if (window.onFrame) window.onFrame();
+}
+function srcOpen(id) {
+  const m = MEDIA.get(id); if (!m) return;
+  if (SRC.m && SRC.m.id === id) return;
+  if (PB.playing) pause(); srcExit();
+  SRC.m = m;
+  if (m.type === 'image') { const im = new Image(); im.src = m.url; SRC.el = im; }
+  else {
+    const el = document.createElement(m.type === 'audio' ? 'audio' : 'video'); el.playsInline = true; el.preload = 'auto'; el.src = m.url;
+    el.addEventListener('ended', () => { $('#tpPlay').textContent = '▶'; });
+    SRC.el = el; el.play().catch(() => { });
+  }
+  $$('#mediaList .mi').forEach(x => x.classList.toggle('sel', x.dataset.id === id));
+  $('#srcName').textContent = m.name; $('#srcBadge').hidden = false;
+  const sk = $('#srcSeek'); sk.hidden = m.type === 'image'; sk.value = 0;
+}
+function srcToggle() { const el = SRC.el; if (!el || !el.play) return; if (el.paused) { if (el.ended) el.currentTime = 0; el.play().catch(() => { }); } else el.pause(); }
+function srcSeekBy(dt) { const el = SRC.el; if (el && el.pause) { el.pause(); el.currentTime = clamp(el.currentTime + dt, 0, el.duration || 1e9); } }
+function srcFrame() {
+  const el = SRC.el, m = SRC.m; const c = PCTX; c.fillStyle = '#000'; c.fillRect(0, 0, PW, PH);
+  const ov = $('#ov'); if (ov) ov.getContext('2d').clearRect(0, 0, ov.width, ov.height);
+  let w = el.videoWidth || el.naturalWidth || 0, h = el.videoHeight || el.naturalHeight || 0;
+  if (m.type === 'audio') { c.fillStyle = '#2EE6C5'; c.font = '700 160px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('♪', PW / 2, PH / 2); }
+  else if (w && h) { const k = Math.min(PW / w, PH / h); const dw = w * k, dh = h * k; try { c.drawImage(el, (PW - dw) / 2, (PH - dh) / 2, dw, dh); } catch (e) { } }
+  const dur = m.type === 'image' ? 0 : (el.duration && isFinite(el.duration) ? el.duration : m.duration || 0), cur = el.currentTime || 0;
+  $('#tpTime').textContent = fmt(cur) + ' / ' + fmt(dur);
+  $('#tpPlay').textContent = (el.paused === false) ? '⏸' : '▶';
+  const sk = $('#srcSeek'); if (sk && !sk._drag && dur) sk.value = (cur / dur * 1000) | 0;
+}
 function seek(t) {
   PB.t = clamp(t, 0, durEnd()); if (PB.playing) { PB.t0 = PB.t; PB.wall0 = performance.now(); }
   syncMedia(true); dirty(); if (window.onFrame) window.onFrame();
@@ -147,7 +186,9 @@ function tick() {
     PB.t = PB.t0 + (performance.now() - PB.wall0) / 1000;
     if (PB.t >= durEnd()) { PB.t = durEnd(); pause(); emit('ended'); }
   }
-  if (!PB.exporting) {
+  if (SRC.m && PB.exporting) srcExit();
+  if (SRC.m) { srcFrame(); }
+  else if (!PB.exporting) {
     syncMedia(false);
     if (DIRTY || PB.playing) { renderFrame(PCTX, PW, PH, PB.t); DIRTY = false; if (window.onFrame) window.onFrame(); }
   }
