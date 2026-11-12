@@ -105,6 +105,12 @@ dialog h3{margin:0 0 10px}
 .chip{display:inline-block;background:var(--p3);border-radius:10px;padding:1px 8px;font-size:11px;margin:1px}
 .vcard{display:flex;gap:8px;align-items:flex-start;border:1px solid var(--ln);border-radius:8px;padding:8px;margin:6px 0;background:var(--p1)}
 .vcard.pick{border-color:var(--ac)}.vcard .vt{flex:1}
+.kclips{max-height:150px;overflow:auto;border:1px solid var(--ln);border-radius:8px;padding:4px 8px;margin:6px 0}.kcl{display:flex;gap:6px;align-items:center;padding:2px 0;font-size:12px}
+.ksheet{display:flex;gap:6px;overflow-x:auto;padding:4px 0;margin:4px 0}.ksheet .kc{flex:none;width:96px;font-size:10px;color:var(--mu)}.ksheet img{width:96px;height:64px;object-fit:cover;border-radius:4px;display:block}.ksheet .kn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kscene{display:flex;gap:8px;border:1px solid var(--ln);border-radius:8px;padding:6px;margin:5px 0;background:var(--p1)}.kscene.ok{border-color:#2ee6c5}.kscene.drop{opacity:.4}
+.kscene img{width:64px;height:96px;object-fit:cover;border-radius:4px;flex:none;background:#000}.kscene .kb{flex:1;min-width:0}.kscene textarea{width:100%;box-sizing:border-box;font-size:12px}.kscene .kt{font-size:11px;color:var(--mu);margin:2px 0}
+.kscene .krow{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}.kscene .krev{display:none;margin-top:4px;gap:5px}.kscene .krev.on{display:flex}.kscene .krev input{flex:1}
+
 .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
 .tile{position:relative;border-radius:8px;overflow:hidden;background:#000;cursor:grab;border:1px solid var(--ln)}
 .tile:hover{border-color:var(--ac)}

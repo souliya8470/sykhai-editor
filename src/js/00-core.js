@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.25
-// APP_VERSION_PREV : 1.24
-// APP_VERSION_PREV_OLDER : 1.23
+// APP_VERSION  : 1.26
+// APP_VERSION_PREV : 1.25
+// APP_VERSION_PREV_OLDER : 1.24
+// 1.26 : Kitti-style AI editing (AI tab) — ⭐ "let AI cut it all" wizard (many clips -> 3 story angles -> storyboard approved scene by scene, revise by typing -> 9:16 timeline with subtitles, extra angles saved as projects); ✨ auto cut (silence + filler words เอ่อ/อืม + AI retakes in one reviewed list); 💬 auto subtitles from the transcript (optional Lao/Thai translation, editable list, 2 new subtitle text styles)
 // 1.25 : play pre-roll — the clock starts only after every layer at the playhead has its frame decoded (max 0.9 s); fixes the first seconds of playback running at 5-12 fps on iPhone while the playhead already moved
 // 1.24 : phones show a compact live readout in the player bar while playing (render/s, ms, sync ms, decoded f/s + drift, layers, paused/muted counts) so every screen recording carries numbers
 // 1.23 : iPhone fix — Safari on iOS lets only one un-muted video play at a time, stacked layers fought each other (play/pause ping-pong, sync 40-60 ms). Now only the loudest layer is un-muted on iOS; play() retries throttled; HUD shows paused/muted/play errors
@@ -31,7 +32,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.25';
+const APP_VERSION = '1.26';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -142,6 +143,8 @@ const TEXT_STYLES = [
   { id: 'price', label: 'ราคา (เหลืองใหญ่)', d: { size: 70, weight: 800, color: '#ffffff', color2: '#FFE14D', stroke: '#000000', strokeW: 10, box: 'none', bg: '', ay: .72, text: T('ซื้อ 1 แถม 2\n390,000 กีบ') } },
   { id: 'blue', label: 'น้ำเงิน ขอบขาว', d: { size: 52, weight: 800, color: '#2B2BE0', color2: '#E02B3A', stroke: '#ffffff', strokeW: 9, box: 'none', bg: '', ay: .08, text: T('ข้อความสีน้ำเงิน') } },
   { id: 'plain', label: 'ขาว เงานุ่ม', d: { size: 52, weight: 700, color: '#ffffff', color2: '#FFE14D', stroke: '', strokeW: 0, box: 'none', bg: '', shadow: true, ay: .8, text: T('ข้อความทั่วไป') } },
+  { id: 'sub', label: 'ซับไตเติล ขาว ขอบดำ', d: { size: 52, weight: 800, color: '#ffffff', color2: '#ffffff', stroke: '#000000', strokeW: 9, box: 'none', bg: '', ay: .78, text: T('ซับไตเติล') } },
+  { id: 'subbox', label: 'ซับไตเติล กล่องดำ', d: { size: 44, weight: 700, color: '#ffffff', color2: '#ffffff', stroke: '', strokeW: 0, box: 'block', bg: '#000000b3', ay: .78, text: T('ซับไตเติล') } },
   { id: 'footer', label: 'ข้อความท้ายจอ (เล็ก)', d: { size: 30, weight: 600, color: '#ffffffd9', color2: '#ffffffd9', stroke: '', strokeW: 0, box: 'none', bg: '', shadow: true, ay: .965, text: T('ผลลัพธ์ที่ได้ขึ้นอยู่กับแต่ละบุคคล') } },
 ];
 function mkText(styleId, text, start, dur, extra) {

@@ -93,7 +93,8 @@ const trText = tr => tr.segs.map((s, i) => `${i}: ${s.text}`).join('\n');
 
 // ---------- progress dialog ----------
 function aiDlg(title, html, mount) {
-  $('#aiTitle').textContent = title; $('#aiBody').innerHTML = html; const d = $('#dlgAi'); if (!d.open) d.showModal(); if (mount) mount($('#aiBody'));
+  const bd = $('#aiBody'); bd.onclick = bd.onchange = bd.oninput = null;   // handlers of the previous dialog must not leak into this one
+  $('#aiTitle').textContent = title; bd.innerHTML = html; const d = $('#dlgAi'); if (!d.open) d.showModal(); if (mount) mount($('#aiBody'));
 }
 function aiProg(msg, pct) { aiDlg('AI กำลังทำงาน…', `<div class="hint">${esc(msg)}</div><div class="progress"><div style="height:100%;width:${pct == null ? 40 : pct}%;background:var(--ac)"></div></div>`); }
 function aiErr(e) { console.error(e); aiDlg('เกิดข้อผิดพลาด', `<div class="hint" style="color:#ff8a95">${esc(e.message || e)}</div>`); AI.busy = false; }
@@ -382,6 +383,9 @@ function renderAiPane() {
   <div class="fld col"><label>คลิปที่ใช้</label><select id="aiClip">${vids.map(m => `<option translate="no" value="${m.id}" ${m.id === keep ? 'selected' : ''}>${esc(m.name)}${getTr(m.id) ? ' ✔' : ''}</option>`).join('') || '<option value="">(ยังไม่มีคลิป)</option>'}</select></div>
   <div class="fld"><label>ภาษาในคลิป</label><select id="aiLang"><option value="lo">ลาว (Gemini)</option><option value="th">ไทย</option></select></div>
   <div class="fld"><label>ตัวถอดเสียงไทย</label><select id="aiEng"><option value="whisper">Whisper ในเครื่อง (ฟรี แม่น)</option><option value="gemini">Gemini</option></select></div>
+  <div class="aicard"><h4>⭐ ให้ AI ตัดให้ทั้งคลิป</h4><div class="mini">โยนคลิปดิบหลายอัน → AI เสนอแนวเรื่อง → ตรวจ storyboard ทีละฉาก → ได้คลิป 9:16 พร้อมซับ</div><button class="wide primary" id="aiK">เริ่ม</button></div>
+  <div class="aicard"><h4>✨ ตัดอัตโนมัติ</h4><div class="mini">ตัดช่วงเงียบ คำอ้ำอึ้ง (เอ่อ อืม) และเทคพูดซ้ำ ในครั้งเดียว</div><button class="wide" id="aiA">ตัดอัตโนมัติ</button></div>
+  <div class="aicard"><h4>💬 ซับอัตโนมัติ</h4><div class="mini">สร้างซับจากเสียงพูด (แปลเป็นลาว/ไทยได้) แล้วแก้ก่อนใส่</div><button class="wide" id="aiB">สร้างซับ</button></div>
   <div class="aicard"><h4>① ถอดเสียง</h4><button class="wide" id="ai1">ถอดเสียงคลิปนี้</button></div>
   <div class="aicard"><h4>② ราคาที่พูด</h4><div class="mini">ตัด/ปิดเสียงราคาบาท แล้วใส่ราคากีบที่พิมพ์เอง</div><button class="wide" id="ai2">ตรวจจับราคา</button></div>
   <div class="aicard"><h4>③ ประโยคเด่นขึ้นจอ</h4><div class="mini">เลือกจุดขาย แล้วขึ้นข้อความตอนที่พูด (ไม่ใช่ซับทั้งหมด)</div><button class="wide" id="ai3">เลือกประโยคเด่น</button></div>
@@ -390,7 +394,7 @@ function renderAiPane() {
   <div class="aicard"><h4>⑥ ให้ AI ตัดต่อ 4 แบบ</h4><div class="mini">ใช้ทุกคลิปในรายการสื่อ แล้วให้พนักงานเลือกแบบที่ชอบ</div><button class="wide primary" id="ai6">สร้าง 4 แบบ</button></div>
   <div class="hint small">ใช้ AI เดือนนี้ $${s.usd.toFixed(2)} จากเพดาน $${loadCap()}</div>`;
   const lg = localStorage.getItem('sk_lang'); if (lg) $('#aiLang').value = lg; $('#aiLang').onchange = e => localStorage.setItem('sk_lang', e.target.value);
-  $('#ai1').onclick = aiTranscribeUI; $('#ai2').onclick = aiPriceUI; $('#ai3').onclick = aiKeyPointsUI; $('#ai4a').onclick = aiSilenceUI; $('#ai4b').onclick = aiRetakeUI; $('#ai5').onclick = () => aiEnhanceUI(null); $('#ai6').onclick = aiVariantsUI;
+  $('#ai1').onclick = aiTranscribeUI; $('#ai2').onclick = aiPriceUI; $('#ai3').onclick = aiKeyPointsUI; $('#ai4a').onclick = aiSilenceUI; $('#ai4b').onclick = aiRetakeUI; $('#ai5').onclick = () => aiEnhanceUI(null); $('#ai6').onclick = aiVariantsUI; $('#aiK').onclick = aiKittiUI; $('#aiA').onclick = aiCleanUI; $('#aiB').onclick = aiSubsUI;
 }
 AI.inspectorAction = (act, it) => {
   if (act === 'enhance') aiEnhanceUI(it);
