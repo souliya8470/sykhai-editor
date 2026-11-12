@@ -20,6 +20,49 @@ function connectEl(el) {
   catch (e) { console.warn('connectEl', e); return null; }
 }
 
+
+// ---------- per-clip voice chain (voice changer / enhance voice / reduce noise) ----------
+const VOICES = [
+  ['orig', 'ต้นฉบับ'], ['sweet', 'หวาน'], ['echo', 'เอคโค่'], ['bass', 'เบสแน่น'], ['high', 'แหลมใส'], ['full', 'เสียงเต็ม'], ['crisp', 'ชัดแจ๋ว'], ['robot', 'หุ่นยนต์'], ['phone', 'โทรศัพท์เก่า'], ['radio', 'วิทยุสื่อสาร'], ['mega', 'โทรโข่ง'], ['dist', 'แตกพร่า'], ['hall', 'ห้องโถง'], ['water', 'ใต้น้ำ'], ['old', 'ยุค 1950']
+];
+function _bq(type, f, q, gain) { const n = AC.createBiquadFilter(); n.type = type; n.frequency.value = f; if (q != null) n.Q.value = q; if (gain != null) n.gain.value = gain; return n; }
+function _dist(k) { const w = AC.createWaveShaper(); const c = new Float32Array(1024); for (let i = 0; i < 1024; i++) { const x = i / 512 - 1; c[i] = (1 + k) * x / (1 + k * Math.abs(x)); } w.curve = c; return w; }
+function _echo(time, fb, wet) { const i = AC.createGain(), o = AC.createGain(), d = AC.createDelay(1), f = AC.createGain(), w = AC.createGain(); d.delayTime.value = time; f.gain.value = fb; w.gain.value = wet; i.connect(o); i.connect(d); d.connect(f); f.connect(d); d.connect(w); w.connect(o); return { i, o, nodes: [i, o, d, f, w] }; }
+function voiceNodes(kind) {   // -> {i, o, nodes[], osc?}
+  const seq = list => { for (let k = 0; k < list.length - 1; k++) list[k].connect(list[k + 1]); return { i: list[0], o: list[list.length - 1], nodes: list }; };
+  switch (kind) {
+    case 'sweet': return seq([_bq('highshelf', 3500, null, 7), _bq('lowshelf', 220, null, -4), _bq('peaking', 2200, 1, 3)]);
+    case 'echo': return _echo(.23, .38, .5);
+    case 'bass': return seq([_bq('lowshelf', 190, null, 11), _bq('peaking', 90, 1, 4)]);
+    case 'high': return seq([_bq('highshelf', 4000, null, 10), _bq('lowshelf', 300, null, -6)]);
+    case 'full': return seq([_bq('lowshelf', 250, null, 6), _bq('peaking', 1100, .9, 3)]);
+    case 'crisp': return seq([_bq('peaking', 3600, 1.1, 7), _bq('highpass', 90)]);
+    case 'robot': { const g = AC.createGain(); g.gain.value = 0; const o = AC.createOscillator(); o.type = 'square'; o.frequency.value = 55; const og = AC.createGain(); og.gain.value = 1; o.connect(og); og.connect(g.gain); o.start(); const r = seq([g, _bq('peaking', 1500, 2, 5)]); r.nodes.push(o, og); r.osc = o; return r; }
+    case 'phone': return seq([_bq('highpass', 450), _bq('lowpass', 2800), _dist(2)]);
+    case 'radio': return seq([_bq('highpass', 600), _bq('lowpass', 2500), _dist(6), _bq('peaking', 1500, 1.5, 6)]);
+    case 'mega': return seq([_bq('bandpass', 1500, .7), _dist(10), _bq('peaking', 2500, 1, 4)]);
+    case 'dist': return seq([_dist(40), _bq('lowpass', 6000)]);
+    case 'hall': { const a = _echo(.09, .55, .45), b = _echo(.17, .5, .4); a.o.connect(b.i); return { i: a.i, o: b.o, nodes: a.nodes.concat(b.nodes) }; }
+    case 'water': return seq([_bq('lowpass', 650, 1.2), _bq('peaking', 400, 1, 4)]);
+    case 'old': return seq([_bq('highpass', 300), _bq('lowpass', 3400), _dist(1.5)]);
+  }
+  return null;
+}
+function vchainApply(r, it) {
+  if (!r || !r.gain || !r.gain._src || !AC) return; const a = it.enh && it.enh.on ? Math.round(it.enh.v ?? 75) : 0; const sig = (it.vfx || 'orig') + '|' + a + '|' + (it.aDn ? 1 : 0);
+  if (r.vsig === sig) return; if (r.vsig === undefined && sig === 'orig|0|0') { r.vsig = sig; return; }
+  try { r.gain._src.disconnect(); } catch (e) { }
+  for (const n of (r.vnodes || [])) { try { n.disconnect(); } catch (e) { } try { n.stop && n.stop(); } catch (e) { } }
+  const list = [];
+  if (it.aDn) { list.push(_bq('highpass', 120, .7)); list.push(_bq('lowpass', 7500, .7)); list.push(_bq('peaking', 6200, 1, -3)); }
+  if (a) { const k = a / 100; list.push(_bq('highpass', 85, .7)); list.push(_bq('peaking', 3000, 1, 5 * k)); list.push(_bq('highshelf', 6000, null, 2.5 * k)); list.push(_bq('lowshelf', 180, null, 2 * k)); }
+  const vn = it.vfx && it.vfx !== 'orig' ? voiceNodes(it.vfx) : null; if (vn) { list.push(vn.i); }
+  let prev = r.gain._src; const all = [];
+  for (const n of list) { prev.connect(n); prev = n; all.push(n); }
+  if (vn) { prev = vn.o; for (const n of vn.nodes) all.push(n); }
+  prev.connect(r.gain); r.vnodes = all; r.vsig = sig;
+}
+
 // audio-item element pool
 const APOOL = new Map();
 function apoolGet(it) {
@@ -139,7 +182,7 @@ function syncMedia(force) {
       const r = POOL.get(it.id); if (r && !r.el.paused) r.el.pause(); if (r) setGain(r.gain, 0); continue;
     }
     const el = poolGet(it); if (!el) continue; const r = POOL.get(it.id);
-    activeIds.add(it.id);
+    activeIds.add(it.id); vchainApply(r, it); if (el.preservesPitch === !it.pitchShift === false || true) el.preservesPitch = !it.pitchShift;
     const sp = clamp(it.speed || 1, 0.0625, 16);
     if (el.playbackRate !== sp) el.playbackRate = sp;
     if (soon) {
@@ -171,7 +214,7 @@ function syncMedia(force) {
     const active = t >= it.start - 1e-6 && t < it.start + it.dur - 1e-6;
     const r0 = APOOL.get(it.id);
     if (!active || !PB.playing) { if (r0 && !r0.el.paused) r0.el.pause(); if (r0) setGain(r0.gain, 0); if (!active) continue; if (!PB.playing) continue; }
-    const r = apoolGet(it); if (!r) continue;
+    const r = apoolGet(it); if (!r) continue; vchainApply(r, it);
     const m = MEDIA.get(it.mediaId); const md = m.duration || 1; const lt = t - it.start;
     let target = (it.in || 0) + lt; const loop = it.loop && md < it.dur + (it.in || 0);
     if (loop) target = target % md;

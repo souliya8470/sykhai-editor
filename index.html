@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.11</title>
+<title>Sykhai Editor v1.12</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -81,13 +81,15 @@ main{display:grid;grid-template-columns:var(--lw,300px) minmax(0,1fr) var(--rw,3
 .tlabel{width:96px;flex:none;position:sticky;left:0;z-index:5;background:var(--p2);border-right:1px solid var(--ln);font-size:11px;color:var(--mu);padding:4px 6px;overflow:hidden}
 .tlane{position:relative;flex:none;background:repeating-linear-gradient(90deg,transparent 0 55px,rgba(255,255,255,.02) 55px 56px)}
 .trow.video .tlabel{border-left:3px solid #2d6a8f}.trow.text .tlabel{border-left:3px solid #b9852b}.trow.audio .tlabel{border-left:3px solid #2f8a5b}
-.clip{position:absolute;top:3px;bottom:3px;border-radius:6px;background:var(--c);overflow:hidden;border:1px solid rgba(255,255,255,.18);cursor:grab;user-select:none}
-.clip.sel{border-color:#fff;box-shadow:0 0 0 1px #fff,0 0 12px rgba(46,230,197,.5);z-index:2}
+.clip{position:absolute;top:3px;bottom:3px;border-radius:5px;background:var(--c);overflow:hidden;border:1px solid rgba(0,0,0,.35);cursor:grab;user-select:none}
+.clip.sel{border-color:#fff;outline:2px solid #fff;outline-offset:-2px;box-shadow:none;z-index:2}
 .clip.hid{opacity:.4}
-.clip .cbg{position:absolute;inset:0;background-size:auto 100%;background-repeat:repeat-x;opacity:.55}
+.clip .cbg{position:absolute;inset:0;background-size:auto 100%;background-repeat:repeat-x}
 .clip .wf{position:absolute;left:0;bottom:0;height:22px;width:100%;pointer-events:none}
 .clip .cl{position:absolute;left:8px;top:2px;right:6px;font-size:11px;color:#fff;text-shadow:0 1px 2px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
 .clip.audio .cl{top:1px}
+.clip.video .cl,.clip.image .cl{left:0;right:0;top:0;padding:2px 8px 8px;background:linear-gradient(rgba(0,0,0,.6),rgba(0,0,0,0))}
+.clip .cl i{font-style:normal;opacity:.75;margin-left:8px;font-size:10px}
 .clip .th{position:absolute;top:0;bottom:0;width:8px;cursor:ew-resize;background:rgba(255,255,255,.0);z-index:3}.clip .th.l{left:0}.clip .th.r{right:0}
 .clip:hover .th,.clip.sel .th{background:rgba(255,255,255,.35)}
 .clip .trb{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,rgba(255,255,255,.55),rgba(255,255,255,0));font-style:normal;font-size:10px;color:#000;padding:2px 3px;pointer-events:none}
@@ -159,7 +161,8 @@ body.resizing{user-select:none}body.resizing *{cursor:inherit!important}
 .trh:hover,.trh.drag{background:rgba(46,230,197,.55)}
 /* clip waveform + volume line */
 .clip.tall .cbg{bottom:var(--wfh);background-size:auto 100%}
-.clip.tall .wf{height:var(--wfh);background:rgba(0,0,0,.28)}
+.clip.tall .wf{height:var(--wfh);background:#16464d}
+.clip.audio .wf{background:none}
 .clip .vl{position:absolute;left:0;right:0;height:0;border-top:2px solid rgba(255,255,255,.9);z-index:4;pointer-events:none}
 .clip .vl u{position:absolute;top:-8px;left:-1px;right:-1px;height:14px;pointer-events:auto;cursor:ns-resize;text-decoration:none}
 .clip .vl u::before,.clip .vl u::after{content:"";position:absolute;top:2px;width:8px;height:8px;border-radius:50%;background:#fff;border:1px solid #333}
@@ -182,6 +185,39 @@ select.uilang{max-width:130px}
 #tlbar #zoom{width:110px}
 #ruler .mk{position:absolute;top:0;z-index:4;transform:translateX(-50%);color:#ffd60a;font-size:11px;line-height:12px;cursor:pointer;font-style:normal}
 #ruler .mk::after{content:"";position:absolute;left:50%;top:12px;height:900px;width:0;border-left:1px dashed rgba(255,214,10,.35);pointer-events:none}
+
+/* fade handles (CapCut-style) */
+.clip .fz{position:absolute;bottom:0;height:var(--wfh);background:rgba(0,0,0,.38);pointer-events:none;z-index:1}
+.clip .fz.l{left:0;clip-path:polygon(0 0,100% 0,0 100%)}
+.clip .fz.r{right:0;clip-path:polygon(0 0,100% 0,100% 100%)}
+.clip .fh{position:absolute;bottom:var(--wfh);margin-bottom:-6px;width:12px;height:12px;border-radius:50%;background:#0d2c30;border:2px solid #4ee0c5;box-sizing:border-box;z-index:5;cursor:ew-resize;display:none;text-decoration:none}
+.clip:hover .fh,.clip.sel .fh,.clip .fh.drag{display:block}
+.clip .fh b{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:600;background:rgba(0,0,0,.8);padding:0 4px;border-radius:3px;display:none;white-space:nowrap;pointer-events:none;color:#fff}
+.clip .fh.drag b{display:block}
+
+/* number boxes + reset */
+.fld.rr>label{width:92px}
+.fld .nv{width:56px;flex:none;text-align:right;padding:3px 4px;font-size:12px;font-variant-numeric:tabular-nums}
+.rst{padding:0 6px;font-size:13px;line-height:20px;color:var(--mu);opacity:.55}.rst.mod{opacity:1;color:var(--ac);border-color:var(--ac)}
+/* CapCut-style inspector tabs */
+.itabs{display:flex;gap:2px;margin:8px 0 2px;border-bottom:1px solid var(--ln);overflow-x:auto}
+.itabs button{flex:1 1 auto;border:0;background:none;border-bottom:2px solid transparent;border-radius:0;padding:6px 4px;color:var(--mu);font-size:12.5px;white-space:nowrap}
+.itabs button.on{color:var(--ac);border-bottom-color:var(--ac);font-weight:600}
+.isubs{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}
+.isubs button{padding:3px 10px;border-radius:14px;font-size:12px;color:var(--mu)}
+.isubs button.on{background:var(--ac);color:#000;border-color:var(--ac)}
+.agrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:6px 0}
+.agrid button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px;font-size:11px;line-height:1.2;text-align:center}
+.agrid button i{font-style:normal;font-size:20px;line-height:1}
+.agrid button.on{background:rgba(46,230,197,.16);border-color:var(--ac);color:var(--ac)}
+.alignrow{display:flex;gap:4px;margin:6px 0}.alignrow button{flex:1;padding:3px 0;font-size:15px}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0}.chips button{padding:3px 9px;font-size:12px;border-radius:14px}.chips button.on{background:var(--ac);color:#000;border-color:var(--ac)}
+.fld.dis{opacity:.5}.fld.dis .soon{margin-left:auto;font-size:10px;color:var(--mu);border:1px solid var(--ln);border-radius:8px;padding:0 6px}
+.soonbox{margin:10px 0;color:var(--mu);font-size:12px}.soonbox summary{cursor:pointer;margin-bottom:4px}
+.hslrow{display:flex;gap:7px;margin:8px 0}.hslrow button{width:26px;height:26px;border-radius:50%;padding:0;border:2px solid transparent}.hslrow button.on{border-color:#fff}
+#curveCv{width:100%;max-width:260px;aspect-ratio:1;border:1px solid var(--ln);border-radius:6px;touch-action:none;cursor:crosshair;display:block;margin:6px 0}
+.wheels{display:flex;flex-direction:column;gap:12px}.wh{border:1px solid var(--ln);border-radius:8px;padding:8px}.wh b{font-size:12px;color:var(--ac)}
+canvas.wheel{display:block;width:120px;height:120px;margin:6px auto;touch-action:none;cursor:crosshair}
 
 </style></head>
 <body>
@@ -894,14 +930,199 @@ I18N_ROWS.push(
   ['จากเพดาน $', 'of the cap $', 'ຈາກວົງເງິນສູງສຸດ $']
 );
 
+// ---- 00-4-i18n-d.js ----
+'use strict';
+// i18n rows D — v1.12: clip look, fade handles, tabbed inspector (Video / Audio / Speed / Animation / Adjust)   [thai, english, lao]
+I18N_ROWS.push(
+  // tooltips
+  ['กึ่งกลางแนวตั้ง', 'Centre vertically', 'ກາງແນວຕັ້ງ'],
+  ['กึ่งกลางแนวนอน', 'Centre horizontally', 'ກາງແນວນອນ'],
+  ['ชิดขวา', 'Align right', 'ຊິດຂວາ'],
+  ['ชิดซ้าย', 'Align left', 'ຊິດຊ້າຍ'],
+  ['ชิดบน', 'Align top', 'ຊິດເທິງ'],
+  ['ชิดล่าง', 'Align bottom', 'ຊິດລຸ່ມ'],
+  ['รีเซ็ตเป็นค่าเริ่มต้น', 'Reset to default', 'ຣີເຊັດເປັນຄ່າເລີ່ມຕົ້ນ'],
+  ['ลากเพื่อให้เสียงค่อยๆ ดังขึ้น (Fade in)', 'Drag to fade the sound in (Fade in)', 'ລາກເພື່ອໃຫ້ສຽງຄ່ອຍໆດັງຂຶ້ນ (Fade in)'],
+  ['ลากเพื่อให้เสียงค่อยๆ เบาลง (Fade out)', 'Drag to fade the sound out (Fade out)', 'ລາກເພື່ອໃຫ້ສຽງຄ່ອຍໆເບົາລົງ (Fade out)'],
+  // HSL colour names
+  ['แดง', 'Red', 'ແດງ'], ['ส้ม', 'Orange', 'ສົ້ມ'], ['เหลือง', 'Yellow', 'ເຫຼືອງ'], ['เขียว', 'Green', 'ຂຽວ'], ['ฟ้าอมเขียว', 'Cyan', 'ຟ້າອົມຂຽວ'], ['น้ำเงิน', 'Blue', 'ນ້ຳເງິນ'], ['ม่วง', 'Purple', 'ມ່ວງ'], ['ชมพู', 'Pink', 'ຊົມພູ'],
+  // tabs
+  ['วิดีโอ', 'Video', 'ວິດີໂອ'],
+  ['ภาพ', 'Image', 'ຮູບ'],
+  ['ความเร็ว', 'Speed', 'ຄວາມໄວ'],
+  ['แอนิเมชัน', 'Animation', 'ແອນິເມຊັນ'],
+  ['ปรับแต่ง', 'Adjust', 'ປັບແຕ່ງ'],
+  ['พื้นฐาน', 'Basic', 'ພື້ນຖານ'],
+  ['ลบพื้นหลัง', 'Remove BG', 'ລຶບພື້ນຫຼັງ'],
+  ['มาสก์', 'Mask', 'ມາສກ໌'],
+  ['แต่งหน้า/ผิว', 'Retouch', 'ແຕ່ງໜ້າ/ຜິວ'],
+  ['เปลี่ยนเสียง', 'Voice changer', 'ປ່ຽນສຽງ'],
+  ['มาตรฐาน', 'Standard', 'ມາດຕະຖານ'],
+  ['เส้นโค้ง', 'Curve', 'ເສັ້ນໂຄ້ງ'],
+  ['เอฟเฟกต์ความเร็ว', 'Velocity effects', 'ເອັບເຟັກຄວາມໄວ'],
+  ['เข้า', 'In', 'ເຂົ້າ'],
+  ['ออก', 'Out', 'ອອກ'],
+  ['ต่อเนื่อง', 'Combo (loop)', 'ຕໍ່ເນື່ອງ'],
+  ['วงล้อสี', 'Colour wheel', 'ວົງລໍ້ສີ'],
+  ['ยังไม่พร้อม', 'Not ready', 'ຍັງບໍ່ພ້ອມ'],
+  // video basic
+  ['ตำแหน่งและขนาด', 'Position and size', 'ຕຳແໜ່ງ ແລະ ຂະໜາດ'],
+  ['ขนาด (%)', 'Scale (%)', 'ຂະໜາດ (%)'],
+  ['ปรับขนาดสัดส่วนเดิม (Uniform)', 'Uniform scale', 'ປັບຂະໜາດຕາມສັດສ່ວນເດີມ (Uniform)'],
+  ['ขนาดแนวนอน (%)', 'Width scale (%)', 'ຂະໜາດແນວນອນ (%)'],
+  ['ขนาดแนวตั้ง (%)', 'Height scale (%)', 'ຂະໜາດແນວຕັ້ງ (%)'],
+  ['หมุน (°)', 'Rotate (°)', 'ໝຸນ (°)'],
+  ['การผสมภาพ (Blend)', 'Blend', 'ການຜະສົມພາບ (Blend)'],
+  ['โหมด', 'Mode', 'ໂໝດ'],
+  ['ปกติ', 'Normal', 'ປົກກະຕິ'],
+  ['คูณ (Multiply)', 'Multiply', 'ຄູນ (Multiply)'],
+  ['สกรีน (Screen)', 'Screen', 'ສະກຣີນ (Screen)'],
+  ['โอเวอร์เลย์', 'Overlay', 'ໂອເວີເລ'],
+  ['ซอฟต์ไลต์', 'Soft light', 'ຊັອບໄລ'],
+  ['ฮาร์ดไลต์', 'Hard light', 'ຮາດໄລ'],
+  ['มืดกว่า', 'Darken', 'ມືດກວ່າ'],
+  ['สว่างกว่า', 'Lighten', 'ສະຫວ່າງກວ່າ'],
+  ['ดอดจ์สี', 'Colour dodge', 'ດອດສີ'],
+  ['ผลต่าง', 'Difference', 'ຜົນຕ່າງ'],
+  ['ความสว่าง', 'Brightness', 'ຄວາມສະຫວ່າງ'],
+  ['ความโปร่งใส (%)', 'Opacity (%)', 'ຄວາມໂປ່ງໃສ (%)'],
+  ['คุณภาพภาพ', 'Image quality', 'ຄຸນນະພາບພາບ'],
+  ['เพิ่มความคมชัด', 'Sharpen', 'ເພີ່ມຄວາມຄົມຊັດ'],
+  ['ปิด', 'Off', 'ປິດ'],
+  ['ปานกลาง', 'Medium', 'ປານກາງ'],
+  ['มาก', 'Strong', 'ຫຼາຍ'],
+  ['ลดนอยส์ภาพ', 'Reduce image noise', 'ຫຼຸດນອຍພາບ'],
+  ['เบลอ', 'Blur', 'ເບລີ'],
+  ['แคนวาส (พื้นหลังด้านหลังคลิป)', 'Canvas (background behind the clip)', 'ແຄນວາສ (ພື້ນຫຼັງຢູ່ຫຼັງຄລິບ)'],
+  ['พื้นหลัง', 'Background', 'ພື້ນຫຼັງ'],
+  ['ไม่มี', 'None', 'ບໍ່ມີ'],
+  ['สีพื้น', 'Solid colour', 'ສີພື້ນ'],
+  ['เห็นผลเมื่อเลือก “ทั้งภาพ (มีขอบ)” หรือย่อขนาดคลิป', 'Visible when “Whole image (with borders)” is chosen or the clip is scaled down', 'ເຫັນຜົນເມື່ອເລືອກ “ທັງຮູບ (ມີຂອບ)” ຫຼື ຍໍ່ຂະໜາດຄລິບ'],
+  ['ใช้กับทุกคลิป', 'Apply to all clips', 'ໃຊ້ກັບທຸກຄລິບ'],
+  ['ใช้กับทุกคลิปแล้ว', 'Applied to all clips', 'ໃຊ້ກັບທຸກຄລິບແລ້ວ'],
+  ['ไม่มีคลิปอื่นให้ใช้', 'There are no other clips', 'ບໍ່ມີຄລິບອື່ນໃຫ້ໃຊ້'],
+  ['การเคลื่อนไหวภาพ', 'Image motion', 'ການເຄື່ອນໄຫວພາບ'],
+  ['ฟีเจอร์ AI ขั้นสูงของ CapCut (ยังไม่พร้อม)', 'Advanced CapCut AI features (not ready)', 'ຟີເຈີ AI ຂັ້ນສູງຂອງ CapCut (ຍັງບໍ່ພ້ອມ)'],
+  ['ทำภาพนิ่ง (Stabilize)', 'Stabilize', 'ເຮັດພາບນິ້ງ (Stabilize)'],
+  ['เฟรมต่อเนื่อง (Optical flow)', 'Optical flow', 'ເຟຣມຕໍ່ເນື່ອງ (Optical flow)'],
+  ['AI ลบ/ขยาย/รีมิกซ์วัตถุ', 'AI remove / expand / remix objects', 'AI ລຶບ/ຂະຫຍາຍ/ຣີມິກວັດຖຸ'],
+  ['สบตากล้อง (Eye contact)', 'Eye contact', 'ສບຕາກ້ອງ (Eye contact)'],
+  ['ซิงก์ปากอัตโนมัติ', 'Auto lip sync', 'ຊິງປາກອັດຕະໂນມັດ'],
+  ['ปรับแสงใหม่ (Relight)', 'Relight', 'ປັບແສງໃໝ່ (Relight)'],
+  ['ครอปอัตโนมัติ (Auto reframe)', 'Auto reframe', 'ຄຣອບອັດຕະໂນມັດ (Auto reframe)'],
+  ['ลบแสงกะพริบ', 'Remove flicker', 'ລຶບແສງກະພິບ'],
+  ['ติดตามกล้อง', 'Camera tracking', 'ຕິດຕາມກ້ອງ'],
+  // remove BG / chroma
+  ['ลบอัตโนมัติ (AI)', 'Auto removal (AI)', 'ລຶບອັດຕະໂນມັດ (AI)'],
+  ['ลบแบบกำหนดเอง', 'Custom removal', 'ລຶບແບບກຳນົດເອງ'],
+  ['ทั้งสองแบบต้องใช้ AI ตัดคน — ยังไม่มีในตัวแก้ไขนี้', 'Both need AI person cut-out — not available in this editor yet', 'ທັງສອງແບບຕ້ອງໃຊ້ AI ຕັດຄົນ — ຍັງບໍ່ມີໃນໂປຣແກຣມນີ້'],
+  ['Chroma key (ฉากเขียว/ฉากสี)', 'Chroma key (green / colour screen)', 'Chroma key (ສາກຂຽວ/ສາກສີ)'],
+  ['เปิดใช้ Chroma key', 'Enable chroma key', 'ເປີດໃຊ້ Chroma key'],
+  ['สีที่จะลบ', 'Colour to remove', 'ສີທີ່ຈະລຶບ'],
+  ['🎯 ดูดสีจากหน้าจอ', '🎯 Pick colour from screen', '🎯 ດູດສີຈາກໜ້າຈໍ'],
+  ['ความแรง', 'Intensity', 'ຄວາມແຮງ'],
+  ['ความนุ่มของขอบ', 'Edge softness', 'ຄວາມນຸ່ມຂອງຂອບ'],
+  ['พื้นหลังที่ถูกลบจะโปร่งใส — วางคลิปอื่นไว้แถวล่างเพื่อให้เห็นเป็นพื้นหลัง', 'The removed background becomes transparent — place another clip on a lower track to show behind it', 'ພື້ນຫຼັງທີ່ຖືກລຶບຈະໂປ່ງໃສ — ວາງຄລິບອື່ນໄວ້ແຖວລຸ່ມເພື່ອໃຫ້ເຫັນເປັນພື້ນຫຼັງ'],
+  // mask
+  ['เพิ่มมาสก์', 'Add mask', 'ເພີ່ມມາສກ໌'],
+  ['เส้นตรง', 'Linear', 'ເສັ້ນຊື່'],
+  ['ดาว', 'Star', 'ດາວ'],
+  ['หัวใจ', 'Heart', 'ຫົວໃຈ'],
+  ['ฟุ้งรอบ', 'Feather all round', 'ຟຸ້ງອ້ອມ'],
+  ['มุม (°)', 'Angle (°)', 'ມຸມ (°)'],
+  ['ตำแหน่ง', 'Position', 'ຕຳແໜ່ງ'],
+  ['ความนุ่ม', 'Softness', 'ຄວາມນຸ່ມ'],
+  ['กลับด้าน', 'Invert', 'ກັບດ້ານ'],
+  // retouch
+  ['แต่งผิว (ใช้กับทั้งภาพ)', 'Skin retouch (applies to the whole image)', 'ແຕ່ງຜິວ (ໃຊ້ກັບທັງພາບ)'],
+  ['ผิวเนียน (%)', 'Smooth skin (%)', 'ຜິວນຽນ (%)'],
+  ['ผิวขาวใส (%)', 'Brighten skin (%)', 'ຜິວຂາວໃສ (%)'],
+  ['ยังไม่มีระบบจับใบหน้า (AI) จึงปรับทั้งภาพ ไม่ได้เฉพาะใบหน้า', 'There is no AI face detection yet, so this affects the whole image, not only the face', 'ຍັງບໍ່ມີລະບົບຈັບໃບໜ້າ (AI) ຈຶ່ງປັບທັງພາບ ບໍ່ແມ່ນສະເພາະໃບໜ້າ'],
+  ['แต่งหน้า/รูปร่าง/ผม (ยังไม่พร้อม)', 'Face / body / hair retouch (not ready)', 'ແຕ່ງໜ້າ/ຮູບຮ່າງ/ຜົມ (ຍັງບໍ່ພ້ອມ)'],
+  ['ปรับรูปหน้า', 'Face shape', 'ປັບຮູບໜ້າ'], ['ปรับดวงตา/จมูก/ปาก', 'Eyes / nose / mouth', 'ປັບຕາ/ດັງ/ປາກ'], ['ปรับรูปร่าง', 'Body shape', 'ປັບຮູບຮ່າງ'], ['สีผม', 'Hair colour', 'ສີຜົມ'],
+  // audio
+  ['ระดับเสียง (%)', 'Volume (%)', 'ລະດັບສຽງ (%)'],
+  ['ค่อยๆ ดังขึ้น (วิ)', 'Fade in (s)', 'ຄ່ອຍໆດັງຂຶ້ນ (ວິນາທີ)'],
+  ['ค่อยๆ เบาลง (วิ)', 'Fade out (s)', 'ຄ່ອຍໆເບົາລົງ (ວິນາທີ)'],
+  ['ปรับระดับเสียงอัตโนมัติ (Normalize)', 'Normalize loudness', 'ປັບລະດັບສຽງອັດຕະໂນມັດ (Normalize)'],
+  ['เพิ่มความชัดของเสียงพูด', 'Enhance voice', 'ເພີ່ມຄວາມຊັດຂອງສຽງເວົ້າ'],
+  ['ลดเสียงรบกวน (กรองความถี่)', 'Reduce noise (frequency filter)', 'ຫຼຸດສຽງລົບກວນ (ກອງຄວາມຖີ່)'],
+  ['🎵 แยกเสียงออกจากวิดีโอ', '🎵 Separate audio from the video', '🎵 ແຍກສຽງອອກຈາກວິດີໂອ'],
+  ['แปลเสียงวิดีโอ (Video translator)', 'Video translator', 'ແປສຽງວິດີໂອ (Video translator)'],
+  ['คลิปนี้ไม่มีเสียง', 'This clip has no audio', 'ຄລິບນີ້ບໍ່ມີສຽງ'],
+  ['แยกเสียงได้เฉพาะคลิปที่ความเร็ว 1 เท่า', 'Audio can only be separated from clips at 1x speed', 'ແຍກສຽງໄດ້ສະເພາະຄລິບທີ່ຄວາມໄວ 1 ເທົ່າ'],
+  ['แยกเสียงไปไว้แถวเสียงแล้ว', 'Audio moved to an audio track', 'ແຍກສຽງໄປໄວ້ແຖວສຽງແລ້ວ'],
+  ['ฟิลเตอร์เสียง', 'Voice filters', 'ຟິວເຕີສຽງ'],
+  ['ต้นฉบับ', 'Original', 'ຕົ້ນສະບັບ'],
+  ['หวาน', 'Sweet', 'ຫວານ'], ['เอคโค่', 'Echo', 'ເອັກໂຄ'], ['เบสแน่น', 'Bass boost', 'ເບສແໜ້ນ'], ['แหลมใส', 'High', 'ແຫຼມໃສ'], ['เสียงเต็ม', 'Full voice', 'ສຽງເຕັມ'], ['ชัดแจ๋ว', 'Crisp', 'ຊັດແຈ້ວ'], ['หุ่นยนต์', 'Robot', 'ຫຸ່ນຍົນ'],
+  ['โทรศัพท์เก่า', 'Old phone', 'ໂທລະສັບເກົ່າ'], ['วิทยุสื่อสาร', 'Walkie-talkie', 'ວິທະຍຸສື່ສານ'], ['โทรโข่ง', 'Megaphone', 'ໂທລະໂຂ່ງ'], ['แตกพร่า', 'Distorted', 'ແຕກພ່າ'], ['ห้องโถง', 'Hall', 'ຫ້ອງໂຖງ'], ['ใต้น้ำ', 'Underwater', 'ໃຕ້ນ້ຳ'], ['ยุค 1950', '1950s announcer', 'ຍຸກ 1950'],
+  ['เสียงตัวการ์ตูน/แปลงเป็นเพลงต้องเปลี่ยนระดับเสียงแบบ AI — ยังไม่มี', 'Cartoon voices / speech-to-song need AI pitch shifting — not available yet', 'ສຽງຕົວກາຕູນ/ແປງເປັນເພງຕ້ອງປ່ຽນລະດັບສຽງແບບ AI — ຍັງບໍ່ມີ'],
+  // speed
+  ['ความเร็ว (เท่า)', 'Speed (x)', 'ຄວາມໄວ (ເທົ່າ)'],
+  ['ความยาว (วิ)', 'Duration (s)', 'ຄວາມຍາວ (ວິນາທີ)'],
+  ['เปลี่ยนระดับเสียงตามความเร็ว', 'Change audio pitch with speed', 'ປ່ຽນລະດັບສຽງຕາມຄວາມໄວ'],
+  ['รีเซ็ตความเร็ว', 'Reset speed', 'ຣີເຊັດຄວາມໄວ'],
+  ['เส้นโค้งความเร็ว (Montage, Hero, Bullet…)', 'Speed curve (Montage, Hero, Bullet…)', 'ເສັ້ນໂຄ້ງຄວາມໄວ (Montage, Hero, Bullet…)'],
+  ['ยังไม่มีในเวอร์ชันนี้ — ใช้แท็บ “มาตรฐาน” ปรับความเร็วคงที่ได้', 'Not in this version yet — use the “Standard” tab for constant speed', 'ຍັງບໍ່ມີໃນເວີຊັນນີ້ — ໃຊ້ແທັບ “ມາດຕະຖານ” ປັບຄວາມໄວຄົງທີ່ໄດ້'],
+  // animation
+  ['เลือนเข้า', 'Fade in', 'ເລືອນເຂົ້າ'], ['ซูมเข้าหา', 'Zoom in', 'ຊູມເຂົ້າຫາ'], ['ซูมถอยเข้า', 'Zoom out in', 'ຊູມຖອຍເຂົ້າ'],
+  ['สไลด์จากขวา', 'Slide from right', 'ສະໄລຈາກຂວາ'], ['สไลด์จากซ้าย', 'Slide from left', 'ສະໄລຈາກຊ້າຍ'], ['สไลด์จากล่าง', 'Slide from bottom', 'ສະໄລຈາກລຸ່ມ'], ['สไลด์จากบน', 'Slide from top', 'ສະໄລຈາກເທິງ'],
+  ['หมุนเข้า', 'Spin in', 'ໝຸນເຂົ້າ'], ['เด้งป๊อป', 'Pop', 'ເດັ້ງປັອບ'], ['ลอยขึ้น', 'Rise', 'ລອຍຂຶ້ນ'], ['สั่นเข้า', 'Shake in', 'ສັ່ນເຂົ້າ'], ['เบลอแล้วชัด', 'Blur to sharp', 'ເບລີແລ້ວຊັດ'],
+  ['เลือนหาย', 'Fade out', 'ເລືອນຫາຍ'], ['ซูมเข้าหาย', 'Zoom in out', 'ຊູມເຂົ້າຫາຍ'], ['ซูมออกหาย', 'Zoom out', 'ຊູມອອກຫາຍ'],
+  ['สไลด์ไปซ้าย', 'Slide left', 'ສະໄລໄປຊ້າຍ'], ['สไลด์ไปขวา', 'Slide right', 'ສະໄລໄປຂວາ'], ['สไลด์ขึ้น', 'Slide up', 'ສະໄລຂຶ້ນ'], ['สไลด์ลง', 'Slide down', 'ສະໄລລົງ'],
+  ['หมุนหาย', 'Spin out', 'ໝຸນຫາຍ'], ['ตกลง', 'Fall', 'ຕົກລົງ'], ['สั่นแล้วหาย', 'Shake out', 'ສັ່ນແລ້ວຫາຍ'], ['เบลอหาย', 'Blur out', 'ເບລີຫາຍ'],
+  ['ซูมเต้น', 'Pulse', 'ຊູມເຕັ້ນ'], ['แกว่ง', 'Swing', 'ແກວ່ງ'], ['สั่น', 'Shake', 'ສັ່ນ'], ['ลอยขึ้นลง', 'Float', 'ລອຍຂຶ້ນລົງ'], ['หัวใจเต้น', 'Heartbeat', 'ຫົວໃຈເຕັ້ນ'], ['หายใจ', 'Breathe', 'ຫາຍໃຈ'],
+  ['ความเร็วตอนเข้า (วิ)', 'In duration (s)', 'ຄວາມໄວຕອນເຂົ້າ (ວິນາທີ)'],
+  ['ความเร็วตอนออก (วิ)', 'Out duration (s)', 'ຄວາມໄວຕອນອອກ (ວິນາທີ)'],
+  // adjust
+  ['ฟิลเตอร์สำเร็จรูป', 'Preset filters', 'ຟິວເຕີສຳເລັດຮູບ'],
+  ['✨ ปรับอัตโนมัติ', '✨ Auto adjust', '✨ ປັບອັດຕະໂນມັດ'],
+  ['การแก้สี', 'Colour correction', 'ການແກ້ສີ'],
+  ['อุณหภูมิสี', 'Temperature', 'ອຸນຫະພູມສີ'],
+  ['ทินต์ (เขียว–ม่วง)', 'Tint (green–magenta)', 'ທິນ (ຂຽວ–ມ່ວງ)'],
+  ['ความสด (%)', 'Saturation (%)', 'ຄວາມສົດ (%)'],
+  ['เปลี่ยนสี (Hue °)', 'Hue (°)', 'ປ່ຽນສີ (Hue °)'],
+  ['แสง', 'Light', 'ແສງ'],
+  ['ความสว่าง (%)', 'Brightness (%)', 'ຄວາມສະຫວ່າງ (%)'],
+  ['คอนทราสต์ (%)', 'Contrast (%)', 'ຄອນທຣາສ (%)'],
+  ['ไฮไลต์', 'Highlights', 'ໄຮໄລ'],
+  ['เงา (Shadow)', 'Shadows', 'ເງົາ (Shadow)'],
+  ['ขาว (Whites)', 'Whites', 'ຂາວ (Whites)'],
+  ['ดำ (Blacks)', 'Blacks', 'ດຳ (Blacks)'],
+  ['ความสดใส (Brilliance)', 'Brilliance', 'ຄວາມສົດໃສ (Brilliance)'],
+  ['ความคมลึก (Clarity)', 'Clarity', 'ຄວາມຄົມເລິກ (Clarity)'],
+  ['เกรนฟิล์ม (Particles)', 'Film grain (Particles)', 'ເກຣນຟິມ (Particles)'],
+  ['ซีดจาง (Fade)', 'Fade', 'ຊີດຈາງ (Fade)'],
+  ['มุมมืด (Vignette %)', 'Vignette (%)', 'ມຸມມືດ (Vignette %)'],
+  ['ขาวดำ (%)', 'Black & white (%)', 'ຂາວດຳ (%)'],
+  ['โทนอุ่นซีเปีย (%)', 'Sepia (%)', 'ໂທນອຸ່ນຊີເປຍ (%)'],
+  ['แปลงเป็น HDR', 'Convert to HDR', 'ແປງເປັນ HDR'],
+  ['★ บันทึกเป็นพรีเซ็ต', '★ Save as preset', '★ ບັນທຶກເປັນພຣີເຊັດ'],
+  ['รีเซ็ตทั้งหมด', 'Reset all', 'ຣີເຊັດທັງໝົດ'],
+  ['ชื่อพรีเซ็ต', 'Preset name', 'ຊື່ພຣີເຊັດ'], ['พรีเซ็ตของฉัน', 'My preset', 'ພຣີເຊັດຂອງຂ້ອຍ'], ['บันทึกพรีเซ็ตแล้ว', 'Preset saved', 'ບັນທຶກພຣີເຊັດແລ້ວ'],
+  ['เฉดสี (Hue)', 'Hue', 'ເຉດສີ (Hue)'],
+  ['ความสด (Saturation)', 'Saturation', 'ຄວາມສົດ (Saturation)'],
+  ['ความสว่าง (Lightness)', 'Lightness', 'ຄວາມສະຫວ່າງ (Lightness)'],
+  ['สี:', 'Colour:', 'ສີ:'],
+  ['รีเซ็ต HSL', 'Reset HSL', 'ຣີເຊັດ HSL'],
+  ['การปรับ HSL ใช้พลังเครื่องมาก อาจกระตุกตอนเล่น/ส่งออก', 'HSL adjustment is heavy on the computer and may stutter during playback / export', 'ການປັບ HSL ໃຊ້ກຳລັງເຄື່ອງຫຼາຍ ອາດກະຕຸກຕອນຫຼິ້ນ/ສົ່ງອອກ'],
+  ['คลิกเพื่อเพิ่มจุด · ลากจุดเพื่อโค้ง · ดับเบิลคลิกจุดเพื่อลบ', 'Click to add a point · drag points to bend · double-click a point to delete', 'ຄລິກເພື່ອເພີ່ມຈຸດ · ລາກຈຸດເພື່ອໂຄ້ງ · ດັບເບິນຄລິກຈຸດເພື່ອລຶບ'],
+  ['รีเซ็ตเส้นโค้ง', 'Reset curve', 'ຣີເຊັດເສັ້ນໂຄ້ງ'],
+  ['เงา', 'Shadows', 'ເງົາ'], ['โทนกลาง', 'Midtones', 'ໂທນກາງ'], ['สว่าง', 'Light', 'ສະຫວ່າງ'], ['สี', 'Colour', 'ສີ'], ['รีเซ็ต', 'Reset', 'ຣີເຊັດ'],
+  // AI tab
+  ['สไตล์ AI (แปลงภาพเป็นการ์ตูน/สีน้ำ ฯลฯ) ใน CapCut ต้องใช้เซิร์ฟเวอร์ AI — ยังไม่มีในตัวแก้ไขนี้', 'AI styles (cartoon / watercolour, etc.) need an AI server in CapCut — not in this editor yet', 'ສະໄຕ AI (ແປງພາບເປັນກາຕູນ/ສີນ້ຳ ແລະອື່ນໆ) ໃນ CapCut ຕ້ອງໃຊ້ເຊີເວີ AI — ຍັງບໍ່ມີໃນໂປຣແກຣມນີ້'],
+  ['การ์ตูน', 'Cartoon', 'ກາຕູນ'], ['สีน้ำมัน', 'Oil painting', 'ສີນ້ຳມັນ'], ['ภาพวาดดินสอ', 'Pencil sketch', 'ພາບແຕ້ມສໍ'], ['อนิเมะ', 'Anime', 'ອະນິເມະ']
+);
+
 // ---- 00-core.js ----
 'use strict';
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.11
-// APP_VERSION_PREV : 1.10
-// APP_VERSION_PREV_OLDER : 1.09
+// APP_VERSION  : 1.12
+// APP_VERSION_PREV : 1.11
+// APP_VERSION_PREV_OLDER : 1.10
+// 1.12 : CapCut-style clip look (teal, thumbnails, timecode label), fade in/out handles on clips, tabbed inspector (Video/Audio/Speed/Animation/Adjust), number boxes + reset on every slider, blend/canvas/chroma key/masks, voice changer, clip animations, curves/colour wheel/HSL
 // 1.11 : CapCut-style timeline toolbar (import, undo/redo, split, trim left/right Q/W, delete, ripple delete, markers M, magnet on Video 1, snapping toggle, zoom fit/in/out)
 // 1.10 : Save-now button in the editor header; Settings button on the Home page (needed on phones to enter the server password); Home header wraps on narrow screens
 // 1.09 : UI language selector (Lao / Thai / English) in header + home; dictionary-based DOM translation, Noto Sans Lao for Lao; user content protected with translate=no
@@ -914,7 +1135,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.11';
+const APP_VERSION = '1.12';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -1112,7 +1333,7 @@ function poolPrune() { for (const id of [...POOL.keys()]) if (!getItem(id)) pool
 const BUFS = [];
 function getBuf(i, W, H) {
   let b = BUFS[i];
-  if (!b) { b = BUFS[i] = document.createElement('canvas'); b.ctx = b.getContext('2d'); }
+  if (!b) { b = BUFS[i] = document.createElement('canvas'); b.ctx = b.getContext('2d', { willReadFrequently: true }); }
   if (b.width !== W || b.height !== H) { b.width = W; b.height = H; }
   b.ctx.setTransform(1, 0, 0, 1, 0, 0); b.ctx.globalAlpha = 1; b.ctx.globalCompositeOperation = 'source-over'; b.ctx.filter = 'none';
   b.ctx.clearRect(0, 0, W, H);
@@ -1128,7 +1349,7 @@ const TRANS = {
   zoomIn: { label: 'ซูมเข้า' }, zoomOut: { label: 'ซูมออก' }, punch: { label: 'ซูมกระแทก' }, spin: { label: 'หมุนเข้า' },
   card3d: { label: 'การ์ดกรอบขาวหมุน 3D', buf: 1 }, glitch: { label: 'กลิตช์', buf: 1 }, blur: { label: 'เบลอเลือน' },
 };
-const FX_BUF_TYPES = new Set(['featherTop', 'featherBottom', 'featherAll']);
+const FX_BUF_TYPES = new Set(['featherTop', 'featherBottom', 'featherAll', 'linear']);
 
 // ---------- helpers ----------
 function mediaSource(it) {
@@ -1141,7 +1362,7 @@ function srcSize(src) { return src.videoWidth ? [src.videoWidth, src.videoHeight
 
 function filterString(it, extraBlur) {
   const f = it.fx || {}; const parts = [];
-  if (f.brightness != null && f.brightness !== 1) parts.push(`brightness(${f.brightness})`);
+  const br = (f.brightness != null ? f.brightness : 1) * (1 + .14 * (f.whiten || 0)); if (br !== 1) parts.push(`brightness(${br.toFixed(3)})`);
   if (f.contrast != null && f.contrast !== 1) parts.push(`contrast(${f.contrast})`);
   if (f.saturate != null && f.saturate !== 1) parts.push(`saturate(${f.saturate})`);
   if (f.gray) parts.push(`grayscale(${f.gray})`);
@@ -1166,7 +1387,8 @@ function drawMediaContent(ctx, it, t, W, H, extra) {
   const src = mediaSource(it); if (!src) return false;
   const [sw0, sh0] = srcSize(src);
   const lt = t - it.start;
-  const s = prop(it, 's', t), x = prop(it, 'x', t), y = prop(it, 'y', t), r = prop(it, 'r', t), o = prop(it, 'o', t);
+  const s = prop(it, 's', t), x = prop(it, 'x', t), y = prop(it, 'y', t); let r = prop(it, 'r', t); const o = prop(it, 'o', t);
+  const A = mediaAnim(it, lt); if (A) { r += A.r; extra = Object.assign({}, extra, { alpha: (extra.alpha ?? 1) * A.a, blur: (extra.blur || 0) + A.blur * W / 1080, dx: (extra.dx || 0) + A.dx * W, dy: (extra.dy || 0) + A.dy * H }); }
   let fw = W, fh = H, sx = 0, sy = 0, sw = sw0, sh = sh0;
   if (it.fit === 'contain') {
     const k = Math.min(W / sw0, H / sh0); fw = sw0 * k; fh = sh0 * k;
@@ -1178,10 +1400,20 @@ function drawMediaContent(ctx, it, t, W, H, extra) {
   let z = 1, pan = 0; const pr = clamp(lt / Math.max(0.1, it.dur), 0, 1);
   if (it.kb === 'in') z = 1 + 0.2 * EASE.io(pr); else if (it.kb === 'out') z = 1.2 - 0.2 * EASE.io(pr); else if (it.kb === 'pan') { z = 1.14; pan = lerp(-1, 1, pr); }
   if (z !== 1 || pan) { const nw = sw / z, nh = sh / z; sx += (sw - nw) / 2 + pan * (sw - nw) / 2; sy += (sh - nh) / 2; sw = nw; sh = nh; }
-  const w = fw * s, h = fh * s, cx = W / 2 + x * W + (extra.dx || 0), cy = H / 2 + y * H + (extra.dy || 0);
+  const nu = it.uni === false; const am = A ? A.s : 1;
+  const w = fw * s * (nu ? (it.sx ?? 1) : 1) * am, h = fh * s * (nu ? (it.sy ?? 1) : 1) * am, cx = W / 2 + x * W + (extra.dx || 0), cy = H / 2 + y * H + (extra.dy || 0);
   BOUNDS[it.id] = { cx, cy, w, h, rot: r };
   ctx.save();
   ctx.globalAlpha *= clamp(o, 0, 1) * (extra.alpha ?? 1);
+  if (it.bg && it.bg !== 'none' && (it.fit === 'contain' || w < W - 1 || h < H - 1)) {   // canvas background (CapCut: Canvas)
+    ctx.save();
+    if (it.bg === 'color') { ctx.fillStyle = it.bgColor || '#000000'; ctx.fillRect(0, 0, W, H); }
+    else {
+      const ka = W / H, sa = sw0 / sh0; let bx = 0, by = 0, bw = sw0, bh = sh0; if (sa > ka) { bw = sh0 * ka; bx = (sw0 - bw) / 2; } else { bh = sw0 / ka; by = (sh0 - bh) / 2; }
+      ctx.filter = `blur(${(22 * W / 1080).toFixed(1)}px) brightness(.72)`; ctx.drawImage(src, bx, by, bw, bh, -W * .06, -H * .06, W * 1.12, H * 1.12); ctx.filter = 'none';
+    }
+    ctx.restore();
+  }
   ctx.translate(cx, cy); ctx.rotate(r * Math.PI / 180);
   const mk = it.mask || { type: 'none' };
   // frame / clip shapes
@@ -1195,9 +1427,15 @@ function drawMediaContent(ctx, it, t, W, H, extra) {
     ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 18 * (W / 1080); ctx.fillStyle = '#fff';
     rrPath(ctx, -w / 2 - b, -h / 2 - b, w + 2 * b, h + 2 * b, 6 * W / 1080); ctx.fill(); ctx.restore();
     ctx.save(); ctx.beginPath(); ctx.rect(-w / 2, -h / 2, w, h); ctx.clip();
+  } else if (mk.type === 'star' || mk.type === 'heart') {
+    ctx.save(); ctx.beginPath(); const R0 = Math.min(w, h) / 2 * (mk.size || 1);
+    if (mk.type === 'star') { for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? R0 * .42 : R0; ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } ctx.closePath(); }
+    else { const k = R0 / 16; ctx.moveTo(0, 14 * k); ctx.bezierCurveTo(-24 * k, -2 * k, -16 * k, -20 * k, 0, -8 * k); ctx.bezierCurveTo(16 * k, -20 * k, 24 * k, -2 * k, 0, 14 * k); ctx.closePath(); }
+    ctx.clip();
   } else { ctx.save(); }
   ctx.filter = filterString(it, extra.blur);
   ctx.drawImage(src, sx, sy, sw, sh, -w / 2, -h / 2, w, h);
+  if ((it.fx || {}).soften > 0) { const ga = ctx.globalAlpha; ctx.globalAlpha = ga * clamp(it.fx.soften, 0, 1) * .75; ctx.filter = `blur(${(5 * W / 540).toFixed(1)}px) brightness(1.04)`; ctx.drawImage(src, sx, sy, sw, sh, -w / 2, -h / 2, w, h); ctx.globalAlpha = ga; }
   ctx.filter = 'none';
   ctx.restore();
   if (mk.type === 'circle') {
@@ -1221,14 +1459,150 @@ function postFx(buf, it, t, W, H) {
     c.save(); c.globalCompositeOperation = 'source-atop'; c.fillStyle = g; c.fillRect(0, 0, W, H); c.restore();
   }
   if (f.glitch > 0) glitchBuf(buf, W, H, f.glitch, t);
+  if ((it.chroma && it.chroma.on) || adjActive(it)) pixelPass(buf, it, W, H, t);
   if (FX_BUF_TYPES.has(mk.type)) {
     c.save(); c.globalCompositeOperation = 'destination-in';
     let g;
     if (mk.type === 'featherTop') { const k = mk.size ?? 0.3; g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(Math.max(0, 1 - k), 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)'); }
     else if (mk.type === 'featherBottom') { const k = mk.size ?? 0.3; g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(Math.min(1, k), 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,1)'); }
+    else if (mk.type === 'linear') {
+      const ang = (mk.angle || 0) * Math.PI / 180, cx = W / 2 + (mk.pos || 0) * W * Math.cos(ang), cy = H / 2 + (mk.pos || 0) * W * Math.sin(ang); const L = Math.hypot(W, H) / 2, fe = Math.max(.001, (mk.feather ?? .05)) * W;
+      const dx = Math.cos(ang), dy = Math.sin(ang), sgn = mk.inv ? -1 : 1;
+      g = c.createLinearGradient(cx - dx * fe * sgn, cy - dy * fe * sgn, cx + dx * fe * sgn, cy + dy * fe * sgn); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    }
     else { g = c.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * .5); const k = 1 - (mk.size ?? 0.35); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(clamp(k, 0, .95), 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)'); }
     c.fillStyle = g; c.fillRect(0, 0, W, H); c.restore();
   }
+}
+
+// ---------- clip animations (In / Out / Combo) ----------
+const ANIM_LIST = {
+  in: [['none', 'ไม่มี', '⊘'], ['fade', 'เลือนเข้า', '◐'], ['zoomin', 'ซูมเข้าหา', '⊕'], ['zoomout', 'ซูมถอยเข้า', '⊖'], ['slideL', 'สไลด์จากขวา', '⇠'], ['slideR', 'สไลด์จากซ้าย', '⇢'], ['slideU', 'สไลด์จากล่าง', '⇡'], ['slideD', 'สไลด์จากบน', '⇣'], ['spin', 'หมุนเข้า', '⟳'], ['pop', 'เด้งป๊อป', '✺'], ['rise', 'ลอยขึ้น', '△'], ['shake', 'สั่นเข้า', '≋'], ['blur', 'เบลอแล้วชัด', '◌']],
+  out: [['none', 'ไม่มี', '⊘'], ['fade', 'เลือนหาย', '◐'], ['zoomin', 'ซูมเข้าหาย', '⊕'], ['zoomout', 'ซูมออกหาย', '⊖'], ['slideL', 'สไลด์ไปซ้าย', '⇠'], ['slideR', 'สไลด์ไปขวา', '⇢'], ['slideU', 'สไลด์ขึ้น', '⇡'], ['slideD', 'สไลด์ลง', '⇣'], ['spin', 'หมุนหาย', '⟳'], ['fall', 'ตกลง', '▽'], ['shake', 'สั่นแล้วหาย', '≋'], ['blur', 'เบลอหาย', '◌']],
+  combo: [['none', 'ไม่มี', '⊘'], ['pulse', 'ซูมเต้น', '◉'], ['swing', 'แกว่ง', '⇋'], ['shake', 'สั่น', '≋'], ['float', 'ลอยขึ้นลง', '≈'], ['heart', 'หัวใจเต้น', '♥'], ['breathe', 'หายใจ', '○']],
+};
+function mediaAnim(it, lt) {
+  const an = it.anim; if (!an || !(an.in || an.out || an.combo)) return null; if (an.in === 'none' && an.out === 'none' && (!an.combo || an.combo === 'none')) return null;
+  const A = { a: 1, s: 1, dx: 0, dy: 0, r: 0, blur: 0 }; const lerpv = (a, b, p) => a + (b - a) * p;
+  if (an.in && an.in !== 'none') {
+    const d = Math.min(an.dIn || .5, it.dur / 2);
+    if (lt < d) {
+      const p = EASE.out(clamp(lt / d, 0, 1)), pr = clamp(lt / d, 0, 1);
+      switch (an.in) {
+        case 'fade': A.a = p; break; case 'zoomin': A.s = lerpv(.5, 1, p); A.a = p; break; case 'zoomout': A.s = lerpv(1.5, 1, p); A.a = p; break;
+        case 'slideL': A.dx = lerpv(-1, 0, p); break; case 'slideR': A.dx = lerpv(1, 0, p); break; case 'slideU': A.dy = lerpv(1, 0, p); break; case 'slideD': A.dy = lerpv(-1, 0, p); break;
+        case 'spin': A.r = lerpv(-120, 0, p); A.s = lerpv(.3, 1, p); A.a = p; break;
+        case 'pop': A.s = pr < .7 ? lerpv(.2, 1.12, pr / .7) : lerpv(1.12, 1, (pr - .7) / .3); A.a = Math.min(1, pr * 3); break;
+        case 'rise': A.dy = lerpv(.12, 0, p); A.a = p; break; case 'shake': A.dx = Math.sin(pr * 24) * .04 * (1 - pr); A.a = Math.min(1, pr * 4); break;
+        case 'blur': A.blur = (1 - p) * 24; A.a = Math.min(1, pr * 3); break;
+      }
+    }
+  }
+  if (an.out && an.out !== 'none') {
+    const d = Math.min(an.dOut || .5, it.dur / 2);
+    if (lt > it.dur - d) {
+      const q = clamp((lt - (it.dur - d)) / d, 0, 1), e = EASE.in ? EASE.in(q) : q * q;
+      switch (an.out) {
+        case 'fade': A.a *= 1 - q; break; case 'zoomin': A.s *= 1 + .5 * e; A.a *= 1 - q; break; case 'zoomout': A.s *= 1 - .5 * e; A.a *= 1 - q; break;
+        case 'slideL': A.dx += -e; break; case 'slideR': A.dx += e; break; case 'slideU': A.dy += -e; break; case 'slideD': A.dy += e; break;
+        case 'spin': A.r += 120 * e; A.s *= 1 - .7 * e; A.a *= 1 - q; break; case 'fall': A.dy += .25 * e; A.a *= 1 - q; break;
+        case 'shake': A.dx += Math.sin(q * 24) * .04 * q; A.a *= 1 - q * .6; break; case 'blur': A.blur += e * 24; A.a *= 1 - q * .6; break;
+      }
+    }
+  }
+  if (an.combo && an.combo !== 'none') {
+    const w = lt * Math.PI * 2;
+    switch (an.combo) {
+      case 'pulse': A.s *= 1 + .06 * Math.sin(w * 1.2); break; case 'swing': A.r += 4 * Math.sin(w * .8); break;
+      case 'shake': A.dx += Math.sin(w * 9) * .006; A.dy += Math.cos(w * 11) * .006; break; case 'float': A.dy += .015 * Math.sin(w * .6); break;
+      case 'heart': { const k = (lt * 1.4) % 1; A.s *= 1 + .07 * (Math.exp(-Math.pow((k - .12) * 14, 2)) + .6 * Math.exp(-Math.pow((k - .3) * 14, 2))); break; }
+      case 'breathe': A.s *= 1.03 + .03 * Math.sin(w * .35); break;
+    }
+  }
+  return A;
+}
+
+// ---------- pixel pass: tone / curves / colour wheel / HSL / chroma key ----------
+const ADJ0 = () => ({ temp: 0, tint: 0, shadow: 0, high: 0, white: 0, black: 0, bril: 0, clarity: 0, fade: 0, grain: 0 });
+function adjActive(it) {
+  const a = it.adj; if (!a) return false;
+  for (const k of ['temp', 'tint', 'shadow', 'high', 'white', 'black', 'bril', 'clarity', 'fade', 'grain']) if (a[k]) return true;
+  if (a.curve) for (const k in a.curve) { const c = a.curve[k]; if (c && c.length && !(c.length === 2 && c[0][0] === 0 && c[0][1] === 0 && c[1][0] === 1 && c[1][1] === 1)) return true; }
+  if (a.wheel) for (const k in a.wheel) { const w = a.wheel[k]; if (w && (w.s || w.l)) return true; }
+  if (a.hsl) for (const k in a.hsl) { const h = a.hsl[k]; if (h && (h.h || h.s || h.l)) return true; }
+  return false;
+}
+function curveLut(pts) {   // monotone cubic through points (x 0..1) -> Float32Array(256)
+  const P = pts.slice().sort((p, q) => p[0] - q[0]); const n = P.length; const out = new Float32Array(256);
+  if (n < 2) { for (let i = 0; i < 256; i++) out[i] = i / 255; return out; }
+  const dx = [], m = [], d = []; for (let i = 0; i < n - 1; i++) { dx[i] = Math.max(1e-6, P[i + 1][0] - P[i][0]); d[i] = (P[i + 1][1] - P[i][1]) / dx[i]; }
+  m[0] = d[0]; m[n - 1] = d[n - 2]; for (let i = 1; i < n - 1; i++) m[i] = d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2;
+  for (let i = 0; i < n - 1; i++) { if (d[i] === 0) { m[i] = 0; m[i + 1] = 0; } else { const a = m[i] / d[i], b = m[i + 1] / d[i], h = Math.hypot(a, b); if (h > 3) { m[i] = 3 * a / h * d[i]; m[i + 1] = 3 * b / h * d[i]; } } }
+  for (let i = 0; i < 256; i++) {
+    const x = i / 255; let k = 0; while (k < n - 2 && x > P[k + 1][0]) k++;
+    if (x <= P[0][0]) { out[i] = P[0][1]; continue; } if (x >= P[n - 1][0]) { out[i] = P[n - 1][1]; continue; }
+    const h = dx[k], tt = (x - P[k][0]) / h, t2 = tt * tt, t3 = t2 * tt;
+    out[i] = (2 * t3 - 3 * t2 + 1) * P[k][1] + (t3 - 2 * t2 + tt) * h * m[k] + (-2 * t3 + 3 * t2) * P[k + 1][1] + (t3 - t2) * h * m[k + 1];
+  }
+  return out;
+}
+function hue2rgb01(h) { h = ((h % 360) + 360) % 360 / 60; const c = 1 - Math.abs(h % 2 - 1); const [r, g, b] = h < 1 ? [1, c, 0] : h < 2 ? [c, 1, 0] : h < 3 ? [0, 1, c] : h < 4 ? [0, c, 1] : h < 5 ? [c, 0, 1] : [1, 0, c]; return [r, g, b]; }
+const HSL_BANDS = [0, 30, 60, 120, 180, 240, 280, 320];
+const _ADJC = {};
+function adjBuild(it) {
+  const a = it.adj || {}; const key = JSON.stringify(a); let c = _ADJC[it.id]; if (c && c.key === key) return c;
+  const L = [new Uint8ClampedArray(256), new Uint8ClampedArray(256), new Uint8ClampedArray(256)];
+  const cl = a.curve || {}; const cM = cl.l && cl.l.length ? curveLut(cl.l) : null; const cC = [cl.r, cl.g, cl.b].map(p => p && p.length ? curveLut(p) : null);
+  const W = a.wheel || {}; const tint = k => { const w = W[k]; if (!w || !w.s) return [0, 0, 0]; const [r, g, b] = hue2rgb01(w.h || 0); return [(r - .5) * 2 * w.s, (g - .5) * 2 * w.s, (b - .5) * 2 * w.s]; };
+  const tS = tint('s'), tM = tint('m'), tH = tint('h'); const lS = (W.s && W.s.l) || 0, lM = (W.m && W.m.l) || 0, lH = (W.h && W.h.l) || 0;
+  const g = z => Math.exp(-z * z);
+  for (let i = 0; i < 256; i++) {
+    const x0 = i / 255; let x = x0;
+    x += .25 * ((a.shadow || 0) / 100 * g((x0 - .2) / .2) + (a.high || 0) / 100 * g((x0 - .8) / .2) + (a.black || 0) / 100 * g(x0 / .15) + (a.white || 0) / 100 * g((x0 - 1) / .15));
+    x += .18 * (a.bril || 0) / 100 * (g((x0 - .2) / .25) - .6 * g((x0 - .8) / .25));
+    x += .35 * (a.clarity || 0) / 100 * (x0 - .5) * (1 - Math.abs(2 * x0 - 1));
+    if (a.fade) x = x * (1 - .2 * a.fade / 100) + .2 * a.fade / 100 * .9;
+    const wS = (1 - x0) * (1 - x0), wM = 4 * x0 * (1 - x0), wH = x0 * x0;
+    for (let ch = 0; ch < 3; ch++) {
+      let v = x + wS * (tS[ch] * .3 + lS * .2) + wM * (tM[ch] * .3 + lM * .2) + wH * (tH[ch] * .3 + lH * .2);
+      if (ch === 0) v += (a.temp || 0) / 100 * .09 + (a.tint || 0) / 100 * .03; if (ch === 2) v -= (a.temp || 0) / 100 * .09 - (a.tint || 0) / 100 * .03; if (ch === 1) v -= (a.tint || 0) / 100 * .06;
+      v = clamp(v, 0, 1); if (cM) v = cM[Math.round(v * 255)]; if (cC[ch]) v = cC[ch][Math.round(clamp(v, 0, 1) * 255)];
+      L[ch][i] = Math.round(clamp(v, 0, 1) * 255);
+    }
+  }
+  const hsl = a.hsl || {}; let hslOn = false; const dh = new Float32Array(360), ds = new Float32Array(360), dl = new Float32Array(360);
+  const names = ['red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'purple', 'magenta'];
+  for (let hh = 0; hh < 360; hh++) for (let b = 0; b < 8; b++) {
+    const v = hsl[names[b]]; if (!v || !(v.h || v.s || v.l)) continue; hslOn = true;
+    let dd = Math.abs(hh - HSL_BANDS[b]); if (dd > 180) dd = 360 - dd; const w = Math.max(0, 1 - dd / 45); if (!w) continue;
+    dh[hh] += (v.h || 0) / 100 * 35 * w; ds[hh] += (v.s || 0) / 100 * w; dl[hh] += (v.l || 0) / 100 * w;
+  }
+  c = _ADJC[it.id] = { key, L, hslOn, dh, ds, dl, grain: (a.grain || 0) / 100, identity: false }; return c;
+}
+function rgb2hsl(r, g, b) { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b); let h = 0, s = 0; const l = (mx + mn) / 2; if (mx !== mn) { const d = mx - mn; s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn); h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; } return [h, s, l]; }
+function hsl2rgb(h, s, l) { h = ((h % 360) + 360) % 360 / 360; if (!s) return [l * 255, l * 255, l * 255]; const q = l < .5 ? l * (1 + s) : l + s - l * s, p = 2 * l - q; const f = t => { t = (t + 1) % 1; return t < 1 / 6 ? p + (q - p) * 6 * t : t < .5 ? q : t < 2 / 3 ? p + (q - p) * (2 / 3 - t) * 6 : p; }; return [f(h + 1 / 3) * 255, f(h) * 255, f(h - 1 / 3) * 255]; }
+function pixelPass(buf, it, W, H, t) {
+  const c = buf.ctx; const im = c.getImageData(0, 0, W, H); const d = im.data, n = d.length;
+  const ck = it.chroma && it.chroma.on ? it.chroma : null;
+  if (ck) {
+    const [kr, kg, kb] = (() => { const h = (ck.color || '#00ff00').replace('#', ''); return [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)]; })();
+    const kcb = -.1687 * kr - .3313 * kg + .5 * kb, kcr = .5 * kr - .4187 * kg - .0813 * kb; const tol = (ck.tol ?? .3) * 110, soft = Math.max(1, (ck.soft ?? .15) * 110);
+    for (let i = 0; i < n; i += 4) {
+      const r = d[i], g = d[i + 1], b = d[i + 2]; const cb = -.1687 * r - .3313 * g + .5 * b, cr = .5 * r - .4187 * g - .0813 * b; const dist = Math.hypot(cb - kcb, cr - kcr);
+      if (dist < tol + soft) { const a = dist <= tol ? 0 : (dist - tol) / soft; d[i + 3] *= a; if (a > 0 && a < 1) { const gm = (r + b) / 2; if (g > gm) d[i + 1] = gm + (g - gm) * a; } }
+    }
+  }
+  if (adjActive(it)) {
+    const A = adjBuild(it); const [Lr, Lg, Lb] = A.L; const gr = A.grain;
+    for (let i = 0; i < n; i += 4) {
+      if (!d[i + 3]) continue; let r = d[i], g = d[i + 1], b = d[i + 2];
+      if (A.hslOn) { const [h, s, l] = rgb2hsl(r, g, b); const hi = Math.floor(h) % 360; const ns = clamp(s * (1 + A.ds[hi]), 0, 1), nl = clamp(l + A.dl[hi] * .3 * (1 - Math.abs(2 * l - 1)), 0, 1); [r, g, b] = hsl2rgb(h + A.dh[hi], ns, nl); }
+      r = Lr[r | 0]; g = Lg[g | 0]; b = Lb[b | 0];
+      if (gr) { const nz = (Math.random() - .5) * 90 * gr; r += nz; g += nz; b += nz; }
+      d[i] = r; d[i + 1] = g; d[i + 2] = b;
+    }
+  }
+  c.putImageData(im, 0, 0);
 }
 function glitchBuf(buf, W, H, amt, t) {
   const tmp = getBuf(3, W, H); tmp.ctx.drawImage(buf, 0, 0);
@@ -1275,11 +1649,15 @@ function drawRotY(ctx, buf, W, H, ang) {
 }
 
 function drawMediaItem(ctx, it, t, W, H) {
+  if (it.blend && it.blend !== 'source-over') { ctx.save(); ctx.globalCompositeOperation = it.blend; try { drawMediaItem0(ctx, it, t, W, H); } finally { ctx.restore(); } }
+  else drawMediaItem0(ctx, it, t, W, H);
+}
+function drawMediaItem0(ctx, it, t, W, H) {
   const lt = t - it.start; const tr = it.transIn;
   let T = null, p = 1;
   if (tr && tr.type && tr.type !== 'none' && lt < tr.dur) { T = tr.type; p = clamp(lt / tr.dur, 0, 1); }
   const f = it.fx || {}, mk = it.mask || {};
-  const needBuf = (T && TRANS[T] && TRANS[T].buf) || f.vignette > 0 || f.glitch > 0 || f.pain || FX_BUF_TYPES.has(mk.type);
+  const needBuf = (T && TRANS[T] && TRANS[T].buf) || f.vignette > 0 || f.glitch > 0 || f.pain || FX_BUF_TYPES.has(mk.type) || adjActive(it) || (it.chroma && it.chroma.on);
   const ex = {};
   if (!needBuf) {
     if (T === 'dipblack' || T === 'dipwhite') {
@@ -1483,7 +1861,8 @@ const trackH = tr => TH[tr.id] || (tr.id === 'V1' ? 84 : TRACK_H[tr.kind]);
 const VOL_MAX = 1.5;
 function wfHeight(it) { const tr = TRACKS.find(t => t.id === it.track); const ch = trackH(tr) - 6; return ch >= 66 ? Math.round(ch * .4) : 22; }
 const tlWidth = () => Math.max(projectEnd() + 14, 40) * TL.pps;
-const CLIP_COL = { video: '#2d6a8f', image: '#7a4fa3', text: '#b9852b', sticker: '#b9602b', audio: '#2f8a5b' };
+const CLIP_COL = { video: '#1b5c63', image: '#5d4a86', text: '#a9772a', sticker: '#a9562a', audio: '#1d6a58' };
+function tcFmt(s) { const f = (D && D.fps) || 30; s = Math.max(0, s); const fr = Math.min(f - 1, Math.round((s % 1) * f)); const t = Math.floor(s); const p2 = n => String(n).padStart(2, '0'); return p2(Math.floor(t / 3600)) + ':' + p2(Math.floor(t % 3600 / 60)) + ':' + p2(t % 60) + ':' + p2(fr); }
 
 function rulerTicks() {
   const total = tlWidth() / TL.pps; let step = 1; const target = 80 / TL.pps;
@@ -1513,10 +1892,15 @@ function renderTimeline() {
     let inner = '';
     if ((it.type === 'video' || it.type === 'image') && m && m.thumb) inner += `<div class="cbg" style="background-image:url(${m.thumb})"></div>`;
     const hasWf = m && (it.type === 'video' || it.type === 'audio'); const wfh = hasWf ? wfHeight(it) : 0; const tall = hasWf && wfh > 22;
-    if (tall) { el.classList.add('tall'); el.style.setProperty('--wfh', wfh + 'px'); }
+    if (tall) el.classList.add('tall'); if (hasWf) el.style.setProperty('--wfh', wfh + 'px');
     if (hasWf) inner += `<canvas class="wf" style="height:${wfh}px"></canvas>`;
     if (hasWf && tall && m.hasAudio !== false) { const ch = trackH(TRACKS.find(t => t.id === it.track)) - 9; inner += `<div class="vl" style="top:${ch - wfh + wfh * (1 - clamp(it.vol ?? 1, 0, VOL_MAX) / VOL_MAX)}px"><u></u><b>${Math.round((it.vol ?? 1) * 100)}%</b></div>`; }
-    inner += `<span class="cl" translate="no">${esc(clipLabel(it))}</span>`;
+    inner += `<span class="cl" translate="no">${esc(clipLabel(it))}${it.type === 'video' || it.type === 'audio' ? `<i>${tcFmt(it.dur)}</i>` : ''}</span>`;
+    if (hasWf && m.hasAudio !== false) {
+      const fi = clamp(it.fadeIn || 0, 0, it.dur), fo = clamp(it.fadeOut || 0, 0, it.dur);
+      inner += `<div class="fz l" style="width:${fi * TL.pps}px"></div><div class="fz r" style="width:${fo * TL.pps}px"></div>`;
+      inner += `<u class="fh l" data-side="l" style="left:${fi * TL.pps + 1}px" title="${T('ลากเพื่อให้เสียงค่อยๆ ดังขึ้น (Fade in)')}"><b>${fi.toFixed(1)}s</b></u><u class="fh r" data-side="r" style="right:${fo * TL.pps + 1}px" title="${T('ลากเพื่อให้เสียงค่อยๆ เบาลง (Fade out)')}"><b>${fo.toFixed(1)}s</b></u>`;
+    }
     if (it.transIn && it.transIn.type !== 'none') inner += `<b class="trb" title="ทรานสิชัน: ${esc((TRANS[it.transIn.type] || {}).label || '')}" style="width:${Math.max(10, it.transIn.dur * TL.pps)}px">⇄</b>`;
     if (it.speed && it.speed !== 1) inner += `<em class="spd">${it.speed}x</em>`;
     if (it.kf) for (const k in it.kf) for (const p of it.kf[k]) inner += `<s class="kfd" style="left:${p.t * TL.pps}px"></s>`;
@@ -1535,12 +1919,13 @@ function renderTimeline() {
 }
 function drawWave(cv, it, m) {
   if (!m.peaks) return; const w = Math.min(4000, Math.max(4, Math.round(it.dur * TL.pps))), h = wfHeight(it); cv.width = w; cv.height = h;
-  const vg = it.type === 'audio' || (it.vol ?? 1) !== 1 ? clamp(it.vol ?? 1, 0, VOL_MAX) : 1;
-  const c = cv.getContext('2d'); c.fillStyle = it.type === 'audio' ? 'rgba(255,255,255,.7)' : 'rgba(255,255,255,.45)';
+  const vg = clamp(it.vol ?? 1, 0, VOL_MAX); const fi = it.fadeIn || 0, fo = it.fadeOut || 0;
+  const c = cv.getContext('2d'); c.fillStyle = it.type === 'audio' ? 'rgba(150,235,205,.85)' : 'rgba(96,205,194,.85)';
   const P = m.peaks, md = m.duration || 1;
   for (let x = 0; x < w; x++) {
-    const tt = (it.in || 0) + (x / w) * it.dur * (it.speed || 1); const idx = Math.floor(((it.loop ? tt % md : tt) / md) * P.length);
-    const v = Math.min(1, (P[clamp(idx, 0, P.length - 1)] || 0) * vg); const bh = Math.max(1, Math.min(h, v * h * 1.4)); c.fillRect(x, (h - bh) / 2, 1, bh);
+    const lt = (x / w) * it.dur; const tt = (it.in || 0) + lt * (it.speed || 1); const idx = Math.floor(((it.loop ? tt % md : tt) / md) * P.length);
+    let g = vg; if (fi) g *= Math.min(1, lt / fi); if (fo) g *= Math.min(1, (it.dur - lt) / fo);
+    const v = Math.min(1, (P[clamp(idx, 0, P.length - 1)] || 0) * g); const bh = Math.max(1, Math.min(h, v * h * 1.25)); c.fillRect(x, h - bh, 1, bh);
   }
 }
 function updatePlayhead() {
@@ -1583,6 +1968,7 @@ function initTimelineEvents() {
     const jn = e.target.closest('.junc'); if (jn) { select(jn.dataset.id); showTab('trans'); return; }
     const trh = e.target.closest('.trh'); if (trh) { e.preventDefault(); rowResizeStart(e, trh.closest('.trow')); return; }
     const vlu = e.target.closest('.vl u'); if (vlu) { e.preventDefault(); e.stopPropagation(); volDragStart(e, vlu.closest('.clip')); return; }
+    const fhe = e.target.closest('.fh'); if (fhe) { e.preventDefault(); e.stopPropagation(); fadeDragStart(e, fhe.closest('.clip'), fhe.dataset.side); return; }
     const clipEl = e.target.closest('.clip');
     const mkEl = e.target.closest('.mk'); if (mkEl) { const mm = (D.markers || []).find(x => x.id === mkEl.dataset.id); if (mm) { pause(); seek(mm.t); } return; }
     const rulerEl = e.target.closest('#ruler');
@@ -1739,6 +2125,19 @@ function volDragStart(e, clipEl) {
     if (typeof refreshInspectorValues === 'function') refreshInspectorValues();
   };
   const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); document.body.classList.remove('resizing'); vl.classList.remove('drag'); if ((it.vol ?? 1) !== v0) commit('vol'); };
+  window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
+}
+function fadeDragStart(e, clipEl, side) {
+  const it = getItem(clipEl.dataset.id); if (!it) return; if (SEL !== it.id) { select(it.id); clipEl = $(`.clip[data-id="${it.id}"]`); if (!clipEl) return; }
+  const m = MEDIA.get(it.mediaId); const cv = $('canvas.wf', clipEl); const fh = $('.fh.' + side, clipEl), fz = $('.fz.' + side, clipEl); const k = side === 'l' ? 'fadeIn' : 'fadeOut'; const other = side === 'l' ? 'fadeOut' : 'fadeIn';
+  const v0 = it[k] || 0; const hr = fh.getBoundingClientRect(); const off = side === 'l' ? e.clientX - hr.left : hr.right - e.clientX; fh.classList.add('drag'); document.body.classList.add('resizing');
+  const mv = ev => {
+    const r = clipEl.getBoundingClientRect(); const x = (side === 'l' ? ev.clientX - r.left : r.right - ev.clientX) - off;
+    const v = clamp(Math.round(x / TL.pps * 10) / 10, 0, Math.max(0, it.dur - (it[other] || 0))); it[k] = v;
+    fh.style[side === 'l' ? 'left' : 'right'] = (v * TL.pps + 1) + 'px'; fz.style.width = (v * TL.pps) + 'px'; $('b', fh).textContent = v.toFixed(1) + 's'; if (m && cv) drawWave(cv, it, m);
+    if (typeof refreshInspectorValues === 'function') refreshInspectorValues();
+  };
+  const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); document.body.classList.remove('resizing'); fh.classList.remove('drag'); if ((it[k] || 0) !== v0) { commit('fade'); if (typeof renderInspector === 'function') renderInspector(); } };
   window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
 }
 // ---------- resizable panels ----------
@@ -2251,11 +2650,6 @@ function kfToggle(it, k) {
 }
 const KF_ON = (it, k) => { const lt = PB.t - it.start; return it.kf && it.kf[k] && it.kf[k].some(p => Math.abs(p.t - lt) < 0.04); };
 
-function R(label, p, min, max, step, it, kf, fmtv) {
-  const v = curVal(it, p); const val = v == null ? (min <= 0 && max >= 0 ? 0 : min) : v;
-  const k = kf ? p.slice(3) : null;
-  return `<div class="fld"><label>${label}</label><input type="range" data-p="${p}" min="${min}" max="${max}" step="${step}" value="${val}"><output>${(+val).toFixed(step < .1 ? 2 : step < 1 ? 1 : 0)}</output>${kf ? `<button class="kfb ${KF_ON(it, k) ? 'on' : ''}" data-kf="${k}" title="คีย์เฟรม">◆</button>` : ''}</div>`;
-}
 function S(label, p, opts, it) { const v = getPath(it, p) ?? opts[0][0]; return `<div class="fld"><label>${label}</label><select data-p="${p}">${opts.map(([k, l]) => `<option value="${k}" ${String(k) === String(v) ? 'selected' : ''}>${l}</option>`).join('')}</select></div>`; }
 function C(label, p, it, def) { const v = getPath(it, p); return `<div class="fld"><label>${label}</label><input type="color" data-p="${p}" value="${toHex(v || def || '#ffffff')}"></div>`; }
 function K(label, p, it, def) { const v = getPath(it, p); return `<div class="fld chk"><label><input type="checkbox" data-p="${p}" ${(v ?? def) ? 'checked' : ''}> ${label}</label></div>`; }
@@ -2266,6 +2660,7 @@ const ANIM_IN = [['none', 'ไม่มี'], ['fade', 'เลือน'], ['pop
 function renderInspector() {
   const box = $('#inspector'); if (!box) return; const it = SEL ? getItem(SEL) : null;
   if (!it) { box.innerHTML = projectInspector(); bindInspector(null); return; }
+  if (it.type === 'video' || it.type === 'image') { box.innerHTML = renderVideoInspector(it); bindInspector(it); ccPost(it); return; }
   let h = `<div class="ihead"><b>${{ video: 'คลิปวิดีโอ', image: 'รูปภาพ', text: 'ข้อความ', sticker: 'สติกเกอร์', audio: 'เสียง' }[it.type]}</b><span class="sp"></span><button data-act="dup">ทำซ้ำ</button><button data-act="del" class="danger">ลบ</button></div>`;
   h += `<div class="fld"><label>เริ่ม</label><input type="number" step="0.1" data-p="start" value="${it.start.toFixed(2)}" class="num"><label class="r">ยาว</label><input type="number" step="0.1" min="0.1" data-p="dur" value="${it.dur.toFixed(2)}" class="num"></div>`;
   if (it.type === 'video' || it.type === 'image') {
@@ -2306,17 +2701,26 @@ function projectInspector() {
 function bindInspector(it) {
   const box = $('#inspector');
   box.oninput = e => {
-    const el = e.target; const p = el.dataset.p; if (!p) return; const tgt = it || D;
-    let v = el.type === 'checkbox' ? el.checked : (el.type === 'range' || el.type === 'number') ? parseFloat(el.value) : el.value;
+    const el = e.target; const p = el.dataset.p; if (!p) return; const tgt = it || D; const isNv = el.classList.contains('nv');
+    if (p === 'sdur') return;
+    let v;
+    if (isNv) { const mm = +(el.dataset.m || 1); v = parseFloat(el.value); if (!isFinite(v)) return; v /= mm; const rg = $('input[type=range]', el.parentNode); if (rg) { v = clamp(v, +rg.min, +rg.max); rg.value = v; } }
+    else v = el.type === 'checkbox' ? el.checked : (el.type === 'range' || el.type === 'number') ? parseFloat(el.value) : el.value;
     if (el.tagName === 'SELECT' && /^(fx\.sharpen|transIn\.dur)$/.test(p)) v = parseFloat(v);
     if (p === 'transIn.type') return;
-    if (p.startsWith('xf.') && it) setXf(it, p.slice(3), v); else setPath(tgt, p, v);
-    if (el.type === 'range') { const o = el.nextElementSibling; if (o && o.tagName === 'OUTPUT') o.textContent = (+v).toFixed(parseFloat(el.step) < .1 ? 2 : parseFloat(el.step) < 1 ? 1 : 0); }
+    if (p === 'speed' && it) { const span = parseFloat(el.dataset.span) || it.dur * (it.speed || 1); it.speed = v; it.dur = Math.max(.1, span / v); const dn = $('#inspector input[data-p="sdur"]'); if (dn) dn.value = it.dur.toFixed(2); }
+    else if (p.startsWith('xf.') && it) setXf(it, p.slice(3), v); else setPath(tgt, p, v);
+    if (isNv && el.type === 'number') { /* number box → slider already synced */ }
+    else if (el.type === 'range') { const nv = $('.nv', el.parentNode); if (nv) nv.value = fmtOutEl(nv, v); }
+    if (el.type === 'range' || isNv) { const rs = $('.rst', el.parentNode); if (rs) rs.classList.toggle('mod', Math.abs(v - parseFloat(rs.dataset.d)) > (parseFloat($('input[type=range]', el.parentNode).step) || .01) / 2); }
     if (p === 'style' && it) { const st = TEXT_STYLES.find(s => s.id === v); if (st) { const keep = it.text; Object.assign(it, JSON.parse(JSON.stringify(st.d)), { text: keep, style: v }); commit('style'); renderInspector(); return; } }
     dirty(); if (el.type === 'text' || el.tagName === 'TEXTAREA') { renderTimeline(); }
   };
   box.onchange = e => {
     const el = e.target; const p = el.dataset.p; if (!p) return;
+    if (p === 'sdur' && it) { const span = parseFloat(el.dataset.span) || it.dur * (it.speed || 1); const nd = Math.max(.1, parseFloat(el.value) || it.dur); it.speed = clamp(span / nd, .1, 8); it.dur = span / it.speed; commit('speed'); renderInspector(); renderTimeline(); return; }
+    if (el.classList.contains('nv')) { const rg = $('input[type=range]', el.parentNode); if (rg) el.value = fmtOutEl(el, +rg.value); }
+    if (p === 'speed' && it) { commit('speed'); renderInspector(); renderTimeline(); return; }
     if (p === 'transIn.type') { applyTransition(it, el.value); renderInspector(); return; }
     if (p === 'transIn.dur') { applyTransition(it, it.transIn.type, parseFloat(el.value)); return; }
     if (p === 'mask.type' && it) { if (el.value === 'none') it.mask = { type: 'none' }; else { const d = { circle: { size: 1, ring: .008, color: '#ffffff' }, round: { r: .06 }, frame: { ring: .014 }, featherTop: { size: .3 }, featherBottom: { size: .3 }, featherAll: { size: .35 } }[el.value]; it.mask = Object.assign({ type: el.value }, d); } }
@@ -2326,7 +2730,9 @@ function bindInspector(it) {
   };
   box.onclick = e => {
     const kb = e.target.closest('.kfb'); if (kb && it) { kfToggle(it, kb.dataset.kf); renderInspector(); return; }
+    const rb = e.target.closest('[data-rst]'); if (rb) { const rg = $('input[type=range]', rb.parentNode); if (rg) { rg.value = rb.dataset.d; rg.dispatchEvent(new Event('input', { bubbles: true })); rg.dispatchEvent(new Event('change', { bubbles: true })); } return; }
     const a = e.target.closest('[data-act]'); if (!a) return; const act = a.dataset.act;
+    if (typeof ccAction === 'function' && ccAction(act, a, it)) return;
     if (act === 'del') cmdDelete(false); else if (act === 'dup') { const b = duplicateItem(it.id); commit('dup'); select(b.id); }
     else if (act === 'clearmutes') { it.mutes = []; commit('mutes'); renderInspector(); }
     else if (act === 'gaps') cmdCloseGaps('V1');
@@ -2335,10 +2741,257 @@ function bindInspector(it) {
 }
 function refreshInspectorValues() {
   const it = SEL ? getItem(SEL) : null; if (!it) return;
-  $$('#inspector input[type=range][data-p^="xf."]').forEach(el => { if (document.activeElement === el) return; const v = prop(it, el.dataset.p.slice(3), PB.t); el.value = v; const o = el.nextElementSibling; if (o) o.textContent = (+v).toFixed(parseFloat(el.step) < .1 ? 2 : 1); });
+  $$('#inspector input[type=range][data-p^="xf."]').forEach(el => { if (document.activeElement === el) return; const v = prop(it, el.dataset.p.slice(3), PB.t); el.value = v; const nv = $('.nv', el.parentNode); if (nv && document.activeElement !== nv) nv.value = fmtOutEl(nv, v); const rs = $('.rst', el.parentNode); if (rs) rs.classList.toggle('mod', Math.abs(v - parseFloat(rs.dataset.d)) > (parseFloat(el.step) || .01) / 2); });
+  $$('#inspector input[type=range][data-p="vol"],#inspector input[type=range][data-p="fadeIn"],#inspector input[type=range][data-p="fadeOut"]').forEach(el => { if (document.activeElement === el) return; const v = it[el.dataset.p] ?? (el.dataset.p === 'vol' ? 1 : 0); el.value = v; const nv = $('.nv', el.parentNode); if (nv) nv.value = fmtOutEl(nv, v); const rs = $('.rst', el.parentNode); if (rs) rs.classList.toggle('mod', Math.abs(v - parseFloat(rs.dataset.d)) > (parseFloat(el.step) || .01) / 2); });
   $$('#inspector .kfb').forEach(b => b.classList.toggle('on', !!KF_ON(it, b.dataset.kf)));
 }
 on('sel', () => { renderInspector(); renderTimeline(); });
+
+// ---- 32-inspector-cc.js ----
+// ============================================================
+//  CapCut-style tabbed inspector for video / image clips
+//  Tabs: Video | Audio | Speed | Animation | Adjust | AI   (+ number boxes & reset buttons on every slider)
+// ============================================================
+const INSP = { tab: 'video', sub: { video: 'basic', audio: 'basic', speed: 'std', anim: 'in', adjust: 'basic' }, hslc: 'red', ch: 'l' };
+try { const o = JSON.parse(localStorage.getItem('sk_insp') || '{}'); if (o.tab) INSP.tab = o.tab; if (o.sub) Object.assign(INSP.sub, o.sub); } catch (e) { }
+const inspSave = () => { try { localStorage.setItem('sk_insp', JSON.stringify({ tab: INSP.tab, sub: INSP.sub })); } catch (e) { } };
+
+// ---------- default values (for the ↺ button) ----------
+const DEFS = {
+  'xf.x': 0, 'xf.y': 0, 'xf.s': 1, 'xf.r': 0, 'xf.o': 1, speed: 1, vol: 1, sx: 1, sy: 1, fadeIn: 0, fadeOut: 0,
+  'fx.brightness': 1, 'fx.contrast': 1, 'fx.saturate': 1, 'fx.hue': 0, 'fx.gray': 0, 'fx.sepia': 0, 'fx.blur': 0, 'fx.vignette': 0, 'fx.soften': 0, 'fx.whiten': 0,
+  'anim.dIn': .5, 'anim.dOut': .5, 'enh.v': 75, 'chroma.tol': .3, 'chroma.soft': .15, 'kfdummy': 0,
+  'mask.size': 1, 'mask.ring': .008, 'mask.r': .06, 'mask.angle': 0, 'mask.pos': 0, 'mask.feather': .05, duckLevel: .35,
+};
+const DEF_SNAP = new Map();
+function defOf(it, p, min, max) {
+  if (p in DEFS) return DEFS[p]; if (/^adj\./.test(p)) return 0;
+  const k = ((it && it.id) || '') + '|' + p; if (!DEF_SNAP.has(k)) { const v = it ? curVal(it, p) : null; DEF_SNAP.set(k, v == null ? (min <= 0 && max >= 0 ? 0 : min) : v); }
+  return DEF_SNAP.get(k);
+}
+// range slider + number box + reset button (+ keyframe button)
+function RR(label, p, min, max, step, it, o) {
+  o = o || {}; const m = o.m || 1; const def = o.def !== undefined ? o.def : defOf(it, p, min, max);
+  let v = curVal(it, p); if (v == null || !isFinite(v)) v = def; const dec = o.dec !== undefined ? o.dec : (step * m < .1 ? 2 : step * m < 1 ? 1 : 0);
+  const mod = Math.abs(v - def) > step / 2;
+  const kfk = o.kf ? p.slice(3) : null;
+  return `<div class="fld rr"><label>${label}</label><input type="range" data-p="${p}" min="${min}" max="${max}" step="${step}" value="${v}"${o.span ? ` data-span="${o.span}"` : ''}><input type="number" class="nv" data-p="${p}" data-m="${m}" data-dec="${dec}" min="${+(min * m).toFixed(4)}" max="${+(max * m).toFixed(4)}" step="${+(step * m).toFixed(4)}" value="${(v * m).toFixed(dec)}"><button class="rst${mod ? ' mod' : ''}" data-rst="${p}" data-d="${def}" title="รีเซ็ตเป็นค่าเริ่มต้น">↺</button>${kfk ? `<button class="kfb ${KF_ON(it, kfk) ? 'on' : ''}" data-kf="${kfk}" title="คีย์เฟรม">◆</button>` : ''}</div>`;
+}
+function R(label, p, min, max, step, it, kf) { return RR(label, p, min, max, step, it, { kf: !!kf }); }
+function fmtOutEl(el, v) { const m = +(el.dataset.m || 1); const dec = el.dataset.dec != null ? +el.dataset.dec : (parseFloat(el.step) * m < .1 ? 2 : parseFloat(el.step) * m < 1 ? 1 : 0); return (v * m).toFixed(dec); }
+
+// ---------- small builders ----------
+const BLENDS = [['source-over', 'ปกติ'], ['multiply', 'คูณ (Multiply)'], ['screen', 'สกรีน (Screen)'], ['overlay', 'โอเวอร์เลย์'], ['soft-light', 'ซอฟต์ไลต์'], ['hard-light', 'ฮาร์ดไลต์'], ['darken', 'มืดกว่า'], ['lighten', 'สว่างกว่า'], ['color-dodge', 'ดอดจ์สี'], ['difference', 'ผลต่าง'], ['luminosity', 'ความสว่าง']];
+const MASK_GRID = [['none', 'ไม่มี', '⊘'], ['circle', 'วงกลม', '◯'], ['round', 'มุมมน', '▢'], ['frame', 'การ์ดกรอบขาว', '▣'], ['star', 'ดาว', '★'], ['heart', 'หัวใจ', '♥'], ['linear', 'เส้นตรง', '◧'], ['featherTop', 'ฟุ้งขอบบน', '▀'], ['featherBottom', 'ฟุ้งขอบล่าง', '▄'], ['featherAll', 'ฟุ้งรอบ', '◍']];
+const HSL_COLORS = [['red', '#e5333b', 'แดง'], ['orange', '#f08a24', 'ส้ม'], ['yellow', '#f2d230', 'เหลือง'], ['green', '#3cb957', 'เขียว'], ['cyan', '#2cc7c7', 'ฟ้าอมเขียว'], ['blue', '#3b6fe0', 'น้ำเงิน'], ['purple', '#8a4fd6', 'ม่วง'], ['magenta', '#d94fb0', 'ชมพู']];
+const dis = label => `<div class="fld chk dis"><label><input type="checkbox" disabled> ${label}</label><span class="soon">ยังไม่พร้อม</span></div>`;
+const subs = (g, list) => `<div class="isubs">` + list.map(([k, l]) => `<button data-act="isub" data-g="${g}" data-v="${k}" class="${INSP.sub[g] === k ? 'on' : ''}">${l}</button>`).join('') + `</div>`;
+const sec = t => `<div class="sec">${t}</div>`;
+const grid = (act, list, cur, extra) => `<div class="agrid">` + list.map(([k, l, ic]) => `<button data-act="${act}" data-v="${k}" ${extra || ''} class="${String(cur) === k ? 'on' : ''}"><i>${ic || '•'}</i><span>${l}</span></button>`).join('') + `</div>`;
+
+function setMaskType(it, val) {
+  if (val === 'none') it.mask = { type: 'none' };
+  else { const d = { circle: { size: 1, ring: .008, color: '#ffffff' }, round: { r: .06 }, frame: { ring: .014 }, star: { size: 1 }, heart: { size: 1.1 }, linear: { angle: 0, pos: 0, feather: .05, inv: false }, featherTop: { size: .3 }, featherBottom: { size: .3 }, featherAll: { size: .35 } }[val]; it.mask = Object.assign({ type: val }, d); }
+}
+
+// ---------- tab contents ----------
+function ccVideo(it) {
+  const sb = INSP.sub.video; let h = subs('video', [['basic', 'พื้นฐาน'], ['bg', 'ลบพื้นหลัง'], ['mask', 'มาสก์'], ['retouch', 'แต่งหน้า/ผิว']]);
+  if (sb === 'basic') {
+    h += sec('ตำแหน่งและขนาด') + RR('ขนาด (%)', 'xf.s', .1, 4, .01, it, { kf: 1, m: 100, def: 1 }) + K('ปรับขนาดสัดส่วนเดิม (Uniform)', 'uni', it, true);
+    if (it.uni === false) h += RR('ขนาดแนวนอน (%)', 'sx', .1, 4, .01, it, { m: 100, def: 1 }) + RR('ขนาดแนวตั้ง (%)', 'sy', .1, 4, .01, it, { m: 100, def: 1 });
+    h += RR('ซ้าย-ขวา', 'xf.x', -1, 1, .005, it, { kf: 1, def: 0 }) + RR('บน-ล่าง', 'xf.y', -1, 1, .005, it, { kf: 1, def: 0 }) + RR('หมุน (°)', 'xf.r', -180, 180, 1, it, { kf: 1, def: 0 });
+    h += `<div class="alignrow"><button data-act="align" data-v="l" title="ชิดซ้าย">⇤</button><button data-act="align" data-v="c" title="กึ่งกลางแนวนอน">⇔</button><button data-act="align" data-v="r" title="ชิดขวา">⇥</button><button data-act="align" data-v="t" title="ชิดบน">⤒</button><button data-act="align" data-v="m" title="กึ่งกลางแนวตั้ง">⇕</button><button data-act="align" data-v="b" title="ชิดล่าง">⤓</button></div>`;
+    h += S('การแสดงผล', 'fit', [['cover', 'เต็มจอ 9:16 (ครอป)'], ['contain', 'ทั้งภาพ (มีขอบ)']], it);
+    h += sec('การผสมภาพ (Blend)') + S('โหมด', 'blend', BLENDS, it) + RR('ความโปร่งใส (%)', 'xf.o', 0, 1, .01, it, { kf: 1, m: 100, def: 1 });
+    h += sec('คุณภาพภาพ') + S('เพิ่มความคมชัด', 'fx.sharpen', [[0, 'ปิด'], [1, 'ปานกลาง'], [2, 'มาก']], it) + K('ลดนอยส์ภาพ', 'fx.denoise', it, false) + RR('เบลอ', 'fx.blur', 0, 20, .5, it, { def: 0 });
+    h += `<div class="btnrow"><button data-act="enhance">✨ ปรับภาพให้สวย/ชัดอัตโนมัติ</button></div>`;
+    h += sec('แคนวาส (พื้นหลังด้านหลังคลิป)') + S('พื้นหลัง', 'bg', [['none', 'ไม่มี'], ['blur', 'เบลอ'], ['color', 'สีพื้น']], it) + (it.bg === 'color' ? C('สีพื้น', 'bgColor', it, '#000000') : '') + `<div class="hint small">เห็นผลเมื่อเลือก “ทั้งภาพ (มีขอบ)” หรือย่อขนาดคลิป</div><div class="btnrow"><button data-act="applyall" data-keys="bg,bgColor,fit">ใช้กับทุกคลิป</button></div>`;
+    h += sec('Ken Burns') + S('การเคลื่อนไหวภาพ', 'kb', [['none', 'ไม่มี'], ['in', 'ซูมเข้า'], ['out', 'ซูมออก'], ['pan', 'แพน']], it);
+    h += sec('ทรานสิชัน (ตอนเริ่มคลิป)') + S('ชนิด', 'transIn.type', Object.entries(TRANS).map(([k, v]) => [k, v.label]), Object.assign({}, it, { transIn: it.transIn || { type: 'none' } })) + (it.transIn ? R('ความยาว (วิ)', 'transIn.dur', .15, 1.5, .05, it) : '');
+    if (it.type === 'video') h += sec('AI') + `<div class="btnrow"><button data-act="silence">✂ ตัดช่วงเงียบ</button><button data-act="aiclip">🎙 วิเคราะห์เสียงคลิปนี้</button></div>`;
+    h += `<details class="soonbox"><summary>ฟีเจอร์ AI ขั้นสูงของ CapCut (ยังไม่พร้อม)</summary>` + ['ทำภาพนิ่ง (Stabilize)', 'เฟรมต่อเนื่อง (Optical flow)', 'AI ลบ/ขยาย/รีมิกซ์วัตถุ', 'สบตากล้อง (Eye contact)', 'ซิงก์ปากอัตโนมัติ', 'ปรับแสงใหม่ (Relight)', 'ครอปอัตโนมัติ (Auto reframe)', 'ลบแสงกะพริบ', 'ติดตามกล้อง'].map(dis).join('') + `</details>`;
+  } else if (sb === 'bg') {
+    const ck = it.chroma || {};
+    h += sec('ลบพื้นหลัง') + dis('ลบอัตโนมัติ (AI)') + dis('ลบแบบกำหนดเอง') + `<div class="hint small">ทั้งสองแบบต้องใช้ AI ตัดคน — ยังไม่มีในตัวแก้ไขนี้</div>`;
+    h += sec('Chroma key (ฉากเขียว/ฉากสี)') + K('เปิดใช้ Chroma key', 'chroma.on', it, false) + C('สีที่จะลบ', 'chroma.color', it, '#00ff00') + (window.EyeDropper ? `<div class="btnrow"><button data-act="eyedrop">🎯 ดูดสีจากหน้าจอ</button></div>` : '') + RR('ความแรง', 'chroma.tol', 0, 1, .01, it, { def: .3 }) + RR('ความนุ่มของขอบ', 'chroma.soft', 0, 1, .01, it, { def: .15 });
+    h += `<div class="hint small">พื้นหลังที่ถูกลบจะโปร่งใส — วางคลิปอื่นไว้แถวล่างเพื่อให้เห็นเป็นพื้นหลัง</div>`;
+  } else if (sb === 'mask') {
+    const mt = (it.mask && it.mask.type) || 'none';
+    h += sec('เพิ่มมาสก์') + grid('mask', MASK_GRID, mt);
+    if (mt === 'circle') h += RR('ขนาดวง', 'mask.size', .3, 1.2, .01, it, { def: 1 }) + RR('ขอบ', 'mask.ring', 0, .03, .001, it, { def: .008 }) + C('สีขอบ', 'mask.color', it, '#ffffff');
+    if (mt === 'round') h += RR('ความโค้ง', 'mask.r', 0, .5, .01, it, { def: .06 });
+    if (mt === 'frame') h += RR('ขอบขาว', 'mask.ring', 0, .05, .001, it, { def: .014 });
+    if (mt === 'star' || mt === 'heart') h += RR('ขนาด', 'mask.size', .3, 1.4, .01, it, { def: 1 });
+    if (mt === 'linear') h += RR('มุม (°)', 'mask.angle', -180, 180, 1, it, { def: 0 }) + RR('ตำแหน่ง', 'mask.pos', -.6, .6, .01, it, { def: 0 }) + RR('ความนุ่ม', 'mask.feather', .002, .4, .002, it, { def: .05 }) + K('กลับด้าน', 'mask.inv', it, false);
+    if (mt.startsWith('feather')) h += RR('ความฟุ้ง', 'mask.size', .05, .8, .01, it, { def: .3 });
+  } else {
+    h += sec('แต่งผิว (ใช้กับทั้งภาพ)') + RR('ผิวเนียน (%)', 'fx.soften', 0, 1, .01, it, { m: 100, def: 0 }) + RR('ผิวขาวใส (%)', 'fx.whiten', 0, 1, .01, it, { m: 100, def: 0 });
+    h += `<div class="hint small">ยังไม่มีระบบจับใบหน้า (AI) จึงปรับทั้งภาพ ไม่ได้เฉพาะใบหน้า</div><details class="soonbox"><summary>แต่งหน้า/รูปร่าง/ผม (ยังไม่พร้อม)</summary>` + ['ปรับรูปหน้า', 'ปรับดวงตา/จมูก/ปาก', 'ปรับรูปร่าง', 'สีผม'].map(dis).join('') + `</details>`;
+  }
+  return h;
+}
+function ccAudio(it) {
+  const sb = INSP.sub.audio; let h = subs('audio', [['basic', 'พื้นฐาน'], ['voice', 'เปลี่ยนเสียง']]); const m = MEDIA.get(it.mediaId);
+  if (m && m.hasAudio === false) return h + `<div class="hint">คลิปนี้ไม่มีเสียง</div>`;
+  if (sb === 'basic') {
+    h += RR('ระดับเสียง (%)', 'vol', 0, 1.5, .01, it, { m: 100, def: 1 }) + RR('ค่อยๆ ดังขึ้น (วิ)', 'fadeIn', 0, 5, .1, it, { def: 0 }) + RR('ค่อยๆ เบาลง (วิ)', 'fadeOut', 0, 5, .1, it, { def: 0 });
+    h += K('ปรับระดับเสียงอัตโนมัติ (Normalize)', 'normalize', it, true) + K('ปิดเสียงคลิปนี้', 'muted', it, false);
+    h += K('เพิ่มความชัดของเสียงพูด', 'enh.on', it, false) + (it.enh && it.enh.on ? RR('ความแรง', 'enh.v', 0, 100, 1, it, { def: 75 }) : '') + K('ลดเสียงรบกวน (กรองความถี่)', 'aDn', it, false);
+    h += `<div class="fld"><label>เสียงที่ปิดไว้</label><span class="mini">${(it.mutes || []).length} ช่วง</span><button data-act="clearmutes">ล้าง</button></div>`;
+    h += `<div class="btnrow"><button data-act="sepaudio">🎵 แยกเสียงออกจากวิดีโอ</button></div>` + dis('แปลเสียงวิดีโอ (Video translator)');
+  } else {
+    h += `<div class="btnrow"><button data-act="applyall" data-keys="vfx,enh,aDn">ใช้กับทุกคลิป</button></div>` + sec('ฟิลเตอร์เสียง') + grid('voice', VOICES.map(([k, l]) => [k, l, k === 'orig' ? '⊘' : '♪']), it.vfx || 'orig');
+    h += `<div class="hint small">เสียงตัวการ์ตูน/แปลงเป็นเพลงต้องเปลี่ยนระดับเสียงแบบ AI — ยังไม่มี</div>`;
+  }
+  return h;
+}
+function ccSpeed(it) {
+  const sb = INSP.sub.speed; let h = subs('speed', [['std', 'มาตรฐาน'], ['curve', 'เส้นโค้ง'], ['vel', 'เอฟเฟกต์ความเร็ว']]);
+  if (sb === 'std') {
+    const span = it.dur * (it.speed || 1);
+    h += `<div class="chips spd">` + [.25, .5, .75, 1, 1.5, 2, 3, 4].map(x => `<button data-act="spdset" data-v="${x}" class="${(it.speed || 1) === x ? 'on' : ''}">${x}x</button>`).join('') + `</div>`;
+    h += RR('ความเร็ว (เท่า)', 'speed', .1, 8, .05, it, { def: 1, dec: 2, span: span.toFixed(4) });
+    h += `<div class="fld"><label>ความยาว (วิ)</label><input type="number" class="num" data-p="sdur" data-span="${span.toFixed(4)}" step="0.1" min="0.1" value="${it.dur.toFixed(2)}"></div>`;
+    h += K('เปลี่ยนระดับเสียงตามความเร็ว', 'pitchShift', it, false) + `<div class="btnrow"><button data-act="spdreset">รีเซ็ตความเร็ว</button></div>`;
+  } else h += dis(sb === 'curve' ? 'เส้นโค้งความเร็ว (Montage, Hero, Bullet…)' : 'เอฟเฟกต์ความเร็ว') + `<div class="hint small">ยังไม่มีในเวอร์ชันนี้ — ใช้แท็บ “มาตรฐาน” ปรับความเร็วคงที่ได้</div>`;
+  return h;
+}
+function ccAnim(it) {
+  const g = INSP.sub.anim; const an = it.anim || {}; const cur = an[g] || 'none';
+  let h = subs('anim', [['in', 'เข้า'], ['out', 'ออก'], ['combo', 'ต่อเนื่อง']]) + grid('anim', ANIM_LIST[g].map(([k, l, ic]) => [k, l, ic]), cur, `data-g="${g}"`);
+  if (g === 'in') h += RR('ความเร็วตอนเข้า (วิ)', 'anim.dIn', .1, 2, .05, it, { def: .5 });
+  if (g === 'out') h += RR('ความเร็วตอนออก (วิ)', 'anim.dOut', .1, 2, .05, it, { def: .5 });
+  return h;
+}
+function ccAdjust(it) {
+  const sb = INSP.sub.adjust; let h = subs('adjust', [['basic', 'พื้นฐาน'], ['hsl', 'HSL'], ['curves', 'เส้นโค้ง'], ['wheel', 'วงล้อสี']]);
+  if (sb === 'basic') {
+    h += sec('ฟิลเตอร์สำเร็จรูป') + `<div class="chips">` + FX_PRESETS.map(p => `<button data-act="fxp" data-v="${p.id}">${p.label}</button>`).join('') + `</div>`;
+    let sp = []; try { sp = JSON.parse(localStorage.getItem('sk_adjpresets') || '[]'); } catch (e) { }
+    if (sp.length) h += `<div class="chips mine">` + sp.map((p, i) => `<button data-act="adjp" data-v="${i}" translate="no">★ ${esc(p.name)}</button>`).join('') + `</div>`;
+    h += `<div class="btnrow"><button data-act="enhance">✨ ปรับอัตโนมัติ</button></div>`;
+    h += sec('การแก้สี') + RR('อุณหภูมิสี', 'adj.temp', -100, 100, 1, it) + RR('ทินต์ (เขียว–ม่วง)', 'adj.tint', -100, 100, 1, it) + RR('ความสด (%)', 'fx.saturate', 0, 2.5, .01, it, { m: 100, def: 1 }) + RR('เปลี่ยนสี (Hue °)', 'fx.hue', -180, 180, 1, it, { def: 0 });
+    h += sec('แสง') + RR('ความสว่าง (%)', 'fx.brightness', .5, 1.6, .01, it, { m: 100, def: 1 }) + RR('คอนทราสต์ (%)', 'fx.contrast', .5, 1.8, .01, it, { m: 100, def: 1 }) + RR('ไฮไลต์', 'adj.high', -100, 100, 1, it) + RR('เงา (Shadow)', 'adj.shadow', -100, 100, 1, it) + RR('ขาว (Whites)', 'adj.white', -100, 100, 1, it) + RR('ดำ (Blacks)', 'adj.black', -100, 100, 1, it) + RR('ความสดใส (Brilliance)', 'adj.bril', -100, 100, 1, it);
+    h += sec('เอฟเฟกต์') + RR('ความคมลึก (Clarity)', 'adj.clarity', -100, 100, 1, it) + RR('เกรนฟิล์ม (Particles)', 'adj.grain', 0, 100, 1, it) + RR('ซีดจาง (Fade)', 'adj.fade', 0, 100, 1, it) + RR('มุมมืด (Vignette %)', 'fx.vignette', 0, 1, .01, it, { m: 100, def: 0 }) + RR('ขาวดำ (%)', 'fx.gray', 0, 1, .01, it, { m: 100, def: 0 }) + RR('โทนอุ่นซีเปีย (%)', 'fx.sepia', 0, 1, .01, it, { m: 100, def: 0 });
+    if (it.fx && it.fx.pain) h += R('แสงแดง: X', 'fx.pain.x', 0, 1, .01, it) + R('แสงแดง: Y', 'fx.pain.y', 0, 1, .01, it) + R('แสงแดง: ขนาด', 'fx.pain.r', .05, .8, .01, it);
+    h += dis('แปลงเป็น HDR') + `<div class="btnrow"><button data-act="applyall" data-keys="adj,fx">ใช้กับทุกคลิป</button><button data-act="adjsave">★ บันทึกเป็นพรีเซ็ต</button><button data-act="adjreset">รีเซ็ตทั้งหมด</button></div>`;
+  } else if (sb === 'hsl') {
+    h += `<div class="hslrow">` + HSL_COLORS.map(([k, c, l]) => `<button data-act="hslc" data-v="${k}" title="${l}" class="${INSP.hslc === k ? 'on' : ''}" style="background:${c}"></button>`).join('') + `</div>`;
+    const k = INSP.hslc; const cn = HSL_COLORS.find(x => x[0] === k)[2];
+    h += `<div class="hint">สี: <b>${cn}</b></div>` + RR('เฉดสี (Hue)', `adj.hsl.${k}.h`, -100, 100, 1, it) + RR('ความสด (Saturation)', `adj.hsl.${k}.s`, -100, 100, 1, it) + RR('ความสว่าง (Lightness)', `adj.hsl.${k}.l`, -100, 100, 1, it);
+    h += `<div class="btnrow"><button data-act="hslreset">รีเซ็ต HSL</button></div><div class="hint small">การปรับ HSL ใช้พลังเครื่องมาก อาจกระตุกตอนเล่น/ส่งออก</div>`;
+  } else if (sb === 'curves') {
+    h += `<div class="chips ch">` + [['l', 'ความสว่าง'], ['r', 'แดง'], ['g', 'เขียว'], ['b', 'น้ำเงิน']].map(([k, l]) => `<button data-act="cch" data-v="${k}" class="${INSP.ch === k ? 'on' : ''}">${l}</button>`).join('') + `</div>`;
+    h += `<canvas id="curveCv" width="260" height="260"></canvas><div class="hint small">คลิกเพื่อเพิ่มจุด · ลากจุดเพื่อโค้ง · ดับเบิลคลิกจุดเพื่อลบ</div><div class="btnrow"><button data-act="curvereset">รีเซ็ตเส้นโค้ง</button></div>`;
+  } else {
+    h += `<div class="wheels">` + [['s', 'เงา'], ['m', 'โทนกลาง'], ['h', 'ไฮไลต์']].map(([k, l]) => `<div class="wh"><b>${l}</b><canvas class="wheel" data-k="${k}" width="120" height="120"></canvas>${RR('สว่าง', `adj.wheel.${k}.l`, -1, 1, .01, it, { m: 100, def: 0 })}${RR('สี', `adj.wheel.${k}.s`, 0, 1, .01, it, { m: 100, def: 0 })}<button data-act="wreset" data-v="${k}">รีเซ็ต</button></div>`).join('') + `</div>`;
+  }
+  return h;
+}
+function ccAI() { return `<div class="hint">สไตล์ AI (แปลงภาพเป็นการ์ตูน/สีน้ำ ฯลฯ) ใน CapCut ต้องใช้เซิร์ฟเวอร์ AI — ยังไม่มีในตัวแก้ไขนี้</div>` + ['การ์ตูน', 'สีน้ำมัน', 'ภาพวาดดินสอ', 'อนิเมะ'].map(dis).join(''); }
+
+function renderVideoInspector(it) {
+  const tabs = it.type === 'video' ? [['video', 'วิดีโอ'], ['audio', 'เสียง'], ['speed', 'ความเร็ว'], ['anim', 'แอนิเมชัน'], ['adjust', 'ปรับแต่ง'], ['ai', 'AI']] : [['video', 'ภาพ'], ['anim', 'แอนิเมชัน'], ['adjust', 'ปรับแต่ง']];
+  if (!tabs.some(t => t[0] === INSP.tab)) INSP.tab = 'video';
+  let h = `<div class="ihead"><b>${it.type === 'video' ? 'คลิปวิดีโอ' : 'รูปภาพ'}</b><span class="sp"></span><button data-act="dup">ทำซ้ำ</button><button data-act="del" class="danger">ลบ</button></div>`;
+  h += `<div class="fld"><label>เริ่ม</label><input type="number" step="0.1" data-p="start" value="${it.start.toFixed(2)}" class="num"><label class="r">ยาว</label><input type="number" step="0.1" min="0.1" data-p="dur" value="${it.dur.toFixed(2)}" class="num"></div>`;
+  h += `<div class="itabs">` + tabs.map(([k, l]) => `<button data-act="itab" data-v="${k}" class="${INSP.tab === k ? 'on' : ''}">${l}</button>`).join('') + `</div>`;
+  h += `<div class="ibody">` + ({ video: ccVideo, audio: ccAudio, speed: ccSpeed, anim: ccAnim, adjust: ccAdjust, ai: ccAI }[INSP.tab])(it) + `</div>`;
+  return h;
+}
+
+// ---------- actions ----------
+function ccApplyAll(it, keys) {
+  let n = 0; for (const o of D.items) { if (o.id === it.id || (o.type !== 'video' && o.type !== 'image')) continue; for (const k of keys) { const v = getPath(it, k); if (v === undefined) { delete o[k]; continue; } setPath(o, k, JSON.parse(JSON.stringify(v))); } n++; }
+  commit('applyall'); toast(n ? 'ใช้กับทุกคลิปแล้ว' : 'ไม่มีคลิปอื่นให้ใช้');
+}
+function ccPreview(it, g) {
+  const an = it.anim || {}; let t0 = Math.max(0, it.start - .3); if (g === 'out') t0 = Math.max(it.start, it.start + it.dur - (an.dOut || .5) - .5); else if (g === 'combo') t0 = it.start;
+  pause(); seek(t0); play(); const stop = g === 'combo' ? 2200 : 1500; setTimeout(() => { if (PB.playing && !PB.exporting) pause(); }, stop);
+}
+function ccAction(act, a, it) {
+  if (!it) return false; const v = a.dataset.v;
+  switch (act) {
+    case 'itab': INSP.tab = v; inspSave(); renderInspector(); return true;
+    case 'isub': INSP.sub[a.dataset.g] = v; inspSave(); renderInspector(); return true;
+    case 'align': {
+      const B = BOUNDS[it.id]; const s = prop(it, 's', PB.t); const bw = B ? B.w : PW * s, bh = B ? B.h : PH * s;
+      const set = (k, val) => setXf(it, k, +val.toFixed(4));
+      if (v === 'l') set('x', (bw - PW) / 2 / PW); if (v === 'r') set('x', (PW - bw) / 2 / PW); if (v === 'c') set('x', 0);
+      if (v === 't') set('y', (bh - PH) / 2 / PH); if (v === 'b') set('y', (PH - bh) / 2 / PH); if (v === 'm') set('y', 0);
+      commit('align'); renderInspector(); return true;
+    }
+    case 'mask': setMaskType(it, v); commit('mask'); renderInspector(); return true;
+    case 'voice': it.vfx = v; commit('voice'); renderInspector(); return true;
+    case 'anim': { it.anim = Object.assign({ in: 'none', out: 'none', combo: 'none' }, it.anim || {}); it.anim[a.dataset.g] = v; commit('anim'); renderInspector(); if (v !== 'none') ccPreview(it, a.dataset.g); return true; }
+    case 'fxp': applyFxPreset(it, v); return true;
+    case 'adjp': { let sp = []; try { sp = JSON.parse(localStorage.getItem('sk_adjpresets') || '[]'); } catch (e) { } const p = sp[+v]; if (p) { it.adj = JSON.parse(JSON.stringify(p.adj || {})); it.fx = JSON.parse(JSON.stringify(p.fx || {})); commit('preset'); renderInspector(); } return true; }
+    case 'adjsave': { const nm = prompt(T('ชื่อพรีเซ็ต'), T('พรีเซ็ตของฉัน')); if (!nm) return true; let sp = []; try { sp = JSON.parse(localStorage.getItem('sk_adjpresets') || '[]'); } catch (e) { } sp.push({ name: nm, adj: it.adj || {}, fx: it.fx || {} }); try { localStorage.setItem('sk_adjpresets', JSON.stringify(sp.slice(-24))); } catch (e) { } toast('บันทึกพรีเซ็ตแล้ว'); renderInspector(); return true; }
+    case 'adjreset': it.adj = {}; it.fx = {}; commit('adjreset'); renderInspector(); return true;
+    case 'applyall': ccApplyAll(it, (a.dataset.keys || '').split(',')); return true;
+    case 'hslc': INSP.hslc = v; renderInspector(); return true;
+    case 'hslreset': if (it.adj && it.adj.hsl) delete it.adj.hsl[INSP.hslc]; commit('hsl'); renderInspector(); return true;
+    case 'cch': INSP.ch = v; renderInspector(); return true;
+    case 'curvereset': if (it.adj && it.adj.curve) delete it.adj.curve[INSP.ch]; commit('curve'); renderInspector(); return true;
+    case 'wreset': if (it.adj && it.adj.wheel) delete it.adj.wheel[v]; commit('wheel'); renderInspector(); return true;
+    case 'spdset': { const span = it.dur * (it.speed || 1); it.speed = +v; it.dur = Math.max(.1, span / it.speed); commit('speed'); renderInspector(); return true; }
+    case 'spdreset': { const span = it.dur * (it.speed || 1); it.speed = 1; it.dur = span; commit('speed'); renderInspector(); return true; }
+    case 'eyedrop': new EyeDropper().open().then(r => { setPath(it, 'chroma.color', r.sRGBHex); setPath(it, 'chroma.on', true); commit('chroma'); renderInspector(); }).catch(() => { }); return true;
+    case 'sepaudio': {
+      const m = MEDIA.get(it.mediaId); if (!m || m.hasAudio === false) { toast('คลิปนี้ไม่มีเสียง'); return true; }
+      if ((it.speed || 1) !== 1) { toast('แยกเสียงได้เฉพาะคลิปที่ความเร็ว 1 เท่า'); return true; }
+      const au = mkAudio('A2', it.mediaId, it.start, it.dur); au.in = it.in || 0; au.vol = it.vol ?? 1; au.fadeIn = it.fadeIn || 0; au.fadeOut = it.fadeOut || 0; au.duck = false; au.loop = false;
+      au.track = freeTrack('audio', it.start, it.dur, 'A2'); if (au.track === 'A1') au.track = 'A2'; addItem(au); it.muted = true; commit('sepaudio'); toast('แยกเสียงไปไว้แถวเสียงแล้ว'); renderInspector(); return true;
+    }
+  }
+  return false;
+}
+
+// ---------- canvas widgets (curves, colour wheels) ----------
+let _wheelImg = null;
+function wheelImage(S) {
+  if (_wheelImg && _wheelImg.width === S) return _wheelImg; const c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'); const im = x.createImageData(S, S); const R0 = S / 2 - 2;
+  for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) { const dx = i - S / 2, dy = j - S / 2, r = Math.hypot(dx, dy); if (r > R0) continue; const h = (Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360; const [rr, gg, bb] = hue2rgb01(h); const s = r / R0; const k = (j * S + i) * 4; im.data[k] = (rr * s + .5 * (1 - s)) * 255; im.data[k + 1] = (gg * s + .5 * (1 - s)) * 255; im.data[k + 2] = (bb * s + .5 * (1 - s)) * 255; im.data[k + 3] = 255; }
+  x.putImageData(im, 0, 0); return (_wheelImg = c);
+}
+function ccPost(it) {
+  if (!it || (it.type !== 'video' && it.type !== 'image')) return;
+  if (INSP.tab === 'adjust' && INSP.sub.adjust === 'curves') ccCurveInit(it);
+  if (INSP.tab === 'adjust' && INSP.sub.adjust === 'wheel') ccWheelInit(it);
+}
+function ccCurveInit(it) {
+  const cv = $('#curveCv'); if (!cv) return; const S = cv.width, ch = INSP.ch; const col = { l: '#e8e8e8', r: '#ff5a5a', g: '#4ee06a', b: '#5a8aff' }[ch];
+  const pts = () => ((it.adj = it.adj || {}).curve = it.adj.curve || {})[ch] || (it.adj.curve[ch] = [[0, 0], [1, 1]]);
+  const X = v => 8 + v * (S - 16), Y = v => S - 8 - v * (S - 16), inv = (px, py) => [clamp((px - 8) / (S - 16), 0, 1), clamp((S - 8 - py) / (S - 16), 0, 1)];
+  const draw = () => {
+    const c = cv.getContext('2d'); c.clearRect(0, 0, S, S); c.fillStyle = '#15181c'; c.fillRect(0, 0, S, S); c.strokeStyle = '#2b3036'; c.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) { c.beginPath(); c.moveTo(X(i / 4), Y(0)); c.lineTo(X(i / 4), Y(1)); c.moveTo(X(0), Y(i / 4)); c.lineTo(X(1), Y(i / 4)); c.stroke(); }
+    c.strokeStyle = '#444b53'; c.beginPath(); c.moveTo(X(0), Y(0)); c.lineTo(X(1), Y(1)); c.stroke();
+    const P = pts(), lut = curveLut(P); c.strokeStyle = col; c.lineWidth = 2; c.beginPath(); for (let i = 0; i < 256; i++) { const x = X(i / 255), y = Y(clamp(lut[i], 0, 1)); i ? c.lineTo(x, y) : c.moveTo(x, y); } c.stroke();
+    c.fillStyle = '#fff'; for (const p of P) { c.beginPath(); c.arc(X(p[0]), Y(p[1]), 5, 0, 7); c.fill(); c.strokeStyle = '#000'; c.lineWidth = 1; c.stroke(); }
+  };
+  draw(); let drag = -1, moved = false;
+  const pos = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * S / r.width, (e.clientY - r.top) * S / r.height]; };
+  cv.onpointerdown = e => {
+    e.preventDefault(); cv.setPointerCapture(e.pointerId); const [px, py] = pos(e); const P = pts(); drag = P.findIndex(p => Math.hypot(X(p[0]) - px, Y(p[1]) - py) < 10); moved = false;
+    if (drag < 0) { const [x, y] = inv(px, py); P.push([x, y]); P.sort((a, b) => a[0] - b[0]); drag = P.findIndex(p => p[0] === x && p[1] === y); moved = true; }
+    draw();
+  };
+  cv.onpointermove = e => { if (drag < 0) return; const P = pts(); const [x, y] = inv(...pos(e)); const q = P[drag]; const first = drag === 0, last = drag === P.length - 1; q[1] = y; if (!first && !last) q[0] = clamp(x, P[drag - 1][0] + .01, P[drag + 1][0] - .01); else q[0] = first ? clamp(x, 0, P[1][0] - .01) : clamp(x, P[drag - 1][0] + .01, 1); moved = true; draw(); dirty(); };
+  cv.onpointerup = () => { if (drag >= 0 && moved) commit('curve'); drag = -1; };
+  cv.ondblclick = e => { const [px, py] = pos(e); const P = pts(); const i = P.findIndex(p => Math.hypot(X(p[0]) - px, Y(p[1]) - py) < 10); if (i > 0 && i < P.length - 1) { P.splice(i, 1); commit('curve'); draw(); } };
+}
+function ccWheelInit(it) {
+  $$('#inspector canvas.wheel').forEach(cv => {
+    const k = cv.dataset.k, S = cv.width; const get = () => (((it.adj = it.adj || {}).wheel = it.adj.wheel || {})[k] = it.adj.wheel[k] || { h: 0, s: 0, l: 0 });
+    const draw = () => { const c = cv.getContext('2d'); c.clearRect(0, 0, S, S); c.drawImage(wheelImage(S), 0, 0); const w = get(); const R0 = S / 2 - 2, a = (w.h || 0) * Math.PI / 180, r = (w.s || 0) * R0; c.beginPath(); c.arc(S / 2 + Math.cos(a) * r, S / 2 + Math.sin(a) * r, 6, 0, 7); c.fillStyle = '#fff'; c.fill(); c.strokeStyle = '#000'; c.stroke(); };
+    draw(); let on = false;
+    const set = e => { const r = cv.getBoundingClientRect(); const dx = (e.clientX - r.left) * S / r.width - S / 2, dy = (e.clientY - r.top) * S / r.height - S / 2; const w = get(); w.h = Math.round((Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360); w.s = +clamp(Math.hypot(dx, dy) / (S / 2 - 2), 0, 1).toFixed(2); draw(); dirty(); const rg = $(`#inspector input[type=range][data-p="adj.wheel.${k}.s"]`), nv = $(`#inspector input.nv[data-p="adj.wheel.${k}.s"]`); if (rg) rg.value = w.s; if (nv) nv.value = Math.round(w.s * 100); };
+    cv.onpointerdown = e => { e.preventDefault(); cv.setPointerCapture(e.pointerId); on = true; set(e); };
+    cv.onpointermove = e => { if (on) set(e); }; cv.onpointerup = () => { if (on) { on = false; commit('wheel'); } };
+  });
+}
 
 // ---- 35-previews.js ----
 // ============================================================
@@ -2425,6 +3078,49 @@ function connectEl(el) {
   ensureAudio();
   try { const src = AC.createMediaElementSource(el); const g = AC.createGain(); src.connect(g); g.connect(MASTER); g._src = src; return g; }
   catch (e) { console.warn('connectEl', e); return null; }
+}
+
+
+// ---------- per-clip voice chain (voice changer / enhance voice / reduce noise) ----------
+const VOICES = [
+  ['orig', 'ต้นฉบับ'], ['sweet', 'หวาน'], ['echo', 'เอคโค่'], ['bass', 'เบสแน่น'], ['high', 'แหลมใส'], ['full', 'เสียงเต็ม'], ['crisp', 'ชัดแจ๋ว'], ['robot', 'หุ่นยนต์'], ['phone', 'โทรศัพท์เก่า'], ['radio', 'วิทยุสื่อสาร'], ['mega', 'โทรโข่ง'], ['dist', 'แตกพร่า'], ['hall', 'ห้องโถง'], ['water', 'ใต้น้ำ'], ['old', 'ยุค 1950']
+];
+function _bq(type, f, q, gain) { const n = AC.createBiquadFilter(); n.type = type; n.frequency.value = f; if (q != null) n.Q.value = q; if (gain != null) n.gain.value = gain; return n; }
+function _dist(k) { const w = AC.createWaveShaper(); const c = new Float32Array(1024); for (let i = 0; i < 1024; i++) { const x = i / 512 - 1; c[i] = (1 + k) * x / (1 + k * Math.abs(x)); } w.curve = c; return w; }
+function _echo(time, fb, wet) { const i = AC.createGain(), o = AC.createGain(), d = AC.createDelay(1), f = AC.createGain(), w = AC.createGain(); d.delayTime.value = time; f.gain.value = fb; w.gain.value = wet; i.connect(o); i.connect(d); d.connect(f); f.connect(d); d.connect(w); w.connect(o); return { i, o, nodes: [i, o, d, f, w] }; }
+function voiceNodes(kind) {   // -> {i, o, nodes[], osc?}
+  const seq = list => { for (let k = 0; k < list.length - 1; k++) list[k].connect(list[k + 1]); return { i: list[0], o: list[list.length - 1], nodes: list }; };
+  switch (kind) {
+    case 'sweet': return seq([_bq('highshelf', 3500, null, 7), _bq('lowshelf', 220, null, -4), _bq('peaking', 2200, 1, 3)]);
+    case 'echo': return _echo(.23, .38, .5);
+    case 'bass': return seq([_bq('lowshelf', 190, null, 11), _bq('peaking', 90, 1, 4)]);
+    case 'high': return seq([_bq('highshelf', 4000, null, 10), _bq('lowshelf', 300, null, -6)]);
+    case 'full': return seq([_bq('lowshelf', 250, null, 6), _bq('peaking', 1100, .9, 3)]);
+    case 'crisp': return seq([_bq('peaking', 3600, 1.1, 7), _bq('highpass', 90)]);
+    case 'robot': { const g = AC.createGain(); g.gain.value = 0; const o = AC.createOscillator(); o.type = 'square'; o.frequency.value = 55; const og = AC.createGain(); og.gain.value = 1; o.connect(og); og.connect(g.gain); o.start(); const r = seq([g, _bq('peaking', 1500, 2, 5)]); r.nodes.push(o, og); r.osc = o; return r; }
+    case 'phone': return seq([_bq('highpass', 450), _bq('lowpass', 2800), _dist(2)]);
+    case 'radio': return seq([_bq('highpass', 600), _bq('lowpass', 2500), _dist(6), _bq('peaking', 1500, 1.5, 6)]);
+    case 'mega': return seq([_bq('bandpass', 1500, .7), _dist(10), _bq('peaking', 2500, 1, 4)]);
+    case 'dist': return seq([_dist(40), _bq('lowpass', 6000)]);
+    case 'hall': { const a = _echo(.09, .55, .45), b = _echo(.17, .5, .4); a.o.connect(b.i); return { i: a.i, o: b.o, nodes: a.nodes.concat(b.nodes) }; }
+    case 'water': return seq([_bq('lowpass', 650, 1.2), _bq('peaking', 400, 1, 4)]);
+    case 'old': return seq([_bq('highpass', 300), _bq('lowpass', 3400), _dist(1.5)]);
+  }
+  return null;
+}
+function vchainApply(r, it) {
+  if (!r || !r.gain || !r.gain._src || !AC) return; const a = it.enh && it.enh.on ? Math.round(it.enh.v ?? 75) : 0; const sig = (it.vfx || 'orig') + '|' + a + '|' + (it.aDn ? 1 : 0);
+  if (r.vsig === sig) return; if (r.vsig === undefined && sig === 'orig|0|0') { r.vsig = sig; return; }
+  try { r.gain._src.disconnect(); } catch (e) { }
+  for (const n of (r.vnodes || [])) { try { n.disconnect(); } catch (e) { } try { n.stop && n.stop(); } catch (e) { } }
+  const list = [];
+  if (it.aDn) { list.push(_bq('highpass', 120, .7)); list.push(_bq('lowpass', 7500, .7)); list.push(_bq('peaking', 6200, 1, -3)); }
+  if (a) { const k = a / 100; list.push(_bq('highpass', 85, .7)); list.push(_bq('peaking', 3000, 1, 5 * k)); list.push(_bq('highshelf', 6000, null, 2.5 * k)); list.push(_bq('lowshelf', 180, null, 2 * k)); }
+  const vn = it.vfx && it.vfx !== 'orig' ? voiceNodes(it.vfx) : null; if (vn) { list.push(vn.i); }
+  let prev = r.gain._src; const all = [];
+  for (const n of list) { prev.connect(n); prev = n; all.push(n); }
+  if (vn) { prev = vn.o; for (const n of vn.nodes) all.push(n); }
+  prev.connect(r.gain); r.vnodes = all; r.vsig = sig;
 }
 
 // audio-item element pool
@@ -2546,7 +3242,7 @@ function syncMedia(force) {
       const r = POOL.get(it.id); if (r && !r.el.paused) r.el.pause(); if (r) setGain(r.gain, 0); continue;
     }
     const el = poolGet(it); if (!el) continue; const r = POOL.get(it.id);
-    activeIds.add(it.id);
+    activeIds.add(it.id); vchainApply(r, it); if (el.preservesPitch === !it.pitchShift === false || true) el.preservesPitch = !it.pitchShift;
     const sp = clamp(it.speed || 1, 0.0625, 16);
     if (el.playbackRate !== sp) el.playbackRate = sp;
     if (soon) {
@@ -2578,7 +3274,7 @@ function syncMedia(force) {
     const active = t >= it.start - 1e-6 && t < it.start + it.dur - 1e-6;
     const r0 = APOOL.get(it.id);
     if (!active || !PB.playing) { if (r0 && !r0.el.paused) r0.el.pause(); if (r0) setGain(r0.gain, 0); if (!active) continue; if (!PB.playing) continue; }
-    const r = apoolGet(it); if (!r) continue;
+    const r = apoolGet(it); if (!r) continue; vchainApply(r, it);
     const m = MEDIA.get(it.mediaId); const md = m.duration || 1; const lt = t - it.start;
     let target = (it.in || 0) + lt; const loop = it.loop && md < it.dur + (it.in || 0);
     if (loop) target = target % md;

@@ -74,13 +74,15 @@ main{display:grid;grid-template-columns:var(--lw,300px) minmax(0,1fr) var(--rw,3
 .tlabel{width:96px;flex:none;position:sticky;left:0;z-index:5;background:var(--p2);border-right:1px solid var(--ln);font-size:11px;color:var(--mu);padding:4px 6px;overflow:hidden}
 .tlane{position:relative;flex:none;background:repeating-linear-gradient(90deg,transparent 0 55px,rgba(255,255,255,.02) 55px 56px)}
 .trow.video .tlabel{border-left:3px solid #2d6a8f}.trow.text .tlabel{border-left:3px solid #b9852b}.trow.audio .tlabel{border-left:3px solid #2f8a5b}
-.clip{position:absolute;top:3px;bottom:3px;border-radius:6px;background:var(--c);overflow:hidden;border:1px solid rgba(255,255,255,.18);cursor:grab;user-select:none}
-.clip.sel{border-color:#fff;box-shadow:0 0 0 1px #fff,0 0 12px rgba(46,230,197,.5);z-index:2}
+.clip{position:absolute;top:3px;bottom:3px;border-radius:5px;background:var(--c);overflow:hidden;border:1px solid rgba(0,0,0,.35);cursor:grab;user-select:none}
+.clip.sel{border-color:#fff;outline:2px solid #fff;outline-offset:-2px;box-shadow:none;z-index:2}
 .clip.hid{opacity:.4}
-.clip .cbg{position:absolute;inset:0;background-size:auto 100%;background-repeat:repeat-x;opacity:.55}
+.clip .cbg{position:absolute;inset:0;background-size:auto 100%;background-repeat:repeat-x}
 .clip .wf{position:absolute;left:0;bottom:0;height:22px;width:100%;pointer-events:none}
 .clip .cl{position:absolute;left:8px;top:2px;right:6px;font-size:11px;color:#fff;text-shadow:0 1px 2px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
 .clip.audio .cl{top:1px}
+.clip.video .cl,.clip.image .cl{left:0;right:0;top:0;padding:2px 8px 8px;background:linear-gradient(rgba(0,0,0,.6),rgba(0,0,0,0))}
+.clip .cl i{font-style:normal;opacity:.75;margin-left:8px;font-size:10px}
 .clip .th{position:absolute;top:0;bottom:0;width:8px;cursor:ew-resize;background:rgba(255,255,255,.0);z-index:3}.clip .th.l{left:0}.clip .th.r{right:0}
 .clip:hover .th,.clip.sel .th{background:rgba(255,255,255,.35)}
 .clip .trb{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,rgba(255,255,255,.55),rgba(255,255,255,0));font-style:normal;font-size:10px;color:#000;padding:2px 3px;pointer-events:none}
@@ -152,7 +154,8 @@ body.resizing{user-select:none}body.resizing *{cursor:inherit!important}
 .trh:hover,.trh.drag{background:rgba(46,230,197,.55)}
 /* clip waveform + volume line */
 .clip.tall .cbg{bottom:var(--wfh);background-size:auto 100%}
-.clip.tall .wf{height:var(--wfh);background:rgba(0,0,0,.28)}
+.clip.tall .wf{height:var(--wfh);background:#16464d}
+.clip.audio .wf{background:none}
 .clip .vl{position:absolute;left:0;right:0;height:0;border-top:2px solid rgba(255,255,255,.9);z-index:4;pointer-events:none}
 .clip .vl u{position:absolute;top:-8px;left:-1px;right:-1px;height:14px;pointer-events:auto;cursor:ns-resize;text-decoration:none}
 .clip .vl u::before,.clip .vl u::after{content:"";position:absolute;top:2px;width:8px;height:8px;border-radius:50%;background:#fff;border:1px solid #333}
@@ -175,3 +178,36 @@ select.uilang{max-width:130px}
 #tlbar #zoom{width:110px}
 #ruler .mk{position:absolute;top:0;z-index:4;transform:translateX(-50%);color:#ffd60a;font-size:11px;line-height:12px;cursor:pointer;font-style:normal}
 #ruler .mk::after{content:"";position:absolute;left:50%;top:12px;height:900px;width:0;border-left:1px dashed rgba(255,214,10,.35);pointer-events:none}
+
+/* fade handles (CapCut-style) */
+.clip .fz{position:absolute;bottom:0;height:var(--wfh);background:rgba(0,0,0,.38);pointer-events:none;z-index:1}
+.clip .fz.l{left:0;clip-path:polygon(0 0,100% 0,0 100%)}
+.clip .fz.r{right:0;clip-path:polygon(0 0,100% 0,100% 100%)}
+.clip .fh{position:absolute;bottom:var(--wfh);margin-bottom:-6px;width:12px;height:12px;border-radius:50%;background:#0d2c30;border:2px solid #4ee0c5;box-sizing:border-box;z-index:5;cursor:ew-resize;display:none;text-decoration:none}
+.clip:hover .fh,.clip.sel .fh,.clip .fh.drag{display:block}
+.clip .fh b{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:600;background:rgba(0,0,0,.8);padding:0 4px;border-radius:3px;display:none;white-space:nowrap;pointer-events:none;color:#fff}
+.clip .fh.drag b{display:block}
+
+/* number boxes + reset */
+.fld.rr>label{width:92px}
+.fld .nv{width:56px;flex:none;text-align:right;padding:3px 4px;font-size:12px;font-variant-numeric:tabular-nums}
+.rst{padding:0 6px;font-size:13px;line-height:20px;color:var(--mu);opacity:.55}.rst.mod{opacity:1;color:var(--ac);border-color:var(--ac)}
+/* CapCut-style inspector tabs */
+.itabs{display:flex;gap:2px;margin:8px 0 2px;border-bottom:1px solid var(--ln);overflow-x:auto}
+.itabs button{flex:1 1 auto;border:0;background:none;border-bottom:2px solid transparent;border-radius:0;padding:6px 4px;color:var(--mu);font-size:12.5px;white-space:nowrap}
+.itabs button.on{color:var(--ac);border-bottom-color:var(--ac);font-weight:600}
+.isubs{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}
+.isubs button{padding:3px 10px;border-radius:14px;font-size:12px;color:var(--mu)}
+.isubs button.on{background:var(--ac);color:#000;border-color:var(--ac)}
+.agrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:6px 0}
+.agrid button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px;font-size:11px;line-height:1.2;text-align:center}
+.agrid button i{font-style:normal;font-size:20px;line-height:1}
+.agrid button.on{background:rgba(46,230,197,.16);border-color:var(--ac);color:var(--ac)}
+.alignrow{display:flex;gap:4px;margin:6px 0}.alignrow button{flex:1;padding:3px 0;font-size:15px}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0}.chips button{padding:3px 9px;font-size:12px;border-radius:14px}.chips button.on{background:var(--ac);color:#000;border-color:var(--ac)}
+.fld.dis{opacity:.5}.fld.dis .soon{margin-left:auto;font-size:10px;color:var(--mu);border:1px solid var(--ln);border-radius:8px;padding:0 6px}
+.soonbox{margin:10px 0;color:var(--mu);font-size:12px}.soonbox summary{cursor:pointer;margin-bottom:4px}
+.hslrow{display:flex;gap:7px;margin:8px 0}.hslrow button{width:26px;height:26px;border-radius:50%;padding:0;border:2px solid transparent}.hslrow button.on{border-color:#fff}
+#curveCv{width:100%;max-width:260px;aspect-ratio:1;border:1px solid var(--ln);border-radius:6px;touch-action:none;cursor:crosshair;display:block;margin:6px 0}
+.wheels{display:flex;flex-direction:column;gap:12px}.wh{border:1px solid var(--ln);border-radius:8px;padding:8px}.wh b{font-size:12px;color:var(--ac)}
+canvas.wheel{display:block;width:120px;height:120px;margin:6px auto;touch-action:none;cursor:crosshair}

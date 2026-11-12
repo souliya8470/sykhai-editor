@@ -38,7 +38,7 @@ function poolPrune() { for (const id of [...POOL.keys()]) if (!getItem(id)) pool
 const BUFS = [];
 function getBuf(i, W, H) {
   let b = BUFS[i];
-  if (!b) { b = BUFS[i] = document.createElement('canvas'); b.ctx = b.getContext('2d'); }
+  if (!b) { b = BUFS[i] = document.createElement('canvas'); b.ctx = b.getContext('2d', { willReadFrequently: true }); }
   if (b.width !== W || b.height !== H) { b.width = W; b.height = H; }
   b.ctx.setTransform(1, 0, 0, 1, 0, 0); b.ctx.globalAlpha = 1; b.ctx.globalCompositeOperation = 'source-over'; b.ctx.filter = 'none';
   b.ctx.clearRect(0, 0, W, H);
@@ -54,7 +54,7 @@ const TRANS = {
   zoomIn: { label: 'ซูมเข้า' }, zoomOut: { label: 'ซูมออก' }, punch: { label: 'ซูมกระแทก' }, spin: { label: 'หมุนเข้า' },
   card3d: { label: 'การ์ดกรอบขาวหมุน 3D', buf: 1 }, glitch: { label: 'กลิตช์', buf: 1 }, blur: { label: 'เบลอเลือน' },
 };
-const FX_BUF_TYPES = new Set(['featherTop', 'featherBottom', 'featherAll']);
+const FX_BUF_TYPES = new Set(['featherTop', 'featherBottom', 'featherAll', 'linear']);
 
 // ---------- helpers ----------
 function mediaSource(it) {
@@ -67,7 +67,7 @@ function srcSize(src) { return src.videoWidth ? [src.videoWidth, src.videoHeight
 
 function filterString(it, extraBlur) {
   const f = it.fx || {}; const parts = [];
-  if (f.brightness != null && f.brightness !== 1) parts.push(`brightness(${f.brightness})`);
+  const br = (f.brightness != null ? f.brightness : 1) * (1 + .14 * (f.whiten || 0)); if (br !== 1) parts.push(`brightness(${br.toFixed(3)})`);
   if (f.contrast != null && f.contrast !== 1) parts.push(`contrast(${f.contrast})`);
   if (f.saturate != null && f.saturate !== 1) parts.push(`saturate(${f.saturate})`);
   if (f.gray) parts.push(`grayscale(${f.gray})`);
@@ -92,7 +92,8 @@ function drawMediaContent(ctx, it, t, W, H, extra) {
   const src = mediaSource(it); if (!src) return false;
   const [sw0, sh0] = srcSize(src);
   const lt = t - it.start;
-  const s = prop(it, 's', t), x = prop(it, 'x', t), y = prop(it, 'y', t), r = prop(it, 'r', t), o = prop(it, 'o', t);
+  const s = prop(it, 's', t), x = prop(it, 'x', t), y = prop(it, 'y', t); let r = prop(it, 'r', t); const o = prop(it, 'o', t);
+  const A = mediaAnim(it, lt); if (A) { r += A.r; extra = Object.assign({}, extra, { alpha: (extra.alpha ?? 1) * A.a, blur: (extra.blur || 0) + A.blur * W / 1080, dx: (extra.dx || 0) + A.dx * W, dy: (extra.dy || 0) + A.dy * H }); }
   let fw = W, fh = H, sx = 0, sy = 0, sw = sw0, sh = sh0;
   if (it.fit === 'contain') {
     const k = Math.min(W / sw0, H / sh0); fw = sw0 * k; fh = sh0 * k;
@@ -104,10 +105,20 @@ function drawMediaContent(ctx, it, t, W, H, extra) {
   let z = 1, pan = 0; const pr = clamp(lt / Math.max(0.1, it.dur), 0, 1);
   if (it.kb === 'in') z = 1 + 0.2 * EASE.io(pr); else if (it.kb === 'out') z = 1.2 - 0.2 * EASE.io(pr); else if (it.kb === 'pan') { z = 1.14; pan = lerp(-1, 1, pr); }
   if (z !== 1 || pan) { const nw = sw / z, nh = sh / z; sx += (sw - nw) / 2 + pan * (sw - nw) / 2; sy += (sh - nh) / 2; sw = nw; sh = nh; }
-  const w = fw * s, h = fh * s, cx = W / 2 + x * W + (extra.dx || 0), cy = H / 2 + y * H + (extra.dy || 0);
+  const nu = it.uni === false; const am = A ? A.s : 1;
+  const w = fw * s * (nu ? (it.sx ?? 1) : 1) * am, h = fh * s * (nu ? (it.sy ?? 1) : 1) * am, cx = W / 2 + x * W + (extra.dx || 0), cy = H / 2 + y * H + (extra.dy || 0);
   BOUNDS[it.id] = { cx, cy, w, h, rot: r };
   ctx.save();
   ctx.globalAlpha *= clamp(o, 0, 1) * (extra.alpha ?? 1);
+  if (it.bg && it.bg !== 'none' && (it.fit === 'contain' || w < W - 1 || h < H - 1)) {   // canvas background (CapCut: Canvas)
+    ctx.save();
+    if (it.bg === 'color') { ctx.fillStyle = it.bgColor || '#000000'; ctx.fillRect(0, 0, W, H); }
+    else {
+      const ka = W / H, sa = sw0 / sh0; let bx = 0, by = 0, bw = sw0, bh = sh0; if (sa > ka) { bw = sh0 * ka; bx = (sw0 - bw) / 2; } else { bh = sw0 / ka; by = (sh0 - bh) / 2; }
+      ctx.filter = `blur(${(22 * W / 1080).toFixed(1)}px) brightness(.72)`; ctx.drawImage(src, bx, by, bw, bh, -W * .06, -H * .06, W * 1.12, H * 1.12); ctx.filter = 'none';
+    }
+    ctx.restore();
+  }
   ctx.translate(cx, cy); ctx.rotate(r * Math.PI / 180);
   const mk = it.mask || { type: 'none' };
   // frame / clip shapes
@@ -121,9 +132,15 @@ function drawMediaContent(ctx, it, t, W, H, extra) {
     ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 18 * (W / 1080); ctx.fillStyle = '#fff';
     rrPath(ctx, -w / 2 - b, -h / 2 - b, w + 2 * b, h + 2 * b, 6 * W / 1080); ctx.fill(); ctx.restore();
     ctx.save(); ctx.beginPath(); ctx.rect(-w / 2, -h / 2, w, h); ctx.clip();
+  } else if (mk.type === 'star' || mk.type === 'heart') {
+    ctx.save(); ctx.beginPath(); const R0 = Math.min(w, h) / 2 * (mk.size || 1);
+    if (mk.type === 'star') { for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? R0 * .42 : R0; ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } ctx.closePath(); }
+    else { const k = R0 / 16; ctx.moveTo(0, 14 * k); ctx.bezierCurveTo(-24 * k, -2 * k, -16 * k, -20 * k, 0, -8 * k); ctx.bezierCurveTo(16 * k, -20 * k, 24 * k, -2 * k, 0, 14 * k); ctx.closePath(); }
+    ctx.clip();
   } else { ctx.save(); }
   ctx.filter = filterString(it, extra.blur);
   ctx.drawImage(src, sx, sy, sw, sh, -w / 2, -h / 2, w, h);
+  if ((it.fx || {}).soften > 0) { const ga = ctx.globalAlpha; ctx.globalAlpha = ga * clamp(it.fx.soften, 0, 1) * .75; ctx.filter = `blur(${(5 * W / 540).toFixed(1)}px) brightness(1.04)`; ctx.drawImage(src, sx, sy, sw, sh, -w / 2, -h / 2, w, h); ctx.globalAlpha = ga; }
   ctx.filter = 'none';
   ctx.restore();
   if (mk.type === 'circle') {
@@ -147,14 +164,150 @@ function postFx(buf, it, t, W, H) {
     c.save(); c.globalCompositeOperation = 'source-atop'; c.fillStyle = g; c.fillRect(0, 0, W, H); c.restore();
   }
   if (f.glitch > 0) glitchBuf(buf, W, H, f.glitch, t);
+  if ((it.chroma && it.chroma.on) || adjActive(it)) pixelPass(buf, it, W, H, t);
   if (FX_BUF_TYPES.has(mk.type)) {
     c.save(); c.globalCompositeOperation = 'destination-in';
     let g;
     if (mk.type === 'featherTop') { const k = mk.size ?? 0.3; g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(Math.max(0, 1 - k), 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)'); }
     else if (mk.type === 'featherBottom') { const k = mk.size ?? 0.3; g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(Math.min(1, k), 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,1)'); }
+    else if (mk.type === 'linear') {
+      const ang = (mk.angle || 0) * Math.PI / 180, cx = W / 2 + (mk.pos || 0) * W * Math.cos(ang), cy = H / 2 + (mk.pos || 0) * W * Math.sin(ang); const L = Math.hypot(W, H) / 2, fe = Math.max(.001, (mk.feather ?? .05)) * W;
+      const dx = Math.cos(ang), dy = Math.sin(ang), sgn = mk.inv ? -1 : 1;
+      g = c.createLinearGradient(cx - dx * fe * sgn, cy - dy * fe * sgn, cx + dx * fe * sgn, cy + dy * fe * sgn); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    }
     else { g = c.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * .5); const k = 1 - (mk.size ?? 0.35); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(clamp(k, 0, .95), 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)'); }
     c.fillStyle = g; c.fillRect(0, 0, W, H); c.restore();
   }
+}
+
+// ---------- clip animations (In / Out / Combo) ----------
+const ANIM_LIST = {
+  in: [['none', 'ไม่มี', '⊘'], ['fade', 'เลือนเข้า', '◐'], ['zoomin', 'ซูมเข้าหา', '⊕'], ['zoomout', 'ซูมถอยเข้า', '⊖'], ['slideL', 'สไลด์จากขวา', '⇠'], ['slideR', 'สไลด์จากซ้าย', '⇢'], ['slideU', 'สไลด์จากล่าง', '⇡'], ['slideD', 'สไลด์จากบน', '⇣'], ['spin', 'หมุนเข้า', '⟳'], ['pop', 'เด้งป๊อป', '✺'], ['rise', 'ลอยขึ้น', '△'], ['shake', 'สั่นเข้า', '≋'], ['blur', 'เบลอแล้วชัด', '◌']],
+  out: [['none', 'ไม่มี', '⊘'], ['fade', 'เลือนหาย', '◐'], ['zoomin', 'ซูมเข้าหาย', '⊕'], ['zoomout', 'ซูมออกหาย', '⊖'], ['slideL', 'สไลด์ไปซ้าย', '⇠'], ['slideR', 'สไลด์ไปขวา', '⇢'], ['slideU', 'สไลด์ขึ้น', '⇡'], ['slideD', 'สไลด์ลง', '⇣'], ['spin', 'หมุนหาย', '⟳'], ['fall', 'ตกลง', '▽'], ['shake', 'สั่นแล้วหาย', '≋'], ['blur', 'เบลอหาย', '◌']],
+  combo: [['none', 'ไม่มี', '⊘'], ['pulse', 'ซูมเต้น', '◉'], ['swing', 'แกว่ง', '⇋'], ['shake', 'สั่น', '≋'], ['float', 'ลอยขึ้นลง', '≈'], ['heart', 'หัวใจเต้น', '♥'], ['breathe', 'หายใจ', '○']],
+};
+function mediaAnim(it, lt) {
+  const an = it.anim; if (!an || !(an.in || an.out || an.combo)) return null; if (an.in === 'none' && an.out === 'none' && (!an.combo || an.combo === 'none')) return null;
+  const A = { a: 1, s: 1, dx: 0, dy: 0, r: 0, blur: 0 }; const lerpv = (a, b, p) => a + (b - a) * p;
+  if (an.in && an.in !== 'none') {
+    const d = Math.min(an.dIn || .5, it.dur / 2);
+    if (lt < d) {
+      const p = EASE.out(clamp(lt / d, 0, 1)), pr = clamp(lt / d, 0, 1);
+      switch (an.in) {
+        case 'fade': A.a = p; break; case 'zoomin': A.s = lerpv(.5, 1, p); A.a = p; break; case 'zoomout': A.s = lerpv(1.5, 1, p); A.a = p; break;
+        case 'slideL': A.dx = lerpv(-1, 0, p); break; case 'slideR': A.dx = lerpv(1, 0, p); break; case 'slideU': A.dy = lerpv(1, 0, p); break; case 'slideD': A.dy = lerpv(-1, 0, p); break;
+        case 'spin': A.r = lerpv(-120, 0, p); A.s = lerpv(.3, 1, p); A.a = p; break;
+        case 'pop': A.s = pr < .7 ? lerpv(.2, 1.12, pr / .7) : lerpv(1.12, 1, (pr - .7) / .3); A.a = Math.min(1, pr * 3); break;
+        case 'rise': A.dy = lerpv(.12, 0, p); A.a = p; break; case 'shake': A.dx = Math.sin(pr * 24) * .04 * (1 - pr); A.a = Math.min(1, pr * 4); break;
+        case 'blur': A.blur = (1 - p) * 24; A.a = Math.min(1, pr * 3); break;
+      }
+    }
+  }
+  if (an.out && an.out !== 'none') {
+    const d = Math.min(an.dOut || .5, it.dur / 2);
+    if (lt > it.dur - d) {
+      const q = clamp((lt - (it.dur - d)) / d, 0, 1), e = EASE.in ? EASE.in(q) : q * q;
+      switch (an.out) {
+        case 'fade': A.a *= 1 - q; break; case 'zoomin': A.s *= 1 + .5 * e; A.a *= 1 - q; break; case 'zoomout': A.s *= 1 - .5 * e; A.a *= 1 - q; break;
+        case 'slideL': A.dx += -e; break; case 'slideR': A.dx += e; break; case 'slideU': A.dy += -e; break; case 'slideD': A.dy += e; break;
+        case 'spin': A.r += 120 * e; A.s *= 1 - .7 * e; A.a *= 1 - q; break; case 'fall': A.dy += .25 * e; A.a *= 1 - q; break;
+        case 'shake': A.dx += Math.sin(q * 24) * .04 * q; A.a *= 1 - q * .6; break; case 'blur': A.blur += e * 24; A.a *= 1 - q * .6; break;
+      }
+    }
+  }
+  if (an.combo && an.combo !== 'none') {
+    const w = lt * Math.PI * 2;
+    switch (an.combo) {
+      case 'pulse': A.s *= 1 + .06 * Math.sin(w * 1.2); break; case 'swing': A.r += 4 * Math.sin(w * .8); break;
+      case 'shake': A.dx += Math.sin(w * 9) * .006; A.dy += Math.cos(w * 11) * .006; break; case 'float': A.dy += .015 * Math.sin(w * .6); break;
+      case 'heart': { const k = (lt * 1.4) % 1; A.s *= 1 + .07 * (Math.exp(-Math.pow((k - .12) * 14, 2)) + .6 * Math.exp(-Math.pow((k - .3) * 14, 2))); break; }
+      case 'breathe': A.s *= 1.03 + .03 * Math.sin(w * .35); break;
+    }
+  }
+  return A;
+}
+
+// ---------- pixel pass: tone / curves / colour wheel / HSL / chroma key ----------
+const ADJ0 = () => ({ temp: 0, tint: 0, shadow: 0, high: 0, white: 0, black: 0, bril: 0, clarity: 0, fade: 0, grain: 0 });
+function adjActive(it) {
+  const a = it.adj; if (!a) return false;
+  for (const k of ['temp', 'tint', 'shadow', 'high', 'white', 'black', 'bril', 'clarity', 'fade', 'grain']) if (a[k]) return true;
+  if (a.curve) for (const k in a.curve) { const c = a.curve[k]; if (c && c.length && !(c.length === 2 && c[0][0] === 0 && c[0][1] === 0 && c[1][0] === 1 && c[1][1] === 1)) return true; }
+  if (a.wheel) for (const k in a.wheel) { const w = a.wheel[k]; if (w && (w.s || w.l)) return true; }
+  if (a.hsl) for (const k in a.hsl) { const h = a.hsl[k]; if (h && (h.h || h.s || h.l)) return true; }
+  return false;
+}
+function curveLut(pts) {   // monotone cubic through points (x 0..1) -> Float32Array(256)
+  const P = pts.slice().sort((p, q) => p[0] - q[0]); const n = P.length; const out = new Float32Array(256);
+  if (n < 2) { for (let i = 0; i < 256; i++) out[i] = i / 255; return out; }
+  const dx = [], m = [], d = []; for (let i = 0; i < n - 1; i++) { dx[i] = Math.max(1e-6, P[i + 1][0] - P[i][0]); d[i] = (P[i + 1][1] - P[i][1]) / dx[i]; }
+  m[0] = d[0]; m[n - 1] = d[n - 2]; for (let i = 1; i < n - 1; i++) m[i] = d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2;
+  for (let i = 0; i < n - 1; i++) { if (d[i] === 0) { m[i] = 0; m[i + 1] = 0; } else { const a = m[i] / d[i], b = m[i + 1] / d[i], h = Math.hypot(a, b); if (h > 3) { m[i] = 3 * a / h * d[i]; m[i + 1] = 3 * b / h * d[i]; } } }
+  for (let i = 0; i < 256; i++) {
+    const x = i / 255; let k = 0; while (k < n - 2 && x > P[k + 1][0]) k++;
+    if (x <= P[0][0]) { out[i] = P[0][1]; continue; } if (x >= P[n - 1][0]) { out[i] = P[n - 1][1]; continue; }
+    const h = dx[k], tt = (x - P[k][0]) / h, t2 = tt * tt, t3 = t2 * tt;
+    out[i] = (2 * t3 - 3 * t2 + 1) * P[k][1] + (t3 - 2 * t2 + tt) * h * m[k] + (-2 * t3 + 3 * t2) * P[k + 1][1] + (t3 - t2) * h * m[k + 1];
+  }
+  return out;
+}
+function hue2rgb01(h) { h = ((h % 360) + 360) % 360 / 60; const c = 1 - Math.abs(h % 2 - 1); const [r, g, b] = h < 1 ? [1, c, 0] : h < 2 ? [c, 1, 0] : h < 3 ? [0, 1, c] : h < 4 ? [0, c, 1] : h < 5 ? [c, 0, 1] : [1, 0, c]; return [r, g, b]; }
+const HSL_BANDS = [0, 30, 60, 120, 180, 240, 280, 320];
+const _ADJC = {};
+function adjBuild(it) {
+  const a = it.adj || {}; const key = JSON.stringify(a); let c = _ADJC[it.id]; if (c && c.key === key) return c;
+  const L = [new Uint8ClampedArray(256), new Uint8ClampedArray(256), new Uint8ClampedArray(256)];
+  const cl = a.curve || {}; const cM = cl.l && cl.l.length ? curveLut(cl.l) : null; const cC = [cl.r, cl.g, cl.b].map(p => p && p.length ? curveLut(p) : null);
+  const W = a.wheel || {}; const tint = k => { const w = W[k]; if (!w || !w.s) return [0, 0, 0]; const [r, g, b] = hue2rgb01(w.h || 0); return [(r - .5) * 2 * w.s, (g - .5) * 2 * w.s, (b - .5) * 2 * w.s]; };
+  const tS = tint('s'), tM = tint('m'), tH = tint('h'); const lS = (W.s && W.s.l) || 0, lM = (W.m && W.m.l) || 0, lH = (W.h && W.h.l) || 0;
+  const g = z => Math.exp(-z * z);
+  for (let i = 0; i < 256; i++) {
+    const x0 = i / 255; let x = x0;
+    x += .25 * ((a.shadow || 0) / 100 * g((x0 - .2) / .2) + (a.high || 0) / 100 * g((x0 - .8) / .2) + (a.black || 0) / 100 * g(x0 / .15) + (a.white || 0) / 100 * g((x0 - 1) / .15));
+    x += .18 * (a.bril || 0) / 100 * (g((x0 - .2) / .25) - .6 * g((x0 - .8) / .25));
+    x += .35 * (a.clarity || 0) / 100 * (x0 - .5) * (1 - Math.abs(2 * x0 - 1));
+    if (a.fade) x = x * (1 - .2 * a.fade / 100) + .2 * a.fade / 100 * .9;
+    const wS = (1 - x0) * (1 - x0), wM = 4 * x0 * (1 - x0), wH = x0 * x0;
+    for (let ch = 0; ch < 3; ch++) {
+      let v = x + wS * (tS[ch] * .3 + lS * .2) + wM * (tM[ch] * .3 + lM * .2) + wH * (tH[ch] * .3 + lH * .2);
+      if (ch === 0) v += (a.temp || 0) / 100 * .09 + (a.tint || 0) / 100 * .03; if (ch === 2) v -= (a.temp || 0) / 100 * .09 - (a.tint || 0) / 100 * .03; if (ch === 1) v -= (a.tint || 0) / 100 * .06;
+      v = clamp(v, 0, 1); if (cM) v = cM[Math.round(v * 255)]; if (cC[ch]) v = cC[ch][Math.round(clamp(v, 0, 1) * 255)];
+      L[ch][i] = Math.round(clamp(v, 0, 1) * 255);
+    }
+  }
+  const hsl = a.hsl || {}; let hslOn = false; const dh = new Float32Array(360), ds = new Float32Array(360), dl = new Float32Array(360);
+  const names = ['red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'purple', 'magenta'];
+  for (let hh = 0; hh < 360; hh++) for (let b = 0; b < 8; b++) {
+    const v = hsl[names[b]]; if (!v || !(v.h || v.s || v.l)) continue; hslOn = true;
+    let dd = Math.abs(hh - HSL_BANDS[b]); if (dd > 180) dd = 360 - dd; const w = Math.max(0, 1 - dd / 45); if (!w) continue;
+    dh[hh] += (v.h || 0) / 100 * 35 * w; ds[hh] += (v.s || 0) / 100 * w; dl[hh] += (v.l || 0) / 100 * w;
+  }
+  c = _ADJC[it.id] = { key, L, hslOn, dh, ds, dl, grain: (a.grain || 0) / 100, identity: false }; return c;
+}
+function rgb2hsl(r, g, b) { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b); let h = 0, s = 0; const l = (mx + mn) / 2; if (mx !== mn) { const d = mx - mn; s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn); h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; } return [h, s, l]; }
+function hsl2rgb(h, s, l) { h = ((h % 360) + 360) % 360 / 360; if (!s) return [l * 255, l * 255, l * 255]; const q = l < .5 ? l * (1 + s) : l + s - l * s, p = 2 * l - q; const f = t => { t = (t + 1) % 1; return t < 1 / 6 ? p + (q - p) * 6 * t : t < .5 ? q : t < 2 / 3 ? p + (q - p) * (2 / 3 - t) * 6 : p; }; return [f(h + 1 / 3) * 255, f(h) * 255, f(h - 1 / 3) * 255]; }
+function pixelPass(buf, it, W, H, t) {
+  const c = buf.ctx; const im = c.getImageData(0, 0, W, H); const d = im.data, n = d.length;
+  const ck = it.chroma && it.chroma.on ? it.chroma : null;
+  if (ck) {
+    const [kr, kg, kb] = (() => { const h = (ck.color || '#00ff00').replace('#', ''); return [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)]; })();
+    const kcb = -.1687 * kr - .3313 * kg + .5 * kb, kcr = .5 * kr - .4187 * kg - .0813 * kb; const tol = (ck.tol ?? .3) * 110, soft = Math.max(1, (ck.soft ?? .15) * 110);
+    for (let i = 0; i < n; i += 4) {
+      const r = d[i], g = d[i + 1], b = d[i + 2]; const cb = -.1687 * r - .3313 * g + .5 * b, cr = .5 * r - .4187 * g - .0813 * b; const dist = Math.hypot(cb - kcb, cr - kcr);
+      if (dist < tol + soft) { const a = dist <= tol ? 0 : (dist - tol) / soft; d[i + 3] *= a; if (a > 0 && a < 1) { const gm = (r + b) / 2; if (g > gm) d[i + 1] = gm + (g - gm) * a; } }
+    }
+  }
+  if (adjActive(it)) {
+    const A = adjBuild(it); const [Lr, Lg, Lb] = A.L; const gr = A.grain;
+    for (let i = 0; i < n; i += 4) {
+      if (!d[i + 3]) continue; let r = d[i], g = d[i + 1], b = d[i + 2];
+      if (A.hslOn) { const [h, s, l] = rgb2hsl(r, g, b); const hi = Math.floor(h) % 360; const ns = clamp(s * (1 + A.ds[hi]), 0, 1), nl = clamp(l + A.dl[hi] * .3 * (1 - Math.abs(2 * l - 1)), 0, 1); [r, g, b] = hsl2rgb(h + A.dh[hi], ns, nl); }
+      r = Lr[r | 0]; g = Lg[g | 0]; b = Lb[b | 0];
+      if (gr) { const nz = (Math.random() - .5) * 90 * gr; r += nz; g += nz; b += nz; }
+      d[i] = r; d[i + 1] = g; d[i + 2] = b;
+    }
+  }
+  c.putImageData(im, 0, 0);
 }
 function glitchBuf(buf, W, H, amt, t) {
   const tmp = getBuf(3, W, H); tmp.ctx.drawImage(buf, 0, 0);
@@ -201,11 +354,15 @@ function drawRotY(ctx, buf, W, H, ang) {
 }
 
 function drawMediaItem(ctx, it, t, W, H) {
+  if (it.blend && it.blend !== 'source-over') { ctx.save(); ctx.globalCompositeOperation = it.blend; try { drawMediaItem0(ctx, it, t, W, H); } finally { ctx.restore(); } }
+  else drawMediaItem0(ctx, it, t, W, H);
+}
+function drawMediaItem0(ctx, it, t, W, H) {
   const lt = t - it.start; const tr = it.transIn;
   let T = null, p = 1;
   if (tr && tr.type && tr.type !== 'none' && lt < tr.dur) { T = tr.type; p = clamp(lt / tr.dur, 0, 1); }
   const f = it.fx || {}, mk = it.mask || {};
-  const needBuf = (T && TRANS[T] && TRANS[T].buf) || f.vignette > 0 || f.glitch > 0 || f.pain || FX_BUF_TYPES.has(mk.type);
+  const needBuf = (T && TRANS[T] && TRANS[T].buf) || f.vignette > 0 || f.glitch > 0 || f.pain || FX_BUF_TYPES.has(mk.type) || adjActive(it) || (it.chroma && it.chroma.on);
   const ex = {};
   if (!needBuf) {
     if (T === 'dipblack' || T === 'dipwhite') {

@@ -156,11 +156,6 @@ function kfToggle(it, k) {
 }
 const KF_ON = (it, k) => { const lt = PB.t - it.start; return it.kf && it.kf[k] && it.kf[k].some(p => Math.abs(p.t - lt) < 0.04); };
 
-function R(label, p, min, max, step, it, kf, fmtv) {
-  const v = curVal(it, p); const val = v == null ? (min <= 0 && max >= 0 ? 0 : min) : v;
-  const k = kf ? p.slice(3) : null;
-  return `<div class="fld"><label>${label}</label><input type="range" data-p="${p}" min="${min}" max="${max}" step="${step}" value="${val}"><output>${(+val).toFixed(step < .1 ? 2 : step < 1 ? 1 : 0)}</output>${kf ? `<button class="kfb ${KF_ON(it, k) ? 'on' : ''}" data-kf="${k}" title="คีย์เฟรม">◆</button>` : ''}</div>`;
-}
 function S(label, p, opts, it) { const v = getPath(it, p) ?? opts[0][0]; return `<div class="fld"><label>${label}</label><select data-p="${p}">${opts.map(([k, l]) => `<option value="${k}" ${String(k) === String(v) ? 'selected' : ''}>${l}</option>`).join('')}</select></div>`; }
 function C(label, p, it, def) { const v = getPath(it, p); return `<div class="fld"><label>${label}</label><input type="color" data-p="${p}" value="${toHex(v || def || '#ffffff')}"></div>`; }
 function K(label, p, it, def) { const v = getPath(it, p); return `<div class="fld chk"><label><input type="checkbox" data-p="${p}" ${(v ?? def) ? 'checked' : ''}> ${label}</label></div>`; }
@@ -171,6 +166,7 @@ const ANIM_IN = [['none', 'ไม่มี'], ['fade', 'เลือน'], ['pop
 function renderInspector() {
   const box = $('#inspector'); if (!box) return; const it = SEL ? getItem(SEL) : null;
   if (!it) { box.innerHTML = projectInspector(); bindInspector(null); return; }
+  if (it.type === 'video' || it.type === 'image') { box.innerHTML = renderVideoInspector(it); bindInspector(it); ccPost(it); return; }
   let h = `<div class="ihead"><b>${{ video: 'คลิปวิดีโอ', image: 'รูปภาพ', text: 'ข้อความ', sticker: 'สติกเกอร์', audio: 'เสียง' }[it.type]}</b><span class="sp"></span><button data-act="dup">ทำซ้ำ</button><button data-act="del" class="danger">ลบ</button></div>`;
   h += `<div class="fld"><label>เริ่ม</label><input type="number" step="0.1" data-p="start" value="${it.start.toFixed(2)}" class="num"><label class="r">ยาว</label><input type="number" step="0.1" min="0.1" data-p="dur" value="${it.dur.toFixed(2)}" class="num"></div>`;
   if (it.type === 'video' || it.type === 'image') {
@@ -211,17 +207,26 @@ function projectInspector() {
 function bindInspector(it) {
   const box = $('#inspector');
   box.oninput = e => {
-    const el = e.target; const p = el.dataset.p; if (!p) return; const tgt = it || D;
-    let v = el.type === 'checkbox' ? el.checked : (el.type === 'range' || el.type === 'number') ? parseFloat(el.value) : el.value;
+    const el = e.target; const p = el.dataset.p; if (!p) return; const tgt = it || D; const isNv = el.classList.contains('nv');
+    if (p === 'sdur') return;
+    let v;
+    if (isNv) { const mm = +(el.dataset.m || 1); v = parseFloat(el.value); if (!isFinite(v)) return; v /= mm; const rg = $('input[type=range]', el.parentNode); if (rg) { v = clamp(v, +rg.min, +rg.max); rg.value = v; } }
+    else v = el.type === 'checkbox' ? el.checked : (el.type === 'range' || el.type === 'number') ? parseFloat(el.value) : el.value;
     if (el.tagName === 'SELECT' && /^(fx\.sharpen|transIn\.dur)$/.test(p)) v = parseFloat(v);
     if (p === 'transIn.type') return;
-    if (p.startsWith('xf.') && it) setXf(it, p.slice(3), v); else setPath(tgt, p, v);
-    if (el.type === 'range') { const o = el.nextElementSibling; if (o && o.tagName === 'OUTPUT') o.textContent = (+v).toFixed(parseFloat(el.step) < .1 ? 2 : parseFloat(el.step) < 1 ? 1 : 0); }
+    if (p === 'speed' && it) { const span = parseFloat(el.dataset.span) || it.dur * (it.speed || 1); it.speed = v; it.dur = Math.max(.1, span / v); const dn = $('#inspector input[data-p="sdur"]'); if (dn) dn.value = it.dur.toFixed(2); }
+    else if (p.startsWith('xf.') && it) setXf(it, p.slice(3), v); else setPath(tgt, p, v);
+    if (isNv && el.type === 'number') { /* number box → slider already synced */ }
+    else if (el.type === 'range') { const nv = $('.nv', el.parentNode); if (nv) nv.value = fmtOutEl(nv, v); }
+    if (el.type === 'range' || isNv) { const rs = $('.rst', el.parentNode); if (rs) rs.classList.toggle('mod', Math.abs(v - parseFloat(rs.dataset.d)) > (parseFloat($('input[type=range]', el.parentNode).step) || .01) / 2); }
     if (p === 'style' && it) { const st = TEXT_STYLES.find(s => s.id === v); if (st) { const keep = it.text; Object.assign(it, JSON.parse(JSON.stringify(st.d)), { text: keep, style: v }); commit('style'); renderInspector(); return; } }
     dirty(); if (el.type === 'text' || el.tagName === 'TEXTAREA') { renderTimeline(); }
   };
   box.onchange = e => {
     const el = e.target; const p = el.dataset.p; if (!p) return;
+    if (p === 'sdur' && it) { const span = parseFloat(el.dataset.span) || it.dur * (it.speed || 1); const nd = Math.max(.1, parseFloat(el.value) || it.dur); it.speed = clamp(span / nd, .1, 8); it.dur = span / it.speed; commit('speed'); renderInspector(); renderTimeline(); return; }
+    if (el.classList.contains('nv')) { const rg = $('input[type=range]', el.parentNode); if (rg) el.value = fmtOutEl(el, +rg.value); }
+    if (p === 'speed' && it) { commit('speed'); renderInspector(); renderTimeline(); return; }
     if (p === 'transIn.type') { applyTransition(it, el.value); renderInspector(); return; }
     if (p === 'transIn.dur') { applyTransition(it, it.transIn.type, parseFloat(el.value)); return; }
     if (p === 'mask.type' && it) { if (el.value === 'none') it.mask = { type: 'none' }; else { const d = { circle: { size: 1, ring: .008, color: '#ffffff' }, round: { r: .06 }, frame: { ring: .014 }, featherTop: { size: .3 }, featherBottom: { size: .3 }, featherAll: { size: .35 } }[el.value]; it.mask = Object.assign({ type: el.value }, d); } }
@@ -231,7 +236,9 @@ function bindInspector(it) {
   };
   box.onclick = e => {
     const kb = e.target.closest('.kfb'); if (kb && it) { kfToggle(it, kb.dataset.kf); renderInspector(); return; }
+    const rb = e.target.closest('[data-rst]'); if (rb) { const rg = $('input[type=range]', rb.parentNode); if (rg) { rg.value = rb.dataset.d; rg.dispatchEvent(new Event('input', { bubbles: true })); rg.dispatchEvent(new Event('change', { bubbles: true })); } return; }
     const a = e.target.closest('[data-act]'); if (!a) return; const act = a.dataset.act;
+    if (typeof ccAction === 'function' && ccAction(act, a, it)) return;
     if (act === 'del') cmdDelete(false); else if (act === 'dup') { const b = duplicateItem(it.id); commit('dup'); select(b.id); }
     else if (act === 'clearmutes') { it.mutes = []; commit('mutes'); renderInspector(); }
     else if (act === 'gaps') cmdCloseGaps('V1');
@@ -240,7 +247,8 @@ function bindInspector(it) {
 }
 function refreshInspectorValues() {
   const it = SEL ? getItem(SEL) : null; if (!it) return;
-  $$('#inspector input[type=range][data-p^="xf."]').forEach(el => { if (document.activeElement === el) return; const v = prop(it, el.dataset.p.slice(3), PB.t); el.value = v; const o = el.nextElementSibling; if (o) o.textContent = (+v).toFixed(parseFloat(el.step) < .1 ? 2 : 1); });
+  $$('#inspector input[type=range][data-p^="xf."]').forEach(el => { if (document.activeElement === el) return; const v = prop(it, el.dataset.p.slice(3), PB.t); el.value = v; const nv = $('.nv', el.parentNode); if (nv && document.activeElement !== nv) nv.value = fmtOutEl(nv, v); const rs = $('.rst', el.parentNode); if (rs) rs.classList.toggle('mod', Math.abs(v - parseFloat(rs.dataset.d)) > (parseFloat(el.step) || .01) / 2); });
+  $$('#inspector input[type=range][data-p="vol"],#inspector input[type=range][data-p="fadeIn"],#inspector input[type=range][data-p="fadeOut"]').forEach(el => { if (document.activeElement === el) return; const v = it[el.dataset.p] ?? (el.dataset.p === 'vol' ? 1 : 0); el.value = v; const nv = $('.nv', el.parentNode); if (nv) nv.value = fmtOutEl(nv, v); const rs = $('.rst', el.parentNode); if (rs) rs.classList.toggle('mod', Math.abs(v - parseFloat(rs.dataset.d)) > (parseFloat(el.step) || .01) / 2); });
   $$('#inspector .kfb').forEach(b => b.classList.toggle('on', !!KF_ON(it, b.dataset.kf)));
 }
 on('sel', () => { renderInspector(); renderTimeline(); });

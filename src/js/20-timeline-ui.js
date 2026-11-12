@@ -8,7 +8,8 @@ const trackH = tr => TH[tr.id] || (tr.id === 'V1' ? 84 : TRACK_H[tr.kind]);
 const VOL_MAX = 1.5;
 function wfHeight(it) { const tr = TRACKS.find(t => t.id === it.track); const ch = trackH(tr) - 6; return ch >= 66 ? Math.round(ch * .4) : 22; }
 const tlWidth = () => Math.max(projectEnd() + 14, 40) * TL.pps;
-const CLIP_COL = { video: '#2d6a8f', image: '#7a4fa3', text: '#b9852b', sticker: '#b9602b', audio: '#2f8a5b' };
+const CLIP_COL = { video: '#1b5c63', image: '#5d4a86', text: '#a9772a', sticker: '#a9562a', audio: '#1d6a58' };
+function tcFmt(s) { const f = (D && D.fps) || 30; s = Math.max(0, s); const fr = Math.min(f - 1, Math.round((s % 1) * f)); const t = Math.floor(s); const p2 = n => String(n).padStart(2, '0'); return p2(Math.floor(t / 3600)) + ':' + p2(Math.floor(t % 3600 / 60)) + ':' + p2(t % 60) + ':' + p2(fr); }
 
 function rulerTicks() {
   const total = tlWidth() / TL.pps; let step = 1; const target = 80 / TL.pps;
@@ -38,10 +39,15 @@ function renderTimeline() {
     let inner = '';
     if ((it.type === 'video' || it.type === 'image') && m && m.thumb) inner += `<div class="cbg" style="background-image:url(${m.thumb})"></div>`;
     const hasWf = m && (it.type === 'video' || it.type === 'audio'); const wfh = hasWf ? wfHeight(it) : 0; const tall = hasWf && wfh > 22;
-    if (tall) { el.classList.add('tall'); el.style.setProperty('--wfh', wfh + 'px'); }
+    if (tall) el.classList.add('tall'); if (hasWf) el.style.setProperty('--wfh', wfh + 'px');
     if (hasWf) inner += `<canvas class="wf" style="height:${wfh}px"></canvas>`;
     if (hasWf && tall && m.hasAudio !== false) { const ch = trackH(TRACKS.find(t => t.id === it.track)) - 9; inner += `<div class="vl" style="top:${ch - wfh + wfh * (1 - clamp(it.vol ?? 1, 0, VOL_MAX) / VOL_MAX)}px"><u></u><b>${Math.round((it.vol ?? 1) * 100)}%</b></div>`; }
-    inner += `<span class="cl" translate="no">${esc(clipLabel(it))}</span>`;
+    inner += `<span class="cl" translate="no">${esc(clipLabel(it))}${it.type === 'video' || it.type === 'audio' ? `<i>${tcFmt(it.dur)}</i>` : ''}</span>`;
+    if (hasWf && m.hasAudio !== false) {
+      const fi = clamp(it.fadeIn || 0, 0, it.dur), fo = clamp(it.fadeOut || 0, 0, it.dur);
+      inner += `<div class="fz l" style="width:${fi * TL.pps}px"></div><div class="fz r" style="width:${fo * TL.pps}px"></div>`;
+      inner += `<u class="fh l" data-side="l" style="left:${fi * TL.pps + 1}px" title="${T('ลากเพื่อให้เสียงค่อยๆ ดังขึ้น (Fade in)')}"><b>${fi.toFixed(1)}s</b></u><u class="fh r" data-side="r" style="right:${fo * TL.pps + 1}px" title="${T('ลากเพื่อให้เสียงค่อยๆ เบาลง (Fade out)')}"><b>${fo.toFixed(1)}s</b></u>`;
+    }
     if (it.transIn && it.transIn.type !== 'none') inner += `<b class="trb" title="ทรานสิชัน: ${esc((TRANS[it.transIn.type] || {}).label || '')}" style="width:${Math.max(10, it.transIn.dur * TL.pps)}px">⇄</b>`;
     if (it.speed && it.speed !== 1) inner += `<em class="spd">${it.speed}x</em>`;
     if (it.kf) for (const k in it.kf) for (const p of it.kf[k]) inner += `<s class="kfd" style="left:${p.t * TL.pps}px"></s>`;
@@ -60,12 +66,13 @@ function renderTimeline() {
 }
 function drawWave(cv, it, m) {
   if (!m.peaks) return; const w = Math.min(4000, Math.max(4, Math.round(it.dur * TL.pps))), h = wfHeight(it); cv.width = w; cv.height = h;
-  const vg = it.type === 'audio' || (it.vol ?? 1) !== 1 ? clamp(it.vol ?? 1, 0, VOL_MAX) : 1;
-  const c = cv.getContext('2d'); c.fillStyle = it.type === 'audio' ? 'rgba(255,255,255,.7)' : 'rgba(255,255,255,.45)';
+  const vg = clamp(it.vol ?? 1, 0, VOL_MAX); const fi = it.fadeIn || 0, fo = it.fadeOut || 0;
+  const c = cv.getContext('2d'); c.fillStyle = it.type === 'audio' ? 'rgba(150,235,205,.85)' : 'rgba(96,205,194,.85)';
   const P = m.peaks, md = m.duration || 1;
   for (let x = 0; x < w; x++) {
-    const tt = (it.in || 0) + (x / w) * it.dur * (it.speed || 1); const idx = Math.floor(((it.loop ? tt % md : tt) / md) * P.length);
-    const v = Math.min(1, (P[clamp(idx, 0, P.length - 1)] || 0) * vg); const bh = Math.max(1, Math.min(h, v * h * 1.4)); c.fillRect(x, (h - bh) / 2, 1, bh);
+    const lt = (x / w) * it.dur; const tt = (it.in || 0) + lt * (it.speed || 1); const idx = Math.floor(((it.loop ? tt % md : tt) / md) * P.length);
+    let g = vg; if (fi) g *= Math.min(1, lt / fi); if (fo) g *= Math.min(1, (it.dur - lt) / fo);
+    const v = Math.min(1, (P[clamp(idx, 0, P.length - 1)] || 0) * g); const bh = Math.max(1, Math.min(h, v * h * 1.25)); c.fillRect(x, h - bh, 1, bh);
   }
 }
 function updatePlayhead() {
@@ -108,6 +115,7 @@ function initTimelineEvents() {
     const jn = e.target.closest('.junc'); if (jn) { select(jn.dataset.id); showTab('trans'); return; }
     const trh = e.target.closest('.trh'); if (trh) { e.preventDefault(); rowResizeStart(e, trh.closest('.trow')); return; }
     const vlu = e.target.closest('.vl u'); if (vlu) { e.preventDefault(); e.stopPropagation(); volDragStart(e, vlu.closest('.clip')); return; }
+    const fhe = e.target.closest('.fh'); if (fhe) { e.preventDefault(); e.stopPropagation(); fadeDragStart(e, fhe.closest('.clip'), fhe.dataset.side); return; }
     const clipEl = e.target.closest('.clip');
     const mkEl = e.target.closest('.mk'); if (mkEl) { const mm = (D.markers || []).find(x => x.id === mkEl.dataset.id); if (mm) { pause(); seek(mm.t); } return; }
     const rulerEl = e.target.closest('#ruler');
@@ -264,6 +272,19 @@ function volDragStart(e, clipEl) {
     if (typeof refreshInspectorValues === 'function') refreshInspectorValues();
   };
   const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); document.body.classList.remove('resizing'); vl.classList.remove('drag'); if ((it.vol ?? 1) !== v0) commit('vol'); };
+  window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
+}
+function fadeDragStart(e, clipEl, side) {
+  const it = getItem(clipEl.dataset.id); if (!it) return; if (SEL !== it.id) { select(it.id); clipEl = $(`.clip[data-id="${it.id}"]`); if (!clipEl) return; }
+  const m = MEDIA.get(it.mediaId); const cv = $('canvas.wf', clipEl); const fh = $('.fh.' + side, clipEl), fz = $('.fz.' + side, clipEl); const k = side === 'l' ? 'fadeIn' : 'fadeOut'; const other = side === 'l' ? 'fadeOut' : 'fadeIn';
+  const v0 = it[k] || 0; const hr = fh.getBoundingClientRect(); const off = side === 'l' ? e.clientX - hr.left : hr.right - e.clientX; fh.classList.add('drag'); document.body.classList.add('resizing');
+  const mv = ev => {
+    const r = clipEl.getBoundingClientRect(); const x = (side === 'l' ? ev.clientX - r.left : r.right - ev.clientX) - off;
+    const v = clamp(Math.round(x / TL.pps * 10) / 10, 0, Math.max(0, it.dur - (it[other] || 0))); it[k] = v;
+    fh.style[side === 'l' ? 'left' : 'right'] = (v * TL.pps + 1) + 'px'; fz.style.width = (v * TL.pps) + 'px'; $('b', fh).textContent = v.toFixed(1) + 's'; if (m && cv) drawWave(cv, it, m);
+    if (typeof refreshInspectorValues === 'function') refreshInspectorValues();
+  };
+  const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); document.body.classList.remove('resizing'); fh.classList.remove('drag'); if ((it[k] || 0) !== v0) { commit('fade'); if (typeof renderInspector === 'function') renderInspector(); } };
   window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
 }
 // ---------- resizable panels ----------
