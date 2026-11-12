@@ -13,6 +13,20 @@ if (!TOKEN || TOKEN.length < 6 || TOKEN === 'CHANGE_ME') { console.error('ตั
 const DIRS = { media: path.join(ROOT, 'media'), projects: path.join(ROOT, 'projects'), out: path.join(ROOT, 'out') };
 Object.values(DIRS).forEach(d => fs.mkdirSync(d, { recursive: true }));
 
+const APP_DIR = path.join(__dirname, 'app'); fs.mkdirSync(APP_DIR, { recursive: true });
+const APP_FILE = path.join(APP_DIR, 'index.html');
+const APP_SRC = process.env.SK_APP_URL || 'https://raw.githubusercontent.com/souliya8470/sykhai-editor/main/index.html';
+let refreshing = false;
+async function refreshApp(force) {          // keep a local copy of the editor page; falls back to the old copy if GitHub is unreachable
+  if (refreshing) return; let age = Infinity; try { age = Date.now() - fs.statSync(APP_FILE).mtimeMs; } catch (e) { }
+  if (!force && age < 10 * 60e3) return; refreshing = true;
+  try {
+    const r = await fetch(APP_SRC, { signal: AbortSignal.timeout(20000) }); if (!r.ok) throw new Error('HTTP ' + r.status);
+    const t = await r.text(); if (t.length < 100000 || !t.includes('Sykhai')) throw new Error('unexpected content');
+    fs.writeFileSync(APP_FILE + '.tmp', t); fs.renameSync(APP_FILE + '.tmp', APP_FILE); console.log('editor page updated from GitHub (' + t.length + ' bytes)');
+  } catch (e) { console.log('editor page not refreshed (' + (e.message || e) + ') — using local copy'); try { fs.utimesSync(APP_FILE, new Date(), new Date()); } catch (_) { } }
+  finally { refreshing = false; }
+}
 const sha = s => crypto.createHash('sha1').update(String(s)).digest('hex');
 const safeName = s => String(s).replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 120);
 const fileName = s => String(s).replace(/[\\\/:*?"<>|\x00-\x1f]/g, '_').replace(/^\.+/, '_').slice(0, 150) || 'video';   // keeps Thai/Lao letters
@@ -50,6 +64,12 @@ const server = http.createServer(async (req, res) => {
   try {
     if (req.method === 'OPTIONS') return send(res, 204, '');
     const u = new URL(req.url, 'http://x'); const parts = u.pathname.split('/').filter(Boolean).map(decodeURIComponent);
+    if (req.method === 'GET' && (u.pathname === '/' || u.pathname === '/index.html')) {   // the editor page itself (no secrets inside)
+      let html; try { html = fs.readFileSync(APP_FILE, 'utf8'); } catch (e) { return send(res, 503, 'ยังไม่มีไฟล์โปรแกรมตัดต่อ (app/index.html) — รอสักครู่แล้วรีเฟรช'); }
+      refreshApp(false);
+      html = html.replace('<head>', '<head><meta name="sk-server" content="1">');
+      return send(res, 200, html, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+    }
     if ((req.headers['x-token'] || u.searchParams.get('t')) !== TOKEN) return send(res, 401, 'unauthorized');
     const [kind, id] = parts;
     if (kind === 'ping') { let free = null, total = null; try { const s = fs.statfsSync(ROOT); free = s.bavail * s.bsize; total = s.blocks * s.bsize; } catch (e) { } return send(res, 200, { ok: true, v: 1, root: ROOT, free, total }); }
@@ -79,7 +99,8 @@ const server = http.createServer(async (req, res) => {
 });
 server.requestTimeout = 0; server.headersTimeout = 60000;
 server.listen(PORT, HOST, () => {
+  refreshApp(true);
   console.log(`Sykhai file server READY (port ${PORT}), files in ${ROOT}`);
   const ips = Object.values(require('os').networkInterfaces()).flat().filter(i => i && i.family === 'IPv4' && !i.internal).map(i => i.address);
-  console.log('Use this address in the editor settings:'); ips.forEach(ip => console.log('   http://' + ip + ':' + PORT));
+  console.log('OPEN THE EDITOR AT (on any computer in the shop):'); ips.forEach(ip => console.log('   http://' + ip + ':' + PORT));
 });

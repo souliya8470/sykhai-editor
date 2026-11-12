@@ -4,7 +4,8 @@
 //  opening a project, exporting, or when you press the Home "sync" button.
 // ============================================================
 const SRV = { up: false, sizes: new Map(), q: [], busy: false, prog: null, label: '', err: '', info: null };
-const srvCfg = () => { try { return JSON.parse(localStorage.getItem('sk_srv') || '{}'); } catch (e) { return {}; } };
+const SRV_SELF = !!document.querySelector('meta[name="sk-server"]');      // page is served by the shop server itself -> same-origin, no CORS/https problems
+const srvCfg = () => { let c = {}; try { c = JSON.parse(localStorage.getItem('sk_srv') || '{}'); } catch (e) { } if (SRV_SELF) c.url = location.origin; return c; };
 const srvOn = () => { const c = srvCfg(); return !!(c.url && c.token); };
 const srvUrl = p => srvCfg().url.trim().replace(/\/+$/, '') + p;
 const srvFetch = (p, o = {}) => fetch(srvUrl(p), Object.assign({}, o, { headers: Object.assign({ 'x-token': srvCfg().token }, o.headers) }));

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.04</title>
+<title>Sykhai Editor v1.05</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -240,15 +240,16 @@ dialog h3{margin:0 0 10px}
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.04
-// APP_VERSION_PREV : 1.03
-// APP_VERSION_PREV_OLDER : 1.02
+// APP_VERSION  : 1.05
+// APP_VERSION_PREV : 1.04
+// APP_VERSION_PREV_OLDER : 1.03
+// 1.05 : editor page can be served by the shop server itself (same-origin, avoids Chrome local-network blocking); server URL auto-set
 // 1.04 : home file server (server/server.js): projects + source media + finished videos stored on shop server; manual sync; auto-download missing media on open
 // 1.03 : Home page (project list), per-project autosave in IndexedDB, rename/duplicate/delete
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.04';
+const APP_VERSION = '1.05';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -1214,7 +1215,8 @@ function initHome() {
 //  opening a project, exporting, or when you press the Home "sync" button.
 // ============================================================
 const SRV = { up: false, sizes: new Map(), q: [], busy: false, prog: null, label: '', err: '', info: null };
-const srvCfg = () => { try { return JSON.parse(localStorage.getItem('sk_srv') || '{}'); } catch (e) { return {}; } };
+const SRV_SELF = !!document.querySelector('meta[name="sk-server"]');      // page is served by the shop server itself -> same-origin, no CORS/https problems
+const srvCfg = () => { let c = {}; try { c = JSON.parse(localStorage.getItem('sk_srv') || '{}'); } catch (e) { } if (SRV_SELF) c.url = location.origin; return c; };
 const srvOn = () => { const c = srvCfg(); return !!(c.url && c.token); };
 const srvUrl = p => srvCfg().url.trim().replace(/\/+$/, '') + p;
 const srvFetch = (p, o = {}) => fetch(srvUrl(p), Object.assign({}, o, { headers: Object.assign({ 'x-token': srvCfg().token }, o.headers) }));
@@ -2359,7 +2361,7 @@ async function init() {
   $('#btnOpen').onclick = () => { const i = document.createElement('input'); i.type = 'file'; i.accept = '.json'; i.onchange = () => i.files[0] && openProject(i.files[0]); i.click(); };
   $('#projName').oninput = e => { D.name = e.target.value; }; $('#projName').onchange = () => commit('rename');
   // settings
-  $('#btnSettings').onclick = () => { const k = loadKeys(); $('#keyClaude').value = k.claude || ''; $('#keyGemini').value = k.gemini || ''; $('#capUsd').value = loadCap(); const sc = srvCfg(); $('#srvUrl').value = sc.url || ''; $('#srvToken').value = sc.token || ''; $('#srvTestMsg').textContent = ''; $('#dlgSettings').showModal(); };
+  $('#btnSettings').onclick = () => { const k = loadKeys(); $('#keyClaude').value = k.claude || ''; $('#keyGemini').value = k.gemini || ''; $('#capUsd').value = loadCap(); const sc = srvCfg(); $('#srvUrl').value = sc.url || ''; $('#srvUrl').disabled = SRV_SELF; $('#srvToken').value = sc.token || ''; $('#srvTestMsg').textContent = ''; $('#dlgSettings').showModal(); };
   $('#srvTest').onclick = async () => { localStorage.setItem('sk_srv', JSON.stringify({ url: $('#srvUrl').value.trim(), token: $('#srvToken').value.trim() })); $('#srvTestMsg').textContent = 'กำลังทดสอบ…'; const ok = await srvPing(); $('#srvTestMsg').textContent = ok ? `✔ เชื่อมต่อได้ · พื้นที่ว่าง ${SRV.info.free != null ? (SRV.info.free / 1e9).toFixed(0) + ' GB' : '-'}` : '✖ ' + SRV.err; };
   $('#setCancel').onclick = () => $('#dlgSettings').close();
   $('#setSave').onclick = () => { saveKeys({ claude: $('#keyClaude').value.trim(), gemini: $('#keyGemini').value.trim() }); localStorage.setItem('sk_cap', String(parseFloat($('#capUsd').value) || 50)); localStorage.setItem('sk_srv', JSON.stringify({ url: $('#srvUrl').value.trim(), token: $('#srvToken').value.trim() })); srvPing().then(ok => ok && srvLoadSizes()); updateCostBadge(); $('#dlgSettings').close(); toast('บันทึกการตั้งค่าแล้ว'); };
