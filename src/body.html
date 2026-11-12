@@ -1,0 +1,78 @@
+<div id="app">
+  <header id="top">
+    <div class="brand">Sykhai <b>Editor</b></div>
+    <input id="projName" value="โปรเจกต์ใหม่" spellcheck="false">
+    <button id="btnUndo" title="ย้อนกลับ (⌘Z)">↶</button>
+    <button id="btnRedo" title="ทำซ้ำ (⌘⇧Z)">↷</button>
+    <span class="sp"></span>
+    <span id="costBadge" title="ค่า AI เดือนนี้ / เพดาน">AI $0.00</span>
+    <button id="btnSettings">⚙ ตั้งค่า</button>
+    <button id="btnSave">💾 บันทึก</button>
+    <button id="btnOpen">📂 เปิด</button>
+    <button id="btnExport" class="primary">⬇ ส่งออก MP4</button>
+    <span class="ver" id="verTag"></span>
+  </header>
+  <main>
+    <aside id="left">
+      <div id="leftTabs"></div>
+      <div id="leftPanes">
+        <div class="lpane on" id="pane-media">
+          <div class="row"><button id="btnImport" class="primary wide">+ นำเข้าไฟล์ (วิดีโอ / รูป / เสียง)</button></div>
+          <input type="file" id="fileIn" multiple accept="video/*,image/*,audio/*,.mov,.mp4,.m4v" hidden>
+          <div id="mediaList"></div>
+        </div>
+        <div class="lpane" id="pane-text"></div>
+        <div class="lpane" id="pane-sticker"></div>
+        <div class="lpane" id="pane-trans"></div>
+        <div class="lpane" id="pane-fx"></div>
+        <div class="lpane" id="pane-audio"></div>
+        <div class="lpane" id="pane-ai"></div>
+      </div>
+    </aside>
+    <section id="center">
+      <div id="stage"><canvas id="pv" width="540" height="960"></canvas><canvas id="ov" width="540" height="960"></canvas></div>
+      <div id="transport">
+        <button id="tpStart" title="กลับไปจุดเริ่ม">⏮</button>
+        <button id="tpPlay" class="primary" title="เล่น/หยุด (Space)">▶</button>
+        <span id="tpTime">00:00.0 / 00:00.0</span>
+        <span class="sp"></span>
+        <button id="tpSplit" title="ตัดที่หัวอ่าน (S)">✂ ตัด</button>
+        <button id="tpDel" title="ลบ (Delete)">🗑 ลบ</button>
+        <button id="tpRipple" title="ลบแล้วดึงคลิปตามมา (Shift+Delete)">🗑⇥</button>
+      </div>
+    </section>
+    <aside id="right"><div id="inspector"></div></aside>
+  </main>
+  <footer id="tl">
+    <div id="tlbar"><span>ไทม์ไลน์</span><span class="sp"></span><label>ซูม <input id="zoom" type="range" min="2" max="6" step="0.05" value="4"></label></div>
+    <div id="tlbody"></div>
+  </footer>
+</div>
+
+<div id="dlgBack" hidden></div>
+<dialog id="dlgSettings">
+  <h3>ตั้งค่า</h3>
+  <div class="fld col"><label>Anthropic API key (Claude — ใช้เลือกประโยคเด่น / แปล / ทำ 3-4 แบบ)</label><input id="keyClaude" type="password" placeholder="sk-ant-..." autocomplete="off"></div>
+  <div class="fld col"><label>Gemini API key (Google AI Studio — ใช้ถอดเสียงภาษาลาว)</label><input id="keyGemini" type="password" placeholder="AIza..." autocomplete="off"></div>
+  <div class="fld"><label>เพดานงบ AI ต่อเดือน (USD)</label><input id="capUsd" type="number" min="1" step="1" value="50" class="num"></div>
+  <div class="hint small">คีย์เก็บในเครื่องนี้เท่านั้น (localStorage ของเบราว์เซอร์) ไม่ถูกส่งไปที่อื่นนอกจากเรียกใช้ API ของ Anthropic/Google โดยตรง</div>
+  <div class="row"><span class="sp"></span><button id="setCancel">ปิด</button><button id="setSave" class="primary">บันทึก</button></div>
+</dialog>
+<dialog id="dlgExport">
+  <h3>ส่งออกวิดีโอ MP4</h3>
+  <div class="hint">1080×1920 · 30fps · ไม่มีลายน้ำ — ระบบเล่นไทม์ไลน์แบบเรียลไทม์เพื่อบันทึก (คลิปยาว 60 วิ = ใช้เวลา ~60 วิ) <b>ห้ามปิด/สลับแท็บขณะส่งออก</b></div>
+  <div class="fld"><label>คุณภาพ</label><select id="expQ"><option value="12000000">สูง (12 Mbps)</option><option value="8000000" selected>มาตรฐาน (8 Mbps)</option><option value="5000000">ประหยัด (5 Mbps)</option></select></div>
+  <div class="progress"><div id="expBar"></div></div><div id="expMsg" class="hint"></div>
+  <div class="row"><span class="sp"></span><button id="expCancel">ปิด</button><button id="expGo" class="primary">เริ่มส่งออก</button></div>
+</dialog>
+<dialog id="dlgAi">
+  <h3 id="aiTitle">AI</h3>
+  <div id="aiBody"></div>
+  <div class="row"><span class="sp"></span><button id="aiClose">ปิด</button></div>
+</dialog>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <filter id="f-sharp1" color-interpolation-filters="sRGB"><feConvolveMatrix order="3" kernelMatrix="0 -0.5 0 -0.5 3 -0.5 0 -0.5 0" preserveAlpha="true" edgeMode="duplicate"/></filter>
+  <filter id="f-sharp2" color-interpolation-filters="sRGB"><feConvolveMatrix order="3" kernelMatrix="0 -1 0 -1 5 -1 0 -1 0" preserveAlpha="true" edgeMode="duplicate"/></filter>
+  <filter id="f-denoise" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="0.7"/></filter>
+</defs></svg>

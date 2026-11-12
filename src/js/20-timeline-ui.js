@@ -1,0 +1,201 @@
+// ============================================================
+//  Timeline UI + media bin
+// ============================================================
+const TL = { pps: 56, labelW: 96 };
+const TRACK_H = { video: 58, text: 36, audio: 44 };
+const tlWidth = () => Math.max(projectEnd() + 14, 40) * TL.pps;
+const CLIP_COL = { video: '#2d6a8f', image: '#7a4fa3', text: '#b9852b', sticker: '#b9602b', audio: '#2f8a5b' };
+
+function rulerTicks() {
+  const total = tlWidth() / TL.pps; let step = 1; const target = 80 / TL.pps;
+  for (const s of [0.5, 1, 2, 5, 10, 15, 30, 60, 120]) { step = s; if (s >= target) break; }
+  let h = '';
+  for (let t = 0; t <= total; t += step) { const x = t * TL.pps; h += `<span style="left:${x}px">${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}${step < 1 ? '.' + Math.round((t % 1) * 10) : ''}</span>`; }
+  return h;
+}
+function clipLabel(it) {
+  if (it.type === 'text') return (it.text || '').replace(/\*/g, '').replace(/\n/g, ' ');
+  if (it.type === 'sticker') return { check: '✔', warning: '⚠', cursor: '☝', brackets: '▢', arrow: '⬇', star: '★', underline: '▁', circle: '◯', emoji: it.text || '😀' }[it.kind] + ' ' + it.kind;
+  const m = MEDIA.get(it.mediaId); return m ? m.name : '?';
+}
+function renderTimeline() {
+  const body = $('#tlbody'); if (!body) return;
+  const sx = body.scrollLeft, sy = body.scrollTop; const W = tlWidth();
+  let h = `<div id="tlinner" style="width:${TL.labelW + W}px"><div id="ruler"><div class="corner"></div><div class="rt" style="width:${W}px">${rulerTicks()}</div></div>`;
+  for (const tr of TRACKS) h += `<div class="trow ${tr.kind}" data-track="${tr.id}" style="height:${TRACK_H[tr.kind]}px"><div class="tlabel">${tr.label}</div><div class="tlane" style="width:${W}px"></div></div>`;
+  h += `<div id="playhead"><i></i></div></div>`;
+  body.innerHTML = h;
+  for (const it of D.items) {
+    const lane = $(`.trow[data-track="${it.track}"] .tlane`, body); if (!lane) continue;
+    const m = MEDIA.get(it.mediaId); const el = document.createElement('div');
+    el.className = 'clip ' + it.type + (it.id === SEL ? ' sel' : '') + (it.hidden ? ' hid' : '');
+    el.dataset.id = it.id; el.style.left = (it.start * TL.pps) + 'px'; el.style.width = Math.max(6, it.dur * TL.pps) + 'px';
+    el.style.setProperty('--c', CLIP_COL[it.type] || '#555');
+    let inner = '';
+    if ((it.type === 'video' || it.type === 'image') && m && m.thumb) inner += `<div class="cbg" style="background-image:url(${m.thumb})"></div>`;
+    if (m && (it.type === 'video' || it.type === 'audio')) inner += `<canvas class="wf"></canvas>`;
+    inner += `<span class="cl">${esc(clipLabel(it))}</span>`;
+    if (it.transIn && it.transIn.type !== 'none') inner += `<b class="trb" title="ทรานสิชัน: ${esc((TRANS[it.transIn.type] || {}).label || '')}" style="width:${Math.max(10, it.transIn.dur * TL.pps)}px">⇄</b>`;
+    if (it.speed && it.speed !== 1) inner += `<em class="spd">${it.speed}x</em>`;
+    if (it.kf) for (const k in it.kf) for (const p of it.kf[k]) inner += `<s class="kfd" style="left:${p.t * TL.pps}px"></s>`;
+    inner += `<i class="th l"></i><i class="th r"></i>`;
+    el.innerHTML = inner; lane.appendChild(el);
+    const cv = $('canvas.wf', el); if (cv) drawWave(cv, it, m);
+  }
+  body.scrollLeft = sx; body.scrollTop = sy; updatePlayhead();
+}
+function drawWave(cv, it, m) {
+  if (!m.peaks) return; const w = Math.min(4000, Math.max(4, Math.round(it.dur * TL.pps))), h = 22; cv.width = w; cv.height = h;
+  const c = cv.getContext('2d'); c.fillStyle = it.type === 'audio' ? 'rgba(255,255,255,.7)' : 'rgba(255,255,255,.45)';
+  const P = m.peaks, md = m.duration || 1;
+  for (let x = 0; x < w; x++) {
+    const tt = (it.in || 0) + (x / w) * it.dur * (it.speed || 1); const idx = Math.floor(((it.loop ? tt % md : tt) / md) * P.length);
+    const v = P[clamp(idx, 0, P.length - 1)] || 0; const bh = Math.max(1, Math.min(h, v * h * 1.4)); c.fillRect(x, (h - bh) / 2, 1, bh);
+  }
+}
+function updatePlayhead() {
+  const ph = $('#playhead'); if (!ph) return; ph.style.left = (TL.labelW + PB.t * TL.pps) + 'px';
+  const body = $('#tlbody'); const x = PB.t * TL.pps;
+  if (PB.playing && (x < body.scrollLeft || x > body.scrollLeft + body.clientWidth - TL.labelW - 40)) body.scrollLeft = Math.max(0, x - 100);
+}
+
+// ---------- add items ----------
+function addMediaToTimeline(mediaId, trackId, start) {
+  const m = MEDIA.get(mediaId); if (!m) return null;
+  let it;
+  if (m.type === 'audio') {
+    const tr = trackId && TRACK_KIND[trackId] === 'audio' ? trackId : 'A1';
+    const st = start ?? PB.t; it = mkAudio(tr, mediaId, st, m.duration);
+    if (tr === 'A1') { it.dur = Math.max(it.dur, 0); }
+  } else {
+    let tr = trackId && TRACK_KIND[trackId] === 'video' ? trackId : null;
+    const dur = m.type === 'image' ? 3 : m.duration;
+    let st = start;
+    if (st == null) { st = tr ? PB.t : D.items.filter(i => i.track === 'V1').reduce((a, i) => Math.max(a, i.start + i.dur), 0); }
+    if (!tr) tr = 'V1';
+    it = mkMedia(tr, mediaId, st, 0, dur);
+    if (m.type === 'video') { it.vol = 1; if (m.hasAudio) it.normalize = true; }
+  }
+  addItem(it); commit('add'); select(it.id); return it;
+}
+function dropTimeFromEvent(e) { const body = $('#tlbody'); const r = body.getBoundingClientRect(); return Math.max(0, (e.clientX - r.left + body.scrollLeft - TL.labelW) / TL.pps); }
+
+// ---------- pointer interactions ----------
+function snapPoints(excludeId) {
+  const pts = [0, PB.t]; for (const o of D.items) { if (o.id === excludeId) continue; pts.push(o.start, o.start + o.dur); } return pts;
+}
+function snapVal(v, pts, tol) { let best = v, bd = tol; for (const p of pts) { const d = Math.abs(p - v); if (d < bd) { bd = d; best = p; } } return best; }
+
+function initTimelineEvents() {
+  const body = $('#tlbody');
+  body.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return;
+    const clipEl = e.target.closest('.clip');
+    const rulerEl = e.target.closest('#ruler');
+    if (rulerEl && !e.target.closest('.corner')) { scrubStart(e); return; }
+    if (!clipEl) {
+      const lane = e.target.closest('.tlane'); if (lane) { select(null); const r = $('#tlinner').getBoundingClientRect(); const t = (e.clientX - r.left - TL.labelW) / TL.pps; pause(); seek(Math.max(0, t)); scrubStart(e, true); }
+      return;
+    }
+    const it = getItem(clipEl.dataset.id); if (!it) return;
+    select(it.id);
+    const mode = e.target.classList.contains('th') ? (e.target.classList.contains('l') ? 'tl' : 'tr') : 'move';
+    const o = { start: it.start, dur: it.dur, in: it.in || 0, track: it.track }; const x0 = e.clientX; const pts = snapPoints(it.id); const tol = 9 / TL.pps; let moved = false;
+    const m = MEDIA.get(it.mediaId); const sp = it.speed || 1;
+    const move = ev => {
+      const dt = (ev.clientX - x0) / TL.pps; if (Math.abs(ev.clientX - x0) > 2) moved = true; if (!moved && mode === 'move' && Math.abs(ev.clientY - e.clientY) < 3) return;
+      if (mode === 'move') {
+        let s = Math.max(0, o.start + dt); const s1 = snapVal(s, pts, tol), s2 = snapVal(s + o.dur, pts, tol) - o.dur; s = Math.abs(s1 - s) <= Math.abs(s2 - s) ? s1 : s2; it.start = Math.max(0, s);
+        const rowEl = document.elementFromPoint(ev.clientX, ev.clientY); const row = rowEl && rowEl.closest ? rowEl.closest('.trow') : null;
+        if (row && TRACK_KIND[row.dataset.track] === TRACK_KIND[o.track]) it.track = row.dataset.track;
+      } else if (mode === 'tl') {
+        let s = snapVal(o.start + dt, pts, tol); let d = s - o.start;
+        if (it.type === 'video' || it.type === 'audio') d = Math.max(d, -(o.in / sp));
+        d = Math.min(d, o.dur - 0.1); d = Math.max(d, -o.start);
+        it.start = o.start + d; it.dur = o.dur - d; if (it.type === 'video' || it.type === 'audio') it.in = o.in + d * sp;
+        if (it.kf) { /* keyframes stay relative to start */ }
+      } else {
+        let e2 = snapVal(o.start + o.dur + dt, pts, tol); let d = e2 - o.start; d = Math.max(0.1, d);
+        if ((it.type === 'video') && m) d = Math.min(d, (m.duration - o.in) / sp);
+        if (it.type === 'audio' && m && !it.loop) d = Math.min(d, m.duration - o.in);
+        it.dur = d;
+      }
+      renderTimeline(); dirty(); emit('inspect-refresh');
+    };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); if (moved) { commit('edit'); } };
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
+    e.preventDefault();
+  });
+  body.addEventListener('wheel', e => {
+    if (e.ctrlKey || e.metaKey) { e.preventDefault(); setZoom(TL.pps * (e.deltaY < 0 ? 1.15 : 0.87)); }
+  }, { passive: false });
+  // drag & drop from media bin
+  body.addEventListener('dragover', e => { if (e.dataTransfer.types.includes('text/mediaid')) e.preventDefault(); });
+  body.addEventListener('drop', e => {
+    const id = e.dataTransfer.getData('text/mediaid'); if (!id) return; e.preventDefault();
+    const row = e.target.closest('.trow'); addMediaToTimeline(id, row ? row.dataset.track : null, dropTimeFromEvent(e));
+  });
+}
+function scrubStart(e, already) {
+  const body = $('#tlbody'); const wasPlaying = PB.playing; pause();
+  const f = ev => { const r = $('#tlinner').getBoundingClientRect(); seek(Math.max(0, (ev.clientX - r.left - TL.labelW) / TL.pps)); };
+  if (!already) f(e);
+  const up = () => { window.removeEventListener('pointermove', f); window.removeEventListener('pointerup', up); if (wasPlaying) play(); };
+  window.addEventListener('pointermove', f); window.addEventListener('pointerup', up);
+}
+function setZoom(p) { TL.pps = clamp(p, 8, 400); const z = $('#zoom'); if (z) z.value = Math.log(TL.pps); renderTimeline(); }
+
+// ---------- editing commands ----------
+function cmdSplit() {
+  const t = PB.t; let target = SEL ? getItem(SEL) : null;
+  const hit = it => it && t > it.start + 0.05 && t < it.start + it.dur - 0.05;
+  const list = hit(target) ? [target] : D.items.filter(i => hit(i) && (i.type === 'video' || i.type === 'image' || i.type === 'audio'));
+  if (!list.length) { toast('เลื่อนหัวอ่านไปกลางคลิปก่อนตัด'); return; }
+  let last; list.forEach(i => { last = splitItem(i.id, t); }); commit('split'); if (last) select(last.id);
+}
+function cmdDelete(ripple) { if (!SEL) return; removeItem(SEL, ripple); SEL = null; commit('delete'); emit('sel'); }
+function cmdCloseGaps(track) {
+  const list = itemsOn(track); let t = 0; for (const it of list) { if (it.start > t + 1e-3) it.start = t; t = it.start + it.dur; } commit('gaps');
+}
+
+// ---------- media bin ----------
+function renderMediaBin() {
+  const box = $('#mediaList'); if (!box) return; const arr = [...MEDIA.values()];
+  box.innerHTML = arr.length ? '' : '<div class="empty">ยังไม่มีไฟล์ — กดปุ่ม “นำเข้า” หรือลากไฟล์มาวางที่นี่</div>';
+  for (const m of arr) {
+    const d = document.createElement('div'); d.className = 'mi'; d.draggable = true; d.dataset.id = m.id;
+    d.innerHTML = `<div class="mth" style="${m.thumb ? `background-image:url(${m.thumb})` : ''}">${m.type === 'audio' ? '♪' : ''}<span class="dur">${m.type === 'image' ? 'ภาพ' : fmt(m.duration)}</span></div><div class="mn" title="${esc(m.name)}">${esc(m.name)}</div><div class="mb"><button data-act="add">+ ใส่ไทม์ไลน์</button><button data-act="del" title="ลบ">×</button></div>${m.type === 'video' ? `<div class="mtag">${m.w}×${m.h}${m.hasAudio === false ? ' · ไม่มีเสียง' : ''}</div>` : ''}`;
+    d.addEventListener('dragstart', e => { e.dataTransfer.setData('text/mediaid', m.id); });
+    d.addEventListener('dblclick', () => addMediaToTimeline(m.id));
+    d.querySelector('[data-act="add"]').onclick = () => addMediaToTimeline(m.id);
+    d.querySelector('[data-act="del"]').onclick = () => { if (D.items.some(i => i.mediaId === m.id) && !confirm('ไฟล์นี้ถูกใช้ในไทม์ไลน์ — ลบคลิปที่ใช้ไฟล์นี้ด้วย?')) return; D.items = D.items.filter(i => i.mediaId !== m.id); MEDIA.delete(m.id); commit('media'); renderMediaBin(); };
+    box.appendChild(d);
+  }
+}
+
+async function importFiles(files) {
+  const list = [...files]; if (!list.length) return;
+  for (const f of list) {
+    const type = f.type.startsWith('video') || /\.(mov|mp4|m4v|webm)$/i.test(f.name) ? 'video' : f.type.startsWith('image') ? 'image' : f.type.startsWith('audio') || /\.(mp3|wav|m4a|aac|ogg)$/i.test(f.name) ? 'audio' : null;
+    if (!type) { toast('ไม่รองรับไฟล์: ' + f.name); continue; }
+    const m = { id: f.name + '|' + f.size, name: f.name, type, file: f, url: URL.createObjectURL(f), duration: 0, w: 0, h: 0 };
+    try {
+      if (type === 'image') {
+        const img = new Image(); img.src = m.url; await img.decode(); m.img = img; m.w = img.naturalWidth; m.h = img.naturalHeight; m.thumb = thumbFrom(img, img.naturalWidth, img.naturalHeight);
+      } else {
+        const el = document.createElement(type === 'video' ? 'video' : 'audio'); el.preload = 'auto'; el.muted = true; el.src = m.url;
+        await new Promise((res, rej) => { el.onloadedmetadata = res; el.onerror = () => rej(new Error('load')); setTimeout(() => rej(new Error('timeout')), 20000); });
+        m.duration = el.duration; if (type === 'video') { m.w = el.videoWidth; m.h = el.videoHeight; await seekTo(el, Math.min(0.3, m.duration / 3)); m.thumb = thumbFrom(el, m.w, m.h); }
+        el.removeAttribute('src'); el.load();
+      }
+    } catch (e) { console.warn(e); toast('เปิดไฟล์ไม่ได้: ' + f.name + ' (ลองไฟล์ H.264 / mp4)'); URL.revokeObjectURL(m.url); continue; }
+    MEDIA.set(m.id, m); renderMediaBin(); emit('media-added', m);
+    if (type !== 'image') analyzeAudio(m).then(() => { renderMediaBin(); renderTimeline(); });
+  }
+  toast('นำเข้าแล้ว ' + list.length + ' ไฟล์');
+}
+function seekTo(el, t) { return new Promise(res => { const done = () => { el.removeEventListener('seeked', done); res(); }; el.addEventListener('seeked', done); try { el.currentTime = t; } catch (e) { res(); } setTimeout(res, 3000); }); }
+function thumbFrom(src, w, h) {
+  const c = document.createElement('canvas'); const k = 160 / Math.max(w, h); c.width = Math.max(2, Math.round(w * k)); c.height = Math.max(2, Math.round(h * k));
+  try { c.getContext('2d').drawImage(src, 0, 0, c.width, c.height); return c.toDataURL('image/jpeg', 0.7); } catch (e) { return ''; }
+}
