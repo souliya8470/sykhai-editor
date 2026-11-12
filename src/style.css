@@ -12,14 +12,14 @@ input[type=text],input[type=password],input[type=number],input:not([type]),selec
 textarea{width:100%;resize:vertical}
 .sp{flex:1}
 hr{border:0;border-top:1px solid var(--ln);margin:10px 0}
-#app{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:46px minmax(0,1fr) 300px;height:100vh;width:100vw;overflow:hidden}
+#app{position:relative;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:46px minmax(0,1fr) var(--tlh,300px);height:100vh;width:100vw;overflow:hidden}
 #top{display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--p1);border-bottom:1px solid var(--ln)}
 .brand{font-size:15px;letter-spacing:.3px;margin-right:6px}.brand b{color:var(--ac)}
 #projName{width:200px;background:transparent;border-color:transparent}#projName:hover,#projName:focus{border-color:var(--ln)}
 #costBadge{background:var(--p2);border:1px solid var(--ln);border-radius:20px;padding:3px 10px;color:var(--mu);font-size:12px}
 #costBadge.warn{color:#ffb84d;border-color:#ffb84d}#costBadge.over{color:var(--red);border-color:var(--red)}
 .ver{color:var(--mu);font-size:11px}
-main{display:grid;grid-template-columns:300px minmax(0,1fr) 310px;min-height:0}
+main{display:grid;grid-template-columns:var(--lw,300px) minmax(0,1fr) var(--rw,310px);min-height:0}
 #left,#right{background:var(--p1);display:flex;flex-direction:column;min-height:0}
 #left{border-right:1px solid var(--ln)}#right{border-left:1px solid var(--ln)}
 #leftTabs{display:flex;flex-wrap:wrap;gap:3px;padding:6px;border-bottom:1px solid var(--ln)}
@@ -140,3 +140,25 @@ dialog h3{margin:0 0 10px}
 #srcBadge button{font-size:11px;padding:3px 8px}
 #srcSeek{flex:1;min-width:60px}
 #srcSeek[hidden]{display:none}
+
+/* resizable layout */
+.split{position:absolute;z-index:30;background:transparent;transition:background .12s}
+.split:hover,.split.drag{background:rgba(46,230,197,.55)}
+.split.v{top:46px;bottom:var(--tlh,300px);width:7px;cursor:col-resize}
+#spL{left:calc(var(--lw,300px) - 3px)}#spR{right:calc(var(--rw,310px) - 3px)}
+.split.h{left:0;right:0;height:7px;bottom:calc(var(--tlh,300px) - 3px);cursor:row-resize}
+body.resizing{user-select:none}body.resizing *{cursor:inherit!important}
+.trh{position:absolute;left:0;right:0;bottom:-3px;height:7px;cursor:row-resize;z-index:8}
+.trh:hover,.trh.drag{background:rgba(46,230,197,.55)}
+/* clip waveform + volume line */
+.clip.tall .cbg{bottom:var(--wfh);background-size:auto 100%}
+.clip.tall .wf{height:var(--wfh);background:rgba(0,0,0,.28)}
+.clip .vl{position:absolute;left:0;right:0;height:0;border-top:2px solid rgba(255,255,255,.9);z-index:4;pointer-events:none}
+.clip .vl u{position:absolute;top:-8px;left:-1px;right:-1px;height:14px;pointer-events:auto;cursor:ns-resize;text-decoration:none}
+.clip .vl u::before,.clip .vl u::after{content:"";position:absolute;top:2px;width:8px;height:8px;border-radius:50%;background:#fff;border:1px solid #333}
+.clip .vl u::before{left:3px}.clip .vl u::after{right:3px}
+.clip .vl b{position:absolute;left:14px;top:-17px;font-size:10px;font-weight:600;background:rgba(0,0,0,.75);padding:0 4px;border-radius:3px;display:none;pointer-events:none}
+.clip .vl.drag b{display:block}
+/* level meter */
+#vu{display:inline-block;width:56px;height:8px;background:#0c0e12;border:1px solid var(--ln);border-radius:4px;overflow:hidden;flex:none}
+#vu i{display:block;height:100%;width:0;background:linear-gradient(90deg,#2ee6c5 0 60%,#ffd60a 60% 85%,#ff4d5e 85%)}

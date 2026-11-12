@@ -3,6 +3,10 @@
 // ============================================================
 const TL = { pps: 56, labelW: 96 };
 const TRACK_H = { video: 58, text: 36, audio: 44 };
+let TH = {}; try { TH = JSON.parse(localStorage.getItem('sk_trh') || '{}') || {}; } catch (e) { }
+const trackH = tr => TH[tr.id] || (tr.id === 'V1' ? 84 : TRACK_H[tr.kind]);
+const VOL_MAX = 1.5;
+function wfHeight(it) { const tr = TRACKS.find(t => t.id === it.track); const ch = trackH(tr) - 6; return ch >= 66 ? Math.round(ch * .4) : 22; }
 const tlWidth = () => Math.max(projectEnd() + 14, 40) * TL.pps;
 const CLIP_COL = { video: '#2d6a8f', image: '#7a4fa3', text: '#b9852b', sticker: '#b9602b', audio: '#2f8a5b' };
 
@@ -22,7 +26,7 @@ function renderTimeline() {
   const body = $('#tlbody'); if (!body) return;
   const sx = body.scrollLeft, sy = body.scrollTop; const W = tlWidth();
   let h = `<div id="tlinner" style="width:${TL.labelW + W}px"><div id="ruler"><div class="corner"></div><div class="rt" style="width:${W}px">${rulerTicks()}</div></div>`;
-  for (const tr of TRACKS) h += `<div class="trow ${tr.kind}" data-track="${tr.id}" style="height:${TRACK_H[tr.kind]}px"><div class="tlabel">${tr.label}</div><div class="tlane" style="width:${W}px"></div></div>`;
+  for (const tr of TRACKS) h += `<div class="trow ${tr.kind}" data-track="${tr.id}" style="height:${trackH(tr)}px"><div class="tlabel">${tr.label}</div><div class="tlane" style="width:${W}px"></div><div class="trh" title="ลากเพื่อปรับความสูงของแถว"></div></div>`;
   h += `<div id="playhead"><i></i></div></div>`;
   body.innerHTML = h;
   for (const it of D.items) {
@@ -33,7 +37,10 @@ function renderTimeline() {
     el.style.setProperty('--c', CLIP_COL[it.type] || '#555');
     let inner = '';
     if ((it.type === 'video' || it.type === 'image') && m && m.thumb) inner += `<div class="cbg" style="background-image:url(${m.thumb})"></div>`;
-    if (m && (it.type === 'video' || it.type === 'audio')) inner += `<canvas class="wf"></canvas>`;
+    const hasWf = m && (it.type === 'video' || it.type === 'audio'); const wfh = hasWf ? wfHeight(it) : 0; const tall = hasWf && wfh > 22;
+    if (tall) { el.classList.add('tall'); el.style.setProperty('--wfh', wfh + 'px'); }
+    if (hasWf) inner += `<canvas class="wf" style="height:${wfh}px"></canvas>`;
+    if (hasWf && tall && m.hasAudio !== false) { const ch = trackH(TRACKS.find(t => t.id === it.track)) - 9; inner += `<div class="vl" style="top:${ch - wfh + wfh * (1 - clamp(it.vol ?? 1, 0, VOL_MAX) / VOL_MAX)}px"><u></u><b>${Math.round((it.vol ?? 1) * 100)}%</b></div>`; }
     inner += `<span class="cl">${esc(clipLabel(it))}</span>`;
     if (it.transIn && it.transIn.type !== 'none') inner += `<b class="trb" title="ทรานสิชัน: ${esc((TRANS[it.transIn.type] || {}).label || '')}" style="width:${Math.max(10, it.transIn.dur * TL.pps)}px">⇄</b>`;
     if (it.speed && it.speed !== 1) inner += `<em class="spd">${it.speed}x</em>`;
@@ -52,12 +59,13 @@ function renderTimeline() {
   body.scrollLeft = sx; body.scrollTop = sy; updatePlayhead();
 }
 function drawWave(cv, it, m) {
-  if (!m.peaks) return; const w = Math.min(4000, Math.max(4, Math.round(it.dur * TL.pps))), h = 22; cv.width = w; cv.height = h;
+  if (!m.peaks) return; const w = Math.min(4000, Math.max(4, Math.round(it.dur * TL.pps))), h = wfHeight(it); cv.width = w; cv.height = h;
+  const vg = it.type === 'audio' || (it.vol ?? 1) !== 1 ? clamp(it.vol ?? 1, 0, VOL_MAX) : 1;
   const c = cv.getContext('2d'); c.fillStyle = it.type === 'audio' ? 'rgba(255,255,255,.7)' : 'rgba(255,255,255,.45)';
   const P = m.peaks, md = m.duration || 1;
   for (let x = 0; x < w; x++) {
     const tt = (it.in || 0) + (x / w) * it.dur * (it.speed || 1); const idx = Math.floor(((it.loop ? tt % md : tt) / md) * P.length);
-    const v = P[clamp(idx, 0, P.length - 1)] || 0; const bh = Math.max(1, Math.min(h, v * h * 1.4)); c.fillRect(x, (h - bh) / 2, 1, bh);
+    const v = Math.min(1, (P[clamp(idx, 0, P.length - 1)] || 0) * vg); const bh = Math.max(1, Math.min(h, v * h * 1.4)); c.fillRect(x, (h - bh) / 2, 1, bh);
   }
 }
 function updatePlayhead() {
@@ -98,6 +106,8 @@ function initTimelineEvents() {
   body.addEventListener('pointerdown', e => {
     if (e.button !== 0) return;
     const jn = e.target.closest('.junc'); if (jn) { select(jn.dataset.id); showTab('trans'); return; }
+    const trh = e.target.closest('.trh'); if (trh) { e.preventDefault(); rowResizeStart(e, trh.closest('.trow')); return; }
+    const vlu = e.target.closest('.vl u'); if (vlu) { e.preventDefault(); e.stopPropagation(); volDragStart(e, vlu.closest('.clip')); return; }
     const clipEl = e.target.closest('.clip');
     const rulerEl = e.target.closest('#ruler');
     if (rulerEl && !e.target.closest('.corner')) { scrubStart(e); return; }
@@ -233,4 +243,43 @@ function seekTo(el, t) { return new Promise(res => { const done = () => { el.rem
 function thumbFrom(src, w, h) {
   const c = document.createElement('canvas'); const k = 160 / Math.max(w, h); c.width = Math.max(2, Math.round(w * k)); c.height = Math.max(2, Math.round(h * k));
   try { c.getContext('2d').drawImage(src, 0, 0, c.width, c.height); return c.toDataURL('image/jpeg', 0.7); } catch (e) { return ''; }
+}
+
+// ---------- track height drag + volume line drag ----------
+function rowResizeStart(e, row) {
+  const tr = TRACKS.find(t => t.id === row.dataset.track); if (!tr) return; const y0 = e.clientY, h0 = trackH(tr); const handle = $('.trh', row); handle.classList.add('drag'); document.body.classList.add('resizing');
+  const mv = ev => { TH[tr.id] = clamp(Math.round(h0 + ev.clientY - y0), 26, 320); row.style.height = TH[tr.id] + 'px'; };
+  const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); document.body.classList.remove('resizing'); try { localStorage.setItem('sk_trh', JSON.stringify(TH)); } catch (e) { } renderTimeline(); };
+  window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
+}
+function volDragStart(e, clipEl) {
+  const it = getItem(clipEl.dataset.id); if (!it) return; if (SEL !== it.id) { select(it.id); clipEl = $(`.clip[data-id="${it.id}"]`); if (!clipEl) return; }
+  const m = MEDIA.get(it.mediaId); const vl = $('.vl', clipEl), cv = $('canvas.wf', clipEl); const wfh = wfHeight(it); const chh = clipEl.clientHeight; const top0 = chh - wfh;
+  const v0 = it.vol ?? 1; vl.classList.add('drag'); document.body.classList.add('resizing');
+  const mv = ev => {
+    const r = clipEl.getBoundingClientRect(); const y = clamp(ev.clientY - r.top - 1, top0, chh);
+    let v = (1 - (y - top0) / wfh) * VOL_MAX; if (Math.abs(v - 1) < .04) v = 1; v = Math.round(v * 100) / 100; it.vol = v;
+    vl.style.top = (top0 + wfh * (1 - v / VOL_MAX)) + 'px'; $('b', vl).textContent = Math.round(v * 100) + '%'; if (m && cv) drawWave(cv, it, m);
+    if (typeof refreshInspectorValues === 'function') refreshInspectorValues();
+  };
+  const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); document.body.classList.remove('resizing'); vl.classList.remove('drag'); if ((it.vol ?? 1) !== v0) commit('vol'); };
+  window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
+}
+// ---------- resizable panels ----------
+function initSplitters() {
+  const root = document.documentElement; let L = {}; try { L = JSON.parse(localStorage.getItem('sk_layout') || '{}') || {}; } catch (e) { }
+  const apply = () => { if (L.lw) root.style.setProperty('--lw', L.lw + 'px'); if (L.rw) root.style.setProperty('--rw', L.rw + 'px'); if (L.tlh) root.style.setProperty('--tlh', L.tlh + 'px'); };
+  apply();
+  const bind = (id, get, set) => {
+    const h = $(id); h.addEventListener('pointerdown', e => {
+      e.preventDefault(); const x0 = e.clientX, y0 = e.clientY, v0 = get(); h.classList.add('drag'); document.body.classList.add('resizing');
+      const mv = ev => { set(v0, ev.clientX - x0, ev.clientY - y0); apply(); window.dispatchEvent(new Event('resize')); };
+      const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); h.classList.remove('drag'); document.body.classList.remove('resizing'); try { localStorage.setItem('sk_layout', JSON.stringify(L)); } catch (e) { } };
+      window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
+    });
+    h.addEventListener('dblclick', () => { delete L[id === '#spL' ? 'lw' : id === '#spR' ? 'rw' : 'tlh']; root.style.removeProperty(id === '#spL' ? '--lw' : id === '#spR' ? '--rw' : '--tlh'); try { localStorage.setItem('sk_layout', JSON.stringify(L)); } catch (e) { } });
+  };
+  bind('#spL', () => $('#left').getBoundingClientRect().width, (v, dx) => { L.lw = clamp(Math.round(v + dx), 200, 560); });
+  bind('#spR', () => $('#right').getBoundingClientRect().width, (v, dx) => { L.rw = clamp(Math.round(v - dx), 220, 560); });
+  bind('#spT', () => $('#tl').getBoundingClientRect().height, (v, dx, dy) => { L.tlh = clamp(Math.round(v - dy), 120, Math.max(160, innerHeight - 260)); });
 }

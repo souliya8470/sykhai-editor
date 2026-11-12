@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.07
-// APP_VERSION_PREV : 1.06
-// APP_VERSION_PREV_OLDER : 1.05
+// APP_VERSION  : 1.08
+// APP_VERSION_PREV : 1.07
+// APP_VERSION_PREV_OLDER : 1.06
+// 1.08 : draggable panel splitters (left/right/timeline height, saved), draggable track heights, tall clips show waveform + draggable volume line, live level meter
 // 1.07 : click a file in the media bin to watch it in the preview in real time (play/pause/seek) before adding it to the timeline
 // 1.06 : editing style guide (paste notes from ChatGPT brainstorming) used by key-points + 4-variant AI
 // 1.05 : editor page can be served by the shop server itself (same-origin, avoids Chrome local-network blocking); server URL auto-set
@@ -13,7 +14,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.07';
+const APP_VERSION = '1.08';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];

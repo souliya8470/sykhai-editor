@@ -1,7 +1,7 @@
 // ============================================================
 //  Audio graph + transport (play / seek / sync of media elements)
 // ============================================================
-let AC = null, MASTER = null, MONITOR = null, EXPDEST = null;
+let AC = null, MASTER = null, MONITOR = null, EXPDEST = null, ANALYSER = null, _vuBuf = null, _vuLvl = 0;
 function ensureAudio() {
   if (AC) return AC;
   AC = new (window.AudioContext || window.webkitAudioContext)();
@@ -11,6 +11,7 @@ function ensureAudio() {
   MONITOR = AC.createGain();
   MASTER.connect(comp); comp.connect(MONITOR); MONITOR.connect(AC.destination);
   EXPDEST = AC.createMediaStreamDestination(); comp.connect(EXPDEST);
+  ANALYSER = AC.createAnalyser(); ANALYSER.fftSize = 512; comp.connect(ANALYSER); _vuBuf = new Uint8Array(ANALYSER.fftSize);
   return AC;
 }
 function connectEl(el) {
@@ -47,6 +48,12 @@ function pause() {
   for (const r of APOOL.values()) { try { r.el.pause(); } catch (e) { } }
   emit('transport');
 }
+function vuUpdate() {
+  const bar = $('#vu i'); if (!bar) return; const active = (PB.playing || (SRC.el && SRC.el.paused === false)) && ANALYSER;
+  let lvl = 0;
+  if (active) { ANALYSER.getByteTimeDomainData(_vuBuf); let pk = 0; for (let i = 0; i < _vuBuf.length; i++) { const v = Math.abs(_vuBuf[i] - 128) / 128; if (v > pk) pk = v; } lvl = Math.min(1, Math.pow(pk, .6)); }
+  _vuLvl = lvl > _vuLvl ? lvl : _vuLvl * .86; bar.style.width = (_vuLvl * 100).toFixed(0) + '%';
+}
 function togglePlay() { if (SRC.m) return srcToggle(); PB.playing ? pause() : play(); }
 
 // ---------- source preview (click a file in the media bin -> watch it in real time, like CapCut) ----------
@@ -68,7 +75,7 @@ function srcOpen(id) {
   else {
     const el = document.createElement(m.type === 'audio' ? 'audio' : 'video'); el.playsInline = true; el.preload = 'auto'; el.src = m.url;
     el.addEventListener('ended', () => { $('#tpPlay').textContent = '▶'; });
-    SRC.el = el; el.play().catch(() => { });
+    SRC.el = el; el.crossOrigin = 'anonymous'; ensureAudio(); if (AC.state !== 'running') AC.resume(); el.src = m.url; connectEl(el); el.play().catch(() => { });
   }
   $$('#mediaList .mi').forEach(x => x.classList.toggle('sel', x.dataset.id === id));
   $('#srcName').textContent = m.name; $('#srcBadge').hidden = false;
@@ -182,6 +189,7 @@ function syncMedia(force) {
 
 // ---------- main loop ----------
 function tick() {
+  vuUpdate();
   if (PB.playing && !PB.exporting) {
     PB.t = PB.t0 + (performance.now() - PB.wall0) / 1000;
     if (PB.t >= durEnd()) { PB.t = durEnd(); pause(); emit('ended'); }

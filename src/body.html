@@ -36,7 +36,7 @@
       <div id="transport">
         <button id="tpStart" title="กลับไปจุดเริ่ม">⏮</button>
         <button id="tpPlay" class="primary" title="เล่น/หยุด (Space)">▶</button>
-        <input id="srcSeek" type="range" min="0" max="1000" value="0" hidden><span id="tpTime">00:00.0 / 00:00.0</span>
+        <input id="srcSeek" type="range" min="0" max="1000" value="0" hidden><span id="vu" title="ระดับเสียง"><i></i></span><span id="tpTime">00:00.0 / 00:00.0</span>
         <span class="sp"></span>
         <button id="tpSplit" title="ตัดที่หัวอ่าน (S)">✂ ตัด</button>
         <button id="tpDel" title="ลบ (Delete)">🗑 ลบ</button>
@@ -49,6 +49,7 @@
     <div id="tlbar"><span>ไทม์ไลน์</span><span class="sp"></span><label>ซูม <input id="zoom" type="range" min="2" max="6" step="0.05" value="4"></label></div>
     <div id="tlbody"></div>
   </footer>
+  <div class="split v" id="spL" title="ลากเพื่อปรับความกว้าง"></div><div class="split v" id="spR" title="ลากเพื่อปรับความกว้าง"></div><div class="split h" id="spT" title="ลากเพื่อปรับความสูงของไทม์ไลน์"></div>
 </div>
 
 <div id="home">

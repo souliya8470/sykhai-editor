@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.07</title>
+<title>Sykhai Editor v1.08</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -19,14 +19,14 @@ input[type=text],input[type=password],input[type=number],input:not([type]),selec
 textarea{width:100%;resize:vertical}
 .sp{flex:1}
 hr{border:0;border-top:1px solid var(--ln);margin:10px 0}
-#app{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:46px minmax(0,1fr) 300px;height:100vh;width:100vw;overflow:hidden}
+#app{position:relative;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:46px minmax(0,1fr) var(--tlh,300px);height:100vh;width:100vw;overflow:hidden}
 #top{display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--p1);border-bottom:1px solid var(--ln)}
 .brand{font-size:15px;letter-spacing:.3px;margin-right:6px}.brand b{color:var(--ac)}
 #projName{width:200px;background:transparent;border-color:transparent}#projName:hover,#projName:focus{border-color:var(--ln)}
 #costBadge{background:var(--p2);border:1px solid var(--ln);border-radius:20px;padding:3px 10px;color:var(--mu);font-size:12px}
 #costBadge.warn{color:#ffb84d;border-color:#ffb84d}#costBadge.over{color:var(--red);border-color:var(--red)}
 .ver{color:var(--mu);font-size:11px}
-main{display:grid;grid-template-columns:300px minmax(0,1fr) 310px;min-height:0}
+main{display:grid;grid-template-columns:var(--lw,300px) minmax(0,1fr) var(--rw,310px);min-height:0}
 #left,#right{background:var(--p1);display:flex;flex-direction:column;min-height:0}
 #left{border-right:1px solid var(--ln)}#right{border-left:1px solid var(--ln)}
 #leftTabs{display:flex;flex-wrap:wrap;gap:3px;padding:6px;border-bottom:1px solid var(--ln)}
@@ -148,6 +148,28 @@ dialog h3{margin:0 0 10px}
 #srcSeek{flex:1;min-width:60px}
 #srcSeek[hidden]{display:none}
 
+/* resizable layout */
+.split{position:absolute;z-index:30;background:transparent;transition:background .12s}
+.split:hover,.split.drag{background:rgba(46,230,197,.55)}
+.split.v{top:46px;bottom:var(--tlh,300px);width:7px;cursor:col-resize}
+#spL{left:calc(var(--lw,300px) - 3px)}#spR{right:calc(var(--rw,310px) - 3px)}
+.split.h{left:0;right:0;height:7px;bottom:calc(var(--tlh,300px) - 3px);cursor:row-resize}
+body.resizing{user-select:none}body.resizing *{cursor:inherit!important}
+.trh{position:absolute;left:0;right:0;bottom:-3px;height:7px;cursor:row-resize;z-index:8}
+.trh:hover,.trh.drag{background:rgba(46,230,197,.55)}
+/* clip waveform + volume line */
+.clip.tall .cbg{bottom:var(--wfh);background-size:auto 100%}
+.clip.tall .wf{height:var(--wfh);background:rgba(0,0,0,.28)}
+.clip .vl{position:absolute;left:0;right:0;height:0;border-top:2px solid rgba(255,255,255,.9);z-index:4;pointer-events:none}
+.clip .vl u{position:absolute;top:-8px;left:-1px;right:-1px;height:14px;pointer-events:auto;cursor:ns-resize;text-decoration:none}
+.clip .vl u::before,.clip .vl u::after{content:"";position:absolute;top:2px;width:8px;height:8px;border-radius:50%;background:#fff;border:1px solid #333}
+.clip .vl u::before{left:3px}.clip .vl u::after{right:3px}
+.clip .vl b{position:absolute;left:14px;top:-17px;font-size:10px;font-weight:600;background:rgba(0,0,0,.75);padding:0 4px;border-radius:3px;display:none;pointer-events:none}
+.clip .vl.drag b{display:block}
+/* level meter */
+#vu{display:inline-block;width:56px;height:8px;background:#0c0e12;border:1px solid var(--ln);border-radius:4px;overflow:hidden;flex:none}
+#vu i{display:block;height:100%;width:0;background:linear-gradient(90deg,#2ee6c5 0 60%,#ffd60a 60% 85%,#ff4d5e 85%)}
+
 </style></head>
 <body>
 <div id="app">
@@ -188,7 +210,7 @@ dialog h3{margin:0 0 10px}
       <div id="transport">
         <button id="tpStart" title="กลับไปจุดเริ่ม">⏮</button>
         <button id="tpPlay" class="primary" title="เล่น/หยุด (Space)">▶</button>
-        <input id="srcSeek" type="range" min="0" max="1000" value="0" hidden><span id="tpTime">00:00.0 / 00:00.0</span>
+        <input id="srcSeek" type="range" min="0" max="1000" value="0" hidden><span id="vu" title="ระดับเสียง"><i></i></span><span id="tpTime">00:00.0 / 00:00.0</span>
         <span class="sp"></span>
         <button id="tpSplit" title="ตัดที่หัวอ่าน (S)">✂ ตัด</button>
         <button id="tpDel" title="ลบ (Delete)">🗑 ลบ</button>
@@ -201,6 +223,7 @@ dialog h3{margin:0 0 10px}
     <div id="tlbar"><span>ไทม์ไลน์</span><span class="sp"></span><label>ซูม <input id="zoom" type="range" min="2" max="6" step="0.05" value="4"></label></div>
     <div id="tlbody"></div>
   </footer>
+  <div class="split v" id="spL" title="ลากเพื่อปรับความกว้าง"></div><div class="split v" id="spR" title="ลากเพื่อปรับความกว้าง"></div><div class="split h" id="spT" title="ลากเพื่อปรับความสูงของไทม์ไลน์"></div>
 </div>
 
 <div id="home">
@@ -245,14 +268,291 @@ dialog h3{margin:0 0 10px}
 </defs></svg>
 
 <script>
+// ---- 00-0-i18n.js ----
+'use strict';
+// ============================================================
+//  UI language (Lao / Thai / English)
+//  Source strings in the app are Thai. For lo/en the text is translated at the DOM level
+//  (text nodes + title/placeholder/aria-label) through dictionary rows [thai, english, lao]
+//  defined in 00-1-i18n-*.js. User content must carry translate="no" (project names, file names,
+//  transcripts ...). T(s) translates strings used by prompt()/confirm()/default content.
+// ============================================================
+const UI_LANGS = { lo: 'ພາສາລາວ', th: 'ภาษาไทย', en: 'English' };
+let UI = 'lo';
+try { const v = localStorage.getItem('sk_ui'); if (v && UI_LANGS[v]) UI = v; } catch (e) { }
+const I18N_ROWS = [];
+const TH_RE = /[฀-๿]/;
+let _i18n = null;
+function i18nBuild() {
+  const col = UI === 'en' ? 1 : 2, exact = new Map(), keys = [];
+  for (const r of I18N_ROWS) {
+    const k = r[0].trim(), v = r[col]; if (!k || v == null || v === '') continue;
+    if (!exact.has(k)) keys.push(k); exact.set(k, v);
+  }
+  keys.sort((a, b) => b.length - a.length);
+  const esc2 = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = keys.length ? new RegExp('(?<![\\u0E00-\\u0E7F])(?:' + keys.map(esc2).join('|') + ')(?![\\u0E00-\\u0E7F])', 'g') : null;
+  _i18n = { exact, re };
+}
+function T(s) {
+  if (UI === 'th' || s == null) return s; s = String(s); if (!TH_RE.test(s)) return s;
+  if (!_i18n) i18nBuild();
+  const { exact, re } = _i18n; const t = s.trim(); const e = exact.get(t);
+  if (e != null) return s.replace(t, () => e);
+  if (!re) return s;
+  return s.replace(re, (m, off, str) => {
+    let o = exact.get(m); if (o == null) return m;
+    const nx = str[off + m.length], pv = str[off - 1];
+    if (nx && /[0-9A-Za-z]/.test(nx) && /[A-Za-z0-9຀-໿]$/.test(o)) o += ' ';
+    if (pv && /[0-9A-Za-z]/.test(pv) && /^[A-Za-z຀-໿]/.test(o)) o = ' ' + o;
+    return o;
+  });
+}
+const _I18N_ATTRS = ['title', 'placeholder', 'aria-label', 'alt'];
+const _skip = el => !el || !el.closest || el.closest('[translate="no"],textarea,script,style');
+function i18nNode(n) {
+  if (n.nodeType === 3) {
+    const v = n.nodeValue; if (!TH_RE.test(v) || _skip(n.parentElement)) return;
+    const t = T(v); if (t !== v) n.nodeValue = t;
+  } else if (n.nodeType === 1) {
+    if (_skip(n)) return;
+    for (const a of _I18N_ATTRS) { const v = n.getAttribute(a); if (v && TH_RE.test(v)) { const t = T(v); if (t !== v) n.setAttribute(a, t); } }
+    for (const c of n.childNodes) i18nNode(c);
+  }
+}
+function i18nStart() {
+  document.documentElement.lang = UI;
+  if (UI === 'th') return;
+  document.title = T(document.title);
+  i18nNode(document.body);
+  new MutationObserver(recs => {
+    for (const r of recs) {
+      if (r.type === 'childList') r.addedNodes.forEach(i18nNode);
+      else if (r.type === 'characterData') i18nNode(r.target);
+      else if (r.type === 'attributes') i18nNode(r.target);
+    }
+  }).observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: _I18N_ATTRS });
+}
+function i18nMountSelectors() {
+  const mk = () => {
+    const s = document.createElement('select'); s.className = 'uilang'; s.setAttribute('translate', 'no'); s.title = '🌐';
+    s.innerHTML = Object.entries(UI_LANGS).map(([k, v]) => `<option value="${k}"${k === UI ? ' selected' : ''}>🌐 ${v}</option>`).join('');
+    s.onchange = async () => {
+      try { localStorage.setItem('sk_ui', s.value); } catch (e) { }
+      try { if (typeof projSaveNow === 'function') await projSaveNow(); } catch (e) { }
+      location.reload();
+    };
+    return s;
+  };
+  const a = document.querySelector('#btnSettings'); if (a) a.parentNode.insertBefore(mk(), a);
+  const b = document.querySelector('#hmNew'); if (b) b.parentNode.insertBefore(mk(), b);
+}
+window.addEventListener('DOMContentLoaded', () => { i18nMountSelectors(); i18nStart(); });
+
+// ---- 00-1-i18n-a.js ----
+'use strict';
+// i18n rows A — body.html, core (tracks / text styles), render labels, timeline UI, store, home, remote.  [thai, english, lao]
+I18N_ROWS.push(
+  // ---- header / transport ----
+  ['กลับหน้าโปรเจกต์ทั้งหมด', 'Back to all projects', 'ກັບຄືນໜ້າໂປຣເຈັກທັງໝົດ'],
+  ['🏠 โปรเจกต์', '🏠 Projects', '🏠 ໂປຣເຈັກ'],
+  ['โปรเจกต์ใหม่', 'New project', 'ໂປຣເຈັກໃໝ່'],
+  ['ย้อนกลับ (⌘Z)', 'Undo (⌘Z)', 'ຍ້ອນກັບ (⌘Z)'],
+  ['ทำซ้ำ (⌘⇧Z)', 'Redo (⌘⇧Z)', 'ເຮັດຊ້ຳ (⌘⇧Z)'],
+  ['ค่า AI เดือนนี้ / เพดาน', 'AI cost this month / cap', 'ຄ່າ AI ເດືອນນີ້ / ວົງເງິນສູງສຸດ'],
+  ['⚙ ตั้งค่า', '⚙ Settings', '⚙ ຕັ້ງຄ່າ'],
+  ['โหลดไฟล์โปรเจกต์ (.json) เก็บสำรอง — โปรเจกต์บันทึกอัตโนมัติอยู่แล้ว', 'Download a project file (.json) as a backup — projects are already saved automatically', 'ດາວໂຫຼດໄຟລ໌ໂປຣເຈັກ (.json) ເກັບສຳຮອງ — ໂປຣເຈັກຖືກບັນທຶກອັດຕະໂນມັດຢູ່ແລ້ວ'],
+  ['💾 สำรองไฟล์', '💾 Backup', '💾 ສຳຮອງໄຟລ໌'],
+  ['นำเข้าไฟล์โปรเจกต์ (.json)', 'Import a project file (.json)', 'ນຳເຂົ້າໄຟລ໌ໂປຣເຈັກ (.json)'],
+  ['📂 นำเข้า', '📂 Import', '📂 ນຳເຂົ້າ'],
+  ['⬇ ส่งออก MP4', '⬇ Export MP4', '⬇ ສົ່ງອອກ MP4'],
+  ['+ นำเข้าไฟล์ (วิดีโอ / รูป / เสียง)', '+ Import files (video / image / audio)', '+ ນຳເຂົ້າໄຟລ໌ (ວິດີໂອ / ຮູບ / ສຽງ)'],
+  ['กลับไปจุดเริ่ม', 'Go to start', 'ກັບໄປຈຸດເລີ່ມຕົ້ນ'],
+  ['เล่น/หยุด (Space)', 'Play / pause (Space)', 'ຫຼິ້ນ/ຢຸດ (Space)'],
+  ['ตัดที่หัวอ่าน (S)', 'Split at playhead (S)', 'ຕັດທີ່ເສັ້ນຫຼິ້ນ (S)'],
+  ['✂ ตัด', '✂ Split', '✂ ຕັດ'],
+  ['ลบ (Delete)', 'Delete (Delete)', 'ລຶບ (Delete)'],
+  ['🗑 ลบ', '🗑 Delete', '🗑 ລຶບ'],
+  ['ลบแล้วดึงคลิปตามมา (Shift+Delete)', 'Delete and close the gap (Shift+Delete)', 'ລຶບແລ້ວດຶງຄລິບຕາມມາ (Shift+Delete)'],
+  ['ไทม์ไลน์', 'Timeline', 'ໄທມ໌ໄລນ໌'],
+  ['ซูม', 'Zoom', 'ຊູມ'],
+  ['ดูตัวอย่างไฟล์ — ', 'Previewing file — ', 'ເບິ່ງຕົວຢ່າງໄຟລ໌ — '],
+  ['กลับไทม์ไลน์', 'Back to timeline', 'ກັບໄປໄທມ໌ໄລນ໌'],
+  ['กลับไปดูไทม์ไลน์', 'Back to the timeline preview', 'ກັບໄປເບິ່ງໄທມ໌ໄລນ໌'],
+  // ---- home ----
+  ['ส่งโปรเจกต์/ไฟล์ขึ้นเซิร์ฟเวอร์ และดึงโปรเจกต์ใหม่ลงเครื่องนี้', 'Send projects/files to the server and pull new projects to this device', 'ສົ່ງໂປຣເຈັກ/ໄຟລ໌ຂຶ້ນເຊີເວີ ແລະ ດຶງໂປຣເຈັກໃໝ່ລົງເຄື່ອງນີ້'],
+  ['☁ ซิงค์เซิร์ฟเวอร์', '☁ Sync server', '☁ ຊິງຄ໌ເຊີເວີ'],
+  ['← กลับไปแก้ไขต่อ', '← Back to editing', '← ກັບໄປແກ້ໄຂຕໍ່'],
+  ['📂 นำเข้าไฟล์โปรเจกต์', '📂 Import project file', '📂 ນຳເຂົ້າໄຟລ໌ໂປຣເຈັກ'],
+  ['+ โปรเจกต์ใหม่', '+ New project', '+ ໂປຣເຈັກໃໝ່'],
+  ['โปรเจกต์ของฉัน', 'My projects', 'ໂປຣເຈັກຂອງຂ້ອຍ'],
+  ['ยังไม่มีโปรเจกต์ — กด “+ โปรเจกต์ใหม่” เพื่อเริ่มตัดต่อ', 'No projects yet — press “+ New project” to start editing', 'ຍັງບໍ່ມີໂປຣເຈັກ — ກົດ “+ ໂປຣເຈັກໃໝ່” ເພື່ອເລີ່ມຕັດຕໍ່'],
+  ['ไฟล์วิดีโอในเครื่องนี้หาย ต้องนำเข้าใหม่', 'Video files are missing on this device and must be imported again', 'ໄຟລ໌ວິດີໂອໃນເຄື່ອງນີ້ຫາຍ ຕ້ອງນຳເຂົ້າໃໝ່'],
+  ['⚠ ไฟล์หาย', '⚠ Missing files', '⚠ ໄຟລ໌ຫາຍ'],
+  ['คลิป', 'clips', 'ຄລິບ'],
+  ['เปลี่ยนชื่อ', 'Rename', 'ປ່ຽນຊື່'],
+  ['ทำสำเนา', 'Duplicate', 'ເຮັດສຳເນົາ'],
+  ['· เซิร์ฟเวอร์ว่าง', '· Server free', '· ເຊີເວີຫວ່າງ'],
+  ['พื้นที่ในเครื่องนี้ที่ใช้ไป', 'Storage used on this device', 'ພື້ນທີ່ໃນເຄື່ອງນີ້ທີ່ໃຊ້ໄປ'],
+  ['GB จาก', 'GB of', 'GB ຈາກ'],
+  ['โปรเจกต์ · โปรเจกต์ถูกบันทึกอัตโนมัติทุกครั้งที่แก้ไข', 'projects · saved automatically after every edit', 'ໂປຣເຈັກ · ໂປຣເຈັກຖືກບັນທຶກອັດຕະໂນມັດທຸກຄັ້ງທີ່ແກ້ໄຂ'],
+  ['โปรเจกต์ · บันทึกอัตโนมัติ', 'projects · autosaved', 'ໂປຣເຈັກ · ບັນທຶກອັດຕະໂນມັດ'],
+  ['โปรเจกต์', 'Project', 'ໂປຣເຈັກ'],
+  ['ไม่พบโปรเจกต์', 'Project not found', 'ບໍ່ພົບໂປຣເຈັກ'],
+  ['ไฟล์โปรเจกต์เสียหาย', 'The project file is damaged', 'ໄຟລ໌ໂປຣເຈັກເສຍຫາຍ'],
+  ['ไฟล์เหล่านี้หายจากเครื่องนี้ ต้องนำเข้าใหม่:', 'These files are missing on this device and must be imported again:', 'ໄຟລ໌ເຫຼົ່ານີ້ຫາຍຈາກເຄື່ອງນີ້ ຕ້ອງນຳເຂົ້າໃໝ່:'],
+  ['ชื่อโปรเจกต์', 'Project name', 'ຊື່ໂປຣເຈັກ'],
+  ['(สำเนา)', '(copy)', '(ສຳເນົາ)'],
+  ['ลบโปรเจกต์ “', 'Delete project “', 'ລຶບໂປຣເຈັກ “'],
+  ['” ?\nไฟล์วิดีโอที่นำเข้าไว้ไม่ถูกลบ', '” ?\nThe imported video files will not be deleted.', '” ?\nໄຟລ໌ວິດີໂອທີ່ນຳເຂົ້າໄວ້ຈະບໍ່ຖືກລຶບ'],
+  ['” ?\n(ไฟล์วิดีโอที่นำเข้าไว้ไม่ถูกลบ)', '” ?\n(The imported video files will not be deleted.)', '” ?\n(ໄຟລ໌ວິດີໂອທີ່ນຳເຂົ້າໄວ້ຈະບໍ່ຖືກລຶບ)'],
+  // ---- settings dialog ----
+  ['ตั้งค่า', 'Settings', 'ຕັ້ງຄ່າ'],
+  ['Anthropic API key (Claude — ใช้เลือกประโยคเด่น / แปล / ทำ 3-4 แบบ)', 'Anthropic API key (Claude — used for key sentences / translation / 3-4 edit variants)', 'Anthropic API key (Claude — ໃຊ້ເລືອກປະໂຫຍກເດັ່ນ / ແປ / ເຮັດ 3-4 ແບບ)'],
+  ['Gemini API key (Google AI Studio — ใช้ถอดเสียงภาษาลาว)', 'Gemini API key (Google AI Studio — used to transcribe Lao speech)', 'Gemini API key (Google AI Studio — ໃຊ້ຖອດສຽງພາສາລາວ)'],
+  ['คู่มือสไตล์การตัดต่อของคุณ (วางข้อความที่สรุปจากการคุยกับ ChatGPT — AI ในโปรแกรมจะทำตามตอนเลือกประโยคเด่น และทำ 3-4 แบบ)', 'Your editing style guide (paste notes summarised from your ChatGPT brainstorming — the AI follows it when picking key sentences and making 3-4 variants)', 'ຄູ່ມືສະໄຕລ໌ການຕັດຕໍ່ຂອງທ່ານ (ວາງຂໍ້ຄວາມທີ່ສະຫຼຸບຈາກການລົມກັບ ChatGPT — AI ໃນໂປຣແກຣມຈະເຮັດຕາມເວລາເລືອກປະໂຫຍກເດັ່ນ ແລະ ເຮັດ 3-4 ແບບ)'],
+  ['เช่น: โทนวิดีโอ จังหวะการตัด ประเภทฮุคแรก คำที่ควร/ไม่ควรใช้ ลำดับเล่าเรื่อง ...', 'e.g. video tone, cutting rhythm, type of opening hook, words to use / avoid, story order ...', 'ເຊັ່ນ: ໂທນວິດີໂອ ຈັງຫວະການຕັດ ປະເພດຮຸກທຳອິດ ຄຳທີ່ຄວນ/ບໍ່ຄວນໃຊ້ ລຳດັບການເລົ່າເລື່ອງ ...'],
+  ['เพดานงบ AI ต่อเดือน (USD)', 'Monthly AI budget cap (USD)', 'ວົງເງິນ AI ສູງສຸດຕໍ່ເດືອນ (USD)'],
+  ['เซิร์ฟเวอร์เก็บไฟล์ที่ร้าน — ที่อยู่ (เว้นว่าง = ไม่ใช้)', 'Shop file server — address (leave empty = not used)', 'ເຊີເວີເກັບໄຟລ໌ທີ່ຮ້ານ — ທີ່ຢູ່ (ປ່ອຍຫວ່າງ = ບໍ່ໃຊ້)'],
+  ['https://ชื่อเครื่อง.xxxx.ts.net:8787  หรือ  http://192.168.1.10:8787', 'https://machine-name.xxxx.ts.net:8787  or  http://192.168.1.10:8787', 'https://ຊື່ເຄື່ອງ.xxxx.ts.net:8787  ຫຼື  http://192.168.1.10:8787'],
+  ['รหัสผ่านเซิร์ฟเวอร์', 'Server password', 'ລະຫັດຜ່ານເຊີເວີ'],
+  ['ทดสอบเชื่อมต่อ', 'Test connection', 'ທົດສອບການເຊື່ອມຕໍ່'],
+  ['คีย์เก็บในเครื่องนี้เท่านั้น (localStorage ของเบราว์เซอร์) ไม่ถูกส่งไปที่อื่นนอกจากเรียกใช้ API ของ Anthropic/Google โดยตรง', 'Keys are stored on this device only (browser localStorage) and are sent nowhere except directly to the Anthropic / Google APIs', 'ຄີເກັບໄວ້ໃນເຄື່ອງນີ້ເທົ່ານັ້ນ (localStorage ຂອງເບຣົາເຊີ) ບໍ່ຖືກສົ່ງໄປບ່ອນອື່ນ ນອກຈາກເອີ້ນໃຊ້ API ຂອງ Anthropic/Google ໂດຍກົງ'],
+  ['ปิด', 'Close', 'ປິດ'],
+  ['บันทึก', 'Save', 'ບັນທຶກ'],
+  ['กำลังทดสอบ…', 'Testing…', 'ກຳລັງທົດສອບ…'],
+  ['✔ เชื่อมต่อได้ · พื้นที่ว่าง', '✔ Connected · free space', '✔ ເຊື່ອມຕໍ່ໄດ້ · ພື້ນທີ່ຫວ່າງ'],
+  // ---- export dialog ----
+  ['ส่งออกวิดีโอ MP4', 'Export MP4 video', 'ສົ່ງອອກວິດີໂອ MP4'],
+  ['1080×1920 · 30fps · ไม่มีลายน้ำ — ระบบเล่นไทม์ไลน์แบบเรียลไทม์เพื่อบันทึก (คลิปยาว 60 วิ = ใช้เวลา ~60 วิ)', '1080×1920 · 30fps · no watermark — the timeline is played in real time to record it (a 60 s video takes ~60 s)', '1080×1920 · 30fps · ບໍ່ມີລາຍນ້ຳ — ລະບົບຫຼິ້ນໄທມ໌ໄລນ໌ແບບເຣຍລທາຍເພື່ອບັນທຶກ (ຄລິບຍາວ 60 ວິນາທີ = ໃຊ້ເວລາ ~60 ວິນາທີ)'],
+  ['ห้ามปิด/สลับแท็บขณะส่งออก', 'Do not close or switch tabs while exporting', 'ຫ້າມປິດ/ສະຫຼັບແທັບຂະນະສົ່ງອອກ'],
+  ['คุณภาพ', 'Quality', 'ຄຸນນະພາບ'],
+  ['สูง (12 Mbps)', 'High (12 Mbps)', 'ສູງ (12 Mbps)'],
+  ['มาตรฐาน (8 Mbps)', 'Standard (8 Mbps)', 'ມາດຕະຖານ (8 Mbps)'],
+  ['ประหยัด (5 Mbps)', 'Economy (5 Mbps)', 'ປະຢັດ (5 Mbps)'],
+  ['เริ่มส่งออก', 'Start export', 'ເລີ່ມສົ່ງອອກ'],
+  ['ยังไม่มีอะไรในไทม์ไลน์', 'The timeline is empty', 'ຍັງບໍ່ມີຫຍັງໃນໄທມ໌ໄລນ໌'],
+  ['เบราว์เซอร์นี้อัดวิดีโอไม่ได้:', 'This browser cannot record video:', 'ເບຣົາເຊີນີ້ບັນທຶກວິດີໂອບໍ່ໄດ້:'],
+  ['กำลังเตรียมคลิป…', 'Preparing clips…', 'ກຳລັງກຽມຄລິບ…'],
+  ['กำลังบันทึก…', 'Recording…', 'ກຳລັງບັນທຶກ…'],
+  ['ยกเลิกแล้ว', 'Cancelled', 'ຍົກເລີກແລ້ວ'],
+  ['เสร็จแล้ว ✔', 'Done ✔', 'ສຳເລັດແລ້ວ ✔'],
+  ['— เบราว์เซอร์ไม่รองรับ mp4 จึงได้ .webm', '— this browser does not support mp4, so a .webm was produced', '— ເບຣົາເຊີບໍ່ຮອງຮັບ mp4 ຈຶ່ງໄດ້ .webm'],
+  // ---- tracks ----
+  ['วิดีโอ 1', 'Video 1', 'ວິດີໂອ 1'],
+  ['วิดีโอ 2 / ภาพแทรก', 'Video 2 / B-roll image', 'ວິດີໂອ 2 / ຮູບແຊກ'],
+  ['ภาพซ้อน', 'Overlay image', 'ຮູບຊ້ອນ'],
+  ['ข้อความ 1', 'Text 1', 'ຂໍ້ຄວາມ 1'],
+  ['ข้อความ 2', 'Text 2', 'ຂໍ້ຄວາມ 2'],
+  ['ข้อความ 3', 'Text 3', 'ຂໍ້ຄວາມ 3'],
+  ['เพลง', 'Music', 'ເພງ'],
+  ['เสียงเอฟเฟกต์', 'Sound effects', 'ສຽງເອັບເຟັກ'],
+  // ---- text styles (labels + sample content) ----
+  ['ขาว + เหลือง (2 บรรทัด)', 'White + yellow (2 lines)', 'ຂາວ + ເຫຼືອງ (2 ແຖວ)'],
+  ['บรรทัดที่ 1\nบรรทัดที่ 2', 'Line 1\nLine 2', 'ແຖວທີ 1\nແຖວທີ 2'],
+  ['ขาว ขอบดำ', 'White, black outline', 'ຂາວ ຂອບດຳ'],
+  ['ข้อความ', 'Text', 'ຂໍ້ຄວາມ'],
+  ['หัวข้อใหญ่ เหลือง', 'Big yellow headline', 'ຫົວຂໍ້ໃຫຍ່ ເຫຼືອງ'],
+  ['หัวข้อ', 'Headline', 'ຫົວຂໍ້'],
+  ['กล่องดำ ตัวขาว', 'Black box, white text', 'ກ່ອງດຳ ຕົວໜັງສືຂາວ'],
+  ['ข้อความในกล่อง', 'Text in a box', 'ຂໍ້ຄວາມໃນກ່ອງ'],
+  ['กล่องดำ + แถบแดง', 'Black box + red bar', 'ກ່ອງດຳ + ແຖບແດງ'],
+  ['บรรทัดบน\nบรรทัดล่างแถบแดง', 'Top line\nBottom line on red bar', 'ແຖວເທິງ\nແຖວລຸ່ມແຖບແດງ'],
+  ['ป้ายเขียวมุมโค้ง', 'Green rounded label', 'ປ້າຍຂຽວມຸມໂຄ້ງ'],
+  ['ป้ายข้อความ', 'Label text', 'ຂໍ້ຄວາມປ້າຍ'],
+  ['ป้ายโปรโมชันแดง', 'Red promotion label', 'ປ້າຍໂປຣໂມຊັນແດງ'],
+  ['โปรตอนนี้', 'Promo right now', 'ໂປຣດຽວນີ້'],
+  ['ราคา (เหลืองใหญ่)', 'Price (big yellow)', 'ລາຄາ (ເຫຼືອງໃຫຍ່)'],
+  ['ซื้อ 1 แถม 2\n390,000 กีบ', 'Buy 1 get 2\n390,000 kip', 'ຊື້ 1 ແຖມ 2\n390,000 ກີບ'],
+  ['น้ำเงิน ขอบขาว', 'Blue, white outline', 'ສີຟ້າ ຂອບຂາວ'],
+  ['ข้อความสีน้ำเงิน', 'Blue text', 'ຂໍ້ຄວາມສີຟ້າ'],
+  ['ขาว เงานุ่ม', 'White, soft shadow', 'ຂາວ ເງົານຸ່ມ'],
+  ['ข้อความทั่วไป', 'General text', 'ຂໍ້ຄວາມທົ່ວໄປ'],
+  ['ข้อความท้ายจอ (เล็ก)', 'Footer text (small)', 'ຂໍ້ຄວາມທ້າຍຈໍ (ນ້ອຍ)'],
+  ['ผลลัพธ์ที่ได้ขึ้นอยู่กับแต่ละบุคคล', 'Results vary from person to person', 'ຜົນທີ່ໄດ້ຮັບຂຶ້ນຢູ່ກັບແຕ່ລະບຸກຄົນ'],
+  // ---- transitions / effects (render labels) ----
+  ['ไม่มี', 'None', 'ບໍ່ມີ'],
+  ['เลือนเข้า', 'Fade in', 'ຄ່ອຍໆປາກົດ'],
+  ['ผ่านดำ', 'Dip to black', 'ຜ່ານສີດຳ'],
+  ['ผ่านขาว', 'Dip to white', 'ຜ່ານສີຂາວ'],
+  ['สไลด์เข้าจากขวา', 'Slide in from right', 'ສະໄລດ໌ເຂົ້າຈາກຂວາ'],
+  ['สไลด์เข้าจากซ้าย', 'Slide in from left', 'ສະໄລດ໌ເຂົ້າຈາກຊ້າຍ'],
+  ['สไลด์เข้าจากล่าง', 'Slide in from bottom', 'ສະໄລດ໌ເຂົ້າຈາກລຸ່ມ'],
+  ['สไลด์เข้าจากบน', 'Slide in from top', 'ສະໄລດ໌ເຂົ້າຈາກເທິງ'],
+  ['ปัดลง', 'Wipe down', 'ປັດລົງ'],
+  ['ปัดขึ้น', 'Wipe up', 'ປັດຂຶ້ນ'],
+  ['ปัดไปซ้าย', 'Wipe left', 'ປັດໄປຊ້າຍ'],
+  ['ปัดไปขวา', 'Wipe right', 'ປັດໄປຂວາ'],
+  ['ปัดลง + เบลอ', 'Wipe down + blur', 'ປັດລົງ + ເບລີ'],
+  ['ซูมเข้า', 'Zoom in', 'ຊູມເຂົ້າ'],
+  ['ซูมออก', 'Zoom out', 'ຊູມອອກ'],
+  ['ซูมกระแทก', 'Punch zoom', 'ຊູມກະແທກ'],
+  ['หมุนเข้า', 'Spin in', 'ໝຸນເຂົ້າ'],
+  ['การ์ดกรอบขาวหมุน 3D', 'White-frame card spin 3D', 'ກາດກອບຂາວໝຸນ 3D'],
+  ['กลิตช์', 'Glitch', 'ກຼິດຊ໌'],
+  ['เบลอเลือน', 'Blur fade', 'ເບລີຄ່ອຍໆເລືອນ'],
+  // ---- timeline UI ----
+  ['⚠ ไฟล์หาย:', '⚠ Missing file:', '⚠ ໄຟລ໌ຫາຍ:'],
+  ['ทรานสิชัน:', 'Transition:', 'ທຣານຊິຊັນ:'],
+  ['ลากทรานสิชัน/เอฟเฟกต์มาวางที่นี่ หรือกดเพื่อเลือก', 'Drag a transition / effect here, or click to choose', 'ລາກທຣານຊິຊັນ/ເອັບເຟັກມາວາງບ່ອນນີ້ ຫຼື ກົດເພື່ອເລືອກ'],
+  ['ปล่อยตรงรอยต่อหรือบนคลิปวิดีโอ/ภาพ', 'Drop on a junction or on a video / image clip', 'ປ່ອຍຕົງຮອຍຕໍ່ ຫຼື ເທິງຄລິບວິດີໂອ/ຮູບ'],
+  ['เลื่อนหัวอ่านไปกลางคลิปก่อนตัด', 'Move the playhead into the middle of a clip before splitting', 'ເລື່ອນເສັ້ນຫຼິ້ນໄປກາງຄລິບກ່ອນຕັດ'],
+  ['ยังไม่มีไฟล์ — กดปุ่ม “นำเข้า” หรือลากไฟล์มาวางที่นี่', 'No files yet — press “Import” or drop files here', 'ຍັງບໍ່ມີໄຟລ໌ — ກົດປຸ່ມ “ນຳເຂົ້າ” ຫຼື ລາກໄຟລ໌ມາວາງບ່ອນນີ້'],
+  ['ภาพ', 'Image', 'ຮູບ'],
+  ['+ ใส่ไทม์ไลน์', '+ Add to timeline', '+ ໃສ່ໄທມ໌ໄລນ໌'],
+  ['ลบ', 'Delete', 'ລຶບ'],
+  ['· ไม่มีเสียง', '· no audio', '· ບໍ່ມີສຽງ'],
+  ['ไฟล์นี้ถูกใช้ในไทม์ไลน์ — ลบคลิปที่ใช้ไฟล์นี้ด้วย?', 'This file is used in the timeline — delete the clips that use it as well?', 'ໄຟລ໌ນີ້ຖືກໃຊ້ໃນໄທມ໌ໄລນ໌ — ລຶບຄລິບທີ່ໃຊ້ໄຟລ໌ນີ້ນຳບໍ?'],
+  ['ไม่รองรับไฟล์:', 'Unsupported file:', 'ບໍ່ຮອງຮັບໄຟລ໌:'],
+  ['เปิดไฟล์ไม่ได้:', 'Cannot open file:', 'ເປີດໄຟລ໌ບໍ່ໄດ້:'],
+  ['(ลองไฟล์ H.264 / mp4)', '(try an H.264 / mp4 file)', '(ລອງໄຟລ໌ H.264 / mp4)'],
+  ['นำเข้าแล้ว', 'Imported', 'ນຳເຂົ້າແລ້ວ'],
+  ['ไฟล์', 'files', 'ໄຟລ໌'],
+  ['บันทึกไฟล์ไว้ในเครื่องไม่ได้ (พื้นที่เต็ม?) — เปิดใหม่ต้องนำเข้าไฟล์อีกครั้ง', 'Could not store the file on this device (storage full?) — you will need to import it again after reopening', 'ບັນທຶກໄຟລ໌ໄວ້ໃນເຄື່ອງບໍ່ໄດ້ (ພື້ນທີ່ເຕັມບໍ?) — ເປີດໃໝ່ຕ້ອງນຳເຂົ້າໄຟລ໌ອີກຄັ້ງ'],
+  // ---- remote server ----
+  ['☁ รอส่ง', '☁ Waiting to upload', '☁ ລໍຖ້າສົ່ງ'],
+  ['☁ เซิร์ฟเวอร์พร้อม', '☁ Server ready', '☁ ເຊີເວີພ້ອມ'],
+  ['☁ ออฟไลน์', '☁ Offline', '☁ ອອບໄລນ໌'],
+  ['เชื่อมต่อเซิร์ฟเวอร์ที่ร้านอยู่', 'Connected to the shop server', 'ເຊື່ອມຕໍ່ເຊີເວີທີ່ຮ້ານຢູ່'],
+  ['เชื่อมต่อเซิร์ฟเวอร์ไม่ได้', 'Cannot connect to the server', 'ເຊື່ອມຕໍ່ເຊີເວີບໍ່ໄດ້'],
+  ['รหัสผ่านไม่ถูก', 'Wrong password', 'ລະຫັດຜ່ານບໍ່ຖືກ'],
+  ['ติดต่อไม่ได้ (ที่อยู่ผิด / เซิร์ฟเวอร์ปิด / https-http ไม่ตรงกัน)', 'Cannot reach it (wrong address / server off / https-http mismatch)', 'ຕິດຕໍ່ບໍ່ໄດ້ (ທີ່ຢູ່ຜິດ / ເຊີເວີປິດ / https-http ບໍ່ກົງກັນ)'],
+  ['ส่งไฟล์ขึ้นเซิร์ฟเวอร์ไม่สำเร็จ:', 'Upload to the server failed:', 'ສົ່ງໄຟລ໌ຂຶ້ນເຊີເວີບໍ່ສຳເລັດ:'],
+  ['โปรเจกต์ “', 'Project “', 'ໂປຣເຈັກ “'],
+  ['” บนเซิร์ฟเวอร์ใหม่กว่า — ไม่เขียนทับ (กดซิงค์ในหน้าโปรเจกต์เพื่อดึง)', '” on the server is newer — not overwritten (press Sync on the Projects page to pull it)', '” ເທິງເຊີເວີໃໝ່ກວ່າ — ບໍ່ຂຽນທັບ (ກົດຊິງຄ໌ໃນໜ້າໂປຣເຈັກເພື່ອດຶງ)'],
+  ['ติดต่อไม่ได้', 'Cannot connect', 'ຕິດຕໍ່ບໍ່ໄດ້'],
+  ['ยังไม่ได้ตั้งค่าเซิร์ฟเวอร์ — เปิด ⚙ ตั้งค่า', 'The server is not set up — open ⚙ Settings', 'ຍັງບໍ່ໄດ້ຕັ້ງຄ່າເຊີເວີ — ເປີດ ⚙ ຕັ້ງຄ່າ'],
+  ['กำลังซิงค์กับเซิร์ฟเวอร์…', 'Syncing with the server…', 'ກຳລັງຊິງຄ໌ກັບເຊີເວີ…'],
+  ['เชื่อมต่อเซิร์ฟเวอร์ไม่ได้:', 'Cannot connect to the server:', 'ເຊື່ອມຕໍ່ເຊີເວີບໍ່ໄດ້:'],
+  ['อ่านรายการจากเซิร์ฟเวอร์ไม่ได้', 'Cannot read the list from the server', 'ອ່ານລາຍການຈາກເຊີເວີບໍ່ໄດ້'],
+  ['ซิงค์แล้ว — ดึงลงเครื่อง', 'Synced — pulled to this device:', 'ຊິງຄ໌ແລ້ວ — ດຶງລົງເຄື່ອງ'],
+  ['โปรเจกต์ · ส่งขึ้นเซิร์ฟเวอร์', 'projects · uploaded to the server:', 'ໂປຣເຈັກ · ສົ່ງຂຶ້ນເຊີເວີ'],
+  ['· กำลังส่งไฟล์วิดีโอ', '· uploading video files', '· ກຳລັງສົ່ງໄຟລ໌ວິດີໂອ'],
+  ['กำลังโหลดไฟล์จากเซิร์ฟเวอร์ (', 'Downloading files from the server (', 'ກຳລັງໂຫຼດໄຟລ໌ຈາກເຊີເວີ ('],
+  ['โหลดไฟล์จากเซิร์ฟเวอร์แล้ว', 'Files downloaded from the server:', 'ໂຫຼດໄຟລ໌ຈາກເຊີເວີແລ້ວ'],
+  ['ไม่พบไฟล์บนเซิร์ฟเวอร์', 'Files not found on the server', 'ບໍ່ພົບໄຟລ໌ເທິງເຊີເວີ'],
+  ['วิดีโอ', 'Video', 'ວິດີໂອ'],
+  ['เก็บวิดีโอที่ตัดเสร็จไว้ในเซิร์ฟเวอร์แล้ว:', 'Finished video stored on the server:', 'ເກັບວິດີໂອທີ່ຕັດສຳເລັດໄວ້ໃນເຊີເວີແລ້ວ:'],
+  ['ส่งวิดีโอขึ้นเซิร์ฟเวอร์ไม่สำเร็จ (ไฟล์ยังโหลดลงเครื่องแล้ว)', 'Could not upload the video to the server (the file was still downloaded to this device)', 'ສົ່ງວິດີໂອຂຶ້ນເຊີເວີບໍ່ສຳເລັດ (ໄຟລ໌ຍັງຖືກດາວໂຫຼດລົງເຄື່ອງແລ້ວ)'],
+  // ---- project I/O (main) ----
+  ['บันทึกโปรเจกต์แล้ว (ไฟล์วิดีโอต้องนำเข้าซ้ำเมื่อเปิดใหม่)', 'Project saved (video files must be imported again when reopening)', 'ບັນທຶກໂປຣເຈັກແລ້ວ (ໄຟລ໌ວິດີໂອຕ້ອງນຳເຂົ້າຊ້ຳເມື່ອເປີດໃໝ່)'],
+  ['ไม่ใช่ไฟล์โปรเจกต์', 'This is not a project file', 'ບໍ່ແມ່ນໄຟລ໌ໂປຣເຈັກ'],
+  ['เปิดโปรเจกต์แล้ว — ต้องนำเข้าไฟล์เดิมอีก', 'Project opened — import the original files again:', 'ເປີດໂປຣເຈັກແລ້ວ — ຕ້ອງນຳເຂົ້າໄຟລ໌ເດີມອີກ'],
+  ['ไฟล์ (ชื่อ/ขนาดเดิม)', 'files (same name / size)', 'ໄຟລ໌ (ຊື່/ຂະໜາດເດີມ)'],
+  ['เปิดโปรเจกต์แล้ว', 'Project opened', 'ເປີດໂປຣເຈັກແລ້ວ'],
+  ['กู้คืนไฟล์ที่นำเข้าไว้', 'Restored imported files:', 'ກູ້ຄືນໄຟລ໌ທີ່ນຳເຂົ້າໄວ້'],
+  ['โปรเจกต์เดิม', 'Previous project', 'ໂປຣເຈັກເດີມ']
+);
+
 // ---- 00-core.js ----
 'use strict';
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.07
-// APP_VERSION_PREV : 1.06
-// APP_VERSION_PREV_OLDER : 1.05
+// APP_VERSION  : 1.08
+// APP_VERSION_PREV : 1.07
+// APP_VERSION_PREV_OLDER : 1.06
+// 1.08 : draggable panel splitters (left/right/timeline height, saved), draggable track heights, tall clips show waveform + draggable volume line, live level meter
 // 1.07 : click a file in the media bin to watch it in the preview in real time (play/pause/seek) before adding it to the timeline
 // 1.06 : editing style guide (paste notes from ChatGPT brainstorming) used by key-points + 4-variant AI
 // 1.05 : editor page can be served by the shop server itself (same-origin, avoids Chrome local-network blocking); server URL auto-set
@@ -261,7 +561,7 @@ dialog h3{margin:0 0 10px}
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.07';
+const APP_VERSION = '1.08';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -822,6 +1122,10 @@ function renderFrame(ctx, W, H, t) {
 // ============================================================
 const TL = { pps: 56, labelW: 96 };
 const TRACK_H = { video: 58, text: 36, audio: 44 };
+let TH = {}; try { TH = JSON.parse(localStorage.getItem('sk_trh') || '{}') || {}; } catch (e) { }
+const trackH = tr => TH[tr.id] || (tr.id === 'V1' ? 84 : TRACK_H[tr.kind]);
+const VOL_MAX = 1.5;
+function wfHeight(it) { const tr = TRACKS.find(t => t.id === it.track); const ch = trackH(tr) - 6; return ch >= 66 ? Math.round(ch * .4) : 22; }
 const tlWidth = () => Math.max(projectEnd() + 14, 40) * TL.pps;
 const CLIP_COL = { video: '#2d6a8f', image: '#7a4fa3', text: '#b9852b', sticker: '#b9602b', audio: '#2f8a5b' };
 
@@ -841,7 +1145,7 @@ function renderTimeline() {
   const body = $('#tlbody'); if (!body) return;
   const sx = body.scrollLeft, sy = body.scrollTop; const W = tlWidth();
   let h = `<div id="tlinner" style="width:${TL.labelW + W}px"><div id="ruler"><div class="corner"></div><div class="rt" style="width:${W}px">${rulerTicks()}</div></div>`;
-  for (const tr of TRACKS) h += `<div class="trow ${tr.kind}" data-track="${tr.id}" style="height:${TRACK_H[tr.kind]}px"><div class="tlabel">${tr.label}</div><div class="tlane" style="width:${W}px"></div></div>`;
+  for (const tr of TRACKS) h += `<div class="trow ${tr.kind}" data-track="${tr.id}" style="height:${trackH(tr)}px"><div class="tlabel">${tr.label}</div><div class="tlane" style="width:${W}px"></div><div class="trh" title="ลากเพื่อปรับความสูงของแถว"></div></div>`;
   h += `<div id="playhead"><i></i></div></div>`;
   body.innerHTML = h;
   for (const it of D.items) {
@@ -852,7 +1156,10 @@ function renderTimeline() {
     el.style.setProperty('--c', CLIP_COL[it.type] || '#555');
     let inner = '';
     if ((it.type === 'video' || it.type === 'image') && m && m.thumb) inner += `<div class="cbg" style="background-image:url(${m.thumb})"></div>`;
-    if (m && (it.type === 'video' || it.type === 'audio')) inner += `<canvas class="wf"></canvas>`;
+    const hasWf = m && (it.type === 'video' || it.type === 'audio'); const wfh = hasWf ? wfHeight(it) : 0; const tall = hasWf && wfh > 22;
+    if (tall) { el.classList.add('tall'); el.style.setProperty('--wfh', wfh + 'px'); }
+    if (hasWf) inner += `<canvas class="wf" style="height:${wfh}px"></canvas>`;
+    if (hasWf && tall && m.hasAudio !== false) { const ch = trackH(TRACKS.find(t => t.id === it.track)) - 9; inner += `<div class="vl" style="top:${ch - wfh + wfh * (1 - clamp(it.vol ?? 1, 0, VOL_MAX) / VOL_MAX)}px"><u></u><b>${Math.round((it.vol ?? 1) * 100)}%</b></div>`; }
     inner += `<span class="cl">${esc(clipLabel(it))}</span>`;
     if (it.transIn && it.transIn.type !== 'none') inner += `<b class="trb" title="ทรานสิชัน: ${esc((TRANS[it.transIn.type] || {}).label || '')}" style="width:${Math.max(10, it.transIn.dur * TL.pps)}px">⇄</b>`;
     if (it.speed && it.speed !== 1) inner += `<em class="spd">${it.speed}x</em>`;
@@ -871,12 +1178,13 @@ function renderTimeline() {
   body.scrollLeft = sx; body.scrollTop = sy; updatePlayhead();
 }
 function drawWave(cv, it, m) {
-  if (!m.peaks) return; const w = Math.min(4000, Math.max(4, Math.round(it.dur * TL.pps))), h = 22; cv.width = w; cv.height = h;
+  if (!m.peaks) return; const w = Math.min(4000, Math.max(4, Math.round(it.dur * TL.pps))), h = wfHeight(it); cv.width = w; cv.height = h;
+  const vg = it.type === 'audio' || (it.vol ?? 1) !== 1 ? clamp(it.vol ?? 1, 0, VOL_MAX) : 1;
   const c = cv.getContext('2d'); c.fillStyle = it.type === 'audio' ? 'rgba(255,255,255,.7)' : 'rgba(255,255,255,.45)';
   const P = m.peaks, md = m.duration || 1;
   for (let x = 0; x < w; x++) {
     const tt = (it.in || 0) + (x / w) * it.dur * (it.speed || 1); const idx = Math.floor(((it.loop ? tt % md : tt) / md) * P.length);
-    const v = P[clamp(idx, 0, P.length - 1)] || 0; const bh = Math.max(1, Math.min(h, v * h * 1.4)); c.fillRect(x, (h - bh) / 2, 1, bh);
+    const v = Math.min(1, (P[clamp(idx, 0, P.length - 1)] || 0) * vg); const bh = Math.max(1, Math.min(h, v * h * 1.4)); c.fillRect(x, (h - bh) / 2, 1, bh);
   }
 }
 function updatePlayhead() {
@@ -917,6 +1225,8 @@ function initTimelineEvents() {
   body.addEventListener('pointerdown', e => {
     if (e.button !== 0) return;
     const jn = e.target.closest('.junc'); if (jn) { select(jn.dataset.id); showTab('trans'); return; }
+    const trh = e.target.closest('.trh'); if (trh) { e.preventDefault(); rowResizeStart(e, trh.closest('.trow')); return; }
+    const vlu = e.target.closest('.vl u'); if (vlu) { e.preventDefault(); e.stopPropagation(); volDragStart(e, vlu.closest('.clip')); return; }
     const clipEl = e.target.closest('.clip');
     const rulerEl = e.target.closest('#ruler');
     if (rulerEl && !e.target.closest('.corner')) { scrubStart(e); return; }
@@ -1052,6 +1362,45 @@ function seekTo(el, t) { return new Promise(res => { const done = () => { el.rem
 function thumbFrom(src, w, h) {
   const c = document.createElement('canvas'); const k = 160 / Math.max(w, h); c.width = Math.max(2, Math.round(w * k)); c.height = Math.max(2, Math.round(h * k));
   try { c.getContext('2d').drawImage(src, 0, 0, c.width, c.height); return c.toDataURL('image/jpeg', 0.7); } catch (e) { return ''; }
+}
+
+// ---------- track height drag + volume line drag ----------
+function rowResizeStart(e, row) {
+  const tr = TRACKS.find(t => t.id === row.dataset.track); if (!tr) return; const y0 = e.clientY, h0 = trackH(tr); const handle = $('.trh', row); handle.classList.add('drag'); document.body.classList.add('resizing');
+  const mv = ev => { TH[tr.id] = clamp(Math.round(h0 + ev.clientY - y0), 26, 320); row.style.height = TH[tr.id] + 'px'; };
+  const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); document.body.classList.remove('resizing'); try { localStorage.setItem('sk_trh', JSON.stringify(TH)); } catch (e) { } renderTimeline(); };
+  window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
+}
+function volDragStart(e, clipEl) {
+  const it = getItem(clipEl.dataset.id); if (!it) return; if (SEL !== it.id) { select(it.id); clipEl = $(`.clip[data-id="${it.id}"]`); if (!clipEl) return; }
+  const m = MEDIA.get(it.mediaId); const vl = $('.vl', clipEl), cv = $('canvas.wf', clipEl); const wfh = wfHeight(it); const chh = clipEl.clientHeight; const top0 = chh - wfh;
+  const v0 = it.vol ?? 1; vl.classList.add('drag'); document.body.classList.add('resizing');
+  const mv = ev => {
+    const r = clipEl.getBoundingClientRect(); const y = clamp(ev.clientY - r.top - 1, top0, chh);
+    let v = (1 - (y - top0) / wfh) * VOL_MAX; if (Math.abs(v - 1) < .04) v = 1; v = Math.round(v * 100) / 100; it.vol = v;
+    vl.style.top = (top0 + wfh * (1 - v / VOL_MAX)) + 'px'; $('b', vl).textContent = Math.round(v * 100) + '%'; if (m && cv) drawWave(cv, it, m);
+    if (typeof refreshInspectorValues === 'function') refreshInspectorValues();
+  };
+  const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); document.body.classList.remove('resizing'); vl.classList.remove('drag'); if ((it.vol ?? 1) !== v0) commit('vol'); };
+  window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
+}
+// ---------- resizable panels ----------
+function initSplitters() {
+  const root = document.documentElement; let L = {}; try { L = JSON.parse(localStorage.getItem('sk_layout') || '{}') || {}; } catch (e) { }
+  const apply = () => { if (L.lw) root.style.setProperty('--lw', L.lw + 'px'); if (L.rw) root.style.setProperty('--rw', L.rw + 'px'); if (L.tlh) root.style.setProperty('--tlh', L.tlh + 'px'); };
+  apply();
+  const bind = (id, get, set) => {
+    const h = $(id); h.addEventListener('pointerdown', e => {
+      e.preventDefault(); const x0 = e.clientX, y0 = e.clientY, v0 = get(); h.classList.add('drag'); document.body.classList.add('resizing');
+      const mv = ev => { set(v0, ev.clientX - x0, ev.clientY - y0); apply(); window.dispatchEvent(new Event('resize')); };
+      const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); h.classList.remove('drag'); document.body.classList.remove('resizing'); try { localStorage.setItem('sk_layout', JSON.stringify(L)); } catch (e) { } };
+      window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
+    });
+    h.addEventListener('dblclick', () => { delete L[id === '#spL' ? 'lw' : id === '#spR' ? 'rw' : 'tlh']; root.style.removeProperty(id === '#spL' ? '--lw' : id === '#spR' ? '--rw' : '--tlh'); try { localStorage.setItem('sk_layout', JSON.stringify(L)); } catch (e) { } });
+  };
+  bind('#spL', () => $('#left').getBoundingClientRect().width, (v, dx) => { L.lw = clamp(Math.round(v + dx), 200, 560); });
+  bind('#spR', () => $('#right').getBoundingClientRect().width, (v, dx) => { L.rw = clamp(Math.round(v - dx), 220, 560); });
+  bind('#spT', () => $('#tl').getBoundingClientRect().height, (v, dx, dy) => { L.tlh = clamp(Math.round(v - dy), 120, Math.max(160, innerHeight - 260)); });
 }
 
 // ---- 25-store.js ----
@@ -1648,7 +1997,7 @@ let _pvT = 0; on('media-added', () => { clearTimeout(_pvT); _pvT = setTimeout(as
 // ============================================================
 //  Audio graph + transport (play / seek / sync of media elements)
 // ============================================================
-let AC = null, MASTER = null, MONITOR = null, EXPDEST = null;
+let AC = null, MASTER = null, MONITOR = null, EXPDEST = null, ANALYSER = null, _vuBuf = null, _vuLvl = 0;
 function ensureAudio() {
   if (AC) return AC;
   AC = new (window.AudioContext || window.webkitAudioContext)();
@@ -1658,6 +2007,7 @@ function ensureAudio() {
   MONITOR = AC.createGain();
   MASTER.connect(comp); comp.connect(MONITOR); MONITOR.connect(AC.destination);
   EXPDEST = AC.createMediaStreamDestination(); comp.connect(EXPDEST);
+  ANALYSER = AC.createAnalyser(); ANALYSER.fftSize = 512; comp.connect(ANALYSER); _vuBuf = new Uint8Array(ANALYSER.fftSize);
   return AC;
 }
 function connectEl(el) {
@@ -1694,6 +2044,12 @@ function pause() {
   for (const r of APOOL.values()) { try { r.el.pause(); } catch (e) { } }
   emit('transport');
 }
+function vuUpdate() {
+  const bar = $('#vu i'); if (!bar) return; const active = (PB.playing || (SRC.el && SRC.el.paused === false)) && ANALYSER;
+  let lvl = 0;
+  if (active) { ANALYSER.getByteTimeDomainData(_vuBuf); let pk = 0; for (let i = 0; i < _vuBuf.length; i++) { const v = Math.abs(_vuBuf[i] - 128) / 128; if (v > pk) pk = v; } lvl = Math.min(1, Math.pow(pk, .6)); }
+  _vuLvl = lvl > _vuLvl ? lvl : _vuLvl * .86; bar.style.width = (_vuLvl * 100).toFixed(0) + '%';
+}
 function togglePlay() { if (SRC.m) return srcToggle(); PB.playing ? pause() : play(); }
 
 // ---------- source preview (click a file in the media bin -> watch it in real time, like CapCut) ----------
@@ -1715,7 +2071,7 @@ function srcOpen(id) {
   else {
     const el = document.createElement(m.type === 'audio' ? 'audio' : 'video'); el.playsInline = true; el.preload = 'auto'; el.src = m.url;
     el.addEventListener('ended', () => { $('#tpPlay').textContent = '▶'; });
-    SRC.el = el; el.play().catch(() => { });
+    SRC.el = el; el.crossOrigin = 'anonymous'; ensureAudio(); if (AC.state !== 'running') AC.resume(); el.src = m.url; connectEl(el); el.play().catch(() => { });
   }
   $$('#mediaList .mi').forEach(x => x.classList.toggle('sel', x.dataset.id === id));
   $('#srcName').textContent = m.name; $('#srcBadge').hidden = false;
@@ -1829,6 +2185,7 @@ function syncMedia(force) {
 
 // ---------- main loop ----------
 function tick() {
+  vuUpdate();
   if (PB.playing && !PB.exporting) {
     PB.t = PB.t0 + (performance.now() - PB.wall0) / 1000;
     if (PB.t >= durEnd()) { PB.t = durEnd(); pause(); emit('ended'); }
@@ -2454,6 +2811,7 @@ async function init() {
     else if (e.key === 'ArrowRight') { pause(); seek(PB.t + (e.shiftKey ? 1 : 1 / 30)); }
     else if (e.key === 'Home') { pause(); seek(0); }
   });
+  initSplitters();
   initHome(); await showHome(); if (srvOn()) srvPing().then(ok => ok && srvLoadSizes());
   tick();
   window.__ready = true;
