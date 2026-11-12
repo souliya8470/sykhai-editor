@@ -27,6 +27,9 @@ function pvDraw(cv, kind, key, ph) {   // ph 0..1 position inside the loop
     if (kind === 'trans') {
       const A = pvItem('__a', '__pvA', 0, 3), B = pvItem('__b', '__pvB', 1, 2, { transIn: key === 'none' ? null : { type: key, dur: 1 } });
       D = { items: [A, B], duckLevel: .22 }; const t = key === 'none' ? (ph < .5 ? .6 : 1.4) : lerp(.55, 2.15, ph); renderFrame(ctx, W, H, t);
+    } else if (kind === 'anim') {
+      const [g, k] = key.split(':'); const an = { in: 'none', out: 'none', combo: 'none', dIn: .6, dOut: .6 }; an[g] = k; const dur = g === 'combo' ? 2.2 : 1.6;
+      const it = pvItem('__a', '__pvA', 0, dur, { anim: an }); D = { items: [it], duckLevel: .22 }; renderFrame(ctx, W, H, ph * (dur - .02));
     } else {
       const it = pvItem('__a', '__pvA', 0, 2.4); if (kind === 'fx') it.fx = JSON.parse(JSON.stringify((FX_PRESETS.find(p => p.id === key) || { fx: {} }).fx)); else applyMaskTo(it, key);
       D = { items: [it], duckLevel: .22 }; renderFrame(ctx, W, H, ph * 2.3);
@@ -51,7 +54,7 @@ async function buildTiles() {
   await pvSamples(); pvPosters();
 }
 function pvPosters() {
-  $$('.tile').forEach(t => pvDraw($('canvas', t), t.dataset.kind, t.dataset.key, t.dataset.kind === 'trans' ? .45 : .5));
+  $$('.tile').forEach(t => pvDraw($('canvas', t), t.dataset.kind, t.dataset.key, t.dataset.kind === 'trans' ? .45 : t.dataset.kind === 'anim' ? ({ in: .2, out: .9, combo: .3 }[t.dataset.key.split(':')[0]]) : .5));
 }
 function pvStart(t) {
   pvStop(); const cv = $('canvas', t); const t0 = performance.now(); PV.anim = { t, raf: 0 };

@@ -264,3 +264,20 @@ main{padding:0}
 /* v1.14 aspect ratio selector */
 select.ratio{appearance:none;-webkit-appearance:none;border:1px solid var(--ln);color:var(--tx);cursor:pointer;padding:3px 22px 3px 10px;background:var(--p3) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23999' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 7px center}
 select.ratio:hover{border-color:var(--ac)}
+
+/* v1.14 visual panes */
+.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.sk-grid{grid-template-columns:repeat(auto-fill,minmax(86px,1fr))}
+button.vt{position:relative;display:block;padding:0;margin:0;overflow:hidden;border-radius:10px;background:#2a2b30;border:1px solid transparent;text-align:center;cursor:pointer}
+button.vt:hover{border-color:var(--ac);background:#2a2b30}
+button.vt canvas{display:block;width:100%;height:auto}
+button.vt span{display:block;padding:3px 4px 5px;font-size:10.5px;line-height:1.2;color:var(--mu);background:#202125}
+.emcats{margin:12px 0 6px;display:flex;flex-wrap:wrap;gap:5px}
+.emcats button,.animsub button{font-size:11.5px;padding:3px 10px;border-radius:14px}
+.animsub{margin:2px 0 8px;display:flex;gap:5px}
+.emj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:5px}
+.emj-grid button.emj{font-size:24px;padding:4px 0;line-height:1.2;background:#2a2b30;border:1px solid transparent;border-radius:9px}
+.emj-grid button.emj:hover{border-color:var(--ac)}
+.tile.on{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac)}
+#leftTabs button{font-size:9px;white-space:nowrap}
+#leftTabs button span{max-width:100%;overflow:hidden;text-overflow:ellipsis}

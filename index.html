@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.14</title>
+<title>Sykhai Editor v1.15</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -272,6 +272,23 @@ main{padding:0}
 select.ratio{appearance:none;-webkit-appearance:none;border:1px solid var(--ln);color:var(--tx);cursor:pointer;padding:3px 22px 3px 10px;background:var(--p3) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23999' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 7px center}
 select.ratio:hover{border-color:var(--ac)}
 
+/* v1.14 visual panes */
+.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.sk-grid{grid-template-columns:repeat(auto-fill,minmax(86px,1fr))}
+button.vt{position:relative;display:block;padding:0;margin:0;overflow:hidden;border-radius:10px;background:#2a2b30;border:1px solid transparent;text-align:center;cursor:pointer}
+button.vt:hover{border-color:var(--ac);background:#2a2b30}
+button.vt canvas{display:block;width:100%;height:auto}
+button.vt span{display:block;padding:3px 4px 5px;font-size:10.5px;line-height:1.2;color:var(--mu);background:#202125}
+.emcats{margin:12px 0 6px;display:flex;flex-wrap:wrap;gap:5px}
+.emcats button,.animsub button{font-size:11.5px;padding:3px 10px;border-radius:14px}
+.animsub{margin:2px 0 8px;display:flex;gap:5px}
+.emj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:5px}
+.emj-grid button.emj{font-size:24px;padding:4px 0;line-height:1.2;background:#2a2b30;border:1px solid transparent;border-radius:9px}
+.emj-grid button.emj:hover{border-color:var(--ac)}
+.tile.on{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac)}
+#leftTabs button{font-size:9px;white-space:nowrap}
+#leftTabs button span{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+
 </style></head>
 <body>
 <div id="app">
@@ -304,6 +321,7 @@ select.ratio:hover{border-color:var(--ac)}
         <div class="lpane" id="pane-text"></div>
         <div class="lpane" id="pane-sticker"></div>
         <div class="lpane" id="pane-trans"></div>
+        <div class="lpane" id="pane-anim"></div>
         <div class="lpane" id="pane-fx"></div>
         <div class="lpane" id="pane-audio"></div>
         <div class="lpane" id="pane-ai"></div>
@@ -1168,6 +1186,11 @@ I18N_ROWS.push(
   ['ทั้งหมด', 'All', 'ທັງໝົດ'],
   ['รูปภาพ', 'Images', 'ຮູບພາບ'],
   ['ไฟล์', 'files', 'ໄຟລ໌'],
+  // v1.14 visual panes
+  ['ฟิลเตอร์', 'Filters', 'ຟິວເຕີ'],
+  ['กดเพื่อเพิ่มที่หัวอ่าน · ลากบนจอเพื่อย้าย', 'Click to add at the playhead · drag on the screen to move', 'ກົດເພື່ອເພີ່ມທີ່ຫົວອ່ານ · ລາກເທິງຈໍເພື່ອຍ້າຍ'],
+  ['เลือกคลิปบนไทม์ไลน์ แล้วกดเพื่อใส่แอนิเมชัน · เอาเมาส์ชี้เพื่อดูตัวอย่าง', 'Select a clip on the timeline, then click to apply · hover to preview', 'ເລືອກຄລິບເທິງໄທມ໌ລາຍ ແລ້ວກົດເພື່ອໃສ່ແອນິເມຊັນ · ເອົາເມົ້າຊີ້ເພື່ອເບິ່ງຕົວຢ່າງ'],
+  ['หน้ายิ้ม', 'Smileys', 'ໜ້າຍິ້ມ'], ['หัวใจ', 'Hearts', 'ຫົວໃຈ'], ['มือ', 'Hands', 'ມື'], ['สัญลักษณ์', 'Symbols', 'ສັນຍາລັກ'], ['สัตว์', 'Animals', 'ສັດ'], ['อาหาร', 'Food', 'ອາຫານ'],
   // v1.14 aspect ratio
   ['ขนาดวิดีโอ', 'Video size', 'ຂະໜາດວິດີໂອ'],
   ['ความยาวรวม', 'total length', 'ຄວາມຍາວລວມ'],
@@ -1180,9 +1203,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.14
-// APP_VERSION_PREV : 1.13
-// APP_VERSION_PREV_OLDER : 1.12
+// APP_VERSION  : 1.15
+// APP_VERSION_PREV : 1.14
+// APP_VERSION_PREV_OLDER : 1.13
+// 1.15 : HOTFIX for 1.14 (text did not render: layoutText lacked H) + MyCut-style left panes — text styles and stickers drawn as real previews over the project's own footage, emoji categories, new Animation tab (in/out/combo) with live hover previews, tab order like MyCut
 // 1.14 : aspect ratio selector in the player (9:16, 1:1, 4:5, 16:9, 4:3) — preview, overlay handles and MP4 export follow the project size; text/blur scale by the short side
 // 1.13 : MyCut-style look — rounded card panels, icon tabs on the left, media filter (all/video/image/audio), teal timecode + big round play button, inspector sections as cards with their own reset button
 // 1.12 : CapCut-style clip look (teal, thumbnails, timecode label), fade in/out handles on clips, tabbed inspector (Video/Audio/Speed/Animation/Adjust), number boxes + reset on every slider, blend/canvas/chroma key/masks, voice changer, clip animations, curves/colour wheel/HSL
@@ -1198,7 +1222,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.14';
+const APP_VERSION = '1.15';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -1779,7 +1803,7 @@ function parseRuns(line) {  // *highlight* markers
   parts.forEach((p, i) => { if (p) runs.push({ s: p, hl: i % 2 === 1 }); });
   return runs.length ? runs : [{ s: '', hl: false }];
 }
-function layoutText(ctx, it, W) {
+function layoutText(ctx, it, W, H) {
   const size = it.size * Math.min(W, H) / 1080; ctx.font = `${it.weight || 700} ${size}px ${it.font || FONT_STACK}`;
   const maxW = (it.maxW || .88) * W;
   const rows = [];   // each: {li, toks:[{s,hl,w}], w}
@@ -1820,7 +1844,7 @@ function drawText(ctx, it, t, W, H) {
   const lt = t - it.start; if (lt < 0) return;
   const ap = textAnimParams(it, lt, W, H);
   if (ap.a <= 0.001) return;
-  const L = layoutText(ctx, it, W); const { rows, size, lineH } = L;
+  const L = layoutText(ctx, it, W, H); const { rows, size, lineH } = L;
   const totalH = rows.length * lineH;
   const xs = prop(it, 's', t), xx = prop(it, 'x', t), yy = prop(it, 'y', t), rr = prop(it, 'r', t), oo = prop(it, 'o', t);
   const cx = W / 2 + xx * W + ap.dx, cy = (it.ay ?? .5) * H + yy * H + ap.dy;
@@ -2585,27 +2609,14 @@ const TAB_ICONS = {
   media: '<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M10 9l5 3-5 3z"/>', text: '<path d="M5 7V4h14v3M12 4v16M9 20h6"/>',
   sticker: '<circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2.5 4 2.5S16 14 16 14M9 9.5h.01M15 9.5h.01"/>', trans: '<path d="M4 6l7 6-7 6zM20 6l-7 6 7 6z"/>',
   fx: '<path d="M12 3l1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8zM18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z"/>',
+  anim: '<path d="M4 18c3-9 7-12 10-8s4 2 6-4"/><circle cx="18" cy="6" r="2"/>',
   audio: '<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>', ai: '<path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path d="M19 17v4M17 19h4"/>'
 };
-const TABS = [['media', 'สื่อ'], ['text', 'ข้อความ'], ['sticker', 'สติกเกอร์'], ['trans', 'ทรานสิชัน'], ['fx', 'เอฟเฟกต์'], ['audio', 'เสียง'], ['ai', 'AI']];
+const TABS = [['media', 'สื่อ'], ['audio', 'เสียง'], ['text', 'ข้อความ'], ['sticker', 'สติกเกอร์'], ['fx', 'ฟิลเตอร์'], ['trans', 'ทรานสิชัน'], ['anim', 'แอนิเมชัน'], ['ai', 'AI']];
 function buildLeft() {
   $('#leftTabs').innerHTML = TABS.map(([id, l], i) => `<button data-tab="${id}" class="${i ? '' : 'on'}"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${TAB_ICONS[id]}</svg><span>${l}</span></button>`).join('');
   $('#leftTabs').onclick = e => { const b = e.target.closest('button'); if (b) showTab(b.dataset.tab); };
-  // text pane
-  $('#pane-text').innerHTML = `<div class="hint">กดเพื่อเพิ่มข้อความที่ตำแหน่งหัวอ่าน (เส้นแดง) — ใช้ *คำ* เพื่อทำตัวเหลือง/เน้น</div>` +
-    TEXT_STYLES.map(s => `<button class="tstyle" data-style="${s.id}">${esc(s.label)}</button>`).join('') +
-    `<hr><button id="btnFooter" class="wide">+ ใส่ข้อความท้ายจอตลอดคลิป</button>`;
-  $('#pane-text').onclick = e => {
-    const b = e.target.closest('.tstyle'); if (b) addText(b.dataset.style);
-    if (e.target.id === 'btnFooter') addFooter();
-  };
-  // sticker pane
-  $('#pane-sticker').innerHTML = `<div class="grid2">` + STICKERS.map(([k, l]) => `<button class="stk" data-k="${k}">${l}</button>`).join('') + `</div><hr>
-    <div class="row"><input id="emojiIn" value="🔥" maxlength="4" style="width:60px;font-size:22px;text-align:center"><button id="addEmoji">+ อีโมจิ</button></div>`;
-  $('#pane-sticker').onclick = e => {
-    const b = e.target.closest('.stk'); if (b) addSticker(b.dataset.k);
-    if (e.target.id === 'addEmoji') addSticker('emoji', { text: $('#emojiIn').value || '🔥' });
-  };
+  buildVisualPanes();
   // transitions + effects: animated tiles (hover = preview, drag = drop onto timeline)
   $('#pane-trans').innerHTML = `<div class="hint">เอาเมาส์ชี้เพื่อดูตัวอย่าง · ลากไปวาง “ตรงรอยต่อระหว่างคลิป” บนไทม์ไลน์ หรือเลือกคลิปแล้วกด</div><div class="tiles" id="tilesTrans"></div>`;
   $('#pane-fx').innerHTML = `<div class="hint">เอาเมาส์ชี้เพื่อดูตัวอย่าง · ลากไปวางบนคลิป หรือเลือกคลิปแล้วกด (ปรับละเอียดได้ที่แผงขวา)</div><div class="tiles" id="tilesFx"></div><div class="hint" style="margin-top:12px">รูปทรง / กรอบ / ซูม</div><div class="tiles" id="tilesMk"></div>`;
@@ -2623,7 +2634,7 @@ function buildLeft() {
 function showTab(id) {
   $$('#leftTabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === id));
   $$('.lpane').forEach(p => p.classList.toggle('on', p.id === 'pane-' + id));
-  if (id === 'audio') renderAudioList(); if (id === 'ai' && window.renderAiPane) renderAiPane();
+  if (id === 'audio') renderAudioList(); if (id === 'text') drawTextTiles(); if (id === 'sticker') drawStickerTiles(); if (id === 'anim') fillAnimTiles(); if (id === 'ai' && window.renderAiPane) renderAiPane();
 }
 function renderAudioList() {
   const box = $('#audioList'); if (!box) return; const arr = [...MEDIA.values()].filter(m => m.type === 'audio');
@@ -3104,6 +3115,9 @@ function pvDraw(cv, kind, key, ph) {   // ph 0..1 position inside the loop
     if (kind === 'trans') {
       const A = pvItem('__a', '__pvA', 0, 3), B = pvItem('__b', '__pvB', 1, 2, { transIn: key === 'none' ? null : { type: key, dur: 1 } });
       D = { items: [A, B], duckLevel: .22 }; const t = key === 'none' ? (ph < .5 ? .6 : 1.4) : lerp(.55, 2.15, ph); renderFrame(ctx, W, H, t);
+    } else if (kind === 'anim') {
+      const [g, k] = key.split(':'); const an = { in: 'none', out: 'none', combo: 'none', dIn: .6, dOut: .6 }; an[g] = k; const dur = g === 'combo' ? 2.2 : 1.6;
+      const it = pvItem('__a', '__pvA', 0, dur, { anim: an }); D = { items: [it], duckLevel: .22 }; renderFrame(ctx, W, H, ph * (dur - .02));
     } else {
       const it = pvItem('__a', '__pvA', 0, 2.4); if (kind === 'fx') it.fx = JSON.parse(JSON.stringify((FX_PRESETS.find(p => p.id === key) || { fx: {} }).fx)); else applyMaskTo(it, key);
       D = { items: [it], duckLevel: .22 }; renderFrame(ctx, W, H, ph * 2.3);
@@ -3128,7 +3142,7 @@ async function buildTiles() {
   await pvSamples(); pvPosters();
 }
 function pvPosters() {
-  $$('.tile').forEach(t => pvDraw($('canvas', t), t.dataset.kind, t.dataset.key, t.dataset.kind === 'trans' ? .45 : .5));
+  $$('.tile').forEach(t => pvDraw($('canvas', t), t.dataset.kind, t.dataset.key, t.dataset.kind === 'trans' ? .45 : t.dataset.kind === 'anim' ? ({ in: .2, out: .9, combo: .3 }[t.dataset.key.split(':')[0]]) : .5));
 }
 function pvStart(t) {
   pvStop(); const cv = $('canvas', t); const t0 = performance.now(); PV.anim = { t, raf: 0 };
@@ -3137,6 +3151,92 @@ function pvStart(t) {
 }
 function pvStop(t) { if (PV.anim) { cancelAnimationFrame(PV.anim.raf); const old = PV.anim.t; PV.anim = null; pvDraw($('canvas', old), old.dataset.kind, old.dataset.key, old.dataset.kind === 'trans' ? .45 : .5); } }
 let _pvT = 0; on('media-added', () => { clearTimeout(_pvT); _pvT = setTimeout(async () => { await pvSamples(); pvPosters(); }, 300); });
+
+// ---- 36-panes-visual.js ----
+// ============================================================
+//  v1.14 — left panes with real previews (MyCut style): text styles, stickers + emoji, animations
+// ============================================================
+const EMOJI_CATS = [
+  ['หน้ายิ้ม', '😀😁😂🤣😍🥰😎🤩😭😱🤔😴🥳😡🤯😇🙄😏🤭😘😉😊🙃😋🥺😤😬'],
+  ['หัวใจ', '❤️🧡💛💚💙💜🖤🤍💖💕💘💝💗💓💔💞'],
+  ['มือ', '👍👎👏🙌👋🤝🙏💪👌✌️🤞👉👈👆👇☝️✊🤙🫶'],
+  ['สัญลักษณ์', '🔥⭐✨💯✅❌⚠️❗❓💥🎉🎁💰💎🏆📣🔔💡⚡🆕🆓🔝➡️⬅️⬆️⬇️'],
+  ['สัตว์', '🐶🐱🐭🐰🦊🐻🐼🐯🦁🐮🐷🐸🐵🐔🐧🦄🐝🦋🐢🐠'],
+  ['อาหาร', '🍎🍌🍇🍓🍉🍑🍕🍔🍟🌭🍜🍣🍰🍩☕🍺🥤🍿🥑🌶️']
+];
+const VP = { emo: 0, animG: 'in', tpc: null };
+function vpBg(c, W, H) {   // real footage frame from the project as the preview background (dark card when nothing imported)
+  const m = MEDIA.get('__pvA');
+  if (PV.key && m && m.img && m.img.naturalWidth) { const iw = m.img.naturalWidth, ih = m.img.naturalHeight, k = Math.max(W / iw, H / ih); c.drawImage(m.img, (W - iw * k) / 2, (H - ih * k) / 2, iw * k, ih * k); c.fillStyle = 'rgba(0,0,0,.18)'; c.fillRect(0, 0, W, H); }
+  else { c.fillStyle = '#2a2b30'; c.fillRect(0, 0, W, H); }
+}
+const emojiList = s => (typeof Intl !== 'undefined' && Intl.Segmenter) ? [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(s)].map(x => x.segment) : [...s];
+
+// ---- text style tiles (real rendering with the same drawText used for export) ----
+function tpDraw(cv, st) {
+  const W = 540, H = 960; if (!VP.tpc) { VP.tpc = document.createElement('canvas'); VP.tpc.width = W; VP.tpc.height = H; }
+  const c = VP.tpc.getContext('2d'); c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; vpBg(c, W, H);
+  const sz = st.id === 'footer' ? 90 : 120, k = sz / (st.d.size || 60);
+  const it = mkText(st.id, T('ข้อความ'), 0, 3, { ay: .5, anim: {}, size: sz, strokeW: (st.d.strokeW || 0) * k, maxW: .95 });
+  try { drawText(c, it, 1, W, H); } catch (e) { console.warn(e); } delete BOUNDS[it.id];
+  const x = cv.getContext('2d'); x.clearRect(0, 0, cv.width, cv.height); x.drawImage(VP.tpc, 135, 399, 270, 162, 0, 0, cv.width, cv.height);
+}
+function buildTextPane() {
+  $('#pane-text').innerHTML = `<div class="hint">กดเพื่อเพิ่มข้อความที่ตำแหน่งหัวอ่าน (เส้นแดง) — ใช้ *คำ* เพื่อทำตัวเหลือง/เน้น</div><div class="vgrid tt-grid">` +
+    TEXT_STYLES.map(s => `<button class="vt tstyle" data-style="${s.id}"><canvas width="270" height="162"></canvas><span>${esc(s.label)}</span></button>`).join('') +
+    `</div><hr><button id="btnFooter" class="wide">+ ใส่ข้อความท้ายจอตลอดคลิป</button>`;
+  $('#pane-text').onclick = e => { const b = e.target.closest('.tstyle'); if (b) addText(b.dataset.style); if (e.target.id === 'btnFooter') addFooter(); };
+  drawTextTiles();
+}
+async function drawTextTiles() { await pvSamples(); $$('#pane-text .tstyle').forEach(b => { const st = TEXT_STYLES.find(s => s.id === b.dataset.style); if (st) tpDraw($('canvas', b), st); }); }
+
+// ---- stickers: drawn stickers + emoji by category ----
+function buildStickerPane() {
+  $('#pane-sticker').innerHTML = `<div class="hint">กดเพื่อเพิ่มที่หัวอ่าน · ลากบนจอเพื่อย้าย</div><div class="vgrid sk-grid">` +
+    STICKERS.map(([k, l]) => `<button class="vt stk" data-k="${k}"><canvas width="120" height="120"></canvas><span>${esc(l)}</span></button>`).join('') + `</div>` +
+    `<div class="chips emcats">` + EMOJI_CATS.map(([l], i) => `<button data-ec="${i}" class="${i === VP.emo ? 'on' : ''}">${l}</button>`).join('') + `</div><div class="emj-grid" id="emjGrid"></div><hr>
+    <div class="row"><input id="emojiIn" value="🔥" maxlength="8" style="width:60px;font-size:22px;text-align:center"><button id="addEmoji">+ อีโมจิ</button></div>`;
+  fillEmoji();
+  $('#pane-sticker').onclick = e => {
+    const b = e.target.closest('.stk'); if (b) return addSticker(b.dataset.k);
+    const c = e.target.closest('[data-ec]'); if (c) { VP.emo = +c.dataset.ec; $$('#pane-sticker .emcats button').forEach(x => x.classList.toggle('on', x === c)); return fillEmoji(); }
+    const m = e.target.closest('.emj'); if (m) return addSticker('emoji', { text: m.dataset.e });
+    if (e.target.id === 'addEmoji') addSticker('emoji', { text: $('#emojiIn').value || '🔥' });
+  };
+  drawStickerTiles();
+}
+function fillEmoji() { $('#emjGrid').innerHTML = emojiList(EMOJI_CATS[VP.emo][1]).map(e => `<button class="emj" data-e="${e}">${e}</button>`).join(''); }
+async function drawStickerTiles() {
+  await pvSamples(); $$('#pane-sticker .stk').forEach(b => {
+    const cv = $('canvas', b), c = cv.getContext('2d'); c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; vpBg(c, 120, 120);
+    const it = mkSticker(b.dataset.k, 0, 2, { size: 540, ay: .5, anim: {} });
+    try { drawSticker(c, it, 1.3, 120, 120); } catch (e) { console.warn(e); } delete BOUNDS[it.id];
+  });
+}
+
+// ---- animations tab (in / out / combo) with live hover previews ----
+function buildAnimPane() {
+  $('#pane-anim').innerHTML = `<div class="hint">เลือกคลิปบนไทม์ไลน์ แล้วกดเพื่อใส่แอนิเมชัน · เอาเมาส์ชี้เพื่อดูตัวอย่าง</div><div class="chips animsub">` +
+    [['in', 'เข้า'], ['out', 'ออก'], ['combo', 'ต่อเนื่อง']].map(([k, l]) => `<button data-ag="${k}" class="${k === VP.animG ? 'on' : ''}">${l}</button>`).join('') + `</div><div class="tiles" id="tilesAnim"></div>`;
+  $('#pane-anim .animsub').onclick = e => { const b = e.target.closest('[data-ag]'); if (!b) return; VP.animG = b.dataset.ag; $$('#pane-anim .animsub button').forEach(x => x.classList.toggle('on', x === b)); fillAnimTiles(); };
+  fillAnimTiles();
+}
+async function fillAnimTiles() {
+  const g = VP.animG, box = $('#tilesAnim'); if (!box) return; box.innerHTML = '';
+  const cur = (getItem(SEL) || {}).anim || {};
+  ANIM_LIST[g].forEach(([k, l]) => {
+    const t = document.createElement('div'); t.className = 'tile' + ((cur[g] || 'none') === k ? ' on' : ''); t.dataset.kind = 'anim'; t.dataset.key = g + ':' + k;
+    t.innerHTML = `<canvas width="${PV.W}" height="${PV.H}"></canvas><span>${esc(l)}</span>`; t.style.cursor = 'pointer'; box.appendChild(t);
+    t.addEventListener('mouseenter', () => pvStart(t)); t.addEventListener('mouseleave', () => pvStop(t));
+    t.addEventListener('click', () => {
+      const it = getItem(SEL); if (!it || (it.type !== 'video' && it.type !== 'image')) { toast('เลือกคลิปวิดีโอ/ภาพบนไทม์ไลน์ก่อน'); return; }
+      it.anim = Object.assign({ in: 'none', out: 'none', combo: 'none' }, it.anim || {}); it.anim[g] = k; commit('anim'); renderInspector();
+      $$('#tilesAnim .tile').forEach(x => x.classList.toggle('on', x === t)); if (k !== 'none') ccPreview(it, g);
+    });
+  });
+  await pvSamples(); pvPosters();
+}
+function buildVisualPanes() { buildTextPane(); buildStickerPane(); buildAnimPane(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => drawTextTiles()); }
 
 // ---- 40-playback.js ----
 // ============================================================

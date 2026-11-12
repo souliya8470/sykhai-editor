@@ -23,27 +23,14 @@ const TAB_ICONS = {
   media: '<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M10 9l5 3-5 3z"/>', text: '<path d="M5 7V4h14v3M12 4v16M9 20h6"/>',
   sticker: '<circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2.5 4 2.5S16 14 16 14M9 9.5h.01M15 9.5h.01"/>', trans: '<path d="M4 6l7 6-7 6zM20 6l-7 6 7 6z"/>',
   fx: '<path d="M12 3l1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8zM18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z"/>',
+  anim: '<path d="M4 18c3-9 7-12 10-8s4 2 6-4"/><circle cx="18" cy="6" r="2"/>',
   audio: '<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>', ai: '<path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path d="M19 17v4M17 19h4"/>'
 };
-const TABS = [['media', 'สื่อ'], ['text', 'ข้อความ'], ['sticker', 'สติกเกอร์'], ['trans', 'ทรานสิชัน'], ['fx', 'เอฟเฟกต์'], ['audio', 'เสียง'], ['ai', 'AI']];
+const TABS = [['media', 'สื่อ'], ['audio', 'เสียง'], ['text', 'ข้อความ'], ['sticker', 'สติกเกอร์'], ['fx', 'ฟิลเตอร์'], ['trans', 'ทรานสิชัน'], ['anim', 'แอนิเมชัน'], ['ai', 'AI']];
 function buildLeft() {
   $('#leftTabs').innerHTML = TABS.map(([id, l], i) => `<button data-tab="${id}" class="${i ? '' : 'on'}"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${TAB_ICONS[id]}</svg><span>${l}</span></button>`).join('');
   $('#leftTabs').onclick = e => { const b = e.target.closest('button'); if (b) showTab(b.dataset.tab); };
-  // text pane
-  $('#pane-text').innerHTML = `<div class="hint">กดเพื่อเพิ่มข้อความที่ตำแหน่งหัวอ่าน (เส้นแดง) — ใช้ *คำ* เพื่อทำตัวเหลือง/เน้น</div>` +
-    TEXT_STYLES.map(s => `<button class="tstyle" data-style="${s.id}">${esc(s.label)}</button>`).join('') +
-    `<hr><button id="btnFooter" class="wide">+ ใส่ข้อความท้ายจอตลอดคลิป</button>`;
-  $('#pane-text').onclick = e => {
-    const b = e.target.closest('.tstyle'); if (b) addText(b.dataset.style);
-    if (e.target.id === 'btnFooter') addFooter();
-  };
-  // sticker pane
-  $('#pane-sticker').innerHTML = `<div class="grid2">` + STICKERS.map(([k, l]) => `<button class="stk" data-k="${k}">${l}</button>`).join('') + `</div><hr>
-    <div class="row"><input id="emojiIn" value="🔥" maxlength="4" style="width:60px;font-size:22px;text-align:center"><button id="addEmoji">+ อีโมจิ</button></div>`;
-  $('#pane-sticker').onclick = e => {
-    const b = e.target.closest('.stk'); if (b) addSticker(b.dataset.k);
-    if (e.target.id === 'addEmoji') addSticker('emoji', { text: $('#emojiIn').value || '🔥' });
-  };
+  buildVisualPanes();
   // transitions + effects: animated tiles (hover = preview, drag = drop onto timeline)
   $('#pane-trans').innerHTML = `<div class="hint">เอาเมาส์ชี้เพื่อดูตัวอย่าง · ลากไปวาง “ตรงรอยต่อระหว่างคลิป” บนไทม์ไลน์ หรือเลือกคลิปแล้วกด</div><div class="tiles" id="tilesTrans"></div>`;
   $('#pane-fx').innerHTML = `<div class="hint">เอาเมาส์ชี้เพื่อดูตัวอย่าง · ลากไปวางบนคลิป หรือเลือกคลิปแล้วกด (ปรับละเอียดได้ที่แผงขวา)</div><div class="tiles" id="tilesFx"></div><div class="hint" style="margin-top:12px">รูปทรง / กรอบ / ซูม</div><div class="tiles" id="tilesMk"></div>`;
@@ -61,7 +48,7 @@ function buildLeft() {
 function showTab(id) {
   $$('#leftTabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === id));
   $$('.lpane').forEach(p => p.classList.toggle('on', p.id === 'pane-' + id));
-  if (id === 'audio') renderAudioList(); if (id === 'ai' && window.renderAiPane) renderAiPane();
+  if (id === 'audio') renderAudioList(); if (id === 'text') drawTextTiles(); if (id === 'sticker') drawStickerTiles(); if (id === 'anim') fillAnimTiles(); if (id === 'ai' && window.renderAiPane) renderAiPane();
 }
 function renderAudioList() {
   const box = $('#audioList'); if (!box) return; const arr = [...MEDIA.values()].filter(m => m.type === 'audio');

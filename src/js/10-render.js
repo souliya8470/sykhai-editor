@@ -421,7 +421,7 @@ function parseRuns(line) {  // *highlight* markers
   parts.forEach((p, i) => { if (p) runs.push({ s: p, hl: i % 2 === 1 }); });
   return runs.length ? runs : [{ s: '', hl: false }];
 }
-function layoutText(ctx, it, W) {
+function layoutText(ctx, it, W, H) {
   const size = it.size * Math.min(W, H) / 1080; ctx.font = `${it.weight || 700} ${size}px ${it.font || FONT_STACK}`;
   const maxW = (it.maxW || .88) * W;
   const rows = [];   // each: {li, toks:[{s,hl,w}], w}
@@ -462,7 +462,7 @@ function drawText(ctx, it, t, W, H) {
   const lt = t - it.start; if (lt < 0) return;
   const ap = textAnimParams(it, lt, W, H);
   if (ap.a <= 0.001) return;
-  const L = layoutText(ctx, it, W); const { rows, size, lineH } = L;
+  const L = layoutText(ctx, it, W, H); const { rows, size, lineH } = L;
   const totalH = rows.length * lineH;
   const xs = prop(it, 's', t), xx = prop(it, 'x', t), yy = prop(it, 'y', t), rr = prop(it, 'r', t), oo = prop(it, 'o', t);
   const cx = W / 2 + xx * W + ap.dx, cy = (it.ay ?? .5) * H + yy * H + ap.dy;
