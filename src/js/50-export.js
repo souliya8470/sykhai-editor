@@ -29,7 +29,7 @@ async function runExport(opts) {
   const chunks = []; rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
   const done = new Promise(res => { rec.onstop = res; });
   MONITOR.gain.value = 0; PB.exporting = true; PB.t = 0; PB.duck = 1;
-  msg.textContent = 'กำลังเตรียมคลิป…'; await waitReady(0, 8000);
+  msg.textContent = 'กำลังเตรียมคลิป…'; let undoOrig = () => { }; try { undoOrig = await exportUseOriginals(msg); } catch (e) { console.warn(e); } msg.textContent = 'กำลังเตรียมคลิป…'; await waitReady(0, 8000);
   renderFrame(ctx, W, H, 0);
   rec.start(1000); PB.playing = true; const start = performance.now();
   await new Promise(resolve => {
@@ -45,7 +45,7 @@ async function runExport(opts) {
   });
   PB.playing = false; for (const r of POOL.values()) { try { r.el.pause(); } catch (e) { } } for (const r of APOOL.values()) { try { r.el.pause(); } catch (e) { } }
   try { rec.stop(); } catch (e) { } await done;
-  PB.exporting = false; MONITOR.gain.value = 1; EXP.running = false; seek(0);
+  PB.exporting = false; MONITOR.gain.value = 1; EXP.running = false; try { undoOrig(); } catch (e) { } seek(0);
   if (EXP.cancel) { msg.textContent = 'ยกเลิกแล้ว'; return null; }
   const blob = new Blob(chunks, { type: ext === 'mp4' ? 'video/mp4' : 'video/webm' });
   EXP.last = { size: blob.size, mime, ext, w: W, h: H, dur: total };

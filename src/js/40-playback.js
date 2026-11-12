@@ -68,7 +68,7 @@ const APOOL = new Map();
 function apoolGet(it) {
   let r = APOOL.get(it.id); if (r) { r.last = performance.now(); return r; }
   const m = MEDIA.get(it.mediaId); if (!m) return null;
-  const el = document.createElement('audio'); el.preload = 'auto'; el.src = m.url; el.crossOrigin = 'anonymous';
+  const el = document.createElement('audio'); el.preload = 'auto'; el.src = m.purl || m.url; el.crossOrigin = 'anonymous';
   const gain = connectEl(el);
   r = { el, gain, last: performance.now(), itemId: it.id }; APOOL.set(it.id, r); return r;
 }
@@ -138,9 +138,9 @@ function srcOpen(id) {
   SRC.m = m;
   if (m.type === 'image') { const im = new Image(); im.src = m.url; SRC.el = im; }
   else {
-    const el = document.createElement(m.type === 'audio' ? 'audio' : 'video'); el.playsInline = true; el.preload = 'auto'; el.src = m.url;
+    const el = document.createElement(m.type === 'audio' ? 'audio' : 'video'); el.playsInline = true; el.preload = 'auto'; el.src = m.purl || m.url;
     el.addEventListener('ended', () => { $('#tpPlay').textContent = '▶'; });
-    SRC.el = el; el.crossOrigin = 'anonymous'; ensureAudio(); if (AC.state !== 'running') AC.resume(); el.src = m.url; connectEl(el); el.play().catch(() => { });
+    SRC.el = el; el.crossOrigin = 'anonymous'; ensureAudio(); if (AC.state !== 'running') AC.resume(); el.src = m.purl || m.url; connectEl(el); el.play().catch(() => { });
   }
   $$('#mediaList .mi').forEach(x => x.classList.toggle('sel', x.dataset.id === id));
   $('#srcName').textContent = m.name; $('#srcBadge').hidden = false;

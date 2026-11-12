@@ -278,7 +278,7 @@ async function aiRetakeUI() {
 // ============================================================
 const _probe = {};
 async function grabFrame(m, t, w = 270) {
-  let v = _probe[m.id]; if (!v) { v = _probe[m.id] = document.createElement('video'); v.muted = true; v.preload = 'auto'; v.src = m.url; await new Promise(r => { v.onloadeddata = r; setTimeout(r, 8000); }); }
+  let v = _probe[m.id]; if (!v) { v = _probe[m.id] = document.createElement('video'); v.muted = true; v.preload = 'auto'; v.src = m.purl || m.url; await new Promise(r => { v.onloadeddata = r; setTimeout(r, 8000); }); }
   await seekTo(v, clamp(t, 0, Math.max(0, m.duration - .05))); const h = Math.round(w * v.videoHeight / v.videoWidth); const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').drawImage(v, 0, 0, w, h); return c;
 }
 function analyzePixels(c) {

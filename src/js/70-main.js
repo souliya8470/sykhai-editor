@@ -137,7 +137,7 @@ async function init() {
     else if (e.key === 'Home') { pause(); seek(0); }
   });
   initSplitters(); initToolbar();
-  initHome(); await showHome(); if (srvOn()) srvPing().then(ok => ok && srvLoadSizes());
+  initHome(); await showHome(); if (srvOn()) srvPing().then(ok => ok && srvLoadSizes()).then(() => srvAdoptProxies());
   tick();
   window.__ready = true;
 }

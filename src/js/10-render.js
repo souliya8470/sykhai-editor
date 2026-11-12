@@ -14,13 +14,14 @@ function poolGet(it, create = true) {
   const m = MEDIA.get(it.mediaId); if (!m) return null;
   if (POOL.size >= POOL_MAX) poolEvict();
   const el = document.createElement('video');
-  el.playsInline = true; el.preload = 'auto'; el.crossOrigin = 'anonymous'; el.src = m.url;
+  el.playsInline = true; el.preload = 'auto'; el.crossOrigin = 'anonymous'; el.src = m.purl || m.url;
   el.addEventListener('seeked', dirty); el.addEventListener('loadeddata', dirty); el.addEventListener('canplay', dirty);
   const gain = (typeof connectEl === 'function') ? connectEl(el) : null;
   r = { el, last: performance.now(), gain, itemId: it.id };
   POOL.set(it.id, r);
   return el;
 }
+function poolResetAll() { for (const id of [...POOL.keys()]) poolRelease(id); if (typeof APOOL !== 'undefined') for (const id of [...APOOL.keys()]) apoolRelease(id); dirty(); }
 function poolEvict() {
   let oldest = null;
   for (const [id, r] of POOL) { if (!oldest || r.last < oldest.last) oldest = r; }

@@ -38,7 +38,7 @@ function xhrPut(path, body, headers, onp) {
 // ----- uploads of source media (sequential queue) -----
 function srvQueueMedia(ids) {
   if (!srvOn()) return;
-  for (const id of ids) { const m = MEDIA.get(id); if (m && m.file && !m.builtin && !m.hidden && SRV.sizes.get(id) !== m.file.size && !SRV.q.includes(id)) SRV.q.push(id); }
+  for (const id of ids) { const m = MEDIA.get(id); if (m && m.file && !m.builtin && !m.hidden && !m.proxyOnly && SRV.sizes.get(id) !== m.file.size && !SRV.q.includes(id)) SRV.q.push(id); }
   updateSrvBadge(); srvRun();
 }
 async function srvRun() {
@@ -55,6 +55,7 @@ async function srvRun() {
       SRV.q.shift();
     }
   } finally { SRV.busy = false; SRV.prog = null; updateSrvBadge(); }
+  srvAdoptProxies();
 }
 // ----- projects -----
 async function srvPushProject(rec) {
@@ -92,6 +93,9 @@ async function srvFetchMissing(ids) {
   for (const id of ids) {
     i++; try {
       toast(`กำลังโหลดไฟล์จากเซิร์ฟเวอร์ (${i}/${ids.length}) ${mediaNameFromId(id)}`, 60000);
+      if (IS_PHONE() && /\.(mov|mp4|m4v|webm)$/i.test(id.split('|')[0])) {      // phones: take the light proxy copy (540p) instead of the 4K original
+        const pf = await srvGetProxy(id, true); if (pf) { await importFiles([pf], { id, name: mediaNameFromId(id), proxyOnly: true, quiet: true }); if (MEDIA.has(id)) { n++; continue; } }
+      }
       const r = await srvFetch('/media/' + srvId(id)); if (!r.ok) continue;
       const name = decodeURIComponent(r.headers.get('x-name') || '') || mediaNameFromId(id); const blob = await r.blob();
       await importFiles([new File([blob], name, { type: blob.type })]); if (MEDIA.has(id)) n++;
@@ -99,6 +103,52 @@ async function srvFetchMissing(ids) {
   }
   toast(n ? `โหลดไฟล์จากเซิร์ฟเวอร์แล้ว ${n} ไฟล์` : 'ไม่พบไฟล์บนเซิร์ฟเวอร์', 4000);
   return n;
+}
+// ----- proxy copies (v1.19): light 540p copies made by the shop server, used for preview on phones -----
+const IS_PHONE = () => matchMedia('(max-width:820px)').matches || matchMedia('(pointer:coarse)').matches;
+SRV.px = { ready: new Set(), pending: new Set(), ffmpeg: null, note: '' };
+async function srvLoadProxies() {
+  try { const r = await srvFetch('/proxies'); if (!r.ok) return false; const j = await r.json(); SRV.px = { ready: new Set(j.ready), pending: new Set(j.pending), ffmpeg: j.ffmpeg, note: j.note || '' }; return true; } catch (e) { return false; }
+}
+async function srvGetProxy(id, wait) {            // -> File (mp4) or null. wait=true: wait (up to 4 min) while the server is still building it
+  if (!srvOn()) return null; if (!SRV.up && !(await srvPing())) return null;
+  const t0 = Date.now();
+  for (;;) {
+    if (!await srvLoadProxies()) return null;
+    if (SRV.px.ready.has(id)) break;
+    if (!wait || !SRV.px.ffmpeg || !SRV.px.pending.has(id) || Date.now() - t0 > 240000) return null;
+    toast('เซิร์ฟเวอร์กำลังสร้างสำเนาเบาของ ' + mediaNameFromId(id) + ' (ครั้งเดียว) …', 8000); await sleep(4000);
+  }
+  try { const r = await srvFetch('/media/' + srvId(id) + '?proxy=1'); if (!r.ok) return null; const b = await r.blob(); return new File([b], mediaNameFromId(id).replace(/\.[^.]+$/, '') + '.proxy.mp4', { type: 'video/mp4' }); } catch (e) { return null; }
+}
+let _adoptBusy = false, _adoptTimer = 0;
+async function srvAdoptProxies() {                // phone has big local originals that are already on the server -> use the light copy for preview
+  if (_adoptBusy || !srvOn() || !IS_PHONE()) return; _adoptBusy = true; let again = false, n = 0;
+  try {
+    if (!SRV.up && !(await srvPing())) return; if (!SRV.sizes.size) await srvLoadSizes();
+    const cand = [...MEDIA.values()].filter(m => m.type === 'video' && !m.proxyOnly && !m.purl && !m.builtin && !m.hidden && m.file && SRV.sizes.get(m.id) === m.file.size && Math.max(m.w || 0, m.h || 0) > 1300);
+    if (!cand.length) return; await srvLoadProxies(); if (!SRV.px.ffmpeg) return;
+    for (const m of cand) {
+      if (SRV.px.ready.has(m.id)) { const f = await srvGetProxy(m.id, false); if (f) { m.pfile = f; m.purl = URL.createObjectURL(f); dbPut(m); n++; } else again = true; }
+      else if (SRV.px.pending.has(m.id)) again = true;
+    }
+  } finally { _adoptBusy = false; }
+  if (n) { poolResetAll(); toast('ใช้สำเนาเบาสำหรับดูตัวอย่างแล้ว ' + n + ' คลิป (ตอนส่งออกยังใช้ไฟล์ต้นฉบับ)', 5000); }
+  if (again) { clearTimeout(_adoptTimer); _adoptTimer = setTimeout(srvAdoptProxies, 8000); }
+}
+async function exportUseOriginals(msgEl) {         // export must use the full-quality originals: swap proxies out, return a function that swaps them back
+  const back = []; const ids = [...new Set(D.items.map(i => i.mediaId).filter(Boolean))];
+  for (const id of ids) {
+    const m = MEDIA.get(id); if (!m) continue;
+    if (m.purl) { back.push(() => { m.purl = m._purl; }); m._purl = m.purl; m.purl = null; }
+    else if (m.proxyOnly) {
+      if (msgEl) msgEl.textContent = 'กำลังดึงไฟล์ต้นฉบับจากเซิร์ฟเวอร์: ' + m.name + ' …';
+      try { const r = await srvFetch('/media/' + srvId(id)); if (!r.ok) throw new Error('HTTP ' + r.status); const b = await r.blob(); const old = m.url, nu = URL.createObjectURL(b); m.url = nu; back.push(() => { m.url = old; URL.revokeObjectURL(nu); }); }
+      catch (e) { toast('ดึงไฟล์ต้นฉบับ ' + m.name + ' ไม่ได้ — ส่งออกจากสำเนาเบา (ความละเอียดต่ำกว่า)', 7000); }
+    }
+  }
+  poolResetAll();
+  return () => { back.forEach(f => f()); poolResetAll(); };
 }
 async function srvPushOut(blob, name) {
   if (!srvOn()) return;

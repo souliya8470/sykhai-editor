@@ -246,12 +246,13 @@ function renderMediaBin() {
   }
 }
 
-async function importFiles(files) {
+async function importFiles(files, opts) {
+  opts = opts || {};
   const list = [...files]; if (!list.length) return;
   for (const f of list) {
     const type = f.type.startsWith('video') || /\.(mov|mp4|m4v|webm)$/i.test(f.name) ? 'video' : f.type.startsWith('image') ? 'image' : f.type.startsWith('audio') || /\.(mp3|wav|m4a|aac|ogg)$/i.test(f.name) ? 'audio' : null;
     if (!type) { toast('ไม่รองรับไฟล์: ' + f.name); continue; }
-    const m = { id: f.name + '|' + f.size, name: f.name, type, file: f, url: URL.createObjectURL(f), duration: 0, w: 0, h: 0 };
+    const m = { id: opts.id || f.name + '|' + f.size, name: opts.name || f.name, type, file: f, url: URL.createObjectURL(f), duration: 0, w: 0, h: 0 }; if (opts.proxyOnly) m.proxyOnly = true;
     try {
       if (type === 'image') {
         const img = new Image(); img.src = m.url; await img.decode(); m.img = img; m.w = img.naturalWidth; m.h = img.naturalHeight; m.thumb = thumbFrom(img, img.naturalWidth, img.naturalHeight);
@@ -265,7 +266,7 @@ async function importFiles(files) {
     MEDIA.set(m.id, m); renderMediaBin(); emit('media-added', m); renderTimeline();
     if (type !== 'image') analyzeAudio(m).then(() => { renderMediaBin(); renderTimeline(); dbPut(m); }); else dbPut(m);
   }
-  toast('นำเข้าแล้ว ' + list.length + ' ไฟล์');
+  if (!opts.quiet) toast('นำเข้าแล้ว ' + list.length + ' ไฟล์');
 }
 function seekTo(el, t) { return new Promise(res => { const done = () => { el.removeEventListener('seeked', done); res(); }; el.addEventListener('seeked', done); try { el.currentTime = t; } catch (e) { res(); } setTimeout(res, 3000); }); }
 function thumbFrom(src, w, h) {
