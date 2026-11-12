@@ -1,5 +1,6 @@
 <div id="app">
   <header id="top">
+    <button id="btnHome" title="กลับหน้าโปรเจกต์ทั้งหมด">🏠 โปรเจกต์</button>
     <div class="brand">Sykhai <b>Editor</b></div>
     <input id="projName" value="โปรเจกต์ใหม่" spellcheck="false">
     <button id="btnUndo" title="ย้อนกลับ (⌘Z)">↶</button>
@@ -7,8 +8,8 @@
     <span class="sp"></span>
     <span id="costBadge" title="ค่า AI เดือนนี้ / เพดาน">AI $0.00</span>
     <button id="btnSettings">⚙ ตั้งค่า</button>
-    <button id="btnSave">💾 บันทึก</button>
-    <button id="btnOpen">📂 เปิด</button>
+    <button id="btnSave" title="โหลดไฟล์โปรเจกต์ (.json) เก็บสำรอง — โปรเจกต์บันทึกอัตโนมัติอยู่แล้ว">💾 สำรองไฟล์</button>
+    <button id="btnOpen" title="นำเข้าไฟล์โปรเจกต์ (.json)">📂 นำเข้า</button>
     <button id="btnExport" class="primary">⬇ ส่งออก MP4</button>
     <span class="ver" id="verTag"></span>
   </header>
@@ -49,6 +50,14 @@
   </footer>
 </div>
 
+<div id="home">
+  <div class="hwrap">
+    <div class="hhead"><div class="brand big">Sykhai <b>Editor</b></div><span class="sp"></span><button id="hmBack" hidden>← กลับไปแก้ไขต่อ</button><button id="hmImport">📂 นำเข้าไฟล์โปรเจกต์</button><button id="hmNew" class="primary">+ โปรเจกต์ใหม่</button></div>
+    <div class="htitle">โปรเจกต์ของฉัน</div>
+    <div id="homeList"></div>
+    <div id="homeFoot" class="hint small"></div>
+  </div>
+</div>
 <div id="dlgBack" hidden></div>
 <dialog id="dlgSettings">
   <h3>ตั้งค่า</h3>

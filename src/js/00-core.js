@@ -2,13 +2,14 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.00
-// APP_VERSION_PREV : 1.01
-// APP_VERSION_PREV_OLDER : 1.00
+// APP_VERSION  : 1.03
+// APP_VERSION_PREV : 1.02
+// APP_VERSION_PREV_OLDER : 1.01
+// 1.03 : Home page (project list), per-project autosave in IndexedDB, rename/duplicate/delete
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.02';
+const APP_VERSION = '1.03';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -47,7 +48,7 @@ const TRACKS = [
 const TRACK_KIND = Object.fromEntries(TRACKS.map(t => [t.id, t.kind]));
 const RENDER_ORDER = ['V1', 'V2', 'V3', 'T1', 'T2', 'T3'];
 
-function newDoc() { return { name: 'โปรเจกต์ใหม่', w: 1080, h: 1920, fps: 30, items: [], duckLevel: 0.22, ver: 1 }; }
+function newDoc() { return { pid: uid(), created: Date.now(), name: 'โปรเจกต์ใหม่', w: 1080, h: 1920, fps: 30, items: [], duckLevel: 0.22, ver: 1 }; }
 let D = newDoc();
 let SEL = null;             // selected item id
 const getItem = (id) => D.items.find(i => i.id === id);
@@ -60,7 +61,6 @@ function commit(label) {
   const snap = JSON.stringify(D);
   if (HIST[HPOS] === snap) { emit('doc'); return; }
   HIST = HIST.slice(0, HPOS + 1); HIST.push(snap); if (HIST.length > 120) HIST.shift(); HPOS = HIST.length - 1;
-  try { localStorage.setItem('sk_autosave', snap); } catch (e) { }
   emit('doc', label);
 }
 function undo() { if (HPOS > 0) { HPOS--; D = JSON.parse(HIST[HPOS]); if (SEL && !getItem(SEL)) SEL = null; emit('doc', 'undo'); emit('sel'); } }

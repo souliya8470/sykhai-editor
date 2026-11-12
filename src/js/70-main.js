@@ -56,10 +56,11 @@ function saveProject() {
 async function openProject(file) {
   try {
     const j = JSON.parse(await file.text()); if (j.app !== 'sykhai-editor') throw new Error('ไม่ใช่ไฟล์โปรเจกต์');
-    D = Object.assign(newDoc(), j.doc); SEL = null; await ensureSfx(); commit('open'); emit('sel');
+    D = Object.assign(newDoc(), j.doc); D.pid = uid(); D.created = Date.now(); SEL = null; await ensureSfx(); HIST = []; HPOS = -1; commit('open'); emit('sel'); HOME.open = false; await projSaveNow(); HOME.started = true;
     const miss = new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => i.mediaId));
     toast(miss.size ? `เปิดโปรเจกต์แล้ว — ต้องนำเข้าไฟล์เดิมอีก ${miss.size} ไฟล์ (ชื่อ/ขนาดเดิม)` : 'เปิดโปรเจกต์แล้ว', 5000);
-  } catch (e) { toast('เปิดไฟล์ไม่ได้: ' + e.message); }
+    return true;
+  } catch (e) { toast('เปิดไฟล์ไม่ได้: ' + e.message); return false; }
 }
 async function ensureSfx() {
   const need = new Set(D.items.filter(i => i.mediaId && String(i.mediaId).startsWith('sfx-') && !MEDIA.has(i.mediaId)).map(i => i.mediaId));
@@ -77,8 +78,8 @@ async function init() {
   buildLeft(); initTimelineEvents(); initPreviewInteraction();
   try { await Promise.race([Promise.all(['800 40px Prompt', '700 40px "Noto Sans Lao"', '700 40px "Noto Sans Thai"'].map(f => document.fonts.load(f, 'กຂaA'))), sleep(4000)]); } catch (e) { }
   try { const n = await restoreMedia(); if (n) toast(`กู้คืนไฟล์ที่นำเข้าไว้ ${n} ไฟล์`); } catch (e) { console.warn(e); }
-  // restore autosave
-  try { const s = localStorage.getItem('sk_autosave'); if (s) { const d = JSON.parse(s); if (d && d.items && d.items.length) { D = Object.assign(newDoc(), d); await ensureSfx(); { const miss = new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => mediaNameFromId(i.mediaId))); toast(miss.size ? 'กู้คืนโปรเจกต์ล่าสุดแล้ว แต่ไฟล์เหล่านี้หาย ต้องนำเข้าใหม่: ' + [...miss].join(', ') : 'กู้คืนโปรเจกต์ล่าสุดแล้ว', 7000); } } } } catch (e) { }
+  // migrate legacy single autosave (<=1.02) into the projects list
+  try { const ls = localStorage.getItem('sk_autosave'); if (ls) { const d = JSON.parse(ls); let ok = true; if (d && d.items && d.items.length) { d.pid = d.pid || uid(); d.created = d.created || Date.now(); d.name = d.name || 'โปรเจกต์เดิม'; ok = await projPut(projRec(d)); } if (ok) localStorage.removeItem('sk_autosave'); } } catch (e) { console.warn(e); }
   HIST = []; HPOS = -1; commit('init');
   renderMediaBin(); renderTimeline(); renderInspector(); updateCostBadge && updateCostBadge();
   $('#zoom').oninput = e => { TL.pps = Math.exp(parseFloat(e.target.value)); renderTimeline(); }; $('#zoom').value = Math.log(TL.pps);
@@ -104,7 +105,7 @@ async function init() {
   window.addEventListener('drop', e => { dc = 0; dz.classList.remove('drop'); if (e.dataTransfer.files && e.dataTransfer.files.length) { e.preventDefault(); importFiles(e.dataTransfer.files); } });
   // keys
   window.addEventListener('keydown', e => {
-    const tg = e.target; if (tg && /^(INPUT|TEXTAREA|SELECT)$/.test(tg.tagName) && !(tg.type === 'range')) return; if (document.querySelector('dialog[open]')) return;
+    const tg = e.target; if (tg && /^(INPUT|TEXTAREA|SELECT)$/.test(tg.tagName) && !(tg.type === 'range')) return; if (document.querySelector('dialog[open]') || HOME.open) return;
     const mod = e.metaKey || e.ctrlKey;
     if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
     else if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
@@ -116,6 +117,7 @@ async function init() {
     else if (e.key === 'ArrowRight') { pause(); seek(PB.t + (e.shiftKey ? 1 : 1 / 30)); }
     else if (e.key === 'Home') { pause(); seek(0); }
   });
+  initHome(); await showHome();
   tick();
   window.__ready = true;
 }

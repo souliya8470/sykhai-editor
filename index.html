@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.02</title>
+<title>Sykhai Editor v1.03</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -121,11 +121,28 @@ dialog h3{margin:0 0 10px}
 #dropMark{position:absolute;display:none;z-index:9;pointer-events:none}
 #dropMark.cut{background:var(--ac);box-shadow:0 0 12px var(--ac);border-radius:3px}
 #dropMark.clipm{border:2px solid var(--ac);background:rgba(46,230,197,.18);border-radius:6px}
+#home{position:fixed;inset:0;z-index:40;background:var(--bg);overflow:auto}
+#home[hidden]{display:none}
+.hwrap{max-width:1100px;margin:0 auto;padding:22px 24px 40px}
+.hhead{display:flex;align-items:center;gap:10px;margin-bottom:18px}.brand.big{font-size:22px}
+.htitle{font-size:15px;color:var(--mu);margin:6px 0 12px}
+#homeList{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
+.hempty{grid-column:1/-1;color:var(--mu);padding:40px 0;text-align:center}
+.pcard{position:relative;background:var(--p1);border:1px solid var(--ln);border-radius:10px;padding:8px;cursor:pointer}
+.pcard:hover{border-color:var(--ac)}
+.pthumb{position:relative;aspect-ratio:9/16;border-radius:7px;background:#0c0d10 center/cover no-repeat;display:flex;align-items:center;justify-content:center}
+.pnone{font-size:34px;opacity:.4}.pdur{position:absolute;right:6px;bottom:6px;background:rgba(0,0,0,.65);padding:1px 6px;border-radius:5px;font-size:11px}
+.pname{margin:8px 2px 2px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pmeta{color:var(--mu);font-size:11px;margin:0 2px}.pwarn{color:#ffb84d}
+.pact{position:absolute;top:12px;right:12px;display:none;gap:4px}.pcard:hover .pact{display:flex}
+.pact button{padding:2px 7px;background:rgba(18,19,22,.85)}
+#homeFoot{margin-top:18px}
 
 </style></head>
 <body>
 <div id="app">
   <header id="top">
+    <button id="btnHome" title="กลับหน้าโปรเจกต์ทั้งหมด">🏠 โปรเจกต์</button>
     <div class="brand">Sykhai <b>Editor</b></div>
     <input id="projName" value="โปรเจกต์ใหม่" spellcheck="false">
     <button id="btnUndo" title="ย้อนกลับ (⌘Z)">↶</button>
@@ -133,8 +150,8 @@ dialog h3{margin:0 0 10px}
     <span class="sp"></span>
     <span id="costBadge" title="ค่า AI เดือนนี้ / เพดาน">AI $0.00</span>
     <button id="btnSettings">⚙ ตั้งค่า</button>
-    <button id="btnSave">💾 บันทึก</button>
-    <button id="btnOpen">📂 เปิด</button>
+    <button id="btnSave" title="โหลดไฟล์โปรเจกต์ (.json) เก็บสำรอง — โปรเจกต์บันทึกอัตโนมัติอยู่แล้ว">💾 สำรองไฟล์</button>
+    <button id="btnOpen" title="นำเข้าไฟล์โปรเจกต์ (.json)">📂 นำเข้า</button>
     <button id="btnExport" class="primary">⬇ ส่งออก MP4</button>
     <span class="ver" id="verTag"></span>
   </header>
@@ -175,6 +192,14 @@ dialog h3{margin:0 0 10px}
   </footer>
 </div>
 
+<div id="home">
+  <div class="hwrap">
+    <div class="hhead"><div class="brand big">Sykhai <b>Editor</b></div><span class="sp"></span><button id="hmBack" hidden>← กลับไปแก้ไขต่อ</button><button id="hmImport">📂 นำเข้าไฟล์โปรเจกต์</button><button id="hmNew" class="primary">+ โปรเจกต์ใหม่</button></div>
+    <div class="htitle">โปรเจกต์ของฉัน</div>
+    <div id="homeList"></div>
+    <div id="homeFoot" class="hint small"></div>
+  </div>
+</div>
 <div id="dlgBack" hidden></div>
 <dialog id="dlgSettings">
   <h3>ตั้งค่า</h3>
@@ -209,13 +234,14 @@ dialog h3{margin:0 0 10px}
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.00
-// APP_VERSION_PREV : 1.01
-// APP_VERSION_PREV_OLDER : 1.00
+// APP_VERSION  : 1.03
+// APP_VERSION_PREV : 1.02
+// APP_VERSION_PREV_OLDER : 1.01
+// 1.03 : Home page (project list), per-project autosave in IndexedDB, rename/duplicate/delete
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.02';
+const APP_VERSION = '1.03';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -254,7 +280,7 @@ const TRACKS = [
 const TRACK_KIND = Object.fromEntries(TRACKS.map(t => [t.id, t.kind]));
 const RENDER_ORDER = ['V1', 'V2', 'V3', 'T1', 'T2', 'T3'];
 
-function newDoc() { return { name: 'โปรเจกต์ใหม่', w: 1080, h: 1920, fps: 30, items: [], duckLevel: 0.22, ver: 1 }; }
+function newDoc() { return { pid: uid(), created: Date.now(), name: 'โปรเจกต์ใหม่', w: 1080, h: 1920, fps: 30, items: [], duckLevel: 0.22, ver: 1 }; }
 let D = newDoc();
 let SEL = null;             // selected item id
 const getItem = (id) => D.items.find(i => i.id === id);
@@ -267,7 +293,6 @@ function commit(label) {
   const snap = JSON.stringify(D);
   if (HIST[HPOS] === snap) { emit('doc'); return; }
   HIST = HIST.slice(0, HPOS + 1); HIST.push(snap); if (HIST.length > 120) HIST.shift(); HPOS = HIST.length - 1;
-  try { localStorage.setItem('sk_autosave', snap); } catch (e) { }
   emit('doc', label);
 }
 function undo() { if (HPOS > 0) { HPOS--; D = JSON.parse(HIST[HPOS]); if (SEL && !getItem(SEL)) SEL = null; emit('doc', 'undo'); emit('sel'); } }
@@ -1013,7 +1038,7 @@ function thumbFrom(src, w, h) {
 // ============================================================
 function dbOpen() {
   return new Promise((res, rej) => {
-    const r = indexedDB.open('sykhai-editor', 1); r.onupgradeneeded = () => r.result.createObjectStore('media', { keyPath: 'id' });
+    const r = indexedDB.open('sykhai-editor', 2); r.onupgradeneeded = () => { const db = r.result; if (!db.objectStoreNames.contains('media')) db.createObjectStore('media', { keyPath: 'id' }); if (!db.objectStoreNames.contains('projects')) db.createObjectStore('projects', { keyPath: 'id' }); };
     r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
   });
 }
@@ -1040,6 +1065,135 @@ async function restoreMedia() {
   return n;
 }
 function mediaNameFromId(id) { return String(id || '').split('|')[0] || '?'; }
+
+
+// ============================================================
+//  Projects store (IndexedDB 'projects') — per-project autosave for the Home page
+// ============================================================
+const HOME = { open: true, started: false };
+const PS = { timer: 0, known: new Set() };
+async function idbTx(store, mode, fn) {
+  const db = await dbOpen();
+  try {
+    return await new Promise((res, rej) => {
+      const t = db.transaction(store, mode); let out; const rq = fn(t.objectStore(store));
+      if (rq) rq.onsuccess = () => { out = rq.result; };
+      t.oncomplete = () => res(out); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
+    });
+  } finally { db.close(); }
+}
+const projPut = async rec => { try { await idbTx('projects', 'readwrite', s => s.put(rec)); PS.known.add(rec.id); return true; } catch (e) { console.warn('projPut', e); return false; } };
+const projGet = async id => { try { return await idbTx('projects', 'readonly', s => s.get(id)); } catch (e) { return null; } };
+const projAll = async () => { try { return (await idbTx('projects', 'readonly', s => s.getAll())) || []; } catch (e) { return []; } };
+const projDel = async id => { try { await idbTx('projects', 'readwrite', s => s.delete(id)); PS.known.delete(id); } catch (e) { } };
+const mediaKeys = async () => { try { return (await idbTx('media', 'readonly', s => s.getAllKeys())) || []; } catch (e) { return []; } };
+
+function projThumb(doc) {
+  const vis = (doc.items || []).filter(i => i.mediaId && (i.type === 'video' || i.type === 'image')).sort((a, b) => a.start - b.start);
+  for (const it of vis) { const m = MEDIA.get(it.mediaId); if (m && m.thumb) return m.thumb; }
+  if (doc === D && !HOME.open && PCANVAS) { try { const c = document.createElement('canvas'); c.width = 90; c.height = 160; c.getContext('2d').drawImage(PCANVAS, 0, 0, 90, 160); return c.toDataURL('image/jpeg', .6); } catch (e) { } }
+  return '';
+}
+function projRec(doc) {
+  const items = doc.items || [];
+  return {
+    id: doc.pid, name: doc.name || 'โปรเจกต์', doc: JSON.stringify(doc), thumb: projThumb(doc), n: items.length,
+    dur: items.reduce((m, i) => Math.max(m, i.start + i.dur), 0),
+    mids: [...new Set(items.map(i => i.mediaId).filter(x => x && !String(x).startsWith('sfx-')))],
+    created: doc.created || Date.now(), updated: Date.now(),
+  };
+}
+async function projSaveNow() {
+  clearTimeout(PS.timer); PS.timer = 0;
+  if (!D || !D.pid || HOME.open) return;
+  if (!D.items.length && !PS.known.has(D.pid)) return;
+  return projPut(projRec(D));
+}
+function projSaveSoon() { clearTimeout(PS.timer); PS.timer = setTimeout(projSaveNow, 700); }
+on('doc', l => { if (l && l !== 'init' && l !== 'open') projSaveSoon(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') projSaveNow(); });
+window.addEventListener('pagehide', () => { projSaveNow(); });
+
+// ---- 26-home.js ----
+// ============================================================
+//  Home page — project list (like CapCut home)
+// ============================================================
+const fmtDate = ts => { try { return new Date(ts).toLocaleString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; } };
+const fmtDur = t => { t = Math.round(t || 0); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
+
+async function showHome() {
+  pause(); await projSaveNow();
+  HOME.open = true; $('#home').hidden = false;
+  $('#hmBack').hidden = !HOME.started;
+  await renderHome();
+}
+function hideHome() { HOME.open = false; $('#home').hidden = true; HOME.started = true; }
+
+async function renderHome() {
+  const [list, keys] = await Promise.all([projAll(), mediaKeys()]);
+  const have = new Set(keys); MEDIA.forEach((m, id) => have.add(id));
+  list.forEach(r => PS.known.add(r.id));
+  list.sort((a, b) => b.updated - a.updated);
+  const box = $('#homeList');
+  if (!list.length) { box.innerHTML = '<div class="hempty">ยังไม่มีโปรเจกต์ — กด “+ โปรเจกต์ใหม่” เพื่อเริ่มตัดต่อ</div>'; }
+  else box.innerHTML = list.map(r => {
+    const miss = (r.mids || []).filter(id => !have.has(id)).length;
+    return `<div class="pcard" data-id="${esc(r.id)}">
+      <div class="pthumb" style="${r.thumb ? `background-image:url(${r.thumb})` : ''}">${r.thumb ? '' : '<span class="pnone">🎬</span>'}<span class="pdur">${fmtDur(r.dur)}</span></div>
+      <div class="pname" title="${esc(r.name)}">${esc(r.name)}</div>
+      <div class="pmeta">${fmtDate(r.updated)} · ${r.n} คลิป${miss ? ` <span class="pwarn" title="ไฟล์วิดีโอในเครื่องนี้หาย ต้องนำเข้าใหม่">⚠ ไฟล์หาย ${miss}</span>` : ''}</div>
+      <div class="pact"><button data-a="rename" title="เปลี่ยนชื่อ">✎</button><button data-a="dup" title="ทำสำเนา">⧉</button><button data-a="del" class="danger" title="ลบ">🗑</button></div>
+    </div>`;
+  }).join('');
+  try {
+    const e = await navigator.storage.estimate();
+    $('#homeFoot').textContent = `พื้นที่ในเครื่องนี้ที่ใช้ไป ${(e.usage / 1e9).toFixed(2)} GB จาก ${(e.quota / 1e9).toFixed(0)} GB · ${list.length} โปรเจกต์ · โปรเจกต์ถูกบันทึกอัตโนมัติทุกครั้งที่แก้ไข`;
+  } catch (e) { $('#homeFoot').textContent = list.length + ' โปรเจกต์ · บันทึกอัตโนมัติ'; }
+}
+
+function resetDoc(doc) {
+  D = doc; SEL = null; HIST = []; HPOS = -1; PB.t = 0;
+  commit('open'); emit('sel'); renderMediaBin && renderMediaBin(); renderInspector && renderInspector(); seek(0);
+}
+async function newProject() {
+  pause(); await projSaveNow();
+  resetDoc(newDoc()); hideHome();
+}
+async function openById(id) {
+  const rec = await projGet(id); if (!rec) { toast('ไม่พบโปรเจกต์'); return renderHome(); }
+  pause(); await projSaveNow();
+  let doc; try { doc = Object.assign(newDoc(), JSON.parse(rec.doc)); } catch (e) { toast('ไฟล์โปรเจกต์เสียหาย'); return; }
+  doc.pid = rec.id; doc.created = doc.created || rec.created;
+  D = doc; await ensureSfx();
+  resetDoc(D); hideHome();
+  const miss = [...new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => mediaNameFromId(i.mediaId)))];
+  if (miss.length) toast('ไฟล์เหล่านี้หายจากเครื่องนี้ ต้องนำเข้าใหม่: ' + miss.join(', '), 7000);
+}
+async function homeAction(id, a) {
+  const rec = await projGet(id); if (!rec) return renderHome();
+  if (a === 'rename') {
+    const n = prompt('ชื่อโปรเจกต์', rec.name); if (n == null || !n.trim()) return;
+    const doc = JSON.parse(rec.doc); doc.name = n.trim(); rec.doc = JSON.stringify(doc); rec.name = doc.name; rec.updated = Date.now(); await projPut(rec);
+  } else if (a === 'dup') {
+    const doc = JSON.parse(rec.doc); doc.pid = uid(); doc.created = Date.now(); doc.name = rec.name + ' (สำเนา)';
+    const r2 = Object.assign({}, rec, { id: doc.pid, name: doc.name, doc: JSON.stringify(doc), created: doc.created, updated: Date.now() }); await projPut(r2);
+  } else if (a === 'del') {
+    if (!confirm(`ลบโปรเจกต์ “${rec.name}” ?\n(ไฟล์วิดีโอที่นำเข้าไว้ไม่ถูกลบ)`)) return;
+    await projDel(id);
+    if (D && D.pid === id) { D = newDoc(); SEL = null; HIST = []; HPOS = -1; commit('init'); emit('sel'); HOME.started = false; }
+  }
+  renderHome();
+}
+function initHome() {
+  $('#hmNew').onclick = newProject;
+  $('#hmBack').onclick = hideHome;
+  $('#btnHome').onclick = showHome;
+  $('#hmImport').onclick = () => { const i = document.createElement('input'); i.type = 'file'; i.accept = '.json'; i.onchange = async () => { if (i.files[0]) { const ok = await openProject(i.files[0]); if (ok) hideHome(); } }; i.click(); };
+  $('#homeList').addEventListener('click', e => {
+    const c = e.target.closest('.pcard'); if (!c) return; const b = e.target.closest('button[data-a]');
+    if (b) { e.stopPropagation(); homeAction(c.dataset.id, b.dataset.a); } else openById(c.dataset.id);
+  });
+}
 
 // ---- 30-panels.js ----
 // ============================================================
@@ -2050,10 +2204,11 @@ function saveProject() {
 async function openProject(file) {
   try {
     const j = JSON.parse(await file.text()); if (j.app !== 'sykhai-editor') throw new Error('ไม่ใช่ไฟล์โปรเจกต์');
-    D = Object.assign(newDoc(), j.doc); SEL = null; await ensureSfx(); commit('open'); emit('sel');
+    D = Object.assign(newDoc(), j.doc); D.pid = uid(); D.created = Date.now(); SEL = null; await ensureSfx(); HIST = []; HPOS = -1; commit('open'); emit('sel'); HOME.open = false; await projSaveNow(); HOME.started = true;
     const miss = new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => i.mediaId));
     toast(miss.size ? `เปิดโปรเจกต์แล้ว — ต้องนำเข้าไฟล์เดิมอีก ${miss.size} ไฟล์ (ชื่อ/ขนาดเดิม)` : 'เปิดโปรเจกต์แล้ว', 5000);
-  } catch (e) { toast('เปิดไฟล์ไม่ได้: ' + e.message); }
+    return true;
+  } catch (e) { toast('เปิดไฟล์ไม่ได้: ' + e.message); return false; }
 }
 async function ensureSfx() {
   const need = new Set(D.items.filter(i => i.mediaId && String(i.mediaId).startsWith('sfx-') && !MEDIA.has(i.mediaId)).map(i => i.mediaId));
@@ -2071,8 +2226,8 @@ async function init() {
   buildLeft(); initTimelineEvents(); initPreviewInteraction();
   try { await Promise.race([Promise.all(['800 40px Prompt', '700 40px "Noto Sans Lao"', '700 40px "Noto Sans Thai"'].map(f => document.fonts.load(f, 'กຂaA'))), sleep(4000)]); } catch (e) { }
   try { const n = await restoreMedia(); if (n) toast(`กู้คืนไฟล์ที่นำเข้าไว้ ${n} ไฟล์`); } catch (e) { console.warn(e); }
-  // restore autosave
-  try { const s = localStorage.getItem('sk_autosave'); if (s) { const d = JSON.parse(s); if (d && d.items && d.items.length) { D = Object.assign(newDoc(), d); await ensureSfx(); { const miss = new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => mediaNameFromId(i.mediaId))); toast(miss.size ? 'กู้คืนโปรเจกต์ล่าสุดแล้ว แต่ไฟล์เหล่านี้หาย ต้องนำเข้าใหม่: ' + [...miss].join(', ') : 'กู้คืนโปรเจกต์ล่าสุดแล้ว', 7000); } } } } catch (e) { }
+  // migrate legacy single autosave (<=1.02) into the projects list
+  try { const ls = localStorage.getItem('sk_autosave'); if (ls) { const d = JSON.parse(ls); let ok = true; if (d && d.items && d.items.length) { d.pid = d.pid || uid(); d.created = d.created || Date.now(); d.name = d.name || 'โปรเจกต์เดิม'; ok = await projPut(projRec(d)); } if (ok) localStorage.removeItem('sk_autosave'); } } catch (e) { console.warn(e); }
   HIST = []; HPOS = -1; commit('init');
   renderMediaBin(); renderTimeline(); renderInspector(); updateCostBadge && updateCostBadge();
   $('#zoom').oninput = e => { TL.pps = Math.exp(parseFloat(e.target.value)); renderTimeline(); }; $('#zoom').value = Math.log(TL.pps);
@@ -2098,7 +2253,7 @@ async function init() {
   window.addEventListener('drop', e => { dc = 0; dz.classList.remove('drop'); if (e.dataTransfer.files && e.dataTransfer.files.length) { e.preventDefault(); importFiles(e.dataTransfer.files); } });
   // keys
   window.addEventListener('keydown', e => {
-    const tg = e.target; if (tg && /^(INPUT|TEXTAREA|SELECT)$/.test(tg.tagName) && !(tg.type === 'range')) return; if (document.querySelector('dialog[open]')) return;
+    const tg = e.target; if (tg && /^(INPUT|TEXTAREA|SELECT)$/.test(tg.tagName) && !(tg.type === 'range')) return; if (document.querySelector('dialog[open]') || HOME.open) return;
     const mod = e.metaKey || e.ctrlKey;
     if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
     else if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
@@ -2110,6 +2265,7 @@ async function init() {
     else if (e.key === 'ArrowRight') { pause(); seek(PB.t + (e.shiftKey ? 1 : 1 / 30)); }
     else if (e.key === 'Home') { pause(); seek(0); }
   });
+  initHome(); await showHome();
   tick();
   window.__ready = true;
 }
