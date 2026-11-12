@@ -1,12 +1,19 @@
 @echo off
-chcp 65001 >nul
-REM ===== Sykhai Editor file server =====
-REM 1) แก้รหัสผ่านด้านล่าง (อย่างน้อย 6 ตัวอักษร)  2) ดับเบิลคลิกไฟล์นี้
-set SK_TOKEN=CHANGE_ME
+cd /d "%~dp0"
 set SK_DIR=D:\SykhaiEditor
 set SK_PORT=8787
+if exist token.txt goto havetoken
+echo.
+echo ===== Sykhai Editor server - first run =====
+set /p NEWPW=Set a password for the editor server (6+ letters/numbers, no spaces or symbols): 
+>token.txt echo %NEWPW%
+cls
+:havetoken
+set /p SK_TOKEN=<token.txt
+schtasks /query /tn SykhaiEditorServer >nul 2>&1
+if errorlevel 1 schtasks /create /tn SykhaiEditorServer /tr "\"%~dp0start.bat\"" /sc onlogon /f >nul 2>&1
 :loop
 node "%~dp0server.js"
-echo เซิร์ฟเวอร์หยุดทำงาน จะเริ่มใหม่ใน 5 วินาที...
+echo Server stopped. Restarting in 5 seconds...
 timeout /t 5 >nul
 goto loop

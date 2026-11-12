@@ -7,7 +7,7 @@
 const http = require('http'), fs = require('fs'), path = require('path'), crypto = require('crypto');
 const ROOT = process.env.SK_DIR || 'D:\\SykhaiEditor';
 const PORT = +process.env.SK_PORT || 8787;
-const TOKEN = process.env.SK_TOKEN || '';
+const TOKEN = (process.env.SK_TOKEN || '').trim();
 const HOST = process.env.SK_HOST || '0.0.0.0';
 if (!TOKEN || TOKEN.length < 6 || TOKEN === 'CHANGE_ME') { console.error('ตั้งรหัสผ่านก่อน: SK_TOKEN (อย่างน้อย 6 ตัวอักษร)'); process.exit(1); }
 const DIRS = { media: path.join(ROOT, 'media'), projects: path.join(ROOT, 'projects'), out: path.join(ROOT, 'out') };
