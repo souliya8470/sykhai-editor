@@ -47,7 +47,24 @@
     <aside id="right"><div id="inspector"></div></aside>
   </main>
   <footer id="tl">
-    <div id="tlbar"><span>ไทม์ไลน์</span><span class="sp"></span><label>ซูม <input id="zoom" type="range" min="2" max="6" step="0.05" value="4"></label></div>
+    <div id="tlbar">
+      <button id="tbImport" title="นำเข้าไฟล์ (วิดีโอ / รูป / เสียง)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button><span class="tsep"></span>
+      <button id="tbUndo" title="ย้อนกลับ (⌘Z)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
+      <button id="tbRedo" title="ทำซ้ำ (⌘⇧Z)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button><span class="tsep"></span>
+      <button id="tbSplit" title="ตัดที่หัวอ่าน (S)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M8 7H5v10h3"/><path d="M16 7h3v10h-3"/></svg></button>
+      <button id="tbTrimL" title="ตัดทิ้งส่วนซ้ายของหัวอ่าน (Q)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v18"/><path d="M10 7H5v10h5"/><path d="M5 7l5 10"/></svg></button>
+      <button id="tbTrimR" title="ตัดทิ้งส่วนขวาของหัวอ่าน (W)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3v18"/><path d="M14 7h5v10h-5"/><path d="M19 7l-5 10"/></svg></button>
+      <button id="tbDel" title="ลบ (Delete)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M9 7V4h6v3M7 7l1 13h8l1-13M10 11v6M14 11v6"/></svg></button>
+      <button id="tbRipple" title="ลบแล้วดึงคลิปตามมา (Shift+Delete)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h8M6 7V4h4v3M5 7l1 13h4l1-13"/><path d="M15 12h6M18 9l3 3-3 3"/></svg></button>
+      <button id="tbMark" title="ใส่มาร์กเกอร์ที่หัวอ่าน (M) — ดับเบิลคลิกมาร์กเกอร์เพื่อลบ"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v10l-6 6-6-6z"/></svg></button>
+      <span class="sp"></span>
+      <button id="tbMagnet" class="tog" title="แม่เหล็กวิดีโอ 1 — ชิดคลิปอัตโนมัติ ไม่มีช่องว่าง"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 14a7 7 0 0 0 14 0V4h-4v10a3 3 0 0 1-6 0V4H5z"/><path d="M5 8h4M15 8h4"/></svg></button>
+      <button id="tbSnap" class="tog on" title="ดูดติดขอบคลิป/มาร์กเกอร์เมื่อลาก"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M3 12h6M21 12h-6"/></svg></button><span class="tsep"></span>
+      <button id="tbFit" title="ซูมให้พอดีจอ"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      <button id="tbZoomOut" title="ซูมออก"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><path d="M8 11h6M16 16l4 4"/></svg></button>
+      <input id="zoom" type="range" min="2" max="6" step="0.05" value="4" title="ซูม">
+      <button id="tbZoomIn" title="ซูมเข้า"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><path d="M8 11h6M11 8v6M16 16l4 4"/></svg></button>
+    </div>
     <div id="tlbody"></div>
   </footer>
   <div class="split v" id="spL" title="ลากเพื่อปรับความกว้าง"></div><div class="split v" id="spR" title="ลากเพื่อปรับความกว้าง"></div><div class="split h" id="spT" title="ลากเพื่อปรับความสูงของไทม์ไลน์"></div>

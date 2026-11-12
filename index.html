@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.10</title>
+<title>Sykhai Editor v1.11</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -70,7 +70,7 @@ main{display:grid;grid-template-columns:var(--lw,300px) minmax(0,1fr) var(--rw,3
 .kfb{padding:0 5px;font-size:11px;line-height:18px;color:var(--mu)}.kfb.on{background:var(--ac);color:#000;border-color:var(--ac)}
 /* timeline */
 #tl{min-width:0;overflow:hidden;background:var(--p1);border-top:1px solid var(--ln);display:flex;flex-direction:column;min-height:0}
-#tlbar{display:flex;align-items:center;gap:10px;padding:3px 12px;color:var(--mu);font-size:12px;border-bottom:1px solid var(--ln)}
+#tlbar{display:flex;align-items:center;gap:3px;padding:3px 10px;color:var(--mu);font-size:12px;border-bottom:1px solid var(--ln)}
 #tlbody{flex:1;overflow:auto;position:relative;min-height:0;background:#17191e}
 #tlinner{position:relative;min-height:100%}
 #ruler{display:flex;height:22px;position:sticky;top:0;z-index:6;background:var(--p2);border-bottom:1px solid var(--ln);cursor:pointer}
@@ -175,6 +175,14 @@ select.uilang{max-width:130px}
 
 @media (max-width:820px){dialog{width:calc(100vw - 20px)!important;min-width:0!important;max-width:none!important;box-sizing:border-box}.hhead{flex-wrap:wrap}.hwrap{padding:14px}.brand.big{font-size:18px}}
 
+#tlbar button{width:30px;height:26px;padding:0;display:inline-flex;align-items:center;justify-content:center;background:transparent;border-color:transparent;color:var(--tx)}
+#tlbar button:hover{background:var(--p3)}
+#tlbar button.tog.on{background:rgba(46,230,197,.16);color:var(--ac);border-color:rgba(46,230,197,.4)}
+#tlbar .tsep{width:1px;height:18px;background:var(--ln);margin:0 5px}
+#tlbar #zoom{width:110px}
+#ruler .mk{position:absolute;top:0;z-index:4;transform:translateX(-50%);color:#ffd60a;font-size:11px;line-height:12px;cursor:pointer;font-style:normal}
+#ruler .mk::after{content:"";position:absolute;left:50%;top:12px;height:900px;width:0;border-left:1px dashed rgba(255,214,10,.35);pointer-events:none}
+
 </style></head>
 <body>
 <div id="app">
@@ -226,7 +234,24 @@ select.uilang{max-width:130px}
     <aside id="right"><div id="inspector"></div></aside>
   </main>
   <footer id="tl">
-    <div id="tlbar"><span>ไทม์ไลน์</span><span class="sp"></span><label>ซูม <input id="zoom" type="range" min="2" max="6" step="0.05" value="4"></label></div>
+    <div id="tlbar">
+      <button id="tbImport" title="นำเข้าไฟล์ (วิดีโอ / รูป / เสียง)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button><span class="tsep"></span>
+      <button id="tbUndo" title="ย้อนกลับ (⌘Z)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
+      <button id="tbRedo" title="ทำซ้ำ (⌘⇧Z)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button><span class="tsep"></span>
+      <button id="tbSplit" title="ตัดที่หัวอ่าน (S)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M8 7H5v10h3"/><path d="M16 7h3v10h-3"/></svg></button>
+      <button id="tbTrimL" title="ตัดทิ้งส่วนซ้ายของหัวอ่าน (Q)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v18"/><path d="M10 7H5v10h5"/><path d="M5 7l5 10"/></svg></button>
+      <button id="tbTrimR" title="ตัดทิ้งส่วนขวาของหัวอ่าน (W)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3v18"/><path d="M14 7h5v10h-5"/><path d="M19 7l-5 10"/></svg></button>
+      <button id="tbDel" title="ลบ (Delete)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M9 7V4h6v3M7 7l1 13h8l1-13M10 11v6M14 11v6"/></svg></button>
+      <button id="tbRipple" title="ลบแล้วดึงคลิปตามมา (Shift+Delete)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h8M6 7V4h4v3M5 7l1 13h4l1-13"/><path d="M15 12h6M18 9l3 3-3 3"/></svg></button>
+      <button id="tbMark" title="ใส่มาร์กเกอร์ที่หัวอ่าน (M) — ดับเบิลคลิกมาร์กเกอร์เพื่อลบ"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v10l-6 6-6-6z"/></svg></button>
+      <span class="sp"></span>
+      <button id="tbMagnet" class="tog" title="แม่เหล็กวิดีโอ 1 — ชิดคลิปอัตโนมัติ ไม่มีช่องว่าง"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 14a7 7 0 0 0 14 0V4h-4v10a3 3 0 0 1-6 0V4H5z"/><path d="M5 8h4M15 8h4"/></svg></button>
+      <button id="tbSnap" class="tog on" title="ดูดติดขอบคลิป/มาร์กเกอร์เมื่อลาก"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M3 12h6M21 12h-6"/></svg></button><span class="tsep"></span>
+      <button id="tbFit" title="ซูมให้พอดีจอ"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      <button id="tbZoomOut" title="ซูมออก"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><path d="M8 11h6M16 16l4 4"/></svg></button>
+      <input id="zoom" type="range" min="2" max="6" step="0.05" value="4" title="ซูม">
+      <button id="tbZoomIn" title="ซูมเข้า"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><path d="M8 11h6M11 8v6M16 16l4 4"/></svg></button>
+    </div>
     <div id="tlbody"></div>
   </footer>
   <div class="split v" id="spL" title="ลากเพื่อปรับความกว้าง"></div><div class="split v" id="spR" title="ลากเพื่อปรับความกว้าง"></div><div class="split h" id="spT" title="ลากเพื่อปรับความสูงของไทม์ไลน์"></div>
@@ -391,6 +416,17 @@ I18N_ROWS.push(
   ['บันทึกโปรเจกต์แล้ว ✔', 'Project saved ✔', 'ບັນທຶກໂປຣເຈັກແລ້ວ ✔'],
   ['· ☁ ส่งขึ้นเซิร์ฟเวอร์แล้ว', '· ☁ uploaded to the server', '· ☁ ສົ່ງຂຶ້ນເຊີເວີແລ້ວ'],
   ['ตั้งค่า (ใส่รหัสผ่านเซิร์ฟเวอร์ที่นี่)', 'Settings (enter the server password here)', 'ຕັ້ງຄ່າ (ໃສ່ລະຫັດຜ່ານເຊີເວີຢູ່ບ່ອນນີ້)'],
+  ['นำเข้าไฟล์ (วิดีโอ / รูป / เสียง)', 'Import files (video / image / audio)', 'ນຳເຂົ້າໄຟລ໌ (ວິດີໂອ / ຮູບ / ສຽງ)'],
+  ['ตัดทิ้งส่วนซ้ายของหัวอ่าน (Q)', 'Trim away the part left of the playhead (Q)', 'ຕັດຖິ້ມສ່ວນຊ້າຍຂອງເສັ້ນຫຼິ້ນ (Q)'],
+  ['ตัดทิ้งส่วนขวาของหัวอ่าน (W)', 'Trim away the part right of the playhead (W)', 'ຕັດຖິ້ມສ່ວນຂວາຂອງເສັ້ນຫຼິ້ນ (W)'],
+  ['ใส่มาร์กเกอร์ที่หัวอ่าน (M) — ดับเบิลคลิกมาร์กเกอร์เพื่อลบ', 'Add a marker at the playhead (M) — double-click a marker to delete it', 'ໃສ່ມາກເກີທີ່ເສັ້ນຫຼິ້ນ (M) — ດັບເບິນຄລິກມາກເກີເພື່ອລຶບ'],
+  ['มาร์กเกอร์ — ดับเบิลคลิกเพื่อลบ', 'Marker — double-click to delete', 'ມາກເກີ — ດັບເບິນຄລິກເພື່ອລຶບ'],
+  ['แม่เหล็กวิดีโอ 1 — ชิดคลิปอัตโนมัติ ไม่มีช่องว่าง', 'Magnet on Video 1 — clips snap together with no gaps', 'ແມ່ເຫຼັກວິດີໂອ 1 — ຄລິບຊິດກັນອັດຕະໂນມັດ ບໍ່ມີຊ່ອງຫວ່າງ'],
+  ['ดูดติดขอบคลิป/มาร์กเกอร์เมื่อลาก', 'Snap to clip edges / markers while dragging', 'ດູດຕິດຂອບຄລິບ/ມາກເກີເມື່ອລາກ'],
+  ['ซูมให้พอดีจอ', 'Zoom to fit', 'ຊູມໃຫ້ພໍດີຈໍ'],
+  ['ซูมออก', 'Zoom out', 'ຊູມອອກ'],
+  ['ซูมเข้า', 'Zoom in', 'ຊູມເຂົ້າ'],
+  ['เปิดแม่เหล็ก: คลิปบนวิดีโอ 1 จะชิดกันอัตโนมัติ', 'Magnet on: clips on Video 1 now snap together automatically', 'ເປີດແມ່ເຫຼັກ: ຄລິບເທິງວິດີໂອ 1 ຈະຊິດກັນອັດຕະໂນມັດ'],
   // ---- home ----
   ['ส่งโปรเจกต์/ไฟล์ขึ้นเซิร์ฟเวอร์ และดึงโปรเจกต์ใหม่ลงเครื่องนี้', 'Send projects/files to the server and pull new projects to this device', 'ສົ່ງໂປຣເຈັກ/ໄຟລ໌ຂຶ້ນເຊີເວີ ແລະ ດຶງໂປຣເຈັກໃໝ່ລົງເຄື່ອງນີ້'],
   ['☁ ซิงค์เซิร์ฟเวอร์', '☁ Sync server', '☁ ຊິງຄ໌ເຊີເວີ'],
@@ -863,9 +899,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.10
-// APP_VERSION_PREV : 1.09
-// APP_VERSION_PREV_OLDER : 1.08
+// APP_VERSION  : 1.11
+// APP_VERSION_PREV : 1.10
+// APP_VERSION_PREV_OLDER : 1.09
+// 1.11 : CapCut-style timeline toolbar (import, undo/redo, split, trim left/right Q/W, delete, ripple delete, markers M, magnet on Video 1, snapping toggle, zoom fit/in/out)
 // 1.10 : Save-now button in the editor header; Settings button on the Home page (needed on phones to enter the server password); Home header wraps on narrow screens
 // 1.09 : UI language selector (Lao / Thai / English) in header + home; dictionary-based DOM translation, Noto Sans Lao for Lao; user content protected with translate=no
 // 1.08 : draggable panel splitters (left/right/timeline height, saved), draggable track heights, tall clips show waveform + draggable volume line, live level meter
@@ -877,7 +914,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.10';
+const APP_VERSION = '1.11';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -918,7 +955,7 @@ const TRACKS = [
 const TRACK_KIND = Object.fromEntries(TRACKS.map(t => [t.id, t.kind]));
 const RENDER_ORDER = ['V1', 'V2', 'V3', 'T1', 'T2', 'T3'];
 
-function newDoc() { return { pid: uid(), created: Date.now(), name: T('โปรเจกต์ใหม่'), w: 1080, h: 1920, fps: 30, items: [], duckLevel: 0.22, ver: 1 }; }
+function newDoc() { return { pid: uid(), created: Date.now(), name: T('โปรเจกต์ใหม่'), w: 1080, h: 1920, fps: 30, items: [], markers: [], duckLevel: 0.22, ver: 1 }; }
 let D = newDoc();
 let SEL = null;             // selected item id
 const getItem = (id) => D.items.find(i => i.id === id);
@@ -928,6 +965,7 @@ const itemsOn = (tr) => D.items.filter(i => i.track === tr).sort((a, b) => a.sta
 // ---------- undo / redo ----------
 let HIST = [], HPOS = -1;
 function commit(label) {
+  if (typeof magnetFix === 'function') magnetFix(label);
   const snap = JSON.stringify(D);
   if (HIST[HPOS] === snap) { emit('doc'); return; }
   HIST = HIST.slice(0, HPOS + 1); HIST.push(snap); if (HIST.length > 120) HIST.shift(); HPOS = HIST.length - 1;
@@ -1462,7 +1500,7 @@ function clipLabel(it) {
 function renderTimeline() {
   const body = $('#tlbody'); if (!body) return;
   const sx = body.scrollLeft, sy = body.scrollTop; const W = tlWidth();
-  let h = `<div id="tlinner" style="width:${TL.labelW + W}px"><div id="ruler"><div class="corner"></div><div class="rt" style="width:${W}px">${rulerTicks()}</div></div>`;
+  let h = `<div id="tlinner" style="width:${TL.labelW + W}px"><div id="ruler"><div class="corner"></div><div class="rt" style="width:${W}px">${rulerTicks()}${(D.markers || []).map(m => `<i class="mk" data-id="${m.id}" style="left:${m.t * TL.pps}px" title="${T('มาร์กเกอร์ — ดับเบิลคลิกเพื่อลบ')}">⚑</i>`).join('')}</div></div>`;
   for (const tr of TRACKS) h += `<div class="trow ${tr.kind}" data-track="${tr.id}" style="height:${trackH(tr)}px"><div class="tlabel">${tr.label}</div><div class="tlane" style="width:${W}px"></div><div class="trh" title="ลากเพื่อปรับความสูงของแถว"></div></div>`;
   h += `<div id="playhead"><i></i></div></div>`;
   body.innerHTML = h;
@@ -1534,7 +1572,7 @@ function dropTimeFromEvent(e) { const body = $('#tlbody'); const r = body.getBou
 
 // ---------- pointer interactions ----------
 function snapPoints(excludeId) {
-  const pts = [0, PB.t]; for (const o of D.items) { if (o.id === excludeId) continue; pts.push(o.start, o.start + o.dur); } return pts;
+  const pts = [0, PB.t, ...(D.markers || []).map(m => m.t)]; for (const o of D.items) { if (o.id === excludeId) continue; pts.push(o.start, o.start + o.dur); } return pts;
 }
 function snapVal(v, pts, tol) { let best = v, bd = tol; for (const p of pts) { const d = Math.abs(p - v); if (d < bd) { bd = d; best = p; } } return best; }
 
@@ -1546,6 +1584,7 @@ function initTimelineEvents() {
     const trh = e.target.closest('.trh'); if (trh) { e.preventDefault(); rowResizeStart(e, trh.closest('.trow')); return; }
     const vlu = e.target.closest('.vl u'); if (vlu) { e.preventDefault(); e.stopPropagation(); volDragStart(e, vlu.closest('.clip')); return; }
     const clipEl = e.target.closest('.clip');
+    const mkEl = e.target.closest('.mk'); if (mkEl) { const mm = (D.markers || []).find(x => x.id === mkEl.dataset.id); if (mm) { pause(); seek(mm.t); } return; }
     const rulerEl = e.target.closest('#ruler');
     if (rulerEl && !e.target.closest('.corner')) { scrubStart(e); return; }
     if (!clipEl) {
@@ -1555,7 +1594,7 @@ function initTimelineEvents() {
     const it = getItem(clipEl.dataset.id); if (!it) return;
     select(it.id);
     const mode = e.target.classList.contains('th') ? (e.target.classList.contains('l') ? 'tl' : 'tr') : 'move';
-    const o = { start: it.start, dur: it.dur, in: it.in || 0, track: it.track }; const x0 = e.clientX; const pts = snapPoints(it.id); const tol = 9 / TL.pps; let moved = false;
+    const o = { start: it.start, dur: it.dur, in: it.in || 0, track: it.track }; const x0 = e.clientX; const pts = snapPoints(it.id); const tol = snapTol() / TL.pps; let moved = false;
     const m = MEDIA.get(it.mediaId); const sp = it.speed || 1;
     const move = ev => {
       const dt = (ev.clientX - x0) / TL.pps; if (Math.abs(ev.clientX - x0) > 2) moved = true; if (!moved && mode === 'move' && Math.abs(ev.clientY - e.clientY) < 3) return;
@@ -1719,6 +1758,60 @@ function initSplitters() {
   bind('#spL', () => $('#left').getBoundingClientRect().width, (v, dx) => { L.lw = clamp(Math.round(v + dx), 200, 560); });
   bind('#spR', () => $('#right').getBoundingClientRect().width, (v, dx) => { L.rw = clamp(Math.round(v - dx), 220, 560); });
   bind('#spT', () => $('#tl').getBoundingClientRect().height, (v, dx, dy) => { L.tlh = clamp(Math.round(v - dy), 120, Math.max(160, innerHeight - 260)); });
+}
+
+// ---- 22-toolbar.js ----
+// ============================================================
+//  Timeline toolbar (CapCut-style): trim left/right, markers, magnet, snapping, zoom
+// ============================================================
+const TLS = { snap: true, magnet: false };
+try { Object.assign(TLS, JSON.parse(localStorage.getItem('sk_tls') || '{}')); } catch (e) { }
+const snapTol = () => TLS.snap ? 9 : 0;
+// magnetic main track: close gaps on Video 1 whenever the document changes
+function magnetFix(label) {
+  if (!TLS.magnet || label === 'init' || label === 'open') return;
+  const list = D.items.filter(i => i.track === 'V1').sort((a, b) => a.start - b.start); let t = 0;
+  for (const it of list) { if (it.start > t + 1e-3) it.start = t; t = Math.max(t, it.start + it.dur); }
+}
+function trimTargets() {
+  const t = PB.t; const target = SEL ? getItem(SEL) : null;
+  const hit = it => it && t > it.start + 0.05 && t < it.start + it.dur - 0.05 && (it.type === 'video' || it.type === 'image' || it.type === 'audio');
+  return hit(target) ? [target] : D.items.filter(hit);
+}
+function cmdTrimLeft() {
+  const list = trimTargets(); if (!list.length) { toast('เลื่อนหัวอ่านไปกลางคลิปก่อนตัด'); return; }
+  const t = PB.t;
+  for (const it of list) {
+    const lt = t - it.start, sp = it.speed || 1;
+    if (it.in != null) it.in += lt * sp; it.dur -= lt; it.start = t; it.transIn = null;
+    if (it.kf) for (const k in it.kf) it.kf[k] = it.kf[k].map(p => ({ t: p.t - lt, v: p.v }));
+  }
+  commit('trimL'); if (TLS.magnet) seek(Math.min(PB.t, projectEnd()));
+}
+function cmdTrimRight() {
+  const list = trimTargets(); if (!list.length) { toast('เลื่อนหัวอ่านไปกลางคลิปก่อนตัด'); return; }
+  for (const it of list) { it.dur = PB.t - it.start; it.transOut = null; }
+  commit('trimR');
+}
+function cmdMarker() {
+  D.markers = D.markers || []; const t = Math.round(PB.t * 100) / 100;
+  const ex = D.markers.findIndex(m => Math.abs(m.t - t) < 0.05);
+  if (ex >= 0) D.markers.splice(ex, 1); else D.markers.push({ id: uid(), t });
+  D.markers.sort((a, b) => a.t - b.t); commit('marker');
+}
+function setTog(id, key) { const b = $(id); b.classList.toggle('on', !!TLS[key]); }
+function initToolbar() {
+  $('#tbImport').onclick = () => $('#fileIn').click();
+  $('#tbUndo').onclick = undo; $('#tbRedo').onclick = redo;
+  $('#tbSplit').onclick = cmdSplit; $('#tbTrimL').onclick = cmdTrimLeft; $('#tbTrimR').onclick = cmdTrimRight;
+  $('#tbDel').onclick = () => cmdDelete(false); $('#tbRipple').onclick = () => cmdDelete(true); $('#tbMark').onclick = cmdMarker;
+  const save = () => { try { localStorage.setItem('sk_tls', JSON.stringify(TLS)); } catch (e) { } };
+  $('#tbMagnet').onclick = () => { TLS.magnet = !TLS.magnet; setTog('#tbMagnet', 'magnet'); save(); if (TLS.magnet) { commit('gaps'); toast('เปิดแม่เหล็ก: คลิปบนวิดีโอ 1 จะชิดกันอัตโนมัติ'); } };
+  $('#tbSnap').onclick = () => { TLS.snap = !TLS.snap; setTog('#tbSnap', 'snap'); save(); };
+  setTog('#tbMagnet', 'magnet'); setTog('#tbSnap', 'snap');
+  $('#tbZoomIn').onclick = () => setZoom(TL.pps * 1.3); $('#tbZoomOut').onclick = () => setZoom(TL.pps / 1.3);
+  $('#tbFit').onclick = () => { const w = $('#tlbody').clientWidth - TL.labelW - 30; setZoom(w / Math.max(projectEnd(), 2)); };
+  $('#tlbody').addEventListener('dblclick', e => { const mk = e.target.closest('.mk'); if (!mk) return; D.markers = (D.markers || []).filter(m => m.id !== mk.dataset.id); commit('marker'); });
 }
 
 // ---- 25-store.js ----
@@ -3124,6 +3217,9 @@ async function init() {
     else if (mod && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
     else if (mod && e.key.toLowerCase() === 'd') { e.preventDefault(); if (SEL) { const b = duplicateItem(SEL); commit('dup'); select(b.id); } }
     else if (!mod && e.key.toLowerCase() === 's') { cmdSplit(); }
+    else if (!mod && e.key.toLowerCase() === 'q') { cmdTrimLeft(); }
+    else if (!mod && e.key.toLowerCase() === 'w') { cmdTrimRight(); }
+    else if (!mod && e.key.toLowerCase() === 'm') { cmdMarker(); }
     else if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); cmdDelete(e.shiftKey); }
     else if (e.key === 'ArrowLeft' && SRC.m) { srcSeekBy(e.shiftKey ? -1 : -1 / 30); }
     else if (e.key === 'ArrowRight' && SRC.m) { srcSeekBy(e.shiftKey ? 1 : 1 / 30); }
@@ -3131,7 +3227,7 @@ async function init() {
     else if (e.key === 'ArrowRight') { pause(); seek(PB.t + (e.shiftKey ? 1 : 1 / 30)); }
     else if (e.key === 'Home') { pause(); seek(0); }
   });
-  initSplitters();
+  initSplitters(); initToolbar();
   initHome(); await showHome(); if (srvOn()) srvPing().then(ok => ok && srvLoadSizes());
   tick();
   window.__ready = true;

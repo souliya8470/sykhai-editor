@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.10
-// APP_VERSION_PREV : 1.09
-// APP_VERSION_PREV_OLDER : 1.08
+// APP_VERSION  : 1.11
+// APP_VERSION_PREV : 1.10
+// APP_VERSION_PREV_OLDER : 1.09
+// 1.11 : CapCut-style timeline toolbar (import, undo/redo, split, trim left/right Q/W, delete, ripple delete, markers M, magnet on Video 1, snapping toggle, zoom fit/in/out)
 // 1.10 : Save-now button in the editor header; Settings button on the Home page (needed on phones to enter the server password); Home header wraps on narrow screens
 // 1.09 : UI language selector (Lao / Thai / English) in header + home; dictionary-based DOM translation, Noto Sans Lao for Lao; user content protected with translate=no
 // 1.08 : draggable panel splitters (left/right/timeline height, saved), draggable track heights, tall clips show waveform + draggable volume line, live level meter
@@ -16,7 +17,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.10';
+const APP_VERSION = '1.11';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -57,7 +58,7 @@ const TRACKS = [
 const TRACK_KIND = Object.fromEntries(TRACKS.map(t => [t.id, t.kind]));
 const RENDER_ORDER = ['V1', 'V2', 'V3', 'T1', 'T2', 'T3'];
 
-function newDoc() { return { pid: uid(), created: Date.now(), name: T('โปรเจกต์ใหม่'), w: 1080, h: 1920, fps: 30, items: [], duckLevel: 0.22, ver: 1 }; }
+function newDoc() { return { pid: uid(), created: Date.now(), name: T('โปรเจกต์ใหม่'), w: 1080, h: 1920, fps: 30, items: [], markers: [], duckLevel: 0.22, ver: 1 }; }
 let D = newDoc();
 let SEL = null;             // selected item id
 const getItem = (id) => D.items.find(i => i.id === id);
@@ -67,6 +68,7 @@ const itemsOn = (tr) => D.items.filter(i => i.track === tr).sort((a, b) => a.sta
 // ---------- undo / redo ----------
 let HIST = [], HPOS = -1;
 function commit(label) {
+  if (typeof magnetFix === 'function') magnetFix(label);
   const snap = JSON.stringify(D);
   if (HIST[HPOS] === snap) { emit('doc'); return; }
   HIST = HIST.slice(0, HPOS + 1); HIST.push(snap); if (HIST.length > 120) HIST.shift(); HPOS = HIST.length - 1;

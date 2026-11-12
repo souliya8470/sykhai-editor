@@ -120,6 +120,9 @@ async function init() {
     else if (mod && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
     else if (mod && e.key.toLowerCase() === 'd') { e.preventDefault(); if (SEL) { const b = duplicateItem(SEL); commit('dup'); select(b.id); } }
     else if (!mod && e.key.toLowerCase() === 's') { cmdSplit(); }
+    else if (!mod && e.key.toLowerCase() === 'q') { cmdTrimLeft(); }
+    else if (!mod && e.key.toLowerCase() === 'w') { cmdTrimRight(); }
+    else if (!mod && e.key.toLowerCase() === 'm') { cmdMarker(); }
     else if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); cmdDelete(e.shiftKey); }
     else if (e.key === 'ArrowLeft' && SRC.m) { srcSeekBy(e.shiftKey ? -1 : -1 / 30); }
     else if (e.key === 'ArrowRight' && SRC.m) { srcSeekBy(e.shiftKey ? 1 : 1 / 30); }
@@ -127,7 +130,7 @@ async function init() {
     else if (e.key === 'ArrowRight') { pause(); seek(PB.t + (e.shiftKey ? 1 : 1 / 30)); }
     else if (e.key === 'Home') { pause(); seek(0); }
   });
-  initSplitters();
+  initSplitters(); initToolbar();
   initHome(); await showHome(); if (srvOn()) srvPing().then(ok => ok && srvLoadSizes());
   tick();
   window.__ready = true;

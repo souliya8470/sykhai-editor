@@ -63,7 +63,7 @@ main{display:grid;grid-template-columns:var(--lw,300px) minmax(0,1fr) var(--rw,3
 .kfb{padding:0 5px;font-size:11px;line-height:18px;color:var(--mu)}.kfb.on{background:var(--ac);color:#000;border-color:var(--ac)}
 /* timeline */
 #tl{min-width:0;overflow:hidden;background:var(--p1);border-top:1px solid var(--ln);display:flex;flex-direction:column;min-height:0}
-#tlbar{display:flex;align-items:center;gap:10px;padding:3px 12px;color:var(--mu);font-size:12px;border-bottom:1px solid var(--ln)}
+#tlbar{display:flex;align-items:center;gap:3px;padding:3px 10px;color:var(--mu);font-size:12px;border-bottom:1px solid var(--ln)}
 #tlbody{flex:1;overflow:auto;position:relative;min-height:0;background:#17191e}
 #tlinner{position:relative;min-height:100%}
 #ruler{display:flex;height:22px;position:sticky;top:0;z-index:6;background:var(--p2);border-bottom:1px solid var(--ln);cursor:pointer}
@@ -167,3 +167,11 @@ html[lang=lo] body,html[lang=lo] button,html[lang=lo] input,html[lang=lo] select
 select.uilang{max-width:130px}
 
 @media (max-width:820px){dialog{width:calc(100vw - 20px)!important;min-width:0!important;max-width:none!important;box-sizing:border-box}.hhead{flex-wrap:wrap}.hwrap{padding:14px}.brand.big{font-size:18px}}
+
+#tlbar button{width:30px;height:26px;padding:0;display:inline-flex;align-items:center;justify-content:center;background:transparent;border-color:transparent;color:var(--tx)}
+#tlbar button:hover{background:var(--p3)}
+#tlbar button.tog.on{background:rgba(46,230,197,.16);color:var(--ac);border-color:rgba(46,230,197,.4)}
+#tlbar .tsep{width:1px;height:18px;background:var(--ln);margin:0 5px}
+#tlbar #zoom{width:110px}
+#ruler .mk{position:absolute;top:0;z-index:4;transform:translateX(-50%);color:#ffd60a;font-size:11px;line-height:12px;cursor:pointer;font-style:normal}
+#ruler .mk::after{content:"";position:absolute;left:50%;top:12px;height:900px;width:0;border-left:1px dashed rgba(255,214,10,.35);pointer-events:none}
