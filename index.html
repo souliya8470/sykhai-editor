@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.09</title>
+<title>Sykhai Editor v1.10</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -173,6 +173,8 @@ body.resizing{user-select:none}body.resizing *{cursor:inherit!important}
 html[lang=lo] body,html[lang=lo] button,html[lang=lo] input,html[lang=lo] select,html[lang=lo] textarea{font-family:"Noto Sans Lao","Prompt","Noto Sans Thai",system-ui,sans-serif}
 select.uilang{max-width:130px}
 
+@media (max-width:820px){dialog{width:calc(100vw - 20px)!important;min-width:0!important;max-width:none!important;box-sizing:border-box}.hhead{flex-wrap:wrap}.hwrap{padding:14px}.brand.big{font-size:18px}}
+
 </style></head>
 <body>
 <div id="app">
@@ -186,6 +188,7 @@ select.uilang{max-width:130px}
     <span id="srvBadge" hidden>☁</span>
     <span id="costBadge" title="ค่า AI เดือนนี้ / เพดาน">AI $0.00</span>
     <button id="btnSettings">⚙ ตั้งค่า</button>
+    <button id="btnSaveNow" class="primary" title="บันทึกทันที (โปรเจกต์บันทึกอัตโนมัติอยู่แล้ว)">✔ บันทึก</button>
     <button id="btnSave" title="โหลดไฟล์โปรเจกต์ (.json) เก็บสำรอง — โปรเจกต์บันทึกอัตโนมัติอยู่แล้ว">💾 สำรองไฟล์</button>
     <button id="btnOpen" title="นำเข้าไฟล์โปรเจกต์ (.json)">📂 นำเข้า</button>
     <button id="btnExport" class="primary">⬇ ส่งออก MP4</button>
@@ -231,7 +234,7 @@ select.uilang{max-width:130px}
 
 <div id="home">
   <div class="hwrap">
-    <div class="hhead"><div class="brand big">Sykhai <b>Editor</b></div><span class="sp"></span><button id="hmSync" hidden title="ส่งโปรเจกต์/ไฟล์ขึ้นเซิร์ฟเวอร์ และดึงโปรเจกต์ใหม่ลงเครื่องนี้">☁ ซิงค์เซิร์ฟเวอร์</button><button id="hmBack" hidden>← กลับไปแก้ไขต่อ</button><button id="hmImport">📂 นำเข้าไฟล์โปรเจกต์</button><button id="hmNew" class="primary">+ โปรเจกต์ใหม่</button></div>
+    <div class="hhead"><div class="brand big">Sykhai <b>Editor</b></div><span class="sp"></span><button id="hmSync" hidden title="ส่งโปรเจกต์/ไฟล์ขึ้นเซิร์ฟเวอร์ และดึงโปรเจกต์ใหม่ลงเครื่องนี้">☁ ซิงค์เซิร์ฟเวอร์</button><button id="hmBack" hidden>← กลับไปแก้ไขต่อ</button><button id="hmImport">📂 นำเข้าไฟล์โปรเจกต์</button><button id="hmSettings" title="ตั้งค่า (ใส่รหัสผ่านเซิร์ฟเวอร์ที่นี่)">⚙ ตั้งค่า</button><button id="hmNew" class="primary">+ โปรเจกต์ใหม่</button></div>
     <div class="htitle">โปรเจกต์ของฉัน</div>
     <div id="homeList"></div>
     <div id="homeFoot" class="hint small"></div>
@@ -383,6 +386,11 @@ I18N_ROWS.push(
   ['ดูตัวอย่างไฟล์ — ', 'Previewing file — ', 'ເບິ່ງຕົວຢ່າງໄຟລ໌ — '],
   ['กลับไทม์ไลน์', 'Back to timeline', 'ກັບໄປໄທມ໌ໄລນ໌'],
   ['กลับไปดูไทม์ไลน์', 'Back to the timeline preview', 'ກັບໄປເບິ່ງໄທມ໌ໄລນ໌'],
+  ['✔ บันทึก', '✔ Save', '✔ ບັນທຶກ'],
+  ['บันทึกทันที (โปรเจกต์บันทึกอัตโนมัติอยู่แล้ว)', 'Save now (projects are already saved automatically)', 'ບັນທຶກທັນທີ (ໂປຣເຈັກຖືກບັນທຶກອັດຕະໂນມັດຢູ່ແລ້ວ)'],
+  ['บันทึกโปรเจกต์แล้ว ✔', 'Project saved ✔', 'ບັນທຶກໂປຣເຈັກແລ້ວ ✔'],
+  ['· ☁ ส่งขึ้นเซิร์ฟเวอร์แล้ว', '· ☁ uploaded to the server', '· ☁ ສົ່ງຂຶ້ນເຊີເວີແລ້ວ'],
+  ['ตั้งค่า (ใส่รหัสผ่านเซิร์ฟเวอร์ที่นี่)', 'Settings (enter the server password here)', 'ຕັ້ງຄ່າ (ໃສ່ລະຫັດຜ່ານເຊີເວີຢູ່ບ່ອນນີ້)'],
   // ---- home ----
   ['ส่งโปรเจกต์/ไฟล์ขึ้นเซิร์ฟเวอร์ และดึงโปรเจกต์ใหม่ลงเครื่องนี้', 'Send projects/files to the server and pull new projects to this device', 'ສົ່ງໂປຣເຈັກ/ໄຟລ໌ຂຶ້ນເຊີເວີ ແລະ ດຶງໂປຣເຈັກໃໝ່ລົງເຄື່ອງນີ້'],
   ['☁ ซิงค์เซิร์ฟเวอร์', '☁ Sync server', '☁ ຊິງຄ໌ເຊີເວີ'],
@@ -855,9 +863,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.09
-// APP_VERSION_PREV : 1.08
-// APP_VERSION_PREV_OLDER : 1.07
+// APP_VERSION  : 1.10
+// APP_VERSION_PREV : 1.09
+// APP_VERSION_PREV_OLDER : 1.08
+// 1.10 : Save-now button in the editor header; Settings button on the Home page (needed on phones to enter the server password); Home header wraps on narrow screens
 // 1.09 : UI language selector (Lao / Thai / English) in header + home; dictionary-based DOM translation, Noto Sans Lao for Lao; user content protected with translate=no
 // 1.08 : draggable panel splitters (left/right/timeline height, saved), draggable track heights, tall clips show waveform + draggable volume line, live level meter
 // 1.07 : click a file in the media bin to watch it in the preview in real time (play/pause/seek) before adding it to the timeline
@@ -868,7 +877,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.09';
+const APP_VERSION = '1.10';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -3085,6 +3094,8 @@ async function init() {
   $('#tlbody').addEventListener('pointerdown', () => srcExit(), true); $('#tlbar').addEventListener('pointerdown', () => srcExit(), true);
   on('doc', () => srcExit());
   $('#tpSplit').onclick = cmdSplit; $('#tpDel').onclick = () => cmdDelete(false); $('#tpRipple').onclick = () => cmdDelete(true);
+  $('#hmSettings').onclick = () => $('#btnSettings').click();
+  $('#btnSaveNow').onclick = async () => { await projSaveNow(); toast('บันทึกโปรเจกต์แล้ว ✔' + (srvOn() ? ' · ☁ ส่งขึ้นเซิร์ฟเวอร์แล้ว' : '')); };
   $('#btnUndo').onclick = undo; $('#btnRedo').onclick = redo; $('#btnSave').onclick = saveProject;
   $('#btnOpen').onclick = () => { const i = document.createElement('input'); i.type = 'file'; i.accept = '.json'; i.onchange = () => i.files[0] && openProject(i.files[0]); i.click(); };
   $('#projName').oninput = e => { D.name = e.target.value; }; $('#projName').onchange = () => commit('rename');

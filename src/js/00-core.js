@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.09
-// APP_VERSION_PREV : 1.08
-// APP_VERSION_PREV_OLDER : 1.07
+// APP_VERSION  : 1.10
+// APP_VERSION_PREV : 1.09
+// APP_VERSION_PREV_OLDER : 1.08
+// 1.10 : Save-now button in the editor header; Settings button on the Home page (needed on phones to enter the server password); Home header wraps on narrow screens
 // 1.09 : UI language selector (Lao / Thai / English) in header + home; dictionary-based DOM translation, Noto Sans Lao for Lao; user content protected with translate=no
 // 1.08 : draggable panel splitters (left/right/timeline height, saved), draggable track heights, tall clips show waveform + draggable volume line, live level meter
 // 1.07 : click a file in the media bin to watch it in the preview in real time (play/pause/seek) before adding it to the timeline
@@ -15,7 +16,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.09';
+const APP_VERSION = '1.10';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];

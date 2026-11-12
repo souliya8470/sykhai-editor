@@ -90,6 +90,8 @@ async function init() {
   $('#tlbody').addEventListener('pointerdown', () => srcExit(), true); $('#tlbar').addEventListener('pointerdown', () => srcExit(), true);
   on('doc', () => srcExit());
   $('#tpSplit').onclick = cmdSplit; $('#tpDel').onclick = () => cmdDelete(false); $('#tpRipple').onclick = () => cmdDelete(true);
+  $('#hmSettings').onclick = () => $('#btnSettings').click();
+  $('#btnSaveNow').onclick = async () => { await projSaveNow(); toast('บันทึกโปรเจกต์แล้ว ✔' + (srvOn() ? ' · ☁ ส่งขึ้นเซิร์ฟเวอร์แล้ว' : '')); };
   $('#btnUndo').onclick = undo; $('#btnRedo').onclick = redo; $('#btnSave').onclick = saveProject;
   $('#btnOpen').onclick = () => { const i = document.createElement('input'); i.type = 'file'; i.accept = '.json'; i.onchange = () => i.files[0] && openProject(i.files[0]); i.click(); };
   $('#projName').oninput = e => { D.name = e.target.value; }; $('#projName').onchange = () => commit('rename');
