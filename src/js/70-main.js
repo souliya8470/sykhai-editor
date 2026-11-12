@@ -76,8 +76,9 @@ async function init() {
   PCANVAS = $('#pv'); PCTX = PCANVAS.getContext('2d');
   buildLeft(); initTimelineEvents(); initPreviewInteraction();
   try { await Promise.race([Promise.all(['800 40px Prompt', '700 40px "Noto Sans Lao"', '700 40px "Noto Sans Thai"'].map(f => document.fonts.load(f, 'กຂaA'))), sleep(4000)]); } catch (e) { }
+  try { const n = await restoreMedia(); if (n) toast(`กู้คืนไฟล์ที่นำเข้าไว้ ${n} ไฟล์`); } catch (e) { console.warn(e); }
   // restore autosave
-  try { const s = localStorage.getItem('sk_autosave'); if (s) { const d = JSON.parse(s); if (d && d.items && d.items.length) { D = Object.assign(newDoc(), d); await ensureSfx(); toast('กู้คืนโปรเจกต์ล่าสุดแล้ว — นำเข้าไฟล์วิดีโอเดิมอีกครั้งเพื่อดูภาพ', 5000); } } } catch (e) { }
+  try { const s = localStorage.getItem('sk_autosave'); if (s) { const d = JSON.parse(s); if (d && d.items && d.items.length) { D = Object.assign(newDoc(), d); await ensureSfx(); { const miss = new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => mediaNameFromId(i.mediaId))); toast(miss.size ? 'กู้คืนโปรเจกต์ล่าสุดแล้ว แต่ไฟล์เหล่านี้หาย ต้องนำเข้าใหม่: ' + [...miss].join(', ') : 'กู้คืนโปรเจกต์ล่าสุดแล้ว', 7000); } } } } catch (e) { }
   HIST = []; HPOS = -1; commit('init');
   renderMediaBin(); renderTimeline(); renderInspector(); updateCostBadge && updateCostBadge();
   $('#zoom').oninput = e => { TL.pps = Math.exp(parseFloat(e.target.value)); renderTimeline(); }; $('#zoom').value = Math.log(TL.pps);

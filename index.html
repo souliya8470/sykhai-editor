@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.01</title>
+<title>Sykhai Editor v1.02</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -210,11 +210,12 @@ dialog h3{margin:0 0 10px}
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
 // APP_VERSION  : 1.00
-// APP_VERSION_PREV : 1.00
-// APP_VERSION_PREV_OLDER : -
+// APP_VERSION_PREV : 1.01
+// APP_VERSION_PREV_OLDER : 1.00
+// 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.01';
+const APP_VERSION = '1.02';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -789,7 +790,7 @@ function rulerTicks() {
 function clipLabel(it) {
   if (it.type === 'text') return (it.text || '').replace(/\*/g, '').replace(/\n/g, ' ');
   if (it.type === 'sticker') return { check: '✔', warning: '⚠', cursor: '☝', brackets: '▢', arrow: '⬇', star: '★', underline: '▁', circle: '◯', emoji: it.text || '😀' }[it.kind] + ' ' + it.kind;
-  const m = MEDIA.get(it.mediaId); return m ? m.name : '?';
+  const m = MEDIA.get(it.mediaId); return m ? m.name : '⚠ ไฟล์หาย: ' + mediaNameFromId(it.mediaId);
 }
 function renderTimeline() {
   const body = $('#tlbody'); if (!body) return;
@@ -974,7 +975,7 @@ function renderMediaBin() {
     d.addEventListener('dragstart', e => { e.dataTransfer.setData('text/mediaid', m.id); });
     d.addEventListener('dblclick', () => addMediaToTimeline(m.id));
     d.querySelector('[data-act="add"]').onclick = () => addMediaToTimeline(m.id);
-    d.querySelector('[data-act="del"]').onclick = () => { if (D.items.some(i => i.mediaId === m.id) && !confirm('ไฟล์นี้ถูกใช้ในไทม์ไลน์ — ลบคลิปที่ใช้ไฟล์นี้ด้วย?')) return; D.items = D.items.filter(i => i.mediaId !== m.id); MEDIA.delete(m.id); commit('media'); renderMediaBin(); };
+    d.querySelector('[data-act="del"]').onclick = () => { if (D.items.some(i => i.mediaId === m.id) && !confirm('ไฟล์นี้ถูกใช้ในไทม์ไลน์ — ลบคลิปที่ใช้ไฟล์นี้ด้วย?')) return; D.items = D.items.filter(i => i.mediaId !== m.id); MEDIA.delete(m.id); dbDel(m.id); commit('media'); renderMediaBin(); };
     box.appendChild(d);
   }
 }
@@ -995,8 +996,8 @@ async function importFiles(files) {
         el.removeAttribute('src'); el.load();
       }
     } catch (e) { console.warn(e); toast('เปิดไฟล์ไม่ได้: ' + f.name + ' (ลองไฟล์ H.264 / mp4)'); URL.revokeObjectURL(m.url); continue; }
-    MEDIA.set(m.id, m); renderMediaBin(); emit('media-added', m);
-    if (type !== 'image') analyzeAudio(m).then(() => { renderMediaBin(); renderTimeline(); });
+    MEDIA.set(m.id, m); renderMediaBin(); emit('media-added', m); renderTimeline();
+    if (type !== 'image') analyzeAudio(m).then(() => { renderMediaBin(); renderTimeline(); dbPut(m); }); else dbPut(m);
   }
   toast('นำเข้าแล้ว ' + list.length + ' ไฟล์');
 }
@@ -1005,6 +1006,40 @@ function thumbFrom(src, w, h) {
   const c = document.createElement('canvas'); const k = 160 / Math.max(w, h); c.width = Math.max(2, Math.round(w * k)); c.height = Math.max(2, Math.round(h * k));
   try { c.getContext('2d').drawImage(src, 0, 0, c.width, c.height); return c.toDataURL('image/jpeg', 0.7); } catch (e) { return ''; }
 }
+
+// ---- 25-store.js ----
+// ============================================================
+//  Persistent media store (IndexedDB) — keeps imported files across reloads
+// ============================================================
+function dbOpen() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open('sykhai-editor', 1); r.onupgradeneeded = () => r.result.createObjectStore('media', { keyPath: 'id' });
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  });
+}
+async function dbPut(m) {
+  try {
+    const db = await dbOpen(); const rec = { id: m.id, name: m.name, type: m.type, file: m.file, duration: m.duration, w: m.w, h: m.h, thumb: m.thumb, hasAudio: m.hasAudio, peaks: m.peaks, pcm16: m.pcm16, rms: m.rms, norm: m.norm, savedAt: Date.now() };
+    await new Promise((res, rej) => { const tx = db.transaction('media', 'readwrite'); tx.objectStore('media').put(rec); tx.oncomplete = res; tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error); });
+    db.close(); return true;
+  } catch (e) { console.warn('dbPut', e); toast('บันทึกไฟล์ไว้ในเครื่องไม่ได้ (พื้นที่เต็ม?) — เปิดใหม่ต้องนำเข้าไฟล์อีกครั้ง', 5000); return false; }
+}
+async function dbDel(id) { try { const db = await dbOpen(); await new Promise(res => { const tx = db.transaction('media', 'readwrite'); tx.objectStore('media').delete(id); tx.oncomplete = res; tx.onerror = res; }); db.close(); } catch (e) { } }
+async function dbAll() {
+  try { const db = await dbOpen(); const all = await new Promise((res, rej) => { const q = db.transaction('media').objectStore('media').getAll(); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); db.close(); return all; }
+  catch (e) { console.warn('dbAll', e); return []; }
+}
+async function restoreMedia() {
+  const all = await dbAll(); let n = 0;
+  for (const r of all) {
+    if (MEDIA.has(r.id) || !r.file) continue;
+    const m = Object.assign({}, r, { url: URL.createObjectURL(r.file) });
+    if (r.type === 'image') { const img = new Image(); img.src = m.url; try { await img.decode(); } catch (e) { } m.img = img; }
+    MEDIA.set(m.id, m); n++;
+  }
+  return n;
+}
+function mediaNameFromId(id) { return String(id || '').split('|')[0] || '?'; }
 
 // ---- 30-panels.js ----
 // ============================================================
@@ -2035,8 +2070,9 @@ async function init() {
   PCANVAS = $('#pv'); PCTX = PCANVAS.getContext('2d');
   buildLeft(); initTimelineEvents(); initPreviewInteraction();
   try { await Promise.race([Promise.all(['800 40px Prompt', '700 40px "Noto Sans Lao"', '700 40px "Noto Sans Thai"'].map(f => document.fonts.load(f, 'กຂaA'))), sleep(4000)]); } catch (e) { }
+  try { const n = await restoreMedia(); if (n) toast(`กู้คืนไฟล์ที่นำเข้าไว้ ${n} ไฟล์`); } catch (e) { console.warn(e); }
   // restore autosave
-  try { const s = localStorage.getItem('sk_autosave'); if (s) { const d = JSON.parse(s); if (d && d.items && d.items.length) { D = Object.assign(newDoc(), d); await ensureSfx(); toast('กู้คืนโปรเจกต์ล่าสุดแล้ว — นำเข้าไฟล์วิดีโอเดิมอีกครั้งเพื่อดูภาพ', 5000); } } } catch (e) { }
+  try { const s = localStorage.getItem('sk_autosave'); if (s) { const d = JSON.parse(s); if (d && d.items && d.items.length) { D = Object.assign(newDoc(), d); await ensureSfx(); { const miss = new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => mediaNameFromId(i.mediaId))); toast(miss.size ? 'กู้คืนโปรเจกต์ล่าสุดแล้ว แต่ไฟล์เหล่านี้หาย ต้องนำเข้าใหม่: ' + [...miss].join(', ') : 'กู้คืนโปรเจกต์ล่าสุดแล้ว', 7000); } } } } catch (e) { }
   HIST = []; HPOS = -1; commit('init');
   renderMediaBin(); renderTimeline(); renderInspector(); updateCostBadge && updateCostBadge();
   $('#zoom').oninput = e => { TL.pps = Math.exp(parseFloat(e.target.value)); renderTimeline(); }; $('#zoom').value = Math.log(TL.pps);

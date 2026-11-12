@@ -16,7 +16,7 @@ function rulerTicks() {
 function clipLabel(it) {
   if (it.type === 'text') return (it.text || '').replace(/\*/g, '').replace(/\n/g, ' ');
   if (it.type === 'sticker') return { check: '✔', warning: '⚠', cursor: '☝', brackets: '▢', arrow: '⬇', star: '★', underline: '▁', circle: '◯', emoji: it.text || '😀' }[it.kind] + ' ' + it.kind;
-  const m = MEDIA.get(it.mediaId); return m ? m.name : '?';
+  const m = MEDIA.get(it.mediaId); return m ? m.name : '⚠ ไฟล์หาย: ' + mediaNameFromId(it.mediaId);
 }
 function renderTimeline() {
   const body = $('#tlbody'); if (!body) return;
@@ -201,7 +201,7 @@ function renderMediaBin() {
     d.addEventListener('dragstart', e => { e.dataTransfer.setData('text/mediaid', m.id); });
     d.addEventListener('dblclick', () => addMediaToTimeline(m.id));
     d.querySelector('[data-act="add"]').onclick = () => addMediaToTimeline(m.id);
-    d.querySelector('[data-act="del"]').onclick = () => { if (D.items.some(i => i.mediaId === m.id) && !confirm('ไฟล์นี้ถูกใช้ในไทม์ไลน์ — ลบคลิปที่ใช้ไฟล์นี้ด้วย?')) return; D.items = D.items.filter(i => i.mediaId !== m.id); MEDIA.delete(m.id); commit('media'); renderMediaBin(); };
+    d.querySelector('[data-act="del"]').onclick = () => { if (D.items.some(i => i.mediaId === m.id) && !confirm('ไฟล์นี้ถูกใช้ในไทม์ไลน์ — ลบคลิปที่ใช้ไฟล์นี้ด้วย?')) return; D.items = D.items.filter(i => i.mediaId !== m.id); MEDIA.delete(m.id); dbDel(m.id); commit('media'); renderMediaBin(); };
     box.appendChild(d);
   }
 }
@@ -222,8 +222,8 @@ async function importFiles(files) {
         el.removeAttribute('src'); el.load();
       }
     } catch (e) { console.warn(e); toast('เปิดไฟล์ไม่ได้: ' + f.name + ' (ลองไฟล์ H.264 / mp4)'); URL.revokeObjectURL(m.url); continue; }
-    MEDIA.set(m.id, m); renderMediaBin(); emit('media-added', m);
-    if (type !== 'image') analyzeAudio(m).then(() => { renderMediaBin(); renderTimeline(); });
+    MEDIA.set(m.id, m); renderMediaBin(); emit('media-added', m); renderTimeline();
+    if (type !== 'image') analyzeAudio(m).then(() => { renderMediaBin(); renderTimeline(); dbPut(m); }); else dbPut(m);
   }
   toast('นำเข้าแล้ว ' + list.length + ' ไฟล์');
 }

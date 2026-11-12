@@ -3,11 +3,12 @@
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
 // APP_VERSION  : 1.00
-// APP_VERSION_PREV : 1.00
-// APP_VERSION_PREV_OLDER : -
+// APP_VERSION_PREV : 1.01
+// APP_VERSION_PREV_OLDER : 1.00
+// 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.01';
+const APP_VERSION = '1.02';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
