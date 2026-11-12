@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.05</title>
+<title>Sykhai Editor v1.06</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -207,6 +207,7 @@ dialog h3{margin:0 0 10px}
   <h3>ตั้งค่า</h3>
   <div class="fld col"><label>Anthropic API key (Claude — ใช้เลือกประโยคเด่น / แปล / ทำ 3-4 แบบ)</label><input id="keyClaude" type="password" placeholder="sk-ant-..." autocomplete="off"></div>
   <div class="fld col"><label>Gemini API key (Google AI Studio — ใช้ถอดเสียงภาษาลาว)</label><input id="keyGemini" type="password" placeholder="AIza..." autocomplete="off"></div>
+  <div class="fld col"><label>คู่มือสไตล์การตัดต่อของคุณ (วางข้อความที่สรุปจากการคุยกับ ChatGPT — AI ในโปรแกรมจะทำตามตอนเลือกประโยคเด่น และทำ 3-4 แบบ)</label><textarea id="styleGuide" rows="6" placeholder="เช่น: โทนวิดีโอ จังหวะการตัด ประเภทฮุคแรก คำที่ควร/ไม่ควรใช้ ลำดับเล่าเรื่อง ..."></textarea></div>
   <div class="fld"><label>เพดานงบ AI ต่อเดือน (USD)</label><input id="capUsd" type="number" min="1" step="1" value="50" class="num"></div>
   <hr>
   <div class="fld col"><label>เซิร์ฟเวอร์เก็บไฟล์ที่ร้าน — ที่อยู่ (เว้นว่าง = ไม่ใช้)</label><input id="srvUrl" placeholder="https://ชื่อเครื่อง.xxxx.ts.net:8787  หรือ  http://192.168.1.10:8787" autocomplete="off"></div>
@@ -240,16 +241,17 @@ dialog h3{margin:0 0 10px}
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.05
-// APP_VERSION_PREV : 1.04
-// APP_VERSION_PREV_OLDER : 1.03
+// APP_VERSION  : 1.06
+// APP_VERSION_PREV : 1.05
+// APP_VERSION_PREV_OLDER : 1.04
+// 1.06 : editing style guide (paste notes from ChatGPT brainstorming) used by key-points + 4-variant AI
 // 1.05 : editor page can be served by the shop server itself (same-origin, avoids Chrome local-network blocking); server URL auto-set
 // 1.04 : home file server (server/server.js): projects + source media + finished videos stored on shop server; manual sync; auto-download missing media on open
 // 1.03 : Home page (project list), per-project autosave in IndexedDB, rename/duplicate/delete
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.05';
+const APP_VERSION = '1.06';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -1898,7 +1900,9 @@ function updateCostBadge() {
 function costGuard(est) { const s = costState(), cap = loadCap(); if (s.usd + est > cap) { toast(`งบ AI เดือนนี้ครบเพดาน $${cap} แล้ว (ใช้ไป $${s.usd.toFixed(2)}) — ปรับเพดานได้ที่ ตั้งค่า`, 5000); return false; } return true; }
 
 // ---------- API calls ----------
-async function claude({ system, content, max_tokens = 3000, label = 'claude', estUsd = 0.05 }) {
+const loadStyle = () => (localStorage.getItem('sk_style') || '').trim().slice(0, 8000);
+async function claude({ system, content, max_tokens = 3000, label = 'claude', estUsd = 0.05, useStyle = false }) {
+  const st = useStyle ? loadStyle() : ''; if (st) { system += '\n\nThe shop owner\'s own editing style guide follows (collected from his brainstorming with another AI; may be Thai/Lao/English). Follow it wherever it applies to this task, but never break the JSON/output format required above:\n<style_guide>\n' + st + '\n</style_guide>'; estUsd += st.length / 3 * 3 / 1e6 + 0.002; }
   const key = loadKeys().claude; if (!key) throw new Error('ยังไม่ได้ใส่ Claude API key (กดปุ่ม ⚙ ตั้งค่า)');
   if (!costGuard(estUsd)) throw new Error('งบ AI ครบเพดาน');
   const r = await fetch('https://api.anthropic.com/v1/messages', {
@@ -2092,7 +2096,7 @@ async function aiKeyPointsUI() {
   try {
     aiProg('AI กำลังเลือกประโยคเด่น…', 40);
     const sys = 'You are a short-video editor for a Lao online shop selling cosmetics and supplements. You pick the key selling moments that deserve on-screen text. Reply with JSON only.';
-    const txt = await claude({ system: sys, label: 'ประโยคเด่น', max_tokens: 2500, estUsd: .04, content: `Transcript phrases ("index: text", language: ${tr.lang === 'lo' ? 'Lao' : 'Thai'}):\n${trText(tr)}\n\nPick 4-8 key selling points actually said (ingredients, benefits, results, how to use, promotion, guarantee, target problem). NOT full subtitles. For each, give the phrase index where it is spoken and the on-screen text WRITTEN IN LAO SCRIPT (translate if the speech is Thai), natural marketing Lao, very short: line1 (2-5 words, wrap the single most important word in *asterisks*) and optional line2 (short detail, may be empty). Prefer distinct points in speaking order. Return {"points":[{"seg":3,"line1":"...","line2":"...","kind":"benefit|ingredient|promo|usage|problem"}]}` });
+    const txt = await claude({ system: sys, label: 'ประโยคเด่น', useStyle: true, max_tokens: 2500, estUsd: .04, content: `Transcript phrases ("index: text", language: ${tr.lang === 'lo' ? 'Lao' : 'Thai'}):\n${trText(tr)}\n\nPick 4-8 key selling points actually said (ingredients, benefits, results, how to use, promotion, guarantee, target problem). NOT full subtitles. For each, give the phrase index where it is spoken and the on-screen text WRITTEN IN LAO SCRIPT (translate if the speech is Thai), natural marketing Lao, very short: line1 (2-5 words, wrap the single most important word in *asterisks*) and optional line2 (short detail, may be empty). Prefer distinct points in speaking order. Return {"points":[{"seg":3,"line1":"...","line2":"...","kind":"benefit|ingredient|promo|usage|problem"}]}` });
     const j = parseJsonLoose(txt); AI.busy = false;
     const pts = (j.points || []).filter(p => tr.segs[p.seg | 0]);
     const rows = pts.map((p, i) => { const s = tr.segs[p.seg | 0]; return `<tr><td><input type="checkbox" data-i="${i}" checked></td><td style="width:64px">${fmt(s.a)}</td><td><textarea data-t="${i}" rows="2">${esc(p.line1 + (p.line2 ? '\n' + p.line2 : ''))}</textarea><div class="mini">${esc(s.text)}</div></td></tr>`; }).join('');
@@ -2213,7 +2217,7 @@ async function aiVariantsUI() {
     }
     const hist = picksSummary();
     content.push({ type: 'text', text: `\nTask: produce EXACTLY 4 different edit variants, each a different strategy:\n1 "hook": strongest hook in the first 2-3 seconds, fast pace, 15-30s total.\n2 "story": natural order, problem -> product -> result, 30-50s.\n3 "benefit": benefit/proof focused and ends with the offer/price moment, 20-40s.\n4 "clean": minimal, most polished takes only, 15-25s.\nRules: use only clip ids above; segment start/end are SOURCE seconds and must align with phrase boundaries (never cut a sentence in half); prefer the best complete take, skip stumbles/repeats/dead air; avoid blurry or dark clips unless it is the only take; keep the speaker's voice continuous. Add 2-6 on-screen overlays per variant: "seg" = index (0-based) in YOUR segments array where it appears, "line1" short Lao-script text (2-5 words, wrap the key word in *asterisks*), "line2" optional short Lao detail. If speech is Thai, translate the overlay text to Lao. Choose a cut transition between consecutive segments from: none, fade, punch, wipe, slide, card, blur (use mostly none/punch/fade; at most 2 fancy ones).${hist ? `\nStaff previously chose these styles (soft preference only, still make all 4): ${hist}` : ''}\nReturn ONLY JSON: {"variants":[{"style":"hook|story|benefit|clean","name":"short Thai name","why":"1 short Thai sentence","segments":[{"clip":"c1","a":0.0,"b":3.2,"transition":"none"}],"overlays":[{"seg":0,"line1":"...","line2":""}]}]}` });
-    const txt = await claude({ system: 'You are an expert short-form video editor producing edit decision lists. Reply with JSON only.', content, max_tokens: 6000, label: 'ตัดต่อ 4 แบบ', estUsd: .12 });
+    const txt = await claude({ system: 'You are an expert short-form video editor producing edit decision lists. Reply with JSON only.', content, max_tokens: 6000, useStyle: true, label: 'ตัดต่อ 4 แบบ', estUsd: .12 });
     const j = parseJsonLoose(txt); const byId = Object.fromEntries(clips.map(c => [c.id, c]));
     AI.variants = (j.variants || []).map(v => { const segs = (v.segments || []).filter(s => byId[s.clip] && toSec(s.b) > toSec(s.a) + .3).map(s => { const c = byId[s.clip], m = c.m; let a = clamp(snapValley(m, toSec(s.a), .2), 0, m.duration), b = clamp(snapValley(m, toSec(s.b), .2), 0, m.duration); if (b - a < .3) { a = toSec(s.a); b = toSec(s.b); } return { m, a, b, transition: VAR_TRANS[s.transition] || 'none' }; }); return Object.assign({}, v, { segs, len: segs.reduce((x, s) => x + s.b - s.a, 0) }); }).filter(v => v.segs.length);
     AI.busy = false; showVariants();
@@ -2361,10 +2365,10 @@ async function init() {
   $('#btnOpen').onclick = () => { const i = document.createElement('input'); i.type = 'file'; i.accept = '.json'; i.onchange = () => i.files[0] && openProject(i.files[0]); i.click(); };
   $('#projName').oninput = e => { D.name = e.target.value; }; $('#projName').onchange = () => commit('rename');
   // settings
-  $('#btnSettings').onclick = () => { const k = loadKeys(); $('#keyClaude').value = k.claude || ''; $('#keyGemini').value = k.gemini || ''; $('#capUsd').value = loadCap(); const sc = srvCfg(); $('#srvUrl').value = sc.url || ''; $('#srvUrl').disabled = SRV_SELF; $('#srvToken').value = sc.token || ''; $('#srvTestMsg').textContent = ''; $('#dlgSettings').showModal(); };
+  $('#btnSettings').onclick = () => { const k = loadKeys(); $('#keyClaude').value = k.claude || ''; $('#keyGemini').value = k.gemini || ''; $('#capUsd').value = loadCap(); $('#styleGuide').value = localStorage.getItem('sk_style') || ''; const sc = srvCfg(); $('#srvUrl').value = sc.url || ''; $('#srvUrl').disabled = SRV_SELF; $('#srvToken').value = sc.token || ''; $('#srvTestMsg').textContent = ''; $('#dlgSettings').showModal(); };
   $('#srvTest').onclick = async () => { localStorage.setItem('sk_srv', JSON.stringify({ url: $('#srvUrl').value.trim(), token: $('#srvToken').value.trim() })); $('#srvTestMsg').textContent = 'กำลังทดสอบ…'; const ok = await srvPing(); $('#srvTestMsg').textContent = ok ? `✔ เชื่อมต่อได้ · พื้นที่ว่าง ${SRV.info.free != null ? (SRV.info.free / 1e9).toFixed(0) + ' GB' : '-'}` : '✖ ' + SRV.err; };
   $('#setCancel').onclick = () => $('#dlgSettings').close();
-  $('#setSave').onclick = () => { saveKeys({ claude: $('#keyClaude').value.trim(), gemini: $('#keyGemini').value.trim() }); localStorage.setItem('sk_cap', String(parseFloat($('#capUsd').value) || 50)); localStorage.setItem('sk_srv', JSON.stringify({ url: $('#srvUrl').value.trim(), token: $('#srvToken').value.trim() })); srvPing().then(ok => ok && srvLoadSizes()); updateCostBadge(); $('#dlgSettings').close(); toast('บันทึกการตั้งค่าแล้ว'); };
+  $('#setSave').onclick = () => { saveKeys({ claude: $('#keyClaude').value.trim(), gemini: $('#keyGemini').value.trim() }); localStorage.setItem('sk_cap', String(parseFloat($('#capUsd').value) || 50)); localStorage.setItem('sk_style', $('#styleGuide').value); localStorage.setItem('sk_srv', JSON.stringify({ url: $('#srvUrl').value.trim(), token: $('#srvToken').value.trim() })); srvPing().then(ok => ok && srvLoadSizes()); updateCostBadge(); $('#dlgSettings').close(); toast('บันทึกการตั้งค่าแล้ว'); };
   // export
   $('#btnExport').onclick = () => { $('#expBar').style.width = '0'; $('#expMsg').textContent = ''; $('#expGo').disabled = false; $('#dlgExport').showModal(); };
   $('#expCancel').onclick = () => { if (EXP.running) EXP.cancel = true; $('#dlgExport').close(); };

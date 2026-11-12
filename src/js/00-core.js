@@ -2,16 +2,17 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.05
-// APP_VERSION_PREV : 1.04
-// APP_VERSION_PREV_OLDER : 1.03
+// APP_VERSION  : 1.06
+// APP_VERSION_PREV : 1.05
+// APP_VERSION_PREV_OLDER : 1.04
+// 1.06 : editing style guide (paste notes from ChatGPT brainstorming) used by key-points + 4-variant AI
 // 1.05 : editor page can be served by the shop server itself (same-origin, avoids Chrome local-network blocking); server URL auto-set
 // 1.04 : home file server (server/server.js): projects + source media + finished videos stored on shop server; manual sync; auto-download missing media on open
 // 1.03 : Home page (project list), per-project autosave in IndexedDB, rename/duplicate/delete
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.05';
+const APP_VERSION = '1.06';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];

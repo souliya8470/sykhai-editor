@@ -21,7 +21,7 @@ async function refreshApp(force) {          // keep a local copy of the editor p
   if (refreshing) return; let age = Infinity; try { age = Date.now() - fs.statSync(APP_FILE).mtimeMs; } catch (e) { }
   if (!force && age < 10 * 60e3) return; refreshing = true;
   try {
-    const r = await fetch(APP_SRC, { signal: AbortSignal.timeout(20000) }); if (!r.ok) throw new Error('HTTP ' + r.status);
+    const r = await fetch(APP_SRC + (APP_SRC.includes('?') ? '&' : '?') + 't=' + Date.now(), { signal: AbortSignal.timeout(20000) }); if (!r.ok) throw new Error('HTTP ' + r.status);
     const t = await r.text(); if (t.length < 100000 || !t.includes('Sykhai')) throw new Error('unexpected content');
     fs.writeFileSync(APP_FILE + '.tmp', t); fs.renameSync(APP_FILE + '.tmp', APP_FILE); console.log('editor page updated from GitHub (' + t.length + ' bytes)');
   } catch (e) { console.log('editor page not refreshed (' + (e.message || e) + ') — using local copy'); try { fs.utimesSync(APP_FILE, new Date(), new Date()); } catch (_) { } }
