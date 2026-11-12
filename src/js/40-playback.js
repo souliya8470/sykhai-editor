@@ -260,7 +260,7 @@ function perfAdapt(ms, now) {
   else if (PERF.n > 120 && PERF.ema < 14 && PERF.q < 1) { PERF.q = Math.min(1, PERF.q + .25); PERF.n = 0; }              // fast again → raise
   if (PERF.hud && now - PERF.shown > 500) {
     const fps = PERF.frames / Math.max(.001, (now - (PERF.t0 || now)) / 1000); PERF.frames = 0; PERF.t0 = now; PERF.shown = now;
-    const e = $('#verTag2'); if (e) e.textContent = `v${APP_VERSION} · ${Math.round(PERF.ema)}ms · ${Math.round(fps)}fps · ${Math.round(PERF.q * 100)}%`;
+    const e = $('#verTag2'); if (e) e.textContent = `v${APP_VERSION} · ${Math.round(PERF.ema)}ms · ${Math.round(fps)}fps · ${Math.round(PERF.q * 100)}%` + proxyTag();
   }
 }
 function tick() {

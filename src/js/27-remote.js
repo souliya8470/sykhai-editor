@@ -122,15 +122,22 @@ async function srvGetProxy(id, wait) {            // -> File (mp4) or null. wait
   try { const r = await srvFetch('/media/' + srvId(id) + '?proxy=1'); if (!r.ok) return null; const b = await r.blob(); return new File([b], mediaNameFromId(id).replace(/\.[^.]+$/, '') + '.proxy.mp4', { type: 'video/mp4' }); } catch (e) { return null; }
 }
 let _adoptBusy = false, _adoptTimer = 0, _adoptTries = 0;
+function proxyTag() {
+  const vs = [...MEDIA.values()].filter(m => m.type === 'video' && !m.hidden && !m.builtin); if (!vs.length) return '';
+  const n = vs.filter(m => m.purl || m.proxyOnly).length;
+  return ' · ⚡' + n + '/' + vs.length + (n < vs.length && SRV.adoptNote ? ' (' + SRV.adoptNote + ')' : '');
+}
+function verText() { return 'Sykhai Editor v' + APP_VERSION + proxyTag(); }
 async function srvAdoptProxies() {                // phone has big local originals that are already on the server -> use the light copy for preview
-  if (_adoptBusy || !srvOn() || !IS_PHONE()) return; _adoptBusy = true; let again = false, n = 0;
+  if (_adoptBusy) return; if (!srvOn()) { SRV.adoptNote = 'no-server'; return; } if (!IS_PHONE()) { SRV.adoptNote = 'desktop'; return; } _adoptBusy = true; let again = false, n = 0; SRV.adoptNote = '';
   try {
-    if (!SRV.up && !(await srvPing())) return; if (!SRV.sizes.size) await srvLoadSizes();
+    if (!SRV.up && !(await srvPing())) { SRV.adoptNote = 'offline'; return; } if (!SRV.sizes.size) await srvLoadSizes();
     const cand = [...MEDIA.values()].filter(m => m.type === 'video' && !m.proxyOnly && !m.purl && !m.builtin && !m.hidden && m.file && SRV.sizes.get(m.id) === m.file.size && Math.max(m.w || 0, m.h || 0) > 1300);
-    if (!cand.length) return; await srvLoadProxies(); if (!SRV.px.ffmpeg) again = /download|unpack|checking/.test(SRV.px.note || '');
+    if (!cand.length) { const raw = [...MEDIA.values()].filter(m => m.type === 'video' && !m.hidden && !m.builtin && !m.proxyOnly && !m.purl); SRV.adoptNote = raw.length ? (raw.some(m => m.file && SRV.sizes.get(m.id) !== m.file.size) ? 'not-uploaded' : 'small') : ''; return; } await srvLoadProxies(); if (!SRV.px.ffmpeg) again = /download|unpack|checking/.test(SRV.px.note || '');
     for (const m of cand) {
-      if (SRV.px.ready.has(m.id)) { const f = await srvGetProxy(m.id, false); if (f) { m.pfile = f; m.purl = URL.createObjectURL(f); dbPut(m); n++; } else again = true; }
-      else if (SRV.px.pending.has(m.id)) again = true;
+      if (SRV.px.ready.has(m.id)) { const f = await srvGetProxy(m.id, false); if (f) { m.pfile = f; m.purl = URL.createObjectURL(f); dbPut(m); n++; } else { again = true; SRV.adoptNote = 'download-failed'; } }
+      else if (SRV.px.pending.has(m.id)) { again = true; SRV.adoptNote = 'server-busy'; }
+      else SRV.adoptNote = 'no-proxy';
     }
   } finally { _adoptBusy = false; }
   if (n) { poolResetAll(); toast('ใช้สำเนาเบาสำหรับดูตัวอย่างแล้ว ' + n + ' คลิป (ตอนส่งออกยังใช้ไฟล์ต้นฉบับ)', 5000); }

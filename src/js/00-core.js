@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.20
-// APP_VERSION_PREV : 1.19
-// APP_VERSION_PREV_OLDER : 1.18
+// APP_VERSION  : 1.21
+// APP_VERSION_PREV : 1.20
+// APP_VERSION_PREV_OLDER : 1.19
+// 1.21 : player bar shows the proxy state next to the version (⚡ light copies in use / total, plus reason code); tapping it retries
 // 1.20 : proxy copies already on the server are used even when the server has no ffmpeg (can be placed by hand)
 // 1.19 : proxy videos — shop server makes a light 540p SDR copy (ffmpeg, auto-installed) of every uploaded video; phones preview/download the copy instead of the 4K HDR original, export swaps back to the originals
 // 1.18 : phone playback performance — preview capped at ~30 fps while playing, adaptive preview resolution (auto 100/75/50%), seek-thrash guard for heavy 4K clips, tap the version text in the player bar to show a live ms/fps/quality readout
@@ -26,7 +27,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.20';
+const APP_VERSION = '1.21';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];

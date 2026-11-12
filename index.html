@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.20</title>
+<title>Sykhai Editor v1.21</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -1278,9 +1278,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.20
-// APP_VERSION_PREV : 1.19
-// APP_VERSION_PREV_OLDER : 1.18
+// APP_VERSION  : 1.21
+// APP_VERSION_PREV : 1.20
+// APP_VERSION_PREV_OLDER : 1.19
+// 1.21 : player bar shows the proxy state next to the version (⚡ light copies in use / total, plus reason code); tapping it retries
 // 1.20 : proxy copies already on the server are used even when the server has no ffmpeg (can be placed by hand)
 // 1.19 : proxy videos — shop server makes a light 540p SDR copy (ffmpeg, auto-installed) of every uploaded video; phones preview/download the copy instead of the 4K HDR original, export swaps back to the originals
 // 1.18 : phone playback performance — preview capped at ~30 fps while playing, adaptive preview resolution (auto 100/75/50%), seek-thrash guard for heavy 4K clips, tap the version text in the player bar to show a live ms/fps/quality readout
@@ -1302,7 +1303,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.20';
+const APP_VERSION = '1.21';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -2550,7 +2551,7 @@ async function openById(id) {
   if (missIds.length && srvOn()) { await srvFetchMissing(missIds); renderMediaBin(); renderTimeline(); window.onFrame(); }
   const still = [...new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => mediaNameFromId(i.mediaId)))];
   if (still.length) toast('ไฟล์เหล่านี้หายจากเครื่องนี้ ต้องนำเข้าใหม่: ' + still.join(', '), 7000);
-  else srvQueueMedia([...new Set(D.items.map(i => i.mediaId).filter(Boolean))]);
+  else { srvQueueMedia([...new Set(D.items.map(i => i.mediaId).filter(Boolean))]); srvAdoptProxies(); }
 }
 async function homeAction(id, a) {
   const rec = await projGet(id); if (!rec) return renderHome();
@@ -2703,15 +2704,22 @@ async function srvGetProxy(id, wait) {            // -> File (mp4) or null. wait
   try { const r = await srvFetch('/media/' + srvId(id) + '?proxy=1'); if (!r.ok) return null; const b = await r.blob(); return new File([b], mediaNameFromId(id).replace(/\.[^.]+$/, '') + '.proxy.mp4', { type: 'video/mp4' }); } catch (e) { return null; }
 }
 let _adoptBusy = false, _adoptTimer = 0, _adoptTries = 0;
+function proxyTag() {
+  const vs = [...MEDIA.values()].filter(m => m.type === 'video' && !m.hidden && !m.builtin); if (!vs.length) return '';
+  const n = vs.filter(m => m.purl || m.proxyOnly).length;
+  return ' · ⚡' + n + '/' + vs.length + (n < vs.length && SRV.adoptNote ? ' (' + SRV.adoptNote + ')' : '');
+}
+function verText() { return 'Sykhai Editor v' + APP_VERSION + proxyTag(); }
 async function srvAdoptProxies() {                // phone has big local originals that are already on the server -> use the light copy for preview
-  if (_adoptBusy || !srvOn() || !IS_PHONE()) return; _adoptBusy = true; let again = false, n = 0;
+  if (_adoptBusy) return; if (!srvOn()) { SRV.adoptNote = 'no-server'; return; } if (!IS_PHONE()) { SRV.adoptNote = 'desktop'; return; } _adoptBusy = true; let again = false, n = 0; SRV.adoptNote = '';
   try {
-    if (!SRV.up && !(await srvPing())) return; if (!SRV.sizes.size) await srvLoadSizes();
+    if (!SRV.up && !(await srvPing())) { SRV.adoptNote = 'offline'; return; } if (!SRV.sizes.size) await srvLoadSizes();
     const cand = [...MEDIA.values()].filter(m => m.type === 'video' && !m.proxyOnly && !m.purl && !m.builtin && !m.hidden && m.file && SRV.sizes.get(m.id) === m.file.size && Math.max(m.w || 0, m.h || 0) > 1300);
-    if (!cand.length) return; await srvLoadProxies(); if (!SRV.px.ffmpeg) again = /download|unpack|checking/.test(SRV.px.note || '');
+    if (!cand.length) { const raw = [...MEDIA.values()].filter(m => m.type === 'video' && !m.hidden && !m.builtin && !m.proxyOnly && !m.purl); SRV.adoptNote = raw.length ? (raw.some(m => m.file && SRV.sizes.get(m.id) !== m.file.size) ? 'not-uploaded' : 'small') : ''; return; } await srvLoadProxies(); if (!SRV.px.ffmpeg) again = /download|unpack|checking/.test(SRV.px.note || '');
     for (const m of cand) {
-      if (SRV.px.ready.has(m.id)) { const f = await srvGetProxy(m.id, false); if (f) { m.pfile = f; m.purl = URL.createObjectURL(f); dbPut(m); n++; } else again = true; }
-      else if (SRV.px.pending.has(m.id)) again = true;
+      if (SRV.px.ready.has(m.id)) { const f = await srvGetProxy(m.id, false); if (f) { m.pfile = f; m.purl = URL.createObjectURL(f); dbPut(m); n++; } else { again = true; SRV.adoptNote = 'download-failed'; } }
+      else if (SRV.px.pending.has(m.id)) { again = true; SRV.adoptNote = 'server-busy'; }
+      else SRV.adoptNote = 'no-proxy';
     }
   } finally { _adoptBusy = false; }
   if (n) { poolResetAll(); toast('ใช้สำเนาเบาสำหรับดูตัวอย่างแล้ว ' + n + ' คลิป (ตอนส่งออกยังใช้ไฟล์ต้นฉบับ)', 5000); }
@@ -3661,7 +3669,7 @@ function perfAdapt(ms, now) {
   else if (PERF.n > 120 && PERF.ema < 14 && PERF.q < 1) { PERF.q = Math.min(1, PERF.q + .25); PERF.n = 0; }              // fast again → raise
   if (PERF.hud && now - PERF.shown > 500) {
     const fps = PERF.frames / Math.max(.001, (now - (PERF.t0 || now)) / 1000); PERF.frames = 0; PERF.t0 = now; PERF.shown = now;
-    const e = $('#verTag2'); if (e) e.textContent = `v${APP_VERSION} · ${Math.round(PERF.ema)}ms · ${Math.round(fps)}fps · ${Math.round(PERF.q * 100)}%`;
+    const e = $('#verTag2'); if (e) e.textContent = `v${APP_VERSION} · ${Math.round(PERF.ema)}ms · ${Math.round(fps)}fps · ${Math.round(PERF.q * 100)}%` + proxyTag();
   }
 }
 function tick() {
@@ -4249,11 +4257,11 @@ async function ensureSfx() {
 
 // ---------- init ----------
 async function init() {
-  $('#verTag').textContent = 'v' + APP_VERSION; $('#verTag2').textContent = 'Sykhai Editor v' + APP_VERSION;
+  $('#verTag').textContent = 'v' + APP_VERSION; $('#verTag2').textContent = 'Sykhai Editor v' + APP_VERSION; setInterval(() => { if (!PERF.hud) { const e = $('#verTag2'), t = verText(); if (e && e.textContent !== t) e.textContent = t; } }, 1500);
   PCANVAS = $('#pv'); PCTX = PCANVAS.getContext('2d');
   $('#mnav').onclick = e => { const b = e.target.closest('button'); if (!b) return; $('#app').dataset.m = b.dataset.m; $$('#mnav button').forEach(x => x.classList.toggle('on', x === b)); setTimeout(() => { fitStage(); renderTimeline(); }, 30); };
   $('#app').dataset.m = 'tl';
-  $('#verTag2').onclick = () => { PERF.hud = !PERF.hud; if (!PERF.hud) $('#verTag2').textContent = 'Sykhai Editor v' + APP_VERSION; };
+  $('#verTag2').onclick = () => { PERF.hud = !PERF.hud; if (!PERF.hud) $('#verTag2').textContent = verText(); srvAdoptProxies(); };
   $('#ratioSel').onchange = e => { const a = ASPECTS.find(x => x[0] === e.target.value); if (!a) return; D.w = a[1]; D.h = a[2]; applyAspect(); commit('ratio'); renderInspector && renderInspector(); };
   try { new ResizeObserver(() => fitStage()).observe($('#center')); } catch (e) { }
   window.addEventListener('resize', fitStage); applyAspect();
