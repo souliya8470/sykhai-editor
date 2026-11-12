@@ -19,7 +19,8 @@ Object.values(DIRS).forEach(d => fs.mkdirSync(d, { recursive: true }));
 //  copy into ./tools by itself (Windows). Originals are never touched; export still uses the originals.
 // ------------------------------------------------------------
 const { spawn, spawnSync } = require('child_process'), os = require('os'), { pipeline } = require('stream/promises'), { Readable } = require('stream');
-const TOOLS = path.join(ROOT, 'tools');   // on the data drive (the code folder may be OneDrive-synced, which makes big .exe files unusable) fs.mkdirSync(TOOLS, { recursive: true });
+const TOOLS = path.join(ROOT, 'tools');   // on the data drive: the code folder may be OneDrive-synced, which makes big .exe files unusable
+fs.mkdirSync(TOOLS, { recursive: true });
 const exeName = n => n + (process.platform === 'win32' ? '.exe' : '');
 const PX = { ff: null, hasZ: false, q: [], cur: null, failed: new Set(), note: 'checking', t0: 0 };
 const proxyFile = key => path.join(DIRS.media, key + '.proxy.mp4');
