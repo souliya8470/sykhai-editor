@@ -102,12 +102,33 @@ function applyAspect() {
 let PCANVAS = null, PCTX = null;
 const durEnd = () => Math.max(0.1, projectEnd());
 
+function playGo() { PB.starting = 0; PB.playing = true; PB.t0 = PB.t; PB.wall0 = performance.now(); emit('transport'); }
+function prerollReady() {   // every video that is on screen at the playhead (or starts within 0.4 s) has its frame loaded and is not seeking
+  const t = PB.t;
+  for (const it of D.items) {
+    if (it.type !== 'video' || it.hidden || !(t >= it.start - 0.4 && t < it.start + it.dur)) continue;
+    const r = POOL.get(it.id); if (!r) return false; const el = r.el; if (el.readyState < 3 || el.seeking) return false;
+  }
+  return true;
+}
 function play() {
-  if (PB.playing) return; ensureAudio(); if (AC.state !== 'running') AC.resume();
+  if (PB.playing || PB.starting) return; ensureAudio(); if (AC.state !== 'running') AC.resume();
   if (PB.t >= durEnd() - 0.05) PB.t = 0;
-  PB.playing = true; PB.t0 = PB.t; PB.wall0 = performance.now(); emit('transport');
+  if (PB.exporting) return playGo();
+  // pre-roll: get the first frames of all layers decoded and positioned BEFORE the clock starts, otherwise the phone spends the first
+  // seconds decoding at 5-12 fps while the playhead already runs (v1.24 recording)
+  syncMedia(true); if (prerollReady()) return playGo();
+  const tok = PB.starting = performance.now() + Math.random(); emit('transport');
+  const t0 = performance.now(), poll = () => {
+    if (PB.starting !== tok) return;
+    syncMedia(true);
+    if (prerollReady() || performance.now() - t0 > 900) return playGo();
+    setTimeout(poll, 40);
+  };
+  setTimeout(poll, 40);
 }
 function pause() {
+  if (PB.starting) { PB.starting = 0; emit('transport'); return; }
   if (!PB.playing) return; PB.playing = false;
   for (const r of POOL.values()) { try { r.el.pause(); } catch (e) { } }
   for (const r of APOOL.values()) { try { r.el.pause(); } catch (e) { } }
@@ -119,7 +140,7 @@ function vuUpdate() {
   if (active) { ANALYSER.getByteTimeDomainData(_vuBuf); let pk = 0; for (let i = 0; i < _vuBuf.length; i++) { const v = Math.abs(_vuBuf[i] - 128) / 128; if (v > pk) pk = v; } lvl = Math.min(1, Math.pow(pk, .6)); }
   _vuLvl = lvl > _vuLvl ? lvl : _vuLvl * .86; bar.style.width = (_vuLvl * 100).toFixed(0) + '%';
 }
-function togglePlay() { if (SRC.m) return srcToggle(); PB.playing ? pause() : play(); }
+function togglePlay() { if (SRC.m) return srcToggle(); (PB.playing || PB.starting) ? pause() : play(); }
 
 // ---------- source preview (click a file in the media bin -> watch it in real time, like CapCut) ----------
 const SRC = { m: null, el: null };

@@ -164,7 +164,7 @@ function ccApplyAll(it, keys) {
 }
 function ccPreview(it, g) {
   const an = it.anim || {}; let t0 = Math.max(0, it.start - .3); if (g === 'out') t0 = Math.max(it.start, it.start + it.dur - (an.dOut || .5) - .5); else if (g === 'combo') t0 = it.start;
-  pause(); seek(t0); play(); const stop = g === 'combo' ? 2200 : 1500; setTimeout(() => { if (PB.playing && !PB.exporting) pause(); }, stop);
+  pause(); seek(t0); play(); const stop = g === 'combo' ? 2200 : 1500; setTimeout(() => { if ((PB.playing || PB.starting) && !PB.exporting) pause(); }, stop);
 }
 function ccAction(act, a, it) {
   if (act === 'cardrst') { const card = a.closest('.icard'); if (card) $$('.rst.mod', card).forEach(b => b.click()); return true; }

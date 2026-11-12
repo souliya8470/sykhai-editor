@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.24</title>
+<title>Sykhai Editor v1.25</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -1278,9 +1278,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.24
-// APP_VERSION_PREV : 1.23
-// APP_VERSION_PREV_OLDER : 1.22
+// APP_VERSION  : 1.25
+// APP_VERSION_PREV : 1.24
+// APP_VERSION_PREV_OLDER : 1.23
+// 1.25 : play pre-roll — the clock starts only after every layer at the playhead has its frame decoded (max 0.9 s); fixes the first seconds of playback running at 5-12 fps on iPhone while the playhead already moved
 // 1.24 : phones show a compact live readout in the player bar while playing (render/s, ms, sync ms, decoded f/s + drift, layers, paused/muted counts) so every screen recording carries numbers
 // 1.23 : iPhone fix — Safari on iOS lets only one un-muted video play at a time, stacked layers fought each other (play/pause ping-pong, sync 40-60 ms). Now only the loudest layer is un-muted on iOS; play() retries throttled; HUD shows paused/muted/play errors
 // 1.22 : performance overlay (tap the version text while playing): loop rate, render/sync/ui ms, per-video decoded frames/s, dropped frames, drift
@@ -1306,7 +1307,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.24';
+const APP_VERSION = '1.25';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -3170,7 +3171,7 @@ function ccApplyAll(it, keys) {
 }
 function ccPreview(it, g) {
   const an = it.anim || {}; let t0 = Math.max(0, it.start - .3); if (g === 'out') t0 = Math.max(it.start, it.start + it.dur - (an.dOut || .5) - .5); else if (g === 'combo') t0 = it.start;
-  pause(); seek(t0); play(); const stop = g === 'combo' ? 2200 : 1500; setTimeout(() => { if (PB.playing && !PB.exporting) pause(); }, stop);
+  pause(); seek(t0); play(); const stop = g === 'combo' ? 2200 : 1500; setTimeout(() => { if ((PB.playing || PB.starting) && !PB.exporting) pause(); }, stop);
 }
 function ccAction(act, a, it) {
   if (act === 'cardrst') { const card = a.closest('.icard'); if (card) $$('.rst.mod', card).forEach(b => b.click()); return true; }
@@ -3514,12 +3515,33 @@ function applyAspect() {
 let PCANVAS = null, PCTX = null;
 const durEnd = () => Math.max(0.1, projectEnd());
 
+function playGo() { PB.starting = 0; PB.playing = true; PB.t0 = PB.t; PB.wall0 = performance.now(); emit('transport'); }
+function prerollReady() {   // every video that is on screen at the playhead (or starts within 0.4 s) has its frame loaded and is not seeking
+  const t = PB.t;
+  for (const it of D.items) {
+    if (it.type !== 'video' || it.hidden || !(t >= it.start - 0.4 && t < it.start + it.dur)) continue;
+    const r = POOL.get(it.id); if (!r) return false; const el = r.el; if (el.readyState < 3 || el.seeking) return false;
+  }
+  return true;
+}
 function play() {
-  if (PB.playing) return; ensureAudio(); if (AC.state !== 'running') AC.resume();
+  if (PB.playing || PB.starting) return; ensureAudio(); if (AC.state !== 'running') AC.resume();
   if (PB.t >= durEnd() - 0.05) PB.t = 0;
-  PB.playing = true; PB.t0 = PB.t; PB.wall0 = performance.now(); emit('transport');
+  if (PB.exporting) return playGo();
+  // pre-roll: get the first frames of all layers decoded and positioned BEFORE the clock starts, otherwise the phone spends the first
+  // seconds decoding at 5-12 fps while the playhead already runs (v1.24 recording)
+  syncMedia(true); if (prerollReady()) return playGo();
+  const tok = PB.starting = performance.now() + Math.random(); emit('transport');
+  const t0 = performance.now(), poll = () => {
+    if (PB.starting !== tok) return;
+    syncMedia(true);
+    if (prerollReady() || performance.now() - t0 > 900) return playGo();
+    setTimeout(poll, 40);
+  };
+  setTimeout(poll, 40);
 }
 function pause() {
+  if (PB.starting) { PB.starting = 0; emit('transport'); return; }
   if (!PB.playing) return; PB.playing = false;
   for (const r of POOL.values()) { try { r.el.pause(); } catch (e) { } }
   for (const r of APOOL.values()) { try { r.el.pause(); } catch (e) { } }
@@ -3531,7 +3553,7 @@ function vuUpdate() {
   if (active) { ANALYSER.getByteTimeDomainData(_vuBuf); let pk = 0; for (let i = 0; i < _vuBuf.length; i++) { const v = Math.abs(_vuBuf[i] - 128) / 128; if (v > pk) pk = v; } lvl = Math.min(1, Math.pow(pk, .6)); }
   _vuLvl = lvl > _vuLvl ? lvl : _vuLvl * .86; bar.style.width = (_vuLvl * 100).toFixed(0) + '%';
 }
-function togglePlay() { if (SRC.m) return srcToggle(); PB.playing ? pause() : play(); }
+function togglePlay() { if (SRC.m) return srcToggle(); (PB.playing || PB.starting) ? pause() : play(); }
 
 // ---------- source preview (click a file in the media bin -> watch it in real time, like CapCut) ----------
 const SRC = { m: null, el: null };
@@ -4270,7 +4292,7 @@ window.onFrame = () => {
   $('#tpTime').textContent = fmt(PB.t) + ' / ' + fmt(projectEnd());
   if (!PB.playing && PB.t !== _lastUiT) { _lastUiT = PB.t; refreshInspectorValues(); }
 };
-on('transport', () => { $('#tpPlay').textContent = PB.playing ? '⏸' : '▶'; });
+on('transport', () => { $('#tpPlay').textContent = (PB.playing || PB.starting) ? '⏸' : '▶'; });
 on('ended', () => { $('#tpPlay').textContent = '▶'; });
 on('doc', () => { poolPrune(); renderTimeline(); dirty(); const n = $('#projName'); if (n && document.activeElement !== n) n.value = D.name; if (PB.t > durEnd()) PB.t = durEnd(); window.onFrame(); if (SEL) refreshInspectorValues(); });
 

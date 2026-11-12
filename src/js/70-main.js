@@ -43,7 +43,7 @@ window.onFrame = () => {
   $('#tpTime').textContent = fmt(PB.t) + ' / ' + fmt(projectEnd());
   if (!PB.playing && PB.t !== _lastUiT) { _lastUiT = PB.t; refreshInspectorValues(); }
 };
-on('transport', () => { $('#tpPlay').textContent = PB.playing ? '⏸' : '▶'; });
+on('transport', () => { $('#tpPlay').textContent = (PB.playing || PB.starting) ? '⏸' : '▶'; });
 on('ended', () => { $('#tpPlay').textContent = '▶'; });
 on('doc', () => { poolPrune(); renderTimeline(); dirty(); const n = $('#projName'); if (n && document.activeElement !== n) n.value = D.name; if (PB.t > durEnd()) PB.t = durEnd(); window.onFrame(); if (SEL) refreshInspectorValues(); });
 
