@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.17
-// APP_VERSION_PREV : 1.16
-// APP_VERSION_PREV_OLDER : 1.15
+// APP_VERSION  : 1.18
+// APP_VERSION_PREV : 1.17
+// APP_VERSION_PREV_OLDER : 1.16
+// 1.18 : phone playback performance — preview capped at ~30 fps while playing, adaptive preview resolution (auto 100/75/50%), seek-thrash guard for heavy 4K clips, tap the version text in the player bar to show a live ms/fps/quality readout
 // 1.17 : smooth timeline follow while playing (continuous scroll instead of page jumps, GPU-moved playhead); version number shown in the player bar on phones
 // 1.16 : per-track lock / hide picture / mute icons on the timeline (saved with the project, respected by playback and export); 5 more colour filters (vintage, faded, drama, pop, cool tone)
 // 1.15 : HOTFIX for 1.14 (text did not render: layoutText lacked H) + MyCut-style left panes — text styles and stickers drawn as real previews over the project's own footage, emoji categories, new Animation tab (in/out/combo) with live hover previews, tab order like MyCut
@@ -23,7 +24,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.17';
+const APP_VERSION = '1.18';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];

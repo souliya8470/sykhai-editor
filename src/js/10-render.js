@@ -84,6 +84,8 @@ function rrPath(ctx, x, y, w, h, r) {
   ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
 }
 
+let BS = 1;   // bounds scale (preview may be rendered at reduced resolution)
+const bsc = b => { if (BS !== 1) { b.cx *= BS; b.cy *= BS; b.w *= BS; b.h *= BS; } return b; };
 const BOUNDS = {};   // itemId -> {cx,cy,w,h,rot}  (preview hit-testing)
 
 // ---------- core: draw one media item (content only, with xf + mask + filter) ----------
@@ -107,7 +109,7 @@ function drawMediaContent(ctx, it, t, W, H, extra) {
   if (z !== 1 || pan) { const nw = sw / z, nh = sh / z; sx += (sw - nw) / 2 + pan * (sw - nw) / 2; sy += (sh - nh) / 2; sw = nw; sh = nh; }
   const nu = it.uni === false; const am = A ? A.s : 1;
   const w = fw * s * (nu ? (it.sx ?? 1) : 1) * am, h = fh * s * (nu ? (it.sy ?? 1) : 1) * am, cx = W / 2 + x * W + (extra.dx || 0), cy = H / 2 + y * H + (extra.dy || 0);
-  BOUNDS[it.id] = { cx, cy, w, h, rot: r };
+  BOUNDS[it.id] = bsc({ cx, cy, w, h, rot: r });
   ctx.save();
   ctx.globalAlpha *= clamp(o, 0, 1) * (extra.alpha ?? 1);
   if (it.bg && it.bg !== 'none' && (it.fit === 'contain' || w < W - 1 || h < H - 1)) {   // canvas background (CapCut: Canvas)
@@ -467,7 +469,7 @@ function drawText(ctx, it, t, W, H) {
   const xs = prop(it, 's', t), xx = prop(it, 'x', t), yy = prop(it, 'y', t), rr = prop(it, 'r', t), oo = prop(it, 'o', t);
   const cx = W / 2 + xx * W + ap.dx, cy = (it.ay ?? .5) * H + yy * H + ap.dy;
   const blockW = Math.max(0, ...rows.map(r => r.w));
-  BOUNDS[it.id] = { cx, cy, w: blockW + 40, h: totalH + 20, rot: rr };
+  BOUNDS[it.id] = bsc({ cx, cy, w: blockW + 40, h: totalH + 20, rot: rr });
   const echoN = (it.anim && it.anim.echo) ? 3 : 0;
   for (let ei = echoN; ei >= 0; ei--) {
     ctx.save();
@@ -515,7 +517,7 @@ function drawSticker(ctx, it, t, W, H) {
   const ap = textAnimParams(it, lt, W, H);
   const S = it.size * Math.min(W, H) / 1080; const xs = prop(it, 's', t), xx = prop(it, 'x', t), yy = prop(it, 'y', t), rr = prop(it, 'r', t), oo = prop(it, 'o', t);
   const cx = W / 2 + xx * W + ap.dx, cy = (it.ay ?? .5) * H + yy * H + ap.dy;
-  BOUNDS[it.id] = { cx, cy, w: S, h: S, rot: rr };
+  BOUNDS[it.id] = bsc({ cx, cy, w: S, h: S, rot: rr });
   ctx.save(); ctx.globalAlpha *= clamp(ap.a * oo, 0, 1); ctx.translate(cx, cy); ctx.rotate(rr * Math.PI / 180); const sc = ap.s * xs; ctx.scale(sc, sc);
   const col = it.color || '#FFD60A'; const r = S / 2;
   const pulse = 0.5 + 0.5 * Math.sin(lt * 6);

@@ -332,3 +332,5 @@ button.tic.on{color:#ff9f43}
 
 .ptitle .pver{display:none;font-size:11px;color:var(--mu)}
 @media (max-width:820px){.ptitle .pver{display:block}}
+
+.ptitle .pver{cursor:pointer;-webkit-tap-highlight-color:transparent}

@@ -217,7 +217,7 @@ function syncMedia(force) {
     const tt = Math.min(target, maxT);
     if (PB.playing) {
       if (el.paused && target <= maxT) el.play().catch(() => { });
-      if (Math.abs(el.currentTime - tt) > 0.3) { try { el.currentTime = tt; } catch (e) { } }
+      if (Math.abs(el.currentTime - tt) > 0.35 && now - (r.lastSeek || 0) > 1200) { r.lastSeek = now; try { el.currentTime = tt; } catch (e) { } }
     } else {
       if (!el.paused) el.pause();
       if (force || Math.abs(el.currentTime - tt) > 0.03) { try { el.currentTime = tt; } catch (e) { } }
@@ -253,6 +253,16 @@ function syncMedia(force) {
 }
 
 // ---------- main loop ----------
+const PERF = { q: 1, ema: 0, n: 0, lastR: 0, hud: false, shown: 0, frames: 0, t0: 0 };
+function perfAdapt(ms, now) {
+  PERF.ema = PERF.n ? PERF.ema * .88 + ms * .12 : ms; PERF.n++; PERF.frames++;
+  if (PERF.n > 24 && PERF.ema > 42 && PERF.q > .5) { PERF.q = PERF.q > .75 ? .75 : .5; PERF.n = 0; }                  // slow device → lower preview resolution
+  else if (PERF.n > 120 && PERF.ema < 14 && PERF.q < 1) { PERF.q = Math.min(1, PERF.q + .25); PERF.n = 0; }              // fast again → raise
+  if (PERF.hud && now - PERF.shown > 500) {
+    const fps = PERF.frames / Math.max(.001, (now - (PERF.t0 || now)) / 1000); PERF.frames = 0; PERF.t0 = now; PERF.shown = now;
+    const e = $('#verTag2'); if (e) e.textContent = `v${APP_VERSION} · ${Math.round(PERF.ema)}ms · ${Math.round(fps)}fps · ${Math.round(PERF.q * 100)}%`;
+  }
+}
 function tick() {
   vuUpdate();
   if (PB.playing && !PB.exporting) {
@@ -264,7 +274,16 @@ function tick() {
   else if (!PB.exporting) {
     syncMedia(false);
     if (PW * 2 !== D.w || PH * 2 !== D.h) applyAspect();
-    if (DIRTY || PB.playing) { renderFrame(PCTX, PW, PH, PB.t); DIRTY = false; if (window.onFrame) window.onFrame(); }
+    if (DIRTY || PB.playing) {
+      const nowR = performance.now();
+      if (!PB.playing || nowR - PERF.lastR >= 30) {   // while playing: preview at most ~30 fps (video is 30 fps anyway) and adaptive resolution
+        const q = PB.playing ? PERF.q : 1, rw = Math.round(PW * q), rh = Math.round(PH * q);
+        if (PCANVAS.width !== rw || PCANVAS.height !== rh) { PCANVAS.width = rw; PCANVAS.height = rh; }
+        BS = 1 / q; const a = performance.now(); renderFrame(PCTX, rw, rh, PB.t); BS = 1; const ms = performance.now() - a;
+        PERF.lastR = nowR; DIRTY = false; if (PB.playing) perfAdapt(ms, nowR);
+      }
+      if (window.onFrame) window.onFrame();   // playhead / time move every screen refresh
+    }
   }
   requestAnimationFrame(tick);
 }

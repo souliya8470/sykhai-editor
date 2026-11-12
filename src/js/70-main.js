@@ -77,6 +77,7 @@ async function init() {
   PCANVAS = $('#pv'); PCTX = PCANVAS.getContext('2d');
   $('#mnav').onclick = e => { const b = e.target.closest('button'); if (!b) return; $('#app').dataset.m = b.dataset.m; $$('#mnav button').forEach(x => x.classList.toggle('on', x === b)); setTimeout(() => { fitStage(); renderTimeline(); }, 30); };
   $('#app').dataset.m = 'tl';
+  $('#verTag2').onclick = () => { PERF.hud = !PERF.hud; if (!PERF.hud) $('#verTag2').textContent = 'Sykhai Editor v' + APP_VERSION; };
   $('#ratioSel').onchange = e => { const a = ASPECTS.find(x => x[0] === e.target.value); if (!a) return; D.w = a[1]; D.h = a[2]; applyAspect(); commit('ratio'); renderInspector && renderInspector(); };
   try { new ResizeObserver(() => fitStage()).observe($('#center')); } catch (e) { }
   window.addEventListener('resize', fitStage); applyAspect();
