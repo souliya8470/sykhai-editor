@@ -142,7 +142,7 @@ async function ensureYtdlp() {
   FT.note = 'ready ' + FT.yt.version; return FT.yt;
 }
 const TT_URL = /^https:\/\/((www|m|vm|vt)\.)?tiktok\.com\/[^\s]+$/i;
-const inboxFile = id => { for (const d of [INBOX, INBOX_DONE]) { try { const hit = fs.readdirSync(d).find(f => f.startsWith(id + '.') && !/\.(part|ytdl)$/i.test(f)); if (hit) return path.join(d, hit); } catch (e) { } } return null; };
+const inboxFile = id => { for (const d of [INBOX, INBOX_DONE]) { try { const hit = fs.readdirSync(d).find(f => f.startsWith(id + '.') && /\.(mp4|mov|m4v|webm)$/i.test(f)); if (hit) return path.join(d, hit); } catch (e) { } } return null; };
 function ftRunOne(job) {
   return new Promise(async (resolve, reject) => {
     try {
@@ -154,7 +154,10 @@ function ftRunOne(job) {
       p.on('error', e => { clearTimeout(timer); reject(new Error('เปิด yt-dlp ไม่ได้: ' + e.message + (e.code === 'EPERM' || e.code === 'EACCES' ? ' — Windows บล็อกไฟล์นี้ (Unblock / Exclusions)' : ''))); });
       p.on('close', code => {
         clearTimeout(timer);
+        const junk = fs.readdirSync(INBOX).filter(x => x.startsWith(job.id + '.') && !/\.(mp4|mov|m4v|webm)$/i.test(x));   // audio-only / image posts (TikTok photo slideshows)
+        junk.forEach(x => { try { fs.unlinkSync(path.join(INBOX, x)); } catch (e) { } });
         const f = inboxFile(job.id);
+        if (code === 0 && !f && junk.length) return reject(new Error('โพสต์นี้ไม่ใช่วิดีโอ (ได้ไฟล์ ' + junk.map(x => path.extname(x)).join(',') + ' — น่าจะเป็นโพสต์รูปสไลด์) ข้ามไป'));
         if (code === 0 && f && f.startsWith(INBOX + path.sep)) { const st = fs.statSync(f); if (st.size < 20000) { try { fs.unlinkSync(f); } catch (e) { } return reject(new Error('ไฟล์ที่ได้เล็กผิดปกติ (' + st.size + ' bytes)')); } return resolve({ name: path.basename(f), size: st.size }); }
         reject(new Error('yt-dlp ล้มเหลว (code ' + code + '): ' + (err || out).trim().split('\n').slice(-3).join(' | ').slice(0, 500)));
       });
@@ -254,7 +257,7 @@ const server = http.createServer(async (req, res) => {
         if (!/^[A-Za-z0-9_-]{4,60}$/.test(vid)) return send(res, 400, { ok: false, error: 'bad id' });
         if (!TT_URL.test(url)) return send(res, 400, { ok: false, error: 'only tiktok.com links are accepted' });
         const have = inboxFile(vid); if (have) return send(res, 200, { ok: true, status: 'exists', name: path.basename(have), where: path.dirname(have) === INBOX ? 'inbox' : 'done' });
-        if (readFetched()[vid]) return send(res, 200, { ok: true, status: 'exists', name: readFetched()[vid].name, where: 'imported' });
+        { const fr = readFetched()[vid]; if (fr && /\.(mp4|mov|m4v|webm)$/i.test(fr.name || '')) return send(res, 200, { ok: true, status: 'exists', name: fr.name, where: 'imported' }); }
         try { const r = await ftEnqueue(vid, url); return send(res, 200, { ok: true, status: 'downloaded', name: r.name, size: r.size }); }
         catch (e) { return send(res, 502, { ok: false, status: 'failed', error: String(e.message || e) }); }
       }
