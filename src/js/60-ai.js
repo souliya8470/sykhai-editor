@@ -43,13 +43,13 @@ async function gemini(parts, { json = true, label = 'gemini' } = {}) {
   const key = loadKeys().gemini; if (!key) throw new Error('ยังไม่ได้ใส่ Gemini API key (กดปุ่ม ⚙ ตั้งค่า)');
   if (!costGuard(0.03)) throw new Error('งบ AI ครบเพดาน');
   const first = localStorage.getItem('sk_gmodel') || 'gemini-flash-latest';
-  const models = [...new Set([first, 'gemini-2.5-flash', 'gemini-flash-lite-latest'])];   // busy model -> retry, then the next model
+  const models = [...new Set([first, 'gemini-flash-latest', 'gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.5-flash-lite'])];   // busy model -> retry, then the next model; retired / unknown model -> next model at once
   const body = JSON.stringify({ contents: [{ role: 'user', parts }], generationConfig: Object.assign({ temperature: 0.1 }, json ? { responseMimeType: 'application/json' } : {}) });
   let j = {}, r = null, last = '';
   for (let mi = 0; mi < models.length; mi++) {
     for (let tri = 0; tri < 3; tri++) {
       try { r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${models[mi]}:generateContent`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': key }, body }); } catch (e) { r = null; last = String(e.message || e); }
-      if (r) { j = await r.json().catch(() => ({})); if (r.ok) break; last = (j.error && j.error.message) || r.status; if (![429, 500, 502, 503, 504].includes(r.status)) throw new Error('Gemini: ' + last); }
+      if (r) { j = await r.json().catch(() => ({})); if (r.ok) break; last = (j.error && j.error.message) || r.status; const gone = r.status === 404 || /no longer available|not found|not supported|deprecated|shut ?down/i.test(String(last)); if (gone) break; if (![429, 500, 502, 503, 504].includes(r.status)) throw new Error('Gemini: ' + last); }
       if (tri < 2) await new Promise(o => setTimeout(o, 2500 * (tri + 1)));   // 2.5 s, 5 s
     }
     if (r && r.ok) break;

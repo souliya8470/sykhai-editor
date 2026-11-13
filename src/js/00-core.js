@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.43
-// APP_VERSION_PREV : 1.42
-// APP_VERSION_PREV_OLDER : 1.41
+// APP_VERSION  : 1.44
+// APP_VERSION_PREV : 1.43
+// APP_VERSION_PREV_OLDER : 1.42
+// 1.44 : Gemini model list refreshed (gemini-2.5-flash is retired for new keys): flash-latest -> 3.8 flash -> 3.7 flash -> 3.5 flash-lite; a retired / unknown model is skipped at once instead of stopping the job
 // 1.43 : Gemini "model is busy" (503 / 429) no longer stops the job — it retries 3 times, then tries two other Gemini models before giving up
 // 1.42 : animated auto-captions (like the AutoCaptions plugin) — AI card "Animated captions": pick a look (8), pick one of the 22 text animations, words per caption, position, and the spoken word changes colour (karaoke highlight, current word or keep); live preview; makes one text clip per caption with the highlight timing inside it
 // 1.41 : text animation pack — 22 ready-made animations (fade / float / pop / drop / blur / slide / zoom / spin / typewriter / wave / shine sweep / glow pulse / neon flicker / rainbow / impact / glitch / cinematic / elastic / wipe-write / card flip / line rise / beat pulse) in a gallery pop-up with real moving previews of your own text (✨ button in the Text tab and in the text inspector); units are words / letters / lines (Lao & Thai are split with Intl.Segmenter, prefix vowels stay glued to their consonant), speed and split mode adjustable, colour / stroke / glow of the clip are kept; rendered by the same drawText so the export matches
@@ -49,7 +50,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.43';
+const APP_VERSION = '1.44';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
