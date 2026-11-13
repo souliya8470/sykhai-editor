@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.32</title>
+<title>Sykhai Editor v1.33</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -356,6 +356,12 @@ button.tic.on{color:#ff9f43}
 #oldMedia .omh .mini{flex:1;opacity:.7}
 #oldMedia .omx{background:transparent;border:0;color:inherit;font-size:16px;cursor:pointer}
 #oldMedia .omg{padding:12px;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+.refopen{display:flex;align-items:center;gap:6px;margin-top:22px;padding:12px 16px;border-radius:12px;border:1px solid var(--line,#444);background:var(--panel2,#1f2a27);color:inherit;font-size:14px;cursor:pointer;flex-wrap:wrap;text-align:left}
+.refopen b{background:var(--ac,#34e0a1);color:#06130e;border-radius:10px;padding:1px 8px;font-size:12px}
+.refopen small{flex-basis:100%;color:var(--mu);font-size:11px}
+.refback{margin-bottom:6px}
+.refq{width:100%;max-width:360px;margin:0 0 12px;padding:8px 10px;border-radius:8px;border:1px solid var(--line,#444);background:transparent;color:inherit}
+.rlang{position:absolute;left:4px;top:4px;font-size:10px;padding:1px 5px;border-radius:6px;background:rgba(0,0,0,.65);color:#fff}
 
 </style></head>
 <body>
@@ -439,11 +445,18 @@ button.tic.on{color:#ff9f43}
 <div id="home">
   <div class="hwrap">
     <div class="hhead"><div class="brand big">Sykhai <b>Editor</b></div><span class="sp"></span><button id="hmSync" hidden title="ส่งโปรเจกต์/ไฟล์ขึ้นเซิร์ฟเวอร์ และดึงโปรเจกต์ใหม่ลงเครื่องนี้">☁ ซิงค์เซิร์ฟเวอร์</button><button id="hmBack" hidden>← กลับไปแก้ไขต่อ</button><button id="hmImport">📂 นำเข้าไฟล์โปรเจกต์</button><button id="hmSettings" title="ตั้งค่า (ใส่รหัสผ่านเซิร์ฟเวอร์ที่นี่)">⚙ ตั้งค่า</button><button id="hmNew" class="primary">+ โปรเจกต์ใหม่</button></div>
+    <div id="homeMain">
     <div class="htitle">โปรเจกต์ของฉัน</div>
     <div id="homeList"></div>
+    <button id="hmRefOpen" class="refopen">📚 <span>คลังวิดีโออ้างอิง</span> <b id="hmRefN">0</b> <span>คลิป</span> ›<small><span>ไว้ให้ AI เรียนรู้แนวตัดต่อ — แยกจากโปรเจกต์</span></small></button>
+    </div>
+    <div id="refPage" hidden>
+    <div class="refback"><button id="hmRefBack">← <span>กลับหน้าโปรเจกต์</span></button></div>
     <div class="htitle refhead">📚 คลังวิดีโออ้างอิง <span class="mini">ไว้ให้ AI เรียนรู้แนวตัดต่อ — แยกจากโปรเจกต์ ไม่ปนกับสื่อของโปรเจกต์</span></div>
     <div class="refbar"><button id="hmRefInbox">📥 ดึงคลิปจากกล่องรับของเซิร์ฟเวอร์</button><button id="hmRefAdd">+ เพิ่มคลิปอ้างอิง</button><button id="hmRefAn" class="primary">🔬 วิเคราะห์แนวตัดต่อ</button></div>
+    <input id="refQ" class="refq" placeholder="ค้นหาคลิปอ้างอิง…" autocomplete="off">
     <div id="refList"></div>
+    </div>
     <div id="homeFoot" class="hint small"></div>
   </div>
 </div>
@@ -1566,6 +1579,9 @@ I18N_ROWS.push(
   ['เอาออกจากโปรเจกต์นี้', 'Remove from this project', 'ເອົາອອກຈາກໂປຣເຈັກນີ້'],
   ['เอาออกจากโปรเจกต์นี้แล้ว (ไฟล์ยังอยู่ใน “ไฟล์เก่า”)', 'Removed from this project (the file is still in “Older files”)', 'ເອົາອອກຈາກໂປຣເຈັກນີ້ແລ້ວ (ໄຟລ໌ຍັງຢູ່ໃນ “ໄຟລ໌ເກົ່າ”)'],
   ['ลบไฟล์นี้ถาวร? (โปรเจกต์อื่นที่ใช้ไฟล์นี้จะหาไฟล์ไม่เจอ)', 'Delete this file for good? (other projects that use it will lose it)', 'ລຶບໄຟລ໌ນີ້ຖາວອນ? (ໂປຣເຈັກອື່ນທີ່ໃຊ້ໄຟລ໌ນີ້ຈະຫາບໍ່ເຫັນ)'],
+  ['ไว้ให้ AI เรียนรู้แนวตัดต่อ — แยกจากโปรเจกต์', 'For the AI to learn editing styles — kept apart from projects', 'ໄວ້ໃຫ້ AI ຮຽນແນວຕັດຕໍ່ — ແຍກຈາກໂປຣເຈັກ'],
+  ['กลับหน้าโปรเจกต์', 'Back to projects', 'ກັບໄປໜ້າໂປຣເຈັກ'],
+  ['ค้นหาคลิปอ้างอิง…', 'Search reference clips…', 'ຄົ້ນຫາຄລິບອ້າງອີງ…'],
 );
 
 // ---- 00-core.js ----
@@ -1573,9 +1589,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.32
-// APP_VERSION_PREV : 1.31
-// APP_VERSION_PREV_OLDER : 1.30
+// APP_VERSION  : 1.33
+// APP_VERSION_PREV : 1.32
+// APP_VERSION_PREV_OLDER : 1.31
+// 1.33 : Home shows only the projects; the reference-video library moved to its own page (one button with the clip count -> library page with back button and a search box), so 100-200 clips no longer crowd the Home page; ref cards show a Thai/Lao tag; N8N pick = top 20 Thai by plays (Lao list has no view counts)
 // 1.32 : per-project media bin — a new project shows only its own media (D.bin = ids imported/added in that project + ids used by its clips); media from other projects live under 📂 older files (re-add with one tap, or delete for good); the × on a bin item removes it from this project only; AI/food/analyzer lists use the project's media only
 // 1.31 : reference-video library kept apart from projects (Home page 📚 section; not in the media bin, not synced, not used by AI cut-it-all; clips pulled from the server inbox and files named <tiktok id>.mp4 are moved there automatically); media bin grid auto-fills columns (more columns + smaller thumbs when the panel is widened, CapCut-style); thumbnails 360 px / q.85 (old ones upgraded in the background); Home project cards about half the size
 // 1.30 : inbox — the shop server can fetch TikTok reference clips by itself (yt-dlp, asked by N8N) into an inbox folder; the editor pulls them into the media list (🔬 analyzer button + automatic on desktop start-up); imported files move to inbox/done
@@ -1609,7 +1626,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.32';
+const APP_VERSION = '1.33';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -2874,10 +2891,11 @@ const fmtDur = t => { t = Math.round(t || 0); return Math.floor(t / 60) + ':' + 
 
 async function showHome() {
   pause(); if (typeof srcExit === 'function') srcExit(); await projSaveNow();
-  HOME.open = true; $('#home').hidden = false;
+  HOME.open = true; $('#home').hidden = false; setRefPage(false);
   $('#hmBack').hidden = !HOME.started; $('#hmSync').hidden = !srvOn();
   await renderHome();
 }
+function setRefPage(on) { HOME.ref = !!on; $('#homeMain').hidden = !!on; $('#refPage').hidden = !on; if (on) { const q = $('#refQ'); if (q) q.value = ''; } renderRefLib(); const w = $('#home'); if (w) w.scrollTop = 0; }
 function hideHome() { HOME.open = false; $('#home').hidden = true; HOME.started = true; }
 
 async function renderHome() {
@@ -2906,13 +2924,19 @@ async function renderHome() {
 
 function renderRefLib() {
   const box = $('#refList'); if (!box) return;
-  const refs = [...MEDIA.values()].filter(m => m.ref && m.type === 'video').sort((a, b) => (a.name < b.name ? -1 : 1));
+  const all = [...MEDIA.values()].filter(m => m.ref && m.type === 'video').sort((a, b) => (a.name < b.name ? -1 : 1));
+  const hn = $('#hmRefN'); if (hn) hn.textContent = all.length;
+  if (!HOME.ref) return;                       // library page is closed — only the count on the Home button matters
+  const q = ($('#refQ') ? $('#refQ').value : '').trim().toLowerCase();
+  const labelOf = m => { const key = typeof anMatch === 'function' ? anMatch(m) : null, r = key && typeof anRefOf === 'function' ? anRefOf(key) : null; return r ? ((r.creator || '') + ' ' + (r.topic_note || '')).trim() : m.name; };
+  const refs = q ? all.filter(m => (m.name + ' ' + labelOf(m)).toLowerCase().includes(q)) : all;
   if (!refs.length) { box.innerHTML = '<div class="hempty small">ยังไม่มีคลิปอ้างอิง — กด “ดึงคลิปจากกล่องรับของเซิร์ฟเวอร์” หรือ “+ เพิ่มคลิปอ้างอิง”</div>'; return; }
   box.innerHTML = refs.map(m => {
     const key = typeof anMatch === 'function' ? anMatch(m) : null, r = key && typeof anRefOf === 'function' ? anRefOf(key) : null, done = typeof REFAN !== 'undefined' && REFAN.res[key || 'name:' + m.name];
     const label = r ? ((r.creator || '') + ' ' + (r.topic_note || '')).trim() : m.name;
+    const tag = r && r.language ? ({ thai: 'ไทย', lao: 'ລາວ' }[r.language] || '') : '';
     return `<div class="pcard rcard" data-id="${esc(m.id)}">
-      <div class="pthumb" style="${m.thumb ? `background-image:url(${m.thumb})` : ''}"><span class="pdur">${fmtDur(m.duration)}</span>${done ? '<span class="rdone" title="วิเคราะห์แล้ว">✔</span>' : ''}</div>
+      <div class="pthumb" style="${m.thumb ? `background-image:url(${m.thumb})` : ''}"><span class="pdur">${fmtDur(m.duration)}</span>${done ? '<span class="rdone" title="วิเคราะห์แล้ว">✔</span>' : ''}${tag ? `<span class="rlang">${tag}</span>` : ''}</div>
       <div class="pname" translate="no" title="${esc(m.name)}">${esc(label)}</div>
       <div class="pact"><button data-a="refdel" class="danger" title="ลบออกจากคลัง">✕</button></div>
     </div>`;
@@ -2963,6 +2987,8 @@ function initHome() {
   $('#hmRefInbox').onclick = async () => { await srvInboxImport(); renderHome(); };
   $('#hmRefAdd').onclick = () => { const i = document.createElement('input'); i.type = 'file'; i.accept = 'video/*,.mov,.mp4'; i.multiple = true; i.onchange = async () => { if (i.files.length) { await importFiles(i.files, { ref: true }); renderHome(); } }; i.click(); };
   $('#hmRefAn').onclick = () => anUI();
+  $('#hmRefOpen').onclick = () => setRefPage(true); $('#hmRefBack').onclick = () => setRefPage(false);
+  $('#refQ').oninput = () => renderRefLib();
   $('#refList').addEventListener('click', e => {
     const c = e.target.closest('.rcard'); if (!c) return; const m = MEDIA.get(c.dataset.id); if (!m) return;
     if (e.target.closest('[data-a="refdel"]')) {

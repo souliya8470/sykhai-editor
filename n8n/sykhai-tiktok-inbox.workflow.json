@@ -93,7 +93,7 @@
   },
   {
    "parameters": {
-    "jsCode": "// เลือกคลิปที่จะโหลด — ปรับตัวเลขตรงนี้ได้\nconst PER_LANG = 50;          // คลิปที่ยอดวิวสูงสุดของแต่ละภาษา (ไทย / ลาว)\nconst MIN_PLAYS = 0;          // ตัดคลิปที่ยอดวิวต่ำกว่านี้ (0 = ไม่ตัด)\nconst j = $input.first().json;\nconst raw = typeof j.data === 'string' ? JSON.parse(j.data) : j;\nconst vids = (raw.videos || raw).filter(v => v.video_id && v.url && (v.plays || 0) >= MIN_PLAYS);\nconst picked = [];\nfor (const lang of ['thai', 'lao']) {\n  vids.filter(v => v.language === lang).sort((a, b) => (b.plays || 0) - (a.plays || 0)).slice(0, PER_LANG).forEach(v => picked.push(v));\n}\nreturn picked.map(v => ({ json: { video_id: v.video_id, url: v.url, language: v.language, category: v.category, plays: v.plays, creator: v.creator } }));"
+    "jsCode": "// เลือกคลิปที่จะโหลด — ปรับตัวเลขตรงนี้ได้\nconst PER_LANG = { thai: 50, lao: 0 };   // จำนวนคลิปที่ยอดวิวสูงสุดของแต่ละภาษา (ลาวในลิสต์ยังไม่มีตัวเลขยอดวิว จึงปิดไว้ = 0)\nconst MIN_PLAYS = 10000;      // ตัดคลิปที่ยอดวิวต่ำกว่านี้ (คลิปที่ไม่มียอดวิวจะไม่ถูกเลือก)\nconst j = $input.first().json;\nconst raw = typeof j.data === 'string' ? JSON.parse(j.data) : j;\nconst vids = (raw.videos || raw).filter(v => v.video_id && v.url && (v.plays || 0) >= MIN_PLAYS);\nconst picked = [];\nfor (const lang of ['thai', 'lao']) {\n  vids.filter(v => v.language === lang).sort((a, b) => (b.plays || 0) - (a.plays || 0)).slice(0, PER_LANG[lang] || 0).forEach(v => picked.push(v));\n}\nreturn picked.map(v => ({ json: { video_id: v.video_id, url: v.url, language: v.language, category: v.category, plays: v.plays, creator: v.creator } }));"
    },
    "id": "n5",
    "name": "เลือกคลิปที่จะโหลด",

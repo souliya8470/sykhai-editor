@@ -349,3 +349,9 @@ button.tic.on{color:#ff9f43}
 #oldMedia .omh .mini{flex:1;opacity:.7}
 #oldMedia .omx{background:transparent;border:0;color:inherit;font-size:16px;cursor:pointer}
 #oldMedia .omg{padding:12px;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+.refopen{display:flex;align-items:center;gap:6px;margin-top:22px;padding:12px 16px;border-radius:12px;border:1px solid var(--line,#444);background:var(--panel2,#1f2a27);color:inherit;font-size:14px;cursor:pointer;flex-wrap:wrap;text-align:left}
+.refopen b{background:var(--ac,#34e0a1);color:#06130e;border-radius:10px;padding:1px 8px;font-size:12px}
+.refopen small{flex-basis:100%;color:var(--mu);font-size:11px}
+.refback{margin-bottom:6px}
+.refq{width:100%;max-width:360px;margin:0 0 12px;padding:8px 10px;border-radius:8px;border:1px solid var(--line,#444);background:transparent;color:inherit}
+.rlang{position:absolute;left:4px;top:4px;font-size:10px;padding:1px 5px;border-radius:6px;background:rgba(0,0,0,.65);color:#fff}

@@ -17,4 +17,7 @@ I18N_ROWS.push(
   ['เอาออกจากโปรเจกต์นี้', 'Remove from this project', 'ເອົາອອກຈາກໂປຣເຈັກນີ້'],
   ['เอาออกจากโปรเจกต์นี้แล้ว (ไฟล์ยังอยู่ใน “ไฟล์เก่า”)', 'Removed from this project (the file is still in “Older files”)', 'ເອົາອອກຈາກໂປຣເຈັກນີ້ແລ້ວ (ໄຟລ໌ຍັງຢູ່ໃນ “ໄຟລ໌ເກົ່າ”)'],
   ['ลบไฟล์นี้ถาวร? (โปรเจกต์อื่นที่ใช้ไฟล์นี้จะหาไฟล์ไม่เจอ)', 'Delete this file for good? (other projects that use it will lose it)', 'ລຶບໄຟລ໌ນີ້ຖາວອນ? (ໂປຣເຈັກອື່ນທີ່ໃຊ້ໄຟລ໌ນີ້ຈະຫາບໍ່ເຫັນ)'],
+  ['ไว้ให้ AI เรียนรู้แนวตัดต่อ — แยกจากโปรเจกต์', 'For the AI to learn editing styles — kept apart from projects', 'ໄວ້ໃຫ້ AI ຮຽນແນວຕັດຕໍ່ — ແຍກຈາກໂປຣເຈັກ'],
+  ['กลับหน้าโปรเจกต์', 'Back to projects', 'ກັບໄປໜ້າໂປຣເຈັກ'],
+  ['ค้นหาคลิปอ้างอิง…', 'Search reference clips…', 'ຄົ້ນຫາຄລິບອ້າງອີງ…'],
 );
