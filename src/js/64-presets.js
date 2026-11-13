@@ -5,6 +5,12 @@
 if (document.fonts) ['800 80px Anton', '400 80px Yellowtail'].forEach(f => { try { document.fonts.load(f); } catch (e) { } });
 
 const PRESETS = [
+  { id: 'cafe', ico: '☕', name: 'คาเฟ่ อุ่นนุ่ม', desc: 'โทนอุ่นนุ่มน่านั่ง สว่างขึ้นนิด ๆ ผ่านฉากแบบมิกซ์สั้นมาก ซูมเข้าช้า ๆ ให้ภาพมีชีวิต ตัวหนังสือเรียบ เหมาะร้านกาแฟ/ขนม/บรรยากาศร้าน', tags: 'อาหาร · มิกซ์สั้น · ซูมช้า',
+    fx: { sepia: .16, saturate: 1.12, contrast: 1.07, brightness: 1.05, hue: -5, vignette: .22 }, trans: ['fade', .12], zoom: ['push', 1.08], text: 'plain', sub: 'subbox' },
+  { id: 'food', ico: '🍜', name: 'อาหารสีสด น่ากิน', desc: 'สีสดคมชัด คอนทราสต์พอดี ให้ข้าว/เนื้อ/ผักดูฉ่ำน่ากิน ตัดเร็วด้วยซูมเข้าเบา ๆ ตัวหนังสือขาวขอบดำอ่านง่าย เหมาะร้านอาหาร/เมนูใหม่', tags: 'อาหาร · สีสดคม · ซูมเข้า',
+    fx: { saturate: 1.38, contrast: 1.12, brightness: 1.04, sharpen: 1, hue: -3 }, trans: ['zoomIn', .16], zoom: ['push', 1.1], text: 'clean', sub: 'sub' },
+  { id: 'street', ico: '🥢', name: 'สตรีทฟู้ด ไว แรง', desc: 'สีจัดจ้าน มุมมืดบาง ตัดไวซูมกระแทกสลับ ตัวหนังสือเหลืองใหญ่ + ดาวระเบิด เหมาะร้านริมทาง/โปรลดราคา/คลิปเร้าใจ', tags: 'อาหาร · ซูมกระแทก · ตัวเหลือง',
+    fx: { saturate: 1.4, contrast: 1.22, brightness: 1.02, vignette: .3, sharpen: 1 }, trans: ['punch', .15], zoom: ['alt', 1.12], text: 'big', sub: 'hl', bursts: ['#ffe14d', '#e0143c'] },
   { id: 'neon', ico: '🔥', name: 'นีออนตัวใหญ่ (ฮิตตอนนี้)', desc: 'ตัวหนังสือแคบใหญ่เรืองแสงเต็มจอ + คำเน้นตัวเขียนนีออน โทนส้มแดงอุ่นมืดขอบ ตัดไวแฟลชขาว ดาวระเบิดเด้งตามข้อความ', tags: 'แฟลชขาว · ซูมสลับ · ดาวระเบิด',
     fx: { contrast: 1.3, saturate: 1.25, sepia: .38, hue: -12, brightness: .92, vignette: .62 }, trans: ['dipwhite', .16], zoom: ['alt', 1.13], text: 'condGlow', sub: 'subGlow', bursts: ['#ff6f91', '#ffe14d', '#ff5a00'] },
   { id: 'hype', ico: '⚡', name: 'ขายด่วน ไว แรง', desc: 'สีสด คอนทราสต์แรง ตัดไว ซูมกระแทกทุกช็อต ตัวหนังสือเหลืองใหญ่ขอบดำ เหมาะโปรโมชัน/ลดราคา', tags: 'ซูมกระแทก · ตัวเหลืองใหญ่ · ดาว',
@@ -31,7 +37,13 @@ function setTransIn(it, type, dur) {   // same rules as applyTransition(), but w
   if (!type || type === 'none') { it.transIn = null; return; }
   dur = Math.min(dur || .4, it.dur * .9);
   const p2 = D.items.find(o => o.track === it.track && o.id !== it.id && Math.abs(o.start + o.dur - it.start) < .06);
-  it.transIn = { type, dur }; if (p2) { p2.dur += dur; it.transIn.ext = dur; it.transIn.prevId = p2.id; }
+  it.transIn = { type, dur };
+  if (p2) {   // the previous clip is stretched under the incoming one — only as far as its source still has footage
+    const pm = p2.type === 'video' ? MEDIA.get(p2.mediaId) : null, sp = p2.speed || 1;
+    const room = pm && pm.duration ? ((pm.duration - .04) - (p2.in || 0)) / sp - p2.dur : dur;
+    const ext = Math.min(dur, room);
+    if (ext > .04) { p2.dur += ext; it.transIn.ext = ext; it.transIn.prevId = p2.id; }
+  }
 }
 function restyleText(it, styleId, over) {
   const st = TEXT_STYLES.find(s => s.id === styleId); if (!st) return; const d = cloneJ(st.d); delete d.text; delete d.ay;
@@ -92,7 +104,8 @@ async function presetShow() {
   const box = $('#pane-preset'); if (!box) return;
   if (!box.dataset.built) {
     box.dataset.built = 1;
-    box.innerHTML = `<div class="hint">เลือกพรีเซ็ต แล้วดูตัวอย่างบนภาพจากคลิปของคุณเอง · เอาเมาส์ชี้เพื่อดูแบบเคลื่อนไหว · กดเพื่อดูใหญ่และใช้</div><div class="tiles" id="tilesPreset"></div>`;
+    box.innerHTML = `<div class="aicard"><h4>🍜 โยนฟุตอาหาร → ปุ่มเดียว</h4><div class="mini">เลือกช่วงที่สวยที่สุดของแต่ละคลิป ตัดสั้น เรียงลำดับ ใส่สี/ทรานสิชัน/ซูม ตัดตามจังหวะเพลง</div><button class="wide primary" id="fdP">เริ่ม</button></div><div class="aicard"><h4>🎵 ตัดตามบีตเพลง</h4><div class="mini">จัดจุดตัดคลิปที่มีอยู่ในไทม์ไลน์ให้ตรงจังหวะเพลงที่ใส่ไว้</div><button class="wide" id="bsP">จัดจังหวะ</button></div><div class="hint">เลือกพรีเซ็ต แล้วดูตัวอย่างบนภาพจากคลิปของคุณเอง · เอาเมาส์ชี้เพื่อดูแบบเคลื่อนไหว · กดเพื่อดูใหญ่และใช้</div><div class="tiles" id="tilesPreset"></div>`;
+    $('#fdP', box).onclick = foodUI; $('#bsP', box).onclick = beatSnapTimeline;
     const tl = $('#tilesPreset');
     PRESETS.forEach(p => {
       const t = document.createElement('div'); t.className = 'tile'; t.dataset.key = p.id; t.dataset.kind = 'preset';

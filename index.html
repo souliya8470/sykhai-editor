@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.27</title>
+<title>Sykhai Editor v1.28</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -1419,14 +1419,65 @@ I18N_ROWS.push(
   ['หลัง', 'After', 'ຫຼັງ']
 );
 
+// ---- 00-6-i18n-f.js ----
+'use strict';
+// i18n rows F — v1.28: food one-tap (best moment, beat-synced cuts, AI order + hook), beat snap, 3 food looks   [thai, english, lao]
+I18N_ROWS.push(
+  ['โยนฟุตอาหาร → ปุ่มเดียว', 'Drop in food clips → one button', 'ໂຍນຄລິບອາຫານ → ປຸ່ມດຽວ'],
+  ['เลือกช่วงที่สวยที่สุดของแต่ละคลิป ตัดสั้น เรียงลำดับ ใส่สี/ทรานสิชัน/ซูม ตัดตามจังหวะเพลง', 'Picks the best moment of each clip, trims it short, orders the shots, adds colour / transitions / zoom and cuts on the music beat', 'ເລືອກຊ່ວງທີ່ງາມທີ່ສຸດຂອງແຕ່ລະຄລິບ ຕັດໃຫ້ສັ້ນ ຈັດລຳດັບ ໃສ່ສີ/ທຣານຊິຊັນ/ຊູມ ຕັດຕາມຈັງຫວະເພງ'],
+  ['ตัดตามบีตเพลง', 'Cut on the music beat', 'ຕັດຕາມຈັງຫວະເພງ'],
+  ['ตัดตามบีต', 'Cut on the beat', 'ຕັດຕາມບີດ'],
+  ['จัดจุดตัดคลิปที่มีอยู่ในไทม์ไลน์ให้ตรงจังหวะเพลงที่ใส่ไว้', 'Line up the cuts of the clips already on the timeline with the beat of the music you added', 'ຈັດຈຸດຕັດຄລິບທີ່ມີຢູ່ໃນໄທມ໌ໄລນ໌ໃຫ້ຕົງຈັງຫວະເພງທີ່ໃສ່ໄວ້'],
+  ['จัดจังหวะ', 'Snap to beat', 'ຈັດຈັງຫວະ'],
+  ['โยนฟุตอาหาร → ตัดให้อัตโนมัติ', 'Drop in food clips → auto edit', 'ໂຍນຄລິບອາຫານ → ຕັດໃຫ້ອັດຕະໂນມັດ'],
+  ['เลือกคลิป → กดปุ่มเดียว → โปรแกรมเลือกช่วงที่สวยที่สุดของแต่ละคลิป ตัดให้สั้น จัดลำดับ ใส่สี/ทรานสิชัน/ซูม และตัดตามจังหวะเพลง แล้วแก้ต่อได้', 'Pick clips → press one button → the program picks the best moment of each clip, trims it, orders the shots, adds colour / transitions / zoom and cuts to the beat — then you can keep editing', 'ເລືອກຄລິບ → ກົດປຸ່ມດຽວ → ໂປຣແກຣມເລືອກຊ່ວງທີ່ງາມທີ່ສຸດຂອງແຕ່ລະຄລິບ ຕັດໃຫ້ສັ້ນ ຈັດລຳດັບ ໃສ່ສີ/ທຣານຊິຊັນ/ຊູມ ແລະ ຕັດຕາມຈັງຫວະເພງ ແລ້ວແກ້ຕໍ່ໄດ້'],
+  ['สไตล์ (พรีเซ็ต)', 'Style (preset)', 'ສະໄຕລ໌ (ພຣີເຊັດ)'],
+  ['ไม่ใส่เพลง', 'No music', 'ບໍ່ໃສ່ເພງ'],
+  ['อยากได้เพลง: นำเข้าไฟล์เพลงที่แท็บ “สื่อ” ก่อน แล้วเปิดหน้านี้อีกครั้ง', 'Want music? Import a music file in the “Media” tab first, then open this window again', 'ຢາກໄດ້ເພງ: ນຳເຂົ້າໄຟລ໌ເພງທີ່ແທັບ “ສື່” ກ່ອນ ແລ້ວເປີດໜ້ານີ້ອີກຄັ້ງ'],
+  ['ตัดตามจังหวะเพลง (บีต)', 'Cut on the music beat', 'ຕັດຕາມຈັງຫວະເພງ (ບີດ)'],
+  ['ให้ AI จัดลำดับช็อต + คิดข้อความฮุก', 'Let AI order the shots + write a hook line', 'ໃຫ້ AI ຈັດລຳດັບຊັອດ + ຄິດຂໍ້ຄວາມເປີດຄລິບ'],
+  ['(ต้องใส่ Claude API key ก่อน)', '(Claude API key needed first)', '(ຕ້ອງໃສ່ Claude API key ກ່ອນ)'],
+  ['ชื่อร้าน / เมนูเด่น (ไม่ใส่ก็ได้ ใช้ช่วย AI คิดข้อความ)', 'Shop name / signature dish (optional — helps the AI write the text)', 'ຊື່ຮ້ານ / ເມນູເດັ່ນ (ບໍ່ໃສ່ກໍໄດ້ ໃຊ້ຊ່ວຍ AI ຄິດຂໍ້ຄວາມ)'],
+  ['เช่น ร้านกาแฟ ลาเต้ศิลป์', 'e.g. coffee shop, latte art', 'ເຊັ່ນ ຮ້ານກາເຟ ລາເຕ້ອາດ'],
+  ['สร้างคลิปให้เลย', 'Make the clip now', 'ສ້າງຄລິບໃຫ້ເລີຍ'],
+  ['กำลังฟังจังหวะเพลง…', 'Listening to the beat of the music…', 'ກຳລັງຟັງຈັງຫວະເພງ…'],
+  ['กำลังหาช่วงที่สวยที่สุดของคลิป', 'Finding the best moment of clip', 'ກຳລັງຊອກຊ່ວງທີ່ງາມທີ່ສຸດຂອງຄລິບ'],
+  ['AI กำลังจัดลำดับช็อตและคิดข้อความฮุก…', 'The AI is ordering the shots and writing the hook…', 'AI ກຳລັງຈັດລຳດັບຊັອດ ແລະ ຄິດຂໍ້ຄວາມເປີດຄລິບ…'],
+  ['กำลังตัดต่อ…', 'Editing…', 'ກຳລັງຕັດຕໍ່…'],
+  ['ยังไม่ได้เลือกคลิป', 'No clip selected', 'ຍັງບໍ່ໄດ້ເລືອກຄລິບ'],
+  ['นำเข้าคลิปอาหารก่อน', 'Import the food clips first', 'ນຳເຂົ້າຄລິບອາຫານກ່ອນ'],
+  ['สร้างคลิปอาหารแล้ว', 'Food clip created', 'ສ້າງຄລິບອາຫານແລ້ວ'],
+  ['คลิปอาหาร', 'Food clip', 'ຄລິບອາຫານ'],
+  ['ช็อต', 'shots', 'ຊັອດ'],
+  ['จับจังหวะเพลงไม่ได้', 'could not detect the beat', 'ຈັບຈັງຫວະເພງບໍ່ໄດ້'],
+  ['กด ↶ ย้อนกลับได้', 'press ↶ to undo', 'ກົດ ↶ ຍ້ອນກັບໄດ້'],
+  ['AI ไม่ตอบ ใช้ลำดับเดิม', 'the AI gave no answer, original order kept', 'AI ບໍ່ຕອບ ໃຊ້ລຳດັບເດີມ'],
+  ['ขยับจุดตัด', 'Cuts moved:', 'ຂະຫຍັບຈຸດຕັດ:'],
+  ['จุดตัดตรงบีตอยู่แล้ว', 'Cuts were already on the beat', 'ຈຸດຕັດຕົງບີດຢູ່ແລ້ວ'],
+  ['ใส่เพลงลงแทร็กเพลงก่อน', 'Put music on the music track first', 'ໃສ່ເພງລົງແທຣັກເພງກ່ອນ'],
+  ['ต้องมีอย่างน้อย 2 คลิปบนวิดีโอ 1', 'Need at least 2 clips on Video 1', 'ຕ້ອງມີຢ່າງໜ້ອຍ 2 ຄລິບເທິງວິດີໂອ 1'],
+  ['จับจังหวะเพลงนี้ไม่ได้ชัด ลองเพลงที่มีจังหวะกลองชัดกว่า', 'Could not find a clear beat in this song — try one with a clearer drum beat', 'ຈັບຈັງຫວະເພງນີ້ບໍ່ໄດ້ຊັດ ລອງເພງທີ່ມີຈັງຫວະກອງຊັດກວ່າ'],
+  // --- presets
+  ['คาเฟ่ อุ่นนุ่ม', 'Café: warm & soft', 'ຄາເຟ່ ອຸ່ນນຸ່ມ'],
+  ['โทนอุ่นนุ่มน่านั่ง สว่างขึ้นนิด ๆ ผ่านฉากแบบมิกซ์สั้นมาก ซูมเข้าช้า ๆ ให้ภาพมีชีวิต ตัวหนังสือเรียบ เหมาะร้านกาแฟ/ขนม/บรรยากาศร้าน', 'Warm, cosy tone, slightly brighter, very short mix transitions, a slow push-in so the picture feels alive, plain text — good for coffee shops, desserts and shop atmosphere', 'ໂທນອຸ່ນນຸ່ມໜ້ານັ່ງ ສະຫວ່າງຂຶ້ນນ້ອຍໜຶ່ງ ປ່ຽນສາກແບບມິກສັ້ນໆ ຊູມເຂົ້າຊ້າໆ ໃຫ້ພາບມີຊີວິດ ໂຕໜັງສືຮຽບງ່າຍ ເໝາະກັບຮ້ານກາເຟ/ເຂົ້າໜົມ/ບັນຍາກາດຮ້ານ'],
+  ['อาหาร · มิกซ์สั้น · ซูมช้า', 'Food · short mix · slow zoom', 'ອາຫານ · ມິກສັ້ນ · ຊູມຊ້າ'],
+  ['อาหารสีสด น่ากิน', 'Vivid food, tasty look', 'ອາຫານສີສົດ ໜ້າກິນ'],
+  ['สีสดคมชัด คอนทราสต์พอดี ให้ข้าว/เนื้อ/ผักดูฉ่ำน่ากิน ตัดเร็วด้วยซูมเข้าเบา ๆ ตัวหนังสือขาวขอบดำอ่านง่าย เหมาะร้านอาหาร/เมนูใหม่', 'Vivid sharp colours with balanced contrast so rice, meat and vegetables look juicy; quick cuts with a gentle zoom-in, easy-to-read white text with black outline — good for restaurants and new dishes', 'ສີສົດຄົມຊັດ ຄອນທຣາສຕ໌ພໍດີ ໃຫ້ເຂົ້າ/ຊີ້ນ/ຜັກເບິ່ງສົດໜ້າກິນ ຕັດໄວດ້ວຍຊູມເຂົ້າເບົາໆ ໂຕໜັງສືຂາວຂອບດຳອ່ານງ່າຍ ເໝາະກັບຮ້ານອາຫານ/ເມນູໃໝ່'],
+  ['อาหาร · สีสดคม · ซูมเข้า', 'Food · vivid & sharp · zoom in', 'ອາຫານ · ສີສົດຄົມ · ຊູມເຂົ້າ'],
+  ['สตรีทฟู้ด ไว แรง', 'Street food: fast & punchy', 'ສະຕຣີດຟູດ ໄວ ແຮງ'],
+  ['สีจัดจ้าน มุมมืดบาง ตัดไวซูมกระแทกสลับ ตัวหนังสือเหลืองใหญ่ + ดาวระเบิด เหมาะร้านริมทาง/โปรลดราคา/คลิปเร้าใจ', 'Bold colours, light dark corners, fast cuts with alternating punch zooms, big yellow text + starbursts — good for roadside stalls, discount deals and exciting clips', 'ສີຈັດຈ້ານ ມຸມມືດບາງ ຕັດໄວຊູມກະແທກສະຫຼັບ ໂຕໜັງສືເຫຼືອງໃຫຍ່ + ດາວລະເບີດ ເໝາະກັບຮ້ານຂ້າງທາງ/ໂປຣຫຼຸດລາຄາ/ຄລິບທີ່ຕື່ນເຕັ້ນ'],
+  ['อาหาร · ซูมกระแทก · ตัวเหลือง', 'Food · punch zoom · yellow text', 'ອາຫານ · ຊູມກະແທກ · ໂຕເຫຼືອງ'],
+);
+
 // ---- 00-core.js ----
 'use strict';
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.27
-// APP_VERSION_PREV : 1.26
-// APP_VERSION_PREV_OLDER : 1.25
+// APP_VERSION  : 1.28
+// APP_VERSION_PREV : 1.27
+// APP_VERSION_PREV_OLDER : 1.26
+// 1.28 : food one-tap — 🍜 drop food clips and press one button: local best-moment picker (sharpness/exposure/colour/motion per clip), optional AI shot order + hook text, beat detection of the imported music (local, free) with cuts landing on the beat, picked look applied (grade, short mix transition, slow push zoom); 🎵 beat-snap for an existing timeline; 3 food looks (cafe warm, vivid food, street food); transitions no longer extend a clip past the end of its source
 // 1.27 : style presets tab (9 trend looks: neon big text, flash sale, talking review, soft & clean, cinematic, vintage, before/after, glitch Y2K, dark luxe) — animated preview on the project's own footage, one click applies grade + transitions + zoom + text/subtitle style + sticker bursts (undoable); new glowing condensed/neon-script text styles, glow on text, starburst/rays/grid stickers
 // 1.26 : Kitti-style AI editing (AI tab) — ⭐ "let AI cut it all" wizard (many clips -> 3 story angles -> storyboard approved scene by scene, revise by typing -> 9:16 timeline with subtitles, extra angles saved as projects); ✨ auto cut (silence + filler words เอ่อ/อืม + AI retakes in one reviewed list); 💬 auto subtitles from the transcript (optional Lao/Thai translation, editable list, 2 new subtitle text styles)
 // 1.25 : play pre-roll — the clock starts only after every layer at the playhead has its frame decoded (max 0.9 s); fixes the first seconds of playback running at 5-12 fps on iPhone while the playhead already moved
@@ -1455,7 +1506,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.27';
+const APP_VERSION = '1.28';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -4393,6 +4444,8 @@ function renderAiPane() {
   <div class="fld col"><label>คลิปที่ใช้</label><select id="aiClip">${vids.map(m => `<option translate="no" value="${m.id}" ${m.id === keep ? 'selected' : ''}>${esc(m.name)}${getTr(m.id) ? ' ✔' : ''}</option>`).join('') || '<option value="">(ยังไม่มีคลิป)</option>'}</select></div>
   <div class="fld"><label>ภาษาในคลิป</label><select id="aiLang"><option value="lo">ลาว (Gemini)</option><option value="th">ไทย</option></select></div>
   <div class="fld"><label>ตัวถอดเสียงไทย</label><select id="aiEng"><option value="whisper">Whisper ในเครื่อง (ฟรี แม่น)</option><option value="gemini">Gemini</option></select></div>
+  <div class="aicard"><h4>🍜 โยนฟุตอาหาร → ปุ่มเดียว</h4><div class="mini">เลือกช่วงที่สวยที่สุดของแต่ละคลิป ตัดสั้น เรียงลำดับ ใส่สี/ทรานสิชัน/ซูม ตัดตามจังหวะเพลง</div><button class="wide primary" id="fdA">เริ่ม</button></div>
+  <div class="aicard"><h4>🎵 ตัดตามบีตเพลง</h4><div class="mini">จัดจุดตัดคลิปที่มีอยู่ในไทม์ไลน์ให้ตรงจังหวะเพลงที่ใส่ไว้</div><button class="wide" id="bsA">จัดจังหวะ</button></div>
   <div class="aicard"><h4>⭐ ให้ AI ตัดให้ทั้งคลิป</h4><div class="mini">โยนคลิปดิบหลายอัน → AI เสนอแนวเรื่อง → ตรวจ storyboard ทีละฉาก → ได้คลิป 9:16 พร้อมซับ</div><button class="wide primary" id="aiK">เริ่ม</button></div>
   <div class="aicard"><h4>✨ ตัดอัตโนมัติ</h4><div class="mini">ตัดช่วงเงียบ คำอ้ำอึ้ง (เอ่อ อืม) และเทคพูดซ้ำ ในครั้งเดียว</div><button class="wide" id="aiA">ตัดอัตโนมัติ</button></div>
   <div class="aicard"><h4>💬 ซับอัตโนมัติ</h4><div class="mini">สร้างซับจากเสียงพูด (แปลเป็นลาว/ไทยได้) แล้วแก้ก่อนใส่</div><button class="wide" id="aiB">สร้างซับ</button></div>
@@ -4404,7 +4457,7 @@ function renderAiPane() {
   <div class="aicard"><h4>⑥ ให้ AI ตัดต่อ 4 แบบ</h4><div class="mini">ใช้ทุกคลิปในรายการสื่อ แล้วให้พนักงานเลือกแบบที่ชอบ</div><button class="wide primary" id="ai6">สร้าง 4 แบบ</button></div>
   <div class="hint small">ใช้ AI เดือนนี้ $${s.usd.toFixed(2)} จากเพดาน $${loadCap()}</div>`;
   const lg = localStorage.getItem('sk_lang'); if (lg) $('#aiLang').value = lg; $('#aiLang').onchange = e => localStorage.setItem('sk_lang', e.target.value);
-  $('#ai1').onclick = aiTranscribeUI; $('#ai2').onclick = aiPriceUI; $('#ai3').onclick = aiKeyPointsUI; $('#ai4a').onclick = aiSilenceUI; $('#ai4b').onclick = aiRetakeUI; $('#ai5').onclick = () => aiEnhanceUI(null); $('#ai6').onclick = aiVariantsUI; $('#aiK').onclick = aiKittiUI; $('#aiA').onclick = aiCleanUI; $('#aiB').onclick = aiSubsUI;
+  $('#ai1').onclick = aiTranscribeUI; $('#ai2').onclick = aiPriceUI; $('#ai3').onclick = aiKeyPointsUI; $('#ai4a').onclick = aiSilenceUI; $('#ai4b').onclick = aiRetakeUI; $('#ai5').onclick = () => aiEnhanceUI(null); $('#ai6').onclick = aiVariantsUI; $('#aiK').onclick = aiKittiUI; $('#fdA').onclick = foodUI; $('#bsA').onclick = beatSnapTimeline; $('#aiA').onclick = aiCleanUI; $('#aiB').onclick = aiSubsUI;
 }
 AI.inspectorAction = (act, it) => {
   if (act === 'enhance') aiEnhanceUI(it);
@@ -4725,6 +4778,214 @@ async function kitBuild() {
   } catch (e) { aiErr(e); }
 }
 
+// ---- 63-food.js ----
+// ============================================================
+//  Food one-tap (v1.28): shoot food -> drop the clips in -> press one button
+//   A) local best-moment picker (sharpness / exposure / colour / motion, no API)
+//   B) beat detection of the music (local, free) + cuts that land on the beat
+//   C) optional AI: shot order (outside -> detail -> process -> hero) and a hook line
+//   D) the chosen look (preset) applied: grade, short mix transition, slow push zoom
+// ============================================================
+
+// ---------- B) beat detection (from the 16 kHz mono PCM that analyzeAudio() keeps) ----------
+function onsetCurve(p, N, lowpass) {
+  const e = new Float32Array(N); let y = 0; const a = 1 - Math.exp(-2 * Math.PI * 160 / 16000);
+  for (let i = 0; i < N; i++) {
+    let s = 0; for (let j = i * 160; j < i * 160 + 160; j++) { const x = p[j]; if (lowpass) { y += a * (x - y); s += y * y; } else s += x * x; }
+    e[i] = Math.sqrt(s / 160);
+  }
+  const on = new Float32Array(N);
+  for (let i = 0; i < N; i++) { let s = 0, c = 0; for (let j = Math.max(0, i - 8); j < i; j++) { s += e[j]; c++; } on[i] = Math.max(0, e[i] - (c ? s / c : 0)); }
+  const srt = Array.from(on).sort((x, y) => x - y), ref = srt[Math.floor(srt.length * .95)] || 1e-6;
+  for (let i = 0; i < N; i++) on[i] /= ref; return on;
+}
+function detectBeats(m) {
+  if (m.beats !== undefined) return m.beats;
+  const p = m.pcm16; if (!p || p.length < 16000 * 6) return (m.beats = null);
+  const N = Math.min(Math.floor(p.length / 160), 15000), full = onsetCurve(p, N, false), low = onsetCurve(p, N, true), on = new Float32Array(N);
+  for (let i = 0; i < N; i++) on[i] = full[i] + 1.2 * low[i];
+  let mean = 0; for (let i = 0; i < N; i++) mean += on[i]; mean /= N;
+  const ac = new Float32Array(240);
+  for (let L = 25; L <= 120; L++) { let s = 0; for (let i = 0; i + L < N; i++) s += on[i] * on[i + L]; ac[L] = s / (N - L); }
+  let bestL = 0, bestS = -1;
+  for (let L = 30; L <= 100; L++) {
+    const bpm = 6000 / L, prior = Math.exp(-.5 * Math.pow(Math.log2(bpm / 112) / .7, 2));
+    const sc = (ac[L] + .5 * (ac[L * 2] || 0) + .25 * ac[Math.round(L / 2)]) * prior; if (sc > bestS) { bestS = sc; bestL = L; }
+  }
+  if (!bestL) return (m.beats = null);
+  const a0 = ac[bestL - 1], a2 = ac[bestL + 1], c0 = ac[bestL], dn = a0 - 2 * c0 + a2; let P = bestL + (dn < 0 ? .5 * (a0 - a2) / dn : 0); if (!isFinite(P) || Math.abs(P - bestL) > 1) P = bestL;
+  const at = x => { const i = Math.round(x); return i >= 0 && i < N ? Math.max(on[i], on[i - 1] || 0, on[i + 1] || 0) : 0; };
+  let off = 0, offS = -1; for (let o = 0; o < Math.ceil(P); o++) { let s = 0; for (let x = o; x < N; x += P) s += at(x); if (s > offS) { offS = s; off = o; } }
+  const beats = []; let cur = off; while (cur - P >= 0) cur -= P;
+  const seek = Math.max(2, Math.round(P * .15));
+  for (; cur < N; cur += P) {
+    let pos = cur, bv = at(cur); for (let d = -seek; d <= seek; d++) { const v = at(cur + d); if (v > bv * 1.15) { bv = v; pos = cur + d; } }
+    if (bv > .6) cur += (pos - cur) * .6;   // follow slow tempo drift
+    beats.push(+((cur + .5) / 100).toFixed(3));
+  }
+  let bs = 0; beats.forEach(b => { bs += at(b * 100 - .5); }); const conf = (bs / Math.max(1, beats.length)) / Math.max(mean, 1e-6);
+  return (m.beats = { bpm: Math.round(6000 / P), period: P / 100, beats, conf: +conf.toFixed(2) });
+}
+async function ensureBeats(m) { if (!m.pcm16) { try { await analyzeAudio(m); } catch (e) { } } return detectBeats(m); }
+// beat times on the TIMELINE for a music item (handles in-point and looping)
+function musicBeatsOnTimeline(a, tEnd) {
+  const m = MEDIA.get(a.mediaId), b = m && detectBeats(m); if (!b) return null; const md = m.duration, out = [], inT = a.in || 0, loop = a.loop && md < a.dur + inT;
+  for (let rep = 0; rep < 80; rep++) {
+    for (const bt of b.beats) { const tl = a.start + bt + rep * md - inT; if (tl < a.start - 1e-6) continue; if (tl > tEnd || tl > a.start + a.dur) return out; out.push(tl); }
+    if (!loop) break;
+  }
+  return out;
+}
+
+// ---------- A) best moment of a clip ----------
+async function bestWindow(m, want) {
+  const dur = m.duration, W = Math.min(want, dur);
+  const grabMid = async (a, w) => { try { return (await grabFrame(m, a + w / 2, 256)).toDataURL('image/jpeg', .6).split(',')[1]; } catch (e) { return ''; } };
+  if (m.type === 'image') return { a: 0, b: Math.min(want, 3), score: .5, img: true, b64: '' };
+  if (dur <= W + .5) { const a = dur > 1.6 ? .15 : 0, b = dur > 1.6 ? dur - .1 : dur; return { a, b, score: .5, b64: await grabMid(a, b - a) }; }
+  const n = clamp(Math.round(dur / .6), 6, 18), step = (dur - .5) / (n - 1), fr = [];
+  let prevL = null;
+  for (let i = 0; i < n; i++) {
+    const t = .25 + i * step; let c; try { c = await grabFrame(m, t, 96); } catch (e) { continue; }
+    const a = analyzePixels(c), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data, L = new Float32Array(c.width * c.height); for (let k = 0; k < L.length; k++) L[k] = (.299 * d[k * 4] + .587 * d[k * 4 + 1] + .114 * d[k * 4 + 2]) / 255;
+    let mo = 0; if (prevL && prevL.length === L.length) { for (let k = 0; k < L.length; k += 3) mo += Math.abs(L[k] - prevL[k]); mo /= L.length / 3; } prevL = L;
+    fr.push({ t, a, mo });
+  }
+  if (fr.length < 3) { const a = Math.max(0, dur / 2 - W / 2); return { a, b: a + W, score: .4, b64: await grabMid(a, W) }; }
+  const maxSharp = Math.max(...fr.map(f => f.a.sharp), 1);
+  fr.forEach(f => { const expo = 1 - Math.min(1, Math.abs(f.a.mean - .45) / .35), sat = Math.min(1, f.a.sat / .5), act = f.mo > .3 ? 0 : Math.min(1, f.mo / .06); f.s = .45 * (f.a.sharp / maxSharp) + .25 * expo + .15 * sat + .15 * act; });
+  let best = -1, bi = 0;
+  for (let i = 0; i < fr.length; i++) { let s = 0, c = 0; for (const f of fr) if (f.t >= fr[i].t - .3 && f.t <= fr[i].t + W - .3) { s += f.s; c++; } if (c) { s /= c; if (s > best) { best = s; bi = i; } } }
+  let a = clamp(fr[bi].t - .3, 0, Math.max(0, dur - W)); const b = Math.min(dur - .05, a + W);
+  return { a, b, score: best, b64: await grabMid(a, b - a) };
+}
+
+// ---------- C) AI: shot order + hook (optional) ----------
+async function foodAiPlan(shots, brief) {
+  const content = [{ type: 'text', text: `You edit a short vertical (9:16) video for a Lao food/cafe/restaurant business from the shots below (one best moment per clip, one frame each). ${brief ? 'Owner note: ' + brief + '\n' : ''}Order the shots like a good café/food reel: establishing shot (outside / signboard / place) -> menu & detail close-ups -> making process (pouring, cooking, hands) -> the hero shot (best-looking dish or drink) last or second to last; a person talking to camera goes first or last. If two shots are near duplicates or clearly poor (blurry, dark, accidental), put their ids in "skip" (at most ${Math.floor(shots.length / 4)} ids). Also write ONE short hook line for the first seconds: Lao script (not Thai), 2-5 words, wrap the key word in *asterisks*. Return ONLY JSON: {"order":["s1","s2"],"skip":[],"hook":""}` }];
+  shots.forEach((s, i) => { content.push({ type: 'text', text: `--- s${i + 1} "${s.m.name}" ${s.isImg ? 'photo' : (s.m.duration).toFixed(1) + 's clip'}` }); if (s.b64) content.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: s.b64 } }); });
+  const txt = await claude({ system: 'You are an expert short-form food video editor. Reply with JSON only.', content, max_tokens: 800, label: 'จัดลำดับอาหาร', estUsd: .04, useStyle: true });
+  const j = parseJsonLoose(txt); const ids = shots.map((_, i) => 's' + (i + 1));
+  const order = (j.order || []).filter(x => ids.includes(x)).filter((x, i, a) => a.indexOf(x) === i); ids.forEach(x => { if (!order.includes(x)) order.push(x); });
+  const skip = (j.skip || []).filter(x => ids.includes(x)).slice(0, Math.floor(shots.length / 4));
+  return { order: order.map(x => +x.slice(1) - 1), skip: skip.map(x => +x.slice(1) - 1), hook: String(j.hook || '').trim().slice(0, 60) };
+}
+
+// ---------- D) build ----------
+const FOOD = { want: 30, preset: 'cafe', brief: '' };
+function foodPlanTimes(shots, target, beats) {
+  const n = shots.length; let want = clamp(target / Math.max(1, n), 1.6, 5);
+  const period = beats ? beats.period : 0;
+  if (beats && period > 0) { const k = Math.max(1, Math.round(want / period)); want = k * period; }
+  return { want, period };
+}
+function foodBuild(shots, o) {
+  // shots in play order: {m, a, b (best window), score, isImg}
+  const bt = o.beats || null;
+  let t = 0; const segs = [];
+  shots.forEach((s, i) => {
+    const maxLen = s.isImg ? 6 : Math.max(.5, s.m.duration - .12); let len = Math.min(s.want, maxLen);
+    if (bt && bt.length) {
+      const target = t + len; let bb = null, bd = 1e9; for (const x of bt) { const l = x - t; if (l < 1 || l > maxLen) continue; const d = Math.abs(x - target); if (d < bd) { bd = d; bb = x; } } if (bb != null) len = bb - t;
+    }
+    const mid = (s.a + s.b) / 2; let a = s.isImg ? 0 : clamp(mid - len / 2, .05, Math.max(.05, s.m.duration - len - .08));
+    if (!s.isImg && a + len > s.m.duration - .04) len = Math.max(.5, s.m.duration - .04 - a);
+    segs.push({ m: s.m, a, b: a + len, transition: 'none' }); t += len;
+  });
+  const v = { name: T('คลิปอาหาร'), segs, overlays: o.hook ? [{ seg: 0, line1: o.hook, line2: '' }] : [] };
+  const doc = buildVariantDoc(v, { style: 'hl', footer: '', music: false }); doc.name = T('คลิปอาหาร');
+  withDoc(doc, () => {
+    const vids = D.items.filter(i => i.track === 'V1');
+    const keep = o.music ? .35 : 1; vids.forEach(i => { i.vol = keep; });
+    if (o.music) { const a = mkAudio('A1', o.music, 0, t); a.vol = .8; a.duck = false; D.items.push(a); }
+    const p = PRESETS.find(x => x.id === o.preset) || PRESETS[0]; applyPresetTo(p, { grade: 1, trans: 1, zoom: 1, text: 1, subs: 0, stick: 1 }); D.preset = p.id; D.presetSub = p.sub;
+  });
+  return { doc, total: t, n: segs.length };
+}
+
+async function foodRun(o) {
+  if (AI.busy) return; AI.busy = true;
+  try {
+    const ms = o.ids.map(id => MEDIA.get(id)).filter(Boolean); if (!ms.length) throw new Error('ยังไม่ได้เลือกคลิป');
+    let mus = o.music ? MEDIA.get(o.music) : null, bi = null;
+    if (mus && o.beat) { aiProg('กำลังฟังจังหวะเพลง…', 4); bi = await ensureBeats(mus); }
+    const beatOk = bi && bi.beats.length > 8 && bi.conf >= 1.2;
+    const planN = ms.length, tmp = foodPlanTimes(Array(planN), o.len, beatOk ? bi : null);
+    const shots = [];
+    for (let i = 0; i < ms.length; i++) {
+      aiProg(`กำลังหาช่วงที่สวยที่สุดของคลิป ${i + 1}/${ms.length}`, 8 + 60 * i / ms.length);
+      const w = await bestWindow(ms[i], tmp.want); shots.push(Object.assign({ m: ms[i], isImg: ms[i].type === 'image', want: tmp.want }, w));
+    }
+    let order = shots.map((_, i) => i), hook = '', aiNote = '';
+    if (o.ai && loadKeys().claude) {
+      try { aiProg('AI กำลังจัดลำดับช็อตและคิดข้อความฮุก…', 74); const pl = await foodAiPlan(shots, o.brief); order = pl.order.filter(i => !pl.skip.includes(i)); hook = pl.hook; aiNote = 'ai'; }
+      catch (e) { if (/งบ/.test(e.message)) throw e; console.warn(e); aiNote = 'fail'; }
+    }
+    let seq = order.map(i => shots[i]);
+    // too many shots for the target length: drop the weakest (never the first / last)
+    const minPer = Math.max(1.6, tmp.want * .75); let guard = 0;
+    while (seq.length > 3 && seq.length * minPer > o.len * 1.15 && guard++ < 30) { let wi = -1, ws = 9; seq.forEach((s, i) => { if (i && i < seq.length - 1 && s.score < ws) { ws = s.score; wi = i; } }); if (wi < 0) break; seq.splice(wi, 1); }
+    aiProg('กำลังตัดต่อ…', 92);
+    let beatsTl = null; if (beatOk) { const probe = { type: 'audio', mediaId: mus.id, start: 0, in: 0, dur: o.len * 3, loop: true }; beatsTl = musicBeatsOnTimeline(probe, o.len * 3); }
+    const r = foodBuild(seq, { beats: beatsTl, hook, music: mus ? mus.id : null, preset: o.preset });
+    await projSaveNow(); D = r.doc; SEL = null; commit('food'); emit('sel'); seek(0); AI.busy = false; $('#dlgAi').close();
+    const pn = (PRESETS.find(x => x.id === o.preset) || {}).name || '';
+    toast(`${T('สร้างคลิปอาหารแล้ว')} · ${r.n} ${T('ช็อต')} · ${r.total.toFixed(0)} ${T('วินาที')}${beatOk ? ' · ' + T('ตัดตามบีต') + ' ' + bi.bpm + ' BPM' : (o.beat && mus ? ' · ' + T('จับจังหวะเพลงไม่ได้') : '')} — ${T('กด ↶ ย้อนกลับได้')}${aiNote === 'fail' ? ' · ' + T('AI ไม่ตอบ ใช้ลำดับเดิม') : ''}`, 7000);
+  } catch (e) { aiErr(e); }
+}
+
+function foodUI() {
+  const ms = [...MEDIA.values()].filter(m => (m.type === 'video' || m.type === 'image') && !m.builtin && !m.hidden);
+  if (!ms.length) return toast('นำเข้าคลิปอาหารก่อน');
+  const mus = [...MEDIA.values()].filter(m => m.type === 'audio' && !m.builtin && !m.hidden), hasKey = !!loadKeys().claude;
+  const foodIds = ['cafe', 'food', 'street'], others = PRESETS.filter(p => !foodIds.includes(p.id));
+  const opt = p => `<option value="${p.id}" ${p.id === (D.preset || FOOD.preset) ? 'selected' : ''}>${p.ico} ${esc(p.name)}</option>`;
+  aiDlg('🍜 โยนฟุตอาหาร → ตัดให้อัตโนมัติ', `<div class="hint">เลือกคลิป → กดปุ่มเดียว → โปรแกรมเลือกช่วงที่สวยที่สุดของแต่ละคลิป ตัดให้สั้น จัดลำดับ ใส่สี/ทรานสิชัน/ซูม และตัดตามจังหวะเพลง แล้วแก้ต่อได้</div>
+    <div class="kclips">${ms.map(m => `<label class="kcl"><input type="checkbox" data-m="${m.id}" checked> <span translate="no">${esc(m.name)}</span> <span class="mini">${m.type === 'image' ? '🖼' : fmt(m.duration)}</span></label>`).join('')}</div>
+    <div class="fld"><label>ความยาวที่ต้องการ</label><select id="fLen"><option value="15">ประมาณ 15 วินาที</option><option value="20">ประมาณ 20 วินาที</option><option value="30" selected>ประมาณ 30 วินาที</option><option value="45">ประมาณ 45 วินาที</option></select></div>
+    <div class="fld"><label>สไตล์ (พรีเซ็ต)</label><select id="fPre">${PRESETS.filter(p => foodIds.includes(p.id)).map(opt).join('')}<option disabled>──────</option>${others.map(opt).join('')}</select></div>
+    <div class="fld"><label>เพลง</label><select id="fMus"><option value="">ไม่ใส่เพลง</option>${mus.map(m => `<option value="${m.id}" translate="no">${esc(m.name)}</option>`).join('')}</select></div>
+    ${mus.length ? '' : '<div class="mini">อยากได้เพลง: นำเข้าไฟล์เพลงที่แท็บ “สื่อ” ก่อน แล้วเปิดหน้านี้อีกครั้ง</div>'}
+    <div class="fld chk"><label><input type="checkbox" id="fBeat" ${mus.length ? 'checked' : 'disabled'}> ตัดตามจังหวะเพลง (บีต)</label></div>
+    <div class="fld chk"><label><input type="checkbox" id="fAi" ${hasKey ? 'checked' : 'disabled'}> ให้ AI จัดลำดับช็อต + คิดข้อความฮุก ${hasKey ? '' : '(ต้องใส่ Claude API key ก่อน)'}</label></div>
+    <div class="fld col"><label>ชื่อร้าน / เมนูเด่น (ไม่ใส่ก็ได้ ใช้ช่วย AI คิดข้อความ)</label><input id="fBrief" placeholder="เช่น ร้านกาแฟ ลาเต้ศิลป์"></div>
+    <div class="row"><span class="sp"></span><button class="primary" id="fGo">สร้างคลิปให้เลย</button></div>`, root => {
+    $('#fMus', root).onchange = e => { const b = $('#fBeat', root); if (!e.target.value) b.checked = false; else if (!b.disabled) b.checked = true; };
+    if (mus.length) $('#fMus', root).value = mus[0].id;
+    $('#fGo', root).onclick = () => {
+      const ids = [...root.querySelectorAll('[data-m]')].filter(x => x.checked).map(x => x.dataset.m); if (!ids.length) return toast('เลือกคลิปก่อน');
+      foodRun({ ids: ids.slice(0, 30), len: +$('#fLen', root).value, preset: $('#fPre', root).value, music: $('#fMus', root).value || '', beat: $('#fBeat', root).checked && !!$('#fMus', root).value, ai: $('#fAi', root).checked, brief: $('#fBrief', root).value.trim() });
+    };
+  });
+}
+
+// ---------- beat-snap an existing timeline ----------
+async function beatSnapTimeline() {
+  const a = D.items.filter(i => i.type === 'audio' && i.track === 'A1').sort((x, y) => x.start - y.start)[0];
+  if (!a) return toast('ใส่เพลงลงแทร็กเพลงก่อน');
+  const vids = D.items.filter(i => i.track === 'V1' && (i.type === 'video' || i.type === 'image')).sort((x, y) => x.start - y.start);
+  if (vids.length < 2) return toast('ต้องมีอย่างน้อย 2 คลิปบนวิดีโอ 1');
+  const m = MEDIA.get(a.mediaId); const bi = m && await ensureBeats(m);
+  if (!bi || bi.conf < 1.2 || bi.beats.length < 8) return toast('จับจังหวะเพลงนี้ไม่ได้ชัด ลองเพลงที่มีจังหวะกลองชัดกว่า', 5000);
+  const bt = musicBeatsOnTimeline(a, projectEnd() + 30); if (!bt || bt.length < 4) return toast('จับจังหวะเพลงนี้ไม่ได้ชัด ลองเพลงที่มีจังหวะกลองชัดกว่า', 5000);
+  const trs = vids.map(it => it.transIn ? { type: it.transIn.type, dur: it.transIn.dur } : null);
+  vids.forEach(it => { const tr = it.transIn; if (tr && tr.prevId && tr.ext) { const p = D.items.find(x => x.id === tr.prevId); if (p) p.dur = Math.max(.1, p.dur - tr.ext); } it.transIn = null; });
+  const oldB = [vids[0].start], newB = [vids[0].start]; let cur = vids[0].start, moved = 0;
+  vids.forEach((it, i) => {
+    const old = it.dur, m2 = it.type === 'video' ? MEDIA.get(it.mediaId) : null, sp = it.speed || 1;
+    const maxLen = m2 && m2.duration ? ((m2.duration - .03) - (it.in || 0)) / sp : 1e9; let len = old;
+    if (i < vids.length - 1) { const target = cur + old; let bb = null, bd = 1e9; for (const x of bt) { const l = x - cur; if (l < .6 || l > maxLen) continue; const d = Math.abs(x - target); if (d < bd) { bd = d; bb = x; } } if (bb != null) len = bb - cur; }
+    if (Math.abs(len - old) > .02) moved++;
+    const r = len / old; if (it.kf) for (const k of Object.keys(it.kf)) it.kf[k] = it.kf[k].map(f => ({ t: f.t * r, v: f.v }));
+    it.start = cur; it.dur = len; oldB.push(oldB[oldB.length - 1] + old); cur += len; newB.push(cur);
+  });
+  const map = x => { if (x <= oldB[0]) return x - oldB[0] + newB[0]; for (let i = 1; i < oldB.length; i++) if (x <= oldB[i]) return newB[i - 1] + (x - oldB[i - 1]) * (newB[i] - newB[i - 1]) / Math.max(1e-6, oldB[i] - oldB[i - 1]); return x - oldB[oldB.length - 1] + newB[newB.length - 1]; };
+  D.items.forEach(it => { if (it.track === 'V1' || it.track === 'A1') return; const s = map(it.start), e = map(it.start + it.dur); it.start = s; it.dur = Math.max(.15, e - s); });
+  vids.forEach((it, i) => { if (i && trs[i]) setTransIn(it, trs[i].type, trs[i].dur); });
+  commit('beatsnap');
+  toast(`${T('ตัดตามบีต')} ${bi.bpm} BPM · ${moved ? T('ขยับจุดตัด') + ' ' + moved + ' ' + T('จุด') : T('จุดตัดตรงบีตอยู่แล้ว')} — ${T('กด ↶ ย้อนกลับได้')}`, 6000);
+}
+
 // ---- 64-presets.js ----
 // ============================================================
 //  Style presets (trend looks): pick one -> see it on YOUR footage -> apply to the timeline in one click
@@ -4733,6 +4994,12 @@ async function kitBuild() {
 if (document.fonts) ['800 80px Anton', '400 80px Yellowtail'].forEach(f => { try { document.fonts.load(f); } catch (e) { } });
 
 const PRESETS = [
+  { id: 'cafe', ico: '☕', name: 'คาเฟ่ อุ่นนุ่ม', desc: 'โทนอุ่นนุ่มน่านั่ง สว่างขึ้นนิด ๆ ผ่านฉากแบบมิกซ์สั้นมาก ซูมเข้าช้า ๆ ให้ภาพมีชีวิต ตัวหนังสือเรียบ เหมาะร้านกาแฟ/ขนม/บรรยากาศร้าน', tags: 'อาหาร · มิกซ์สั้น · ซูมช้า',
+    fx: { sepia: .16, saturate: 1.12, contrast: 1.07, brightness: 1.05, hue: -5, vignette: .22 }, trans: ['fade', .12], zoom: ['push', 1.08], text: 'plain', sub: 'subbox' },
+  { id: 'food', ico: '🍜', name: 'อาหารสีสด น่ากิน', desc: 'สีสดคมชัด คอนทราสต์พอดี ให้ข้าว/เนื้อ/ผักดูฉ่ำน่ากิน ตัดเร็วด้วยซูมเข้าเบา ๆ ตัวหนังสือขาวขอบดำอ่านง่าย เหมาะร้านอาหาร/เมนูใหม่', tags: 'อาหาร · สีสดคม · ซูมเข้า',
+    fx: { saturate: 1.38, contrast: 1.12, brightness: 1.04, sharpen: 1, hue: -3 }, trans: ['zoomIn', .16], zoom: ['push', 1.1], text: 'clean', sub: 'sub' },
+  { id: 'street', ico: '🥢', name: 'สตรีทฟู้ด ไว แรง', desc: 'สีจัดจ้าน มุมมืดบาง ตัดไวซูมกระแทกสลับ ตัวหนังสือเหลืองใหญ่ + ดาวระเบิด เหมาะร้านริมทาง/โปรลดราคา/คลิปเร้าใจ', tags: 'อาหาร · ซูมกระแทก · ตัวเหลือง',
+    fx: { saturate: 1.4, contrast: 1.22, brightness: 1.02, vignette: .3, sharpen: 1 }, trans: ['punch', .15], zoom: ['alt', 1.12], text: 'big', sub: 'hl', bursts: ['#ffe14d', '#e0143c'] },
   { id: 'neon', ico: '🔥', name: 'นีออนตัวใหญ่ (ฮิตตอนนี้)', desc: 'ตัวหนังสือแคบใหญ่เรืองแสงเต็มจอ + คำเน้นตัวเขียนนีออน โทนส้มแดงอุ่นมืดขอบ ตัดไวแฟลชขาว ดาวระเบิดเด้งตามข้อความ', tags: 'แฟลชขาว · ซูมสลับ · ดาวระเบิด',
     fx: { contrast: 1.3, saturate: 1.25, sepia: .38, hue: -12, brightness: .92, vignette: .62 }, trans: ['dipwhite', .16], zoom: ['alt', 1.13], text: 'condGlow', sub: 'subGlow', bursts: ['#ff6f91', '#ffe14d', '#ff5a00'] },
   { id: 'hype', ico: '⚡', name: 'ขายด่วน ไว แรง', desc: 'สีสด คอนทราสต์แรง ตัดไว ซูมกระแทกทุกช็อต ตัวหนังสือเหลืองใหญ่ขอบดำ เหมาะโปรโมชัน/ลดราคา', tags: 'ซูมกระแทก · ตัวเหลืองใหญ่ · ดาว',
@@ -4759,7 +5026,13 @@ function setTransIn(it, type, dur) {   // same rules as applyTransition(), but w
   if (!type || type === 'none') { it.transIn = null; return; }
   dur = Math.min(dur || .4, it.dur * .9);
   const p2 = D.items.find(o => o.track === it.track && o.id !== it.id && Math.abs(o.start + o.dur - it.start) < .06);
-  it.transIn = { type, dur }; if (p2) { p2.dur += dur; it.transIn.ext = dur; it.transIn.prevId = p2.id; }
+  it.transIn = { type, dur };
+  if (p2) {   // the previous clip is stretched under the incoming one — only as far as its source still has footage
+    const pm = p2.type === 'video' ? MEDIA.get(p2.mediaId) : null, sp = p2.speed || 1;
+    const room = pm && pm.duration ? ((pm.duration - .04) - (p2.in || 0)) / sp - p2.dur : dur;
+    const ext = Math.min(dur, room);
+    if (ext > .04) { p2.dur += ext; it.transIn.ext = ext; it.transIn.prevId = p2.id; }
+  }
 }
 function restyleText(it, styleId, over) {
   const st = TEXT_STYLES.find(s => s.id === styleId); if (!st) return; const d = cloneJ(st.d); delete d.text; delete d.ay;
@@ -4820,7 +5093,8 @@ async function presetShow() {
   const box = $('#pane-preset'); if (!box) return;
   if (!box.dataset.built) {
     box.dataset.built = 1;
-    box.innerHTML = `<div class="hint">เลือกพรีเซ็ต แล้วดูตัวอย่างบนภาพจากคลิปของคุณเอง · เอาเมาส์ชี้เพื่อดูแบบเคลื่อนไหว · กดเพื่อดูใหญ่และใช้</div><div class="tiles" id="tilesPreset"></div>`;
+    box.innerHTML = `<div class="aicard"><h4>🍜 โยนฟุตอาหาร → ปุ่มเดียว</h4><div class="mini">เลือกช่วงที่สวยที่สุดของแต่ละคลิป ตัดสั้น เรียงลำดับ ใส่สี/ทรานสิชัน/ซูม ตัดตามจังหวะเพลง</div><button class="wide primary" id="fdP">เริ่ม</button></div><div class="aicard"><h4>🎵 ตัดตามบีตเพลง</h4><div class="mini">จัดจุดตัดคลิปที่มีอยู่ในไทม์ไลน์ให้ตรงจังหวะเพลงที่ใส่ไว้</div><button class="wide" id="bsP">จัดจังหวะ</button></div><div class="hint">เลือกพรีเซ็ต แล้วดูตัวอย่างบนภาพจากคลิปของคุณเอง · เอาเมาส์ชี้เพื่อดูแบบเคลื่อนไหว · กดเพื่อดูใหญ่และใช้</div><div class="tiles" id="tilesPreset"></div>`;
+    $('#fdP', box).onclick = foodUI; $('#bsP', box).onclick = beatSnapTimeline;
     const tl = $('#tilesPreset');
     PRESETS.forEach(p => {
       const t = document.createElement('div'); t.className = 'tile'; t.dataset.key = p.id; t.dataset.kind = 'preset';
