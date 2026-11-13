@@ -9,7 +9,7 @@ function dbOpen() {
 }
 async function dbPut(m) {
   try {
-    const db = await dbOpen(); const rec = { id: m.id, name: m.name, type: m.type, file: m.file, duration: m.duration, w: m.w, h: m.h, thumb: m.thumb, hasAudio: m.hasAudio, peaks: m.peaks, pcm16: m.pcm16, rms: m.rms, norm: m.norm, proxyOnly: m.proxyOnly || false, pfile: m.pfile || null, savedAt: Date.now() };
+    const db = await dbOpen(); const rec = { id: m.id, name: m.name, type: m.type, file: m.file, duration: m.duration, w: m.w, h: m.h, thumb: m.thumb, hasAudio: m.hasAudio, peaks: m.peaks, pcm16: m.pcm16, rms: m.rms, norm: m.norm, proxyOnly: m.proxyOnly || false, pfile: m.pfile || null, ref: !!m.ref, tv: m.tv || 0, savedAt: Date.now() };
     await new Promise((res, rej) => { const tx = db.transaction('media', 'readwrite'); tx.objectStore('media').put(rec); tx.oncomplete = res; tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error); });
     db.close(); return true;
   } catch (e) { console.warn('dbPut', e); toast('บันทึกไฟล์ไว้ในเครื่องไม่ได้ (พื้นที่เต็ม?) — เปิดใหม่ต้องนำเข้าไฟล์อีกครั้ง', 5000); return false; }
@@ -28,6 +28,31 @@ async function restoreMedia() {
     MEDIA.set(m.id, m); n++;
   }
   return n;
+}
+// v1.31: reference clips (TikTok ids as file names) live in the Home "reference library", not in the project media bin
+const REF_NAME = /^\d{17,20}\.(mp4|mov|m4v|webm)$/i;
+function migrateRefs() { let n = 0; MEDIA.forEach(m => { if (!m.ref && !m.builtin && m.type === 'video' && REF_NAME.test(m.name || '')) { m.ref = true; dbPut(m); n++; } }); return n; }
+// v1.31: thumbnails were 160 px / q.7 (blurry when shown larger) — rebuild old ones at 360 px / q.85 in the background, one at a time
+let _thumbBusy = false;
+async function upgradeThumbs() {
+  if (_thumbBusy) return; _thumbBusy = true; let n = 0;
+  try {
+    for (const m of [...MEDIA.values()]) {
+      if (m.tv === 2 || m.builtin || m.hidden || m.type === 'audio' || !m.url) continue;
+      try {
+        if (m.type === 'image') { const img = m.img || new Image(); if (!m.img) { img.src = m.url; await img.decode(); } m.thumb = thumbFrom(img, img.naturalWidth, img.naturalHeight); }
+        else {
+          const el = document.createElement('video'); el.preload = 'auto'; el.muted = true; el.src = m.url;
+          await new Promise((res, rej) => { el.onloadedmetadata = res; el.onerror = () => rej(new Error('load')); setTimeout(() => rej(new Error('timeout')), 15000); });
+          await seekTo(el, Math.min(0.3, (el.duration || 1) / 3)); const t = thumbFrom(el, el.videoWidth, el.videoHeight); if (t) m.thumb = t;
+          el.removeAttribute('src'); el.load();
+        }
+        m.tv = 2; await dbPut(m); n++; if (n % 4 === 0) { renderMediaBin(); if (HOME.open) renderHome(); }
+      } catch (e) { m.tv = 2; }
+      await sleep(150);
+    }
+  } finally { _thumbBusy = false; }
+  if (n) { renderMediaBin(); if (HOME.open) renderHome(); }
 }
 function mediaNameFromId(id) { return String(id || '').split('|')[0] || '?'; }
 

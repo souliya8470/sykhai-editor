@@ -28,6 +28,7 @@ async function renderHome() {
       <div class="pact"><button data-a="rename" title="เปลี่ยนชื่อ">✎</button><button data-a="dup" title="ทำสำเนา">⧉</button><button data-a="del" class="danger" title="ลบ">🗑</button></div>
     </div>`;
   }).join('');
+  renderRefLib();
   try {
     const e = await navigator.storage.estimate();
     const sv = SRV.info && SRV.info.free != null ? ` · เซิร์ฟเวอร์ว่าง ${(SRV.info.free / 1e9).toFixed(0)} GB` : '';
@@ -35,6 +36,20 @@ async function renderHome() {
   } catch (e) { $('#homeFoot').textContent = list.length + ' โปรเจกต์ · บันทึกอัตโนมัติ'; }
 }
 
+function renderRefLib() {
+  const box = $('#refList'); if (!box) return;
+  const refs = [...MEDIA.values()].filter(m => m.ref && m.type === 'video').sort((a, b) => (a.name < b.name ? -1 : 1));
+  if (!refs.length) { box.innerHTML = '<div class="hempty small">ยังไม่มีคลิปอ้างอิง — กด “ดึงคลิปจากกล่องรับของเซิร์ฟเวอร์” หรือ “+ เพิ่มคลิปอ้างอิง”</div>'; return; }
+  box.innerHTML = refs.map(m => {
+    const key = typeof anMatch === 'function' ? anMatch(m) : null, r = key && typeof anRefOf === 'function' ? anRefOf(key) : null, done = typeof REFAN !== 'undefined' && REFAN.res[key || 'name:' + m.name];
+    const label = r ? ((r.creator || '') + ' ' + (r.topic_note || '')).trim() : m.name;
+    return `<div class="pcard rcard" data-id="${esc(m.id)}">
+      <div class="pthumb" style="${m.thumb ? `background-image:url(${m.thumb})` : ''}"><span class="pdur">${fmtDur(m.duration)}</span>${done ? '<span class="rdone" title="วิเคราะห์แล้ว">✔</span>' : ''}</div>
+      <div class="pname" translate="no" title="${esc(m.name)}">${esc(label)}</div>
+      <div class="pact"><button data-a="refdel" class="danger" title="ลบออกจากคลัง">✕</button></div>
+    </div>`;
+  }).join('');
+}
 function resetDoc(doc) {
   D = doc; SEL = null; HIST = []; HPOS = -1; PB.t = 0;
   commit('open'); emit('sel'); renderMediaBin && renderMediaBin(); renderInspector && renderInspector(); seek(0);
@@ -77,6 +92,17 @@ function initHome() {
   $('#hmBack').onclick = hideHome; $('#hmSync').onclick = srvSyncAll;
   $('#btnHome').onclick = showHome;
   $('#hmImport').onclick = () => { const i = document.createElement('input'); i.type = 'file'; i.accept = '.json'; i.onchange = async () => { if (i.files[0]) { const ok = await openProject(i.files[0]); if (ok) hideHome(); } }; i.click(); };
+  $('#hmRefInbox').onclick = async () => { await srvInboxImport(); renderHome(); };
+  $('#hmRefAdd').onclick = () => { const i = document.createElement('input'); i.type = 'file'; i.accept = 'video/*,.mov,.mp4'; i.multiple = true; i.onchange = async () => { if (i.files.length) { await importFiles(i.files, { ref: true }); renderHome(); } }; i.click(); };
+  $('#hmRefAn').onclick = () => anUI();
+  $('#refList').addEventListener('click', e => {
+    const c = e.target.closest('.rcard'); if (!c) return; const m = MEDIA.get(c.dataset.id); if (!m) return;
+    if (e.target.closest('[data-a="refdel"]')) {
+      if (!confirm(T('ลบคลิปนี้ออกจากคลังอ้างอิง?') + '\n' + m.name)) return;
+      MEDIA.delete(m.id); dbDel(m.id); try { URL.revokeObjectURL(m.url); } catch (_) { } renderRefLib(); return;
+    }
+    window.open(m.url, '_blank');
+  });
   $('#homeList').addEventListener('click', e => {
     const c = e.target.closest('.pcard'); if (!c) return; const b = e.target.closest('button[data-a]');
     if (b) { e.stopPropagation(); homeAction(c.dataset.id, b.dataset.a); } else openById(c.dataset.id);

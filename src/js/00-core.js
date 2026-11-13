@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.30
-// APP_VERSION_PREV : 1.29
-// APP_VERSION_PREV_OLDER : 1.28
+// APP_VERSION  : 1.31
+// APP_VERSION_PREV : 1.30
+// APP_VERSION_PREV_OLDER : 1.29
+// 1.31 : reference-video library kept apart from projects (Home page 📚 section; not in the media bin, not synced, not used by AI cut-it-all; clips pulled from the server inbox and files named <tiktok id>.mp4 are moved there automatically); media bin grid auto-fills columns (more columns + smaller thumbs when the panel is widened, CapCut-style); thumbnails 360 px / q.85 (old ones upgraded in the background); Home project cards about half the size
 // 1.30 : inbox — the shop server can fetch TikTok reference clips by itself (yt-dlp, asked by N8N) into an inbox folder; the editor pulls them into the media list (🔬 analyzer button + automatic on desktop start-up); imported files move to inbox/done
 // 1.29 : reference-video analyzer (AI tab 🔬) — measures how a sample short video is edited, fully in the browser: shots / cuts per 10 s / cuts in the first 3 s / hard vs soft vs flash vs dip transitions / motion level / colour (brightness, saturation, contrast, warmth) / audio type + BPM; auto-crops static phone-app chrome of screen recordings; optional Claude look at text overlay, hook type and structure; results stored locally and exported as reference-videos.json with the `style` blocks filled in + grouped summary (language/category)
 // 1.28 : food one-tap — 🍜 drop food clips and press one button: local best-moment picker (sharpness/exposure/colour/motion per clip), optional AI shot order + hook text, beat detection of the imported music (local, free) with cuts landing on the beat, picked look applied (grade, short mix transition, slow push zoom); 🎵 beat-snap for an existing timeline; 3 food looks (cafe warm, vivid food, street food); transitions no longer extend a clip past the end of its source
@@ -36,7 +37,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.30';
+const APP_VERSION = '1.31';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];

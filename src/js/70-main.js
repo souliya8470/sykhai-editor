@@ -49,7 +49,7 @@ on('doc', () => { poolPrune(); renderTimeline(); dirty(); const n = $('#projName
 
 // ---------- project I/O ----------
 function saveProject() {
-  const data = { app: 'sykhai-editor', version: APP_VERSION, doc: D, media: [...MEDIA.values()].filter(m => !m.builtin && !m.hidden).map(m => ({ id: m.id, name: m.name, type: m.type })) };
+  const data = { app: 'sykhai-editor', version: APP_VERSION, doc: D, media: [...MEDIA.values()].filter(m => !m.builtin && !m.hidden && !m.ref).map(m => ({ id: m.id, name: m.name, type: m.type })) };
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: 'application/json' })); a.download = (D.name || 'project') + '.sykhai.json'; document.body.appendChild(a); a.click(); setTimeout(() => a.remove(), 1000);
   toast('บันทึกโปรเจกต์แล้ว (ไฟล์วิดีโอต้องนำเข้าซ้ำเมื่อเปิดใหม่)');
 }
@@ -83,7 +83,7 @@ async function init() {
   window.addEventListener('resize', fitStage); applyAspect();
   buildLeft(); initTimelineEvents(); initPreviewInteraction();
   try { await Promise.race([Promise.all(['800 40px Prompt', '700 40px "Noto Sans Lao"', '700 40px "Noto Sans Thai"'].map(f => document.fonts.load(f, 'กຂaA'))), sleep(4000)]); } catch (e) { }
-  try { const n = await restoreMedia(); if (n) toast(`กู้คืนไฟล์ที่นำเข้าไว้ ${n} ไฟล์`); } catch (e) { console.warn(e); }
+  try { const n = await restoreMedia(); const r = migrateRefs(); if (n - r > 0) toast(`กู้คืนไฟล์ที่นำเข้าไว้ ${n - r} ไฟล์`); setTimeout(upgradeThumbs, 2500); } catch (e) { console.warn(e); }
   // migrate legacy single autosave (<=1.02) into the projects list
   try { const ls = localStorage.getItem('sk_autosave'); if (ls) { const d = JSON.parse(ls); let ok = true; if (d && d.items && d.items.length) { d.pid = d.pid || uid(); d.created = d.created || Date.now(); d.name = d.name || 'โปรเจกต์เดิม'; ok = await projPut(projRec(d)); } if (ok) localStorage.removeItem('sk_autosave'); } } catch (e) { console.warn(e); }
   HIST = []; HPOS = -1; commit('init');

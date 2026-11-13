@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.30</title>
+<title>Sykhai Editor v1.31</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -41,7 +41,7 @@ main{display:grid;grid-template-columns:var(--lw,300px) minmax(0,1fr) var(--rw,3
 .tstyle{display:block;width:100%;margin:4px 0;text-align:left;padding:8px 10px}
 .row{display:flex;gap:6px;align-items:center;margin:6px 0}
 .btnrow{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
-#mediaList{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+#mediaList{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px;margin-top:8px}
 .mi{background:var(--p2);border:1px solid var(--ln);border-radius:8px;padding:5px;position:relative;cursor:grab}
 .mth{height:86px;border-radius:5px;background:#000 center/cover no-repeat;position:relative;display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--mu)}
 .mth .dur{position:absolute;right:4px;bottom:3px;background:rgba(0,0,0,.7);font-size:10px;padding:1px 5px;border-radius:4px;color:#fff}
@@ -134,15 +134,17 @@ dialog h3{margin:0 0 10px}
 .hwrap{max-width:1100px;margin:0 auto;padding:22px 24px 40px}
 .hhead{display:flex;align-items:center;gap:10px;margin-bottom:18px}.brand.big{font-size:22px}
 .htitle{font-size:15px;color:var(--mu);margin:6px 0 12px}
-#homeList{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
+#homeList,#refList{display:grid;grid-template-columns:repeat(auto-fill,92px);gap:12px}
+.refhead{margin-top:30px}.refhead .mini{color:var(--mu);font-size:11px;margin-left:6px}.refbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.rcard .pname{font-size:11px;font-weight:500}.rdone{position:absolute;left:5px;top:5px;background:var(--ac);color:#000;border-radius:50%;width:16px;height:16px;font-size:10px;display:flex;align-items:center;justify-content:center}
 .hempty{grid-column:1/-1;color:var(--mu);padding:40px 0;text-align:center}
-.pcard{position:relative;background:var(--p1);border:1px solid var(--ln);border-radius:10px;padding:8px;cursor:pointer}
+.pcard{position:relative;background:var(--p1);border:1px solid var(--ln);border-radius:9px;padding:5px;cursor:pointer}
 .pcard:hover{border-color:var(--ac)}
 .pthumb{position:relative;aspect-ratio:9/16;border-radius:7px;background:#0c0d10 center/cover no-repeat;display:flex;align-items:center;justify-content:center}
-.pnone{font-size:34px;opacity:.4}.pdur{position:absolute;right:6px;bottom:6px;background:rgba(0,0,0,.65);padding:1px 6px;border-radius:5px;font-size:11px}
-.pname{margin:8px 2px 2px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pmeta{color:var(--mu);font-size:11px;margin:0 2px}.pwarn{color:#ffb84d}
-.pact{position:absolute;top:12px;right:12px;display:none;gap:4px}.pcard:hover .pact{display:flex}
+.pnone{font-size:26px;opacity:.4}.pdur{position:absolute;right:4px;bottom:4px;background:rgba(0,0,0,.65);padding:0 5px;border-radius:4px;font-size:10px}
+.pname{margin:5px 2px 1px;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pmeta{color:var(--mu);font-size:10px;margin:0 2px;line-height:1.3}.pwarn{color:#ffb84d}
+.pact{position:absolute;top:8px;right:8px;display:none;gap:4px}.pcard:hover .pact{display:flex}
 .pact button{padding:2px 7px;background:rgba(18,19,22,.85)}
 #homeFoot{margin-top:18px}
 #srvBadge{background:var(--p2);border:1px solid var(--ln);border-radius:20px;padding:3px 10px;color:var(--ac);font-size:12px}#srvBadge.off{color:var(--mu)}
@@ -256,7 +258,7 @@ main{padding:0}
 #mediaFilter{margin-top:8px}
 #mediaFilter .chips{align-items:center;margin:0}
 .mi{background:transparent;border:0;padding:0}
-.mth{height:92px;border-radius:9px}
+.mth{height:68px;border-radius:8px}
 .mi:hover .mth{outline:2px solid var(--ac)}
 .mi .mb button{background:var(--p2);border-color:transparent}
 #btnImport{border-radius:10px;padding:8px 10px}
@@ -432,6 +434,9 @@ button.tic.on{color:#ff9f43}
     <div class="hhead"><div class="brand big">Sykhai <b>Editor</b></div><span class="sp"></span><button id="hmSync" hidden title="ส่งโปรเจกต์/ไฟล์ขึ้นเซิร์ฟเวอร์ และดึงโปรเจกต์ใหม่ลงเครื่องนี้">☁ ซิงค์เซิร์ฟเวอร์</button><button id="hmBack" hidden>← กลับไปแก้ไขต่อ</button><button id="hmImport">📂 นำเข้าไฟล์โปรเจกต์</button><button id="hmSettings" title="ตั้งค่า (ใส่รหัสผ่านเซิร์ฟเวอร์ที่นี่)">⚙ ตั้งค่า</button><button id="hmNew" class="primary">+ โปรเจกต์ใหม่</button></div>
     <div class="htitle">โปรเจกต์ของฉัน</div>
     <div id="homeList"></div>
+    <div class="htitle refhead">📚 คลังวิดีโออ้างอิง <span class="mini">ไว้ให้ AI เรียนรู้แนวตัดต่อ — แยกจากโปรเจกต์ ไม่ปนกับสื่อของโปรเจกต์</span></div>
+    <div class="refbar"><button id="hmRefInbox">📥 ดึงคลิปจากกล่องรับของเซิร์ฟเวอร์</button><button id="hmRefAdd">+ เพิ่มคลิปอ้างอิง</button><button id="hmRefAn" class="primary">🔬 วิเคราะห์แนวตัดต่อ</button></div>
+    <div id="refList"></div>
     <div id="homeFoot" class="hint small"></div>
   </div>
 </div>
@@ -1534,14 +1539,30 @@ I18N_ROWS.push(
   ['คลิปรอในกล่องรับ — เปิด 🔬 วิเคราะห์ เพื่อดึงเข้า', 'clips waiting in the inbox — open 🔬 Analyse to pull them in', 'ຄລິບລໍຖ້າໃນກ່ອງຮັບ — ເປີດ 🔬 ວິເຄາະ ເພື່ອດຶງເຂົ້າ'],
 );
 
+// ---- 00-9-i18n-i.js ----
+'use strict';
+// i18n rows I — v1.31: reference-video library on Home   [thai, english, lao]
+I18N_ROWS.push(
+  ['คลังวิดีโออ้างอิง', 'Reference video library', 'ຄັງວິດີໂອອ້າງອີງ'],
+  ['ไว้ให้ AI เรียนรู้แนวตัดต่อ — แยกจากโปรเจกต์ ไม่ปนกับสื่อของโปรเจกต์', 'For the AI to learn editing styles — kept apart from projects, not mixed with project media', 'ໄວ້ໃຫ້ AI ຮຽນແນວຕັດຕໍ່ — ແຍກຈາກໂປຣເຈັກ ບໍ່ປົນກັບສື່ຂອງໂປຣເຈັກ'],
+  ['เพิ่มคลิปอ้างอิง', 'Add reference clips', 'ເພີ່ມຄລິບອ້າງອີງ'],
+  ['วิเคราะห์แนวตัดต่อ', 'Analyse editing style', 'ວິເຄາະແນວຕັດຕໍ່'],
+  ['ยังไม่มีคลิปอ้างอิง — กด “ดึงคลิปจากกล่องรับของเซิร์ฟเวอร์” หรือ “+ เพิ่มคลิปอ้างอิง”', 'No reference clips yet — press “Pull clips from the server inbox” or “+ Add reference clips”', 'ຍັງບໍ່ມີຄລິບອ້າງອີງ — ກົດ “ດຶງຄລິບຈາກກ່ອງຮັບຂອງເຊີບເວີ” ຫຼື “+ ເພີ່ມຄລິບອ້າງອີງ”'],
+  ['วิเคราะห์แล้ว', 'Analysed', 'ວິເຄາະແລ້ວ'],
+  ['ลบออกจากคลัง', 'Remove from the library', 'ລຶບອອກຈາກຄັງ'],
+  ['ลบคลิปนี้ออกจากคลังอ้างอิง?', 'Remove this clip from the reference library?', 'ລຶບຄລິບນີ້ອອກຈາກຄັງອ້າງອີງບໍ?'],
+  ['(อยู่ในคลังอ้างอิงที่หน้าโปรเจกต์)', '(in the reference library on the project page)', '(ຢູ່ໃນຄັງອ້າງອີງທີ່ໜ້າໂປຣເຈັກ)'],
+);
+
 // ---- 00-core.js ----
 'use strict';
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.30
-// APP_VERSION_PREV : 1.29
-// APP_VERSION_PREV_OLDER : 1.28
+// APP_VERSION  : 1.31
+// APP_VERSION_PREV : 1.30
+// APP_VERSION_PREV_OLDER : 1.29
+// 1.31 : reference-video library kept apart from projects (Home page 📚 section; not in the media bin, not synced, not used by AI cut-it-all; clips pulled from the server inbox and files named <tiktok id>.mp4 are moved there automatically); media bin grid auto-fills columns (more columns + smaller thumbs when the panel is widened, CapCut-style); thumbnails 360 px / q.85 (old ones upgraded in the background); Home project cards about half the size
 // 1.30 : inbox — the shop server can fetch TikTok reference clips by itself (yt-dlp, asked by N8N) into an inbox folder; the editor pulls them into the media list (🔬 analyzer button + automatic on desktop start-up); imported files move to inbox/done
 // 1.29 : reference-video analyzer (AI tab 🔬) — measures how a sample short video is edited, fully in the browser: shots / cuts per 10 s / cuts in the first 3 s / hard vs soft vs flash vs dip transitions / motion level / colour (brightness, saturation, contrast, warmth) / audio type + BPM; auto-crops static phone-app chrome of screen recordings; optional Claude look at text overlay, hook type and structure; results stored locally and exported as reference-videos.json with the `style` blocks filled in + grouped summary (language/category)
 // 1.28 : food one-tap — 🍜 drop food clips and press one button: local best-moment picker (sharpness/exposure/colour/motion per clip), optional AI shot order + hook text, beat detection of the imported music (local, free) with cuts landing on the beat, picked look applied (grade, short mix transition, slow push zoom); 🎵 beat-snap for an existing timeline; 3 food looks (cafe warm, vivid food, street food); transitions no longer extend a clip past the end of its source
@@ -1573,7 +1594,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.30';
+const APP_VERSION = '1.31';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -2540,7 +2561,7 @@ function cmdCloseGaps(track) {
 // ---------- media bin ----------
 let MF = 'all';
 function renderMediaBin() {
-  const box = $('#mediaList'); if (!box) return; const all = [...MEDIA.values()].filter(m => !m.hidden); const arr = all.filter(m => MF === 'all' || m.type === MF);
+  const box = $('#mediaList'); if (!box) return; const all = [...MEDIA.values()].filter(m => !m.hidden && !m.ref); const arr = all.filter(m => MF === 'all' || m.type === MF);
   const mfb = $('#mediaFilter'); if (mfb) {
     mfb.innerHTML = `<div class="chips">` + [['all', 'ทั้งหมด'], ['video', 'วิดีโอ'], ['image', 'รูปภาพ'], ['audio', 'เสียง']].map(([k, l]) => `<button data-mf="${k}" class="${MF === k ? 'on' : ''}">${l}</button>`).join('') + `<span class="sp"></span><span class="mini">${all.length} <span>ไฟล์</span></span></div>`;
     mfb.onclick = e => { const b = e.target.closest('[data-mf]'); if (b) { MF = b.dataset.mf; renderMediaBin(); } };
@@ -2565,7 +2586,7 @@ async function importFiles(files, opts) {
   for (const f of list) {
     const type = f.type.startsWith('video') || /\.(mov|mp4|m4v|webm)$/i.test(f.name) ? 'video' : f.type.startsWith('image') ? 'image' : f.type.startsWith('audio') || /\.(mp3|wav|m4a|aac|ogg)$/i.test(f.name) ? 'audio' : null;
     if (!type) { toast('ไม่รองรับไฟล์: ' + f.name); continue; }
-    const m = { id: opts.id || f.name + '|' + f.size, name: opts.name || f.name, type, file: f, url: URL.createObjectURL(f), duration: 0, w: 0, h: 0 }; if (opts.proxyOnly) m.proxyOnly = true;
+    const m = { id: opts.id || f.name + '|' + f.size, name: opts.name || f.name, type, file: f, url: URL.createObjectURL(f), duration: 0, w: 0, h: 0 }; if (opts.proxyOnly) m.proxyOnly = true; if (opts.ref) m.ref = true; m.tv = 2;
     try {
       if (type === 'image') {
         const img = new Image(); img.src = m.url; await img.decode(); m.img = img; m.w = img.naturalWidth; m.h = img.naturalHeight; m.thumb = thumbFrom(img, img.naturalWidth, img.naturalHeight);
@@ -2583,8 +2604,8 @@ async function importFiles(files, opts) {
 }
 function seekTo(el, t) { return new Promise(res => { const done = () => { el.removeEventListener('seeked', done); res(); }; el.addEventListener('seeked', done); try { el.currentTime = t; } catch (e) { res(); } setTimeout(res, 3000); }); }
 function thumbFrom(src, w, h) {
-  const c = document.createElement('canvas'); const k = 160 / Math.max(w, h); c.width = Math.max(2, Math.round(w * k)); c.height = Math.max(2, Math.round(h * k));
-  try { c.getContext('2d').drawImage(src, 0, 0, c.width, c.height); return c.toDataURL('image/jpeg', 0.7); } catch (e) { return ''; }
+  const c = document.createElement('canvas'); const k = Math.min(1, 360 / Math.max(w, h)); c.width = Math.max(2, Math.round(w * k)); c.height = Math.max(2, Math.round(h * k));
+  try { c.getContext('2d').drawImage(src, 0, 0, c.width, c.height); return c.toDataURL('image/jpeg', 0.85); } catch (e) { return ''; }
 }
 
 // ---------- track height drag + volume line drag ----------
@@ -2705,7 +2726,7 @@ function dbOpen() {
 }
 async function dbPut(m) {
   try {
-    const db = await dbOpen(); const rec = { id: m.id, name: m.name, type: m.type, file: m.file, duration: m.duration, w: m.w, h: m.h, thumb: m.thumb, hasAudio: m.hasAudio, peaks: m.peaks, pcm16: m.pcm16, rms: m.rms, norm: m.norm, proxyOnly: m.proxyOnly || false, pfile: m.pfile || null, savedAt: Date.now() };
+    const db = await dbOpen(); const rec = { id: m.id, name: m.name, type: m.type, file: m.file, duration: m.duration, w: m.w, h: m.h, thumb: m.thumb, hasAudio: m.hasAudio, peaks: m.peaks, pcm16: m.pcm16, rms: m.rms, norm: m.norm, proxyOnly: m.proxyOnly || false, pfile: m.pfile || null, ref: !!m.ref, tv: m.tv || 0, savedAt: Date.now() };
     await new Promise((res, rej) => { const tx = db.transaction('media', 'readwrite'); tx.objectStore('media').put(rec); tx.oncomplete = res; tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error); });
     db.close(); return true;
   } catch (e) { console.warn('dbPut', e); toast('บันทึกไฟล์ไว้ในเครื่องไม่ได้ (พื้นที่เต็ม?) — เปิดใหม่ต้องนำเข้าไฟล์อีกครั้ง', 5000); return false; }
@@ -2724,6 +2745,31 @@ async function restoreMedia() {
     MEDIA.set(m.id, m); n++;
   }
   return n;
+}
+// v1.31: reference clips (TikTok ids as file names) live in the Home "reference library", not in the project media bin
+const REF_NAME = /^\d{17,20}\.(mp4|mov|m4v|webm)$/i;
+function migrateRefs() { let n = 0; MEDIA.forEach(m => { if (!m.ref && !m.builtin && m.type === 'video' && REF_NAME.test(m.name || '')) { m.ref = true; dbPut(m); n++; } }); return n; }
+// v1.31: thumbnails were 160 px / q.7 (blurry when shown larger) — rebuild old ones at 360 px / q.85 in the background, one at a time
+let _thumbBusy = false;
+async function upgradeThumbs() {
+  if (_thumbBusy) return; _thumbBusy = true; let n = 0;
+  try {
+    for (const m of [...MEDIA.values()]) {
+      if (m.tv === 2 || m.builtin || m.hidden || m.type === 'audio' || !m.url) continue;
+      try {
+        if (m.type === 'image') { const img = m.img || new Image(); if (!m.img) { img.src = m.url; await img.decode(); } m.thumb = thumbFrom(img, img.naturalWidth, img.naturalHeight); }
+        else {
+          const el = document.createElement('video'); el.preload = 'auto'; el.muted = true; el.src = m.url;
+          await new Promise((res, rej) => { el.onloadedmetadata = res; el.onerror = () => rej(new Error('load')); setTimeout(() => rej(new Error('timeout')), 15000); });
+          await seekTo(el, Math.min(0.3, (el.duration || 1) / 3)); const t = thumbFrom(el, el.videoWidth, el.videoHeight); if (t) m.thumb = t;
+          el.removeAttribute('src'); el.load();
+        }
+        m.tv = 2; await dbPut(m); n++; if (n % 4 === 0) { renderMediaBin(); if (HOME.open) renderHome(); }
+      } catch (e) { m.tv = 2; }
+      await sleep(150);
+    }
+  } finally { _thumbBusy = false; }
+  if (n) { renderMediaBin(); if (HOME.open) renderHome(); }
 }
 function mediaNameFromId(id) { return String(id || '').split('|')[0] || '?'; }
 
@@ -2806,6 +2852,7 @@ async function renderHome() {
       <div class="pact"><button data-a="rename" title="เปลี่ยนชื่อ">✎</button><button data-a="dup" title="ทำสำเนา">⧉</button><button data-a="del" class="danger" title="ลบ">🗑</button></div>
     </div>`;
   }).join('');
+  renderRefLib();
   try {
     const e = await navigator.storage.estimate();
     const sv = SRV.info && SRV.info.free != null ? ` · เซิร์ฟเวอร์ว่าง ${(SRV.info.free / 1e9).toFixed(0)} GB` : '';
@@ -2813,6 +2860,20 @@ async function renderHome() {
   } catch (e) { $('#homeFoot').textContent = list.length + ' โปรเจกต์ · บันทึกอัตโนมัติ'; }
 }
 
+function renderRefLib() {
+  const box = $('#refList'); if (!box) return;
+  const refs = [...MEDIA.values()].filter(m => m.ref && m.type === 'video').sort((a, b) => (a.name < b.name ? -1 : 1));
+  if (!refs.length) { box.innerHTML = '<div class="hempty small">ยังไม่มีคลิปอ้างอิง — กด “ดึงคลิปจากกล่องรับของเซิร์ฟเวอร์” หรือ “+ เพิ่มคลิปอ้างอิง”</div>'; return; }
+  box.innerHTML = refs.map(m => {
+    const key = typeof anMatch === 'function' ? anMatch(m) : null, r = key && typeof anRefOf === 'function' ? anRefOf(key) : null, done = typeof REFAN !== 'undefined' && REFAN.res[key || 'name:' + m.name];
+    const label = r ? ((r.creator || '') + ' ' + (r.topic_note || '')).trim() : m.name;
+    return `<div class="pcard rcard" data-id="${esc(m.id)}">
+      <div class="pthumb" style="${m.thumb ? `background-image:url(${m.thumb})` : ''}"><span class="pdur">${fmtDur(m.duration)}</span>${done ? '<span class="rdone" title="วิเคราะห์แล้ว">✔</span>' : ''}</div>
+      <div class="pname" translate="no" title="${esc(m.name)}">${esc(label)}</div>
+      <div class="pact"><button data-a="refdel" class="danger" title="ลบออกจากคลัง">✕</button></div>
+    </div>`;
+  }).join('');
+}
 function resetDoc(doc) {
   D = doc; SEL = null; HIST = []; HPOS = -1; PB.t = 0;
   commit('open'); emit('sel'); renderMediaBin && renderMediaBin(); renderInspector && renderInspector(); seek(0);
@@ -2855,6 +2916,17 @@ function initHome() {
   $('#hmBack').onclick = hideHome; $('#hmSync').onclick = srvSyncAll;
   $('#btnHome').onclick = showHome;
   $('#hmImport').onclick = () => { const i = document.createElement('input'); i.type = 'file'; i.accept = '.json'; i.onchange = async () => { if (i.files[0]) { const ok = await openProject(i.files[0]); if (ok) hideHome(); } }; i.click(); };
+  $('#hmRefInbox').onclick = async () => { await srvInboxImport(); renderHome(); };
+  $('#hmRefAdd').onclick = () => { const i = document.createElement('input'); i.type = 'file'; i.accept = 'video/*,.mov,.mp4'; i.multiple = true; i.onchange = async () => { if (i.files.length) { await importFiles(i.files, { ref: true }); renderHome(); } }; i.click(); };
+  $('#hmRefAn').onclick = () => anUI();
+  $('#refList').addEventListener('click', e => {
+    const c = e.target.closest('.rcard'); if (!c) return; const m = MEDIA.get(c.dataset.id); if (!m) return;
+    if (e.target.closest('[data-a="refdel"]')) {
+      if (!confirm(T('ลบคลิปนี้ออกจากคลังอ้างอิง?') + '\n' + m.name)) return;
+      MEDIA.delete(m.id); dbDel(m.id); try { URL.revokeObjectURL(m.url); } catch (_) { } renderRefLib(); return;
+    }
+    window.open(m.url, '_blank');
+  });
   $('#homeList').addEventListener('click', e => {
     const c = e.target.closest('.pcard'); if (!c) return; const b = e.target.closest('button[data-a]');
     if (b) { e.stopPropagation(); homeAction(c.dataset.id, b.dataset.a); } else openById(c.dataset.id);
@@ -2902,7 +2974,7 @@ function xhrPut(path, body, headers, onp) {
 // ----- uploads of source media (sequential queue) -----
 function srvQueueMedia(ids) {
   if (!srvOn()) return;
-  for (const id of ids) { const m = MEDIA.get(id); if (m && m.file && !m.builtin && !m.hidden && !m.proxyOnly && SRV.sizes.get(id) !== m.file.size && !SRV.q.includes(id)) SRV.q.push(id); }
+  for (const id of ids) { const m = MEDIA.get(id); if (m && m.file && !m.builtin && !m.hidden && !m.ref && !m.proxyOnly && SRV.sizes.get(id) !== m.file.size && !SRV.q.includes(id)) SRV.q.push(id); }
   updateSrvBadge(); srvRun();
 }
 async function srvRun() {
@@ -2986,12 +3058,12 @@ async function srvInboxImport(opts) {
       try {
         const r = await srvFetch('/inbox/' + srvId(f.name)); if (!r.ok) continue;
         const blob = await r.blob(); const file = new File([blob], f.name, { type: blob.type || 'video/mp4' });
-        await importFiles([file], { quiet: true });
+        await importFiles([file], { quiet: true, ref: true });
         if ([...MEDIA.values()].some(m => m.name === f.name)) { await srvFetch('/inbox/' + srvId(f.name), { method: 'DELETE' }); n++; }
       } catch (e) { console.warn('srvInboxImport', e); }
     }
   } finally { _inboxBusy = false; }
-  toast(n ? `ดึงคลิปเข้ามาแล้ว ${n} คลิป` : 'ดึงคลิปจากกล่องรับไม่สำเร็จ', 5000);
+  toast(n ? `ดึงคลิปเข้ามาแล้ว ${n} คลิป (อยู่ในคลังอ้างอิงที่หน้าโปรเจกต์)` : 'ดึงคลิปจากกล่องรับไม่สำเร็จ', 5000); if (n && HOME.open) renderHome();
   return n;
 }
 async function srvInboxAuto() {         // on start-up: desktop pulls new clips by itself, phones only get a hint (mobile data / small screen)
@@ -3018,7 +3090,7 @@ async function srvGetProxy(id, wait) {            // -> File (mp4) or null. wait
 }
 let _adoptBusy = false, _adoptTimer = 0, _adoptTries = 0;
 function proxyTag() {
-  const vs = [...MEDIA.values()].filter(m => m.type === 'video' && !m.hidden && !m.builtin); if (!vs.length) return '';
+  const vs = [...MEDIA.values()].filter(m => m.type === 'video' && !m.hidden && !m.ref && !m.builtin); if (!vs.length) return '';
   const n = vs.filter(m => m.purl || m.proxyOnly).length;
   return ' · ⚡' + n + '/' + vs.length + (n < vs.length && SRV.adoptNote ? ' (' + SRV.adoptNote + ')' : '');
 }
@@ -3027,8 +3099,8 @@ async function srvAdoptProxies() {                // phone has big local origina
   if (_adoptBusy) return; if (!srvOn()) { SRV.adoptNote = 'no-server'; return; } if (!IS_PHONE()) { SRV.adoptNote = 'desktop'; return; } _adoptBusy = true; let again = false, n = 0; SRV.adoptNote = '';
   try {
     if (!SRV.up && !(await srvPing())) { SRV.adoptNote = 'offline'; return; } if (!SRV.sizes.size) await srvLoadSizes();
-    const cand = [...MEDIA.values()].filter(m => m.type === 'video' && !m.proxyOnly && !m.purl && !m.builtin && !m.hidden && m.file && SRV.sizes.get(m.id) === m.file.size && Math.max(m.w || 0, m.h || 0) > 1300);
-    if (!cand.length) { const raw = [...MEDIA.values()].filter(m => m.type === 'video' && !m.hidden && !m.builtin && !m.proxyOnly && !m.purl); SRV.adoptNote = raw.length ? (raw.some(m => m.file && SRV.sizes.get(m.id) !== m.file.size) ? 'not-uploaded' : 'small') : ''; return; } await srvLoadProxies(); if (!SRV.px.ffmpeg) again = /download|unpack|checking/.test(SRV.px.note || '');
+    const cand = [...MEDIA.values()].filter(m => m.type === 'video' && !m.proxyOnly && !m.purl && !m.builtin && !m.hidden && !m.ref && m.file && SRV.sizes.get(m.id) === m.file.size && Math.max(m.w || 0, m.h || 0) > 1300);
+    if (!cand.length) { const raw = [...MEDIA.values()].filter(m => m.type === 'video' && !m.hidden && !m.ref && !m.builtin && !m.proxyOnly && !m.purl); SRV.adoptNote = raw.length ? (raw.some(m => m.file && SRV.sizes.get(m.id) !== m.file.size) ? 'not-uploaded' : 'small') : ''; return; } await srvLoadProxies(); if (!SRV.px.ffmpeg) again = /download|unpack|checking/.test(SRV.px.note || '');
     for (const m of cand) {
       if (SRV.px.ready.has(m.id)) { const f = await srvGetProxy(m.id, false); if (f) { m.pfile = f; m.purl = URL.createObjectURL(f); dbPut(m); n++; } else { again = true; SRV.adoptNote = 'download-failed'; } }
       else if (SRV.px.pending.has(m.id)) { again = true; SRV.adoptNote = 'server-busy'; }
@@ -3584,7 +3656,7 @@ function synthSample(kind) {
 }
 function loadImg(src) { return new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(i); i.src = src; }); }
 async function pvSamples() {
-  const meds = [...MEDIA.values()].filter(m => m.thumb && !m.hidden && m.type !== 'audio'); const key = meds.slice(0, 2).map(m => m.id).join('|');
+  const meds = [...MEDIA.values()].filter(m => m.thumb && !m.hidden && !m.ref && m.type !== 'audio'); const key = meds.slice(0, 2).map(m => m.id).join('|');
   if (PV.key === key && MEDIA.has('__pvA')) return;
   const a = await loadImg(meds[0] ? meds[0].thumb : synthSample('A')), b = await loadImg(meds[1] ? meds[1].thumb : (meds[0] ? meds[0].thumb : synthSample('B')));
   const mk = (id, img) => MEDIA.set(id, { id, name: id, type: 'image', img, w: img.naturalWidth || 180, h: img.naturalHeight || 320, duration: 0, hidden: true, hasAudio: false });
@@ -4485,7 +4557,7 @@ function recordPick(v) { let p = []; try { p = JSON.parse(localStorage.getItem('
 const VAR_TRANS = { none: 'none', fade: 'fade', punch: 'punch', wipe: 'wipeBlur', slide: 'slideL', card: 'card3d', blur: 'blur' };
 
 async function aiVariantsUI() {
-  const vids = [...MEDIA.values()].filter(m => m.type === 'video'); if (!vids.length) return toast('นำเข้าคลิปวิดีโอก่อน'); if (AI.busy) return;
+  const vids = [...MEDIA.values()].filter(m => m.type === 'video' && !m.ref); if (!vids.length) return toast('นำเข้าคลิปวิดีโอก่อน'); if (AI.busy) return;
   if (!loadKeys().claude) return toast('ต้องใส่ Claude API key ก่อน (⚙ ตั้งค่า)'); AI.busy = true;
   try {
     const lang = $('#aiLang').value, eng = $('#aiEng').value; const clips = [];
@@ -4537,7 +4609,7 @@ function showVariants() {
 //  AI panel + inspector hooks
 // ============================================================
 function renderAiPane() {
-  const box = $('#pane-ai'); if (!box) return; const keep = $('#aiClip') ? $('#aiClip').value : ''; const vids = [...MEDIA.values()].filter(m => m.type === 'video'); const s = costState();
+  const box = $('#pane-ai'); if (!box) return; const keep = $('#aiClip') ? $('#aiClip').value : ''; const vids = [...MEDIA.values()].filter(m => m.type === 'video' && !m.ref); const s = costState();
   box.innerHTML = `<div class="hint">ขั้นตอนแนะนำ: ① ถอดเสียง → ② ราคา → ③ ประโยคเด่น → ④ ตัดช่วงเงียบ/เทคซ้ำ → ⑤ ปรับภาพ หรือกด ⑥ ให้ AI ตัดต่อให้ 4 แบบจากทุกคลิป</div>
   <div class="fld col"><label>คลิปที่ใช้</label><select id="aiClip">${vids.map(m => `<option translate="no" value="${m.id}" ${m.id === keep ? 'selected' : ''}>${esc(m.name)}${getTr(m.id) ? ' ✔' : ''}</option>`).join('') || '<option value="">(ยังไม่มีคลิป)</option>'}</select></div>
   <div class="fld"><label>ภาษาในคลิป</label><select id="aiLang"><option value="lo">ลาว (Gemini)</option><option value="th">ไทย</option></select></div>
@@ -4754,7 +4826,7 @@ function kitClipText() { return KIT.clips.map(c => `${c.id} | ${c.m.name} | ${c.
 const KIT_RULES = 'Rules: use only clip ids above; segment start/end are SOURCE seconds and must align with phrase boundaries (never cut a sentence in half); prefer the best complete take, skip stumbles/repeats/dead air; avoid blurry or dark footage unless it is the only take; keep the speaker\'s voice continuous. Overlay text: "line1" short Lao-script text (2-5 words, wrap the key word in *asterisks*), "line2" optional short Lao detail (translate to Lao if the speech is Thai); leave both empty when the scene needs no text.';
 
 function aiKittiUI() {
-  const vids = [...MEDIA.values()].filter(m => m.type === 'video'); if (!vids.length) return toast('นำเข้าคลิปวิดีโอก่อน');
+  const vids = [...MEDIA.values()].filter(m => m.type === 'video' && !m.ref); if (!vids.length) return toast('นำเข้าคลิปวิดีโอก่อน');
   if (!loadKeys().claude) return toast('ต้องใส่ Claude API key ก่อน (⚙ ตั้งค่า)');
   const hasMus = [...MEDIA.values()].some(m => m.type === 'audio' && !m.builtin);
   aiDlg('ให้ AI ตัดให้ทั้งคลิป', `<div class="hint">① เลือกคลิป → ② AI ดูคลิปแล้วเสนอแนวเรื่อง → ③ ตรวจ storyboard ทีละฉาก → ④ ได้คลิปแนวตั้ง 9:16 ลงไทม์ไลน์ (แก้ต่อได้)</div>
@@ -5034,9 +5106,9 @@ async function foodRun(o) {
 }
 
 function foodUI() {
-  const ms = [...MEDIA.values()].filter(m => (m.type === 'video' || m.type === 'image') && !m.builtin && !m.hidden);
+  const ms = [...MEDIA.values()].filter(m => (m.type === 'video' || m.type === 'image') && !m.builtin && !m.hidden && !m.ref);
   if (!ms.length) return toast('นำเข้าคลิปอาหารก่อน');
-  const mus = [...MEDIA.values()].filter(m => m.type === 'audio' && !m.builtin && !m.hidden), hasKey = !!loadKeys().claude;
+  const mus = [...MEDIA.values()].filter(m => m.type === 'audio' && !m.builtin && !m.hidden && !m.ref), hasKey = !!loadKeys().claude;
   const foodIds = ['cafe', 'food', 'street'], others = PRESETS.filter(p => !foodIds.includes(p.id));
   const opt = p => `<option value="${p.id}" ${p.id === (D.preset || FOOD.preset) ? 'selected' : ''}>${p.ico} ${esc(p.name)}</option>`;
   aiDlg('🍜 โยนฟุตอาหาร → ตัดให้อัตโนมัติ', `<div class="hint">เลือกคลิป → กดปุ่มเดียว → โปรแกรมเลือกช่วงที่สวยที่สุดของแต่ละคลิป ตัดให้สั้น จัดลำดับ ใส่สี/ทรานสิชัน/ซูม และตัดตามจังหวะเพลง แล้วแก้ต่อได้</div>
@@ -5387,7 +5459,7 @@ function anResultsHtml() {
   return `<div class="aicard"><h4>ผลที่วัดได้ (${rows.length} คลิป)</h4><table class="aitbl"><tr><td><b>คลิป</b></td><td><b>ยาว</b></td><td><b>ตัด/10 วิ</b></td><td><b>ตัดช่วง 3 วิแรก</b></td><td><b>เสียง</b></td></tr>${rows.map(a => `<tr><td translate="no">${esc(a.creator || a.name)}</td><td>${a.duration_s}s</td><td>${a.pace.cuts_per_10s}</td><td>${a.pace.cuts_first3s}</td><td>${esc((a.audio || {}).type || '')}</td></tr>`).join('')}</table></div>`;
 }
 function anUI() {
-  const vids = [...MEDIA.values()].filter(m => m.type === 'video' && !m.builtin && !m.hidden), hasKey = !!loadKeys().claude;
+  const vids = [...MEDIA.values()].filter(m => m.type === 'video' && !m.builtin && !m.hidden).sort((a, b) => (b.ref ? 1 : 0) - (a.ref ? 1 : 0)), hasKey = !!loadKeys().claude;
   const refOpts = REFAN.refs.map(r => `<option value="${r.video_id}" translate="no">${esc((r.creator || '') + ' · ' + (r.topic_note || ''))}</option>`).join('');
   const sel = (arr, cls, v) => `<select class="${cls}">${arr.map(([k, l]) => `<option value="${k}" ${k === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
   aiDlg('🔬 วิเคราะห์เทคนิคตัดต่อ (วิดีโออ้างอิง)', `<div class="hint">นำคลิปตัวอย่าง (ที่ดาวน์โหลด/อัดหน้าจอมา) เข้าโปรแกรม แล้วให้โปรแกรมวัดว่าเขาตัดต่ออย่างไร: จังหวะตัด, ฮุกใน 3 วินาทีแรก, ทรานสิชัน, สี, ชนิดเสียง และ (ถ้าเปิด AI) ข้อความบนจอ/โครงเรื่อง เก็บเฉพาะตัวเลขที่วัดได้ ไม่เก็บตัวคลิป</div>
@@ -5477,7 +5549,7 @@ on('doc', () => { poolPrune(); renderTimeline(); dirty(); const n = $('#projName
 
 // ---------- project I/O ----------
 function saveProject() {
-  const data = { app: 'sykhai-editor', version: APP_VERSION, doc: D, media: [...MEDIA.values()].filter(m => !m.builtin && !m.hidden).map(m => ({ id: m.id, name: m.name, type: m.type })) };
+  const data = { app: 'sykhai-editor', version: APP_VERSION, doc: D, media: [...MEDIA.values()].filter(m => !m.builtin && !m.hidden && !m.ref).map(m => ({ id: m.id, name: m.name, type: m.type })) };
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: 'application/json' })); a.download = (D.name || 'project') + '.sykhai.json'; document.body.appendChild(a); a.click(); setTimeout(() => a.remove(), 1000);
   toast('บันทึกโปรเจกต์แล้ว (ไฟล์วิดีโอต้องนำเข้าซ้ำเมื่อเปิดใหม่)');
 }
@@ -5511,7 +5583,7 @@ async function init() {
   window.addEventListener('resize', fitStage); applyAspect();
   buildLeft(); initTimelineEvents(); initPreviewInteraction();
   try { await Promise.race([Promise.all(['800 40px Prompt', '700 40px "Noto Sans Lao"', '700 40px "Noto Sans Thai"'].map(f => document.fonts.load(f, 'กຂaA'))), sleep(4000)]); } catch (e) { }
-  try { const n = await restoreMedia(); if (n) toast(`กู้คืนไฟล์ที่นำเข้าไว้ ${n} ไฟล์`); } catch (e) { console.warn(e); }
+  try { const n = await restoreMedia(); const r = migrateRefs(); if (n - r > 0) toast(`กู้คืนไฟล์ที่นำเข้าไว้ ${n - r} ไฟล์`); setTimeout(upgradeThumbs, 2500); } catch (e) { console.warn(e); }
   // migrate legacy single autosave (<=1.02) into the projects list
   try { const ls = localStorage.getItem('sk_autosave'); if (ls) { const d = JSON.parse(ls); let ok = true; if (d && d.items && d.items.length) { d.pid = d.pid || uid(); d.created = d.created || Date.now(); d.name = d.name || 'โปรเจกต์เดิม'; ok = await projPut(projRec(d)); } if (ok) localStorage.removeItem('sk_autosave'); } } catch (e) { console.warn(e); }
   HIST = []; HPOS = -1; commit('init');

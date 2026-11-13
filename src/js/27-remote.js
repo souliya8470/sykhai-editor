@@ -38,7 +38,7 @@ function xhrPut(path, body, headers, onp) {
 // ----- uploads of source media (sequential queue) -----
 function srvQueueMedia(ids) {
   if (!srvOn()) return;
-  for (const id of ids) { const m = MEDIA.get(id); if (m && m.file && !m.builtin && !m.hidden && !m.proxyOnly && SRV.sizes.get(id) !== m.file.size && !SRV.q.includes(id)) SRV.q.push(id); }
+  for (const id of ids) { const m = MEDIA.get(id); if (m && m.file && !m.builtin && !m.hidden && !m.ref && !m.proxyOnly && SRV.sizes.get(id) !== m.file.size && !SRV.q.includes(id)) SRV.q.push(id); }
   updateSrvBadge(); srvRun();
 }
 async function srvRun() {
@@ -122,12 +122,12 @@ async function srvInboxImport(opts) {
       try {
         const r = await srvFetch('/inbox/' + srvId(f.name)); if (!r.ok) continue;
         const blob = await r.blob(); const file = new File([blob], f.name, { type: blob.type || 'video/mp4' });
-        await importFiles([file], { quiet: true });
+        await importFiles([file], { quiet: true, ref: true });
         if ([...MEDIA.values()].some(m => m.name === f.name)) { await srvFetch('/inbox/' + srvId(f.name), { method: 'DELETE' }); n++; }
       } catch (e) { console.warn('srvInboxImport', e); }
     }
   } finally { _inboxBusy = false; }
-  toast(n ? `ดึงคลิปเข้ามาแล้ว ${n} คลิป` : 'ดึงคลิปจากกล่องรับไม่สำเร็จ', 5000);
+  toast(n ? `ดึงคลิปเข้ามาแล้ว ${n} คลิป (อยู่ในคลังอ้างอิงที่หน้าโปรเจกต์)` : 'ดึงคลิปจากกล่องรับไม่สำเร็จ', 5000); if (n && HOME.open) renderHome();
   return n;
 }
 async function srvInboxAuto() {         // on start-up: desktop pulls new clips by itself, phones only get a hint (mobile data / small screen)
@@ -154,7 +154,7 @@ async function srvGetProxy(id, wait) {            // -> File (mp4) or null. wait
 }
 let _adoptBusy = false, _adoptTimer = 0, _adoptTries = 0;
 function proxyTag() {
-  const vs = [...MEDIA.values()].filter(m => m.type === 'video' && !m.hidden && !m.builtin); if (!vs.length) return '';
+  const vs = [...MEDIA.values()].filter(m => m.type === 'video' && !m.hidden && !m.ref && !m.builtin); if (!vs.length) return '';
   const n = vs.filter(m => m.purl || m.proxyOnly).length;
   return ' · ⚡' + n + '/' + vs.length + (n < vs.length && SRV.adoptNote ? ' (' + SRV.adoptNote + ')' : '');
 }
@@ -163,8 +163,8 @@ async function srvAdoptProxies() {                // phone has big local origina
   if (_adoptBusy) return; if (!srvOn()) { SRV.adoptNote = 'no-server'; return; } if (!IS_PHONE()) { SRV.adoptNote = 'desktop'; return; } _adoptBusy = true; let again = false, n = 0; SRV.adoptNote = '';
   try {
     if (!SRV.up && !(await srvPing())) { SRV.adoptNote = 'offline'; return; } if (!SRV.sizes.size) await srvLoadSizes();
-    const cand = [...MEDIA.values()].filter(m => m.type === 'video' && !m.proxyOnly && !m.purl && !m.builtin && !m.hidden && m.file && SRV.sizes.get(m.id) === m.file.size && Math.max(m.w || 0, m.h || 0) > 1300);
-    if (!cand.length) { const raw = [...MEDIA.values()].filter(m => m.type === 'video' && !m.hidden && !m.builtin && !m.proxyOnly && !m.purl); SRV.adoptNote = raw.length ? (raw.some(m => m.file && SRV.sizes.get(m.id) !== m.file.size) ? 'not-uploaded' : 'small') : ''; return; } await srvLoadProxies(); if (!SRV.px.ffmpeg) again = /download|unpack|checking/.test(SRV.px.note || '');
+    const cand = [...MEDIA.values()].filter(m => m.type === 'video' && !m.proxyOnly && !m.purl && !m.builtin && !m.hidden && !m.ref && m.file && SRV.sizes.get(m.id) === m.file.size && Math.max(m.w || 0, m.h || 0) > 1300);
+    if (!cand.length) { const raw = [...MEDIA.values()].filter(m => m.type === 'video' && !m.hidden && !m.ref && !m.builtin && !m.proxyOnly && !m.purl); SRV.adoptNote = raw.length ? (raw.some(m => m.file && SRV.sizes.get(m.id) !== m.file.size) ? 'not-uploaded' : 'small') : ''; return; } await srvLoadProxies(); if (!SRV.px.ffmpeg) again = /download|unpack|checking/.test(SRV.px.note || '');
     for (const m of cand) {
       if (SRV.px.ready.has(m.id)) { const f = await srvGetProxy(m.id, false); if (f) { m.pfile = f; m.purl = URL.createObjectURL(f); dbPut(m); n++; } else { again = true; SRV.adoptNote = 'download-failed'; } }
       else if (SRV.px.pending.has(m.id)) { again = true; SRV.adoptNote = 'server-busy'; }

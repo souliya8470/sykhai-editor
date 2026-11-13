@@ -14,7 +14,7 @@ function synthSample(kind) {
 }
 function loadImg(src) { return new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(i); i.src = src; }); }
 async function pvSamples() {
-  const meds = [...MEDIA.values()].filter(m => m.thumb && !m.hidden && m.type !== 'audio'); const key = meds.slice(0, 2).map(m => m.id).join('|');
+  const meds = [...MEDIA.values()].filter(m => m.thumb && !m.hidden && !m.ref && m.type !== 'audio'); const key = meds.slice(0, 2).map(m => m.id).join('|');
   if (PV.key === key && MEDIA.has('__pvA')) return;
   const a = await loadImg(meds[0] ? meds[0].thumb : synthSample('A')), b = await loadImg(meds[1] ? meds[1].thumb : (meds[0] ? meds[0].thumb : synthSample('B')));
   const mk = (id, img) => MEDIA.set(id, { id, name: id, type: 'image', img, w: img.naturalWidth || 180, h: img.naturalHeight || 320, duration: 0, hidden: true, hasAudio: false });

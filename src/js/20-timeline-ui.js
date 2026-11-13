@@ -227,7 +227,7 @@ function cmdCloseGaps(track) {
 // ---------- media bin ----------
 let MF = 'all';
 function renderMediaBin() {
-  const box = $('#mediaList'); if (!box) return; const all = [...MEDIA.values()].filter(m => !m.hidden); const arr = all.filter(m => MF === 'all' || m.type === MF);
+  const box = $('#mediaList'); if (!box) return; const all = [...MEDIA.values()].filter(m => !m.hidden && !m.ref); const arr = all.filter(m => MF === 'all' || m.type === MF);
   const mfb = $('#mediaFilter'); if (mfb) {
     mfb.innerHTML = `<div class="chips">` + [['all', 'ทั้งหมด'], ['video', 'วิดีโอ'], ['image', 'รูปภาพ'], ['audio', 'เสียง']].map(([k, l]) => `<button data-mf="${k}" class="${MF === k ? 'on' : ''}">${l}</button>`).join('') + `<span class="sp"></span><span class="mini">${all.length} <span>ไฟล์</span></span></div>`;
     mfb.onclick = e => { const b = e.target.closest('[data-mf]'); if (b) { MF = b.dataset.mf; renderMediaBin(); } };
@@ -252,7 +252,7 @@ async function importFiles(files, opts) {
   for (const f of list) {
     const type = f.type.startsWith('video') || /\.(mov|mp4|m4v|webm)$/i.test(f.name) ? 'video' : f.type.startsWith('image') ? 'image' : f.type.startsWith('audio') || /\.(mp3|wav|m4a|aac|ogg)$/i.test(f.name) ? 'audio' : null;
     if (!type) { toast('ไม่รองรับไฟล์: ' + f.name); continue; }
-    const m = { id: opts.id || f.name + '|' + f.size, name: opts.name || f.name, type, file: f, url: URL.createObjectURL(f), duration: 0, w: 0, h: 0 }; if (opts.proxyOnly) m.proxyOnly = true;
+    const m = { id: opts.id || f.name + '|' + f.size, name: opts.name || f.name, type, file: f, url: URL.createObjectURL(f), duration: 0, w: 0, h: 0 }; if (opts.proxyOnly) m.proxyOnly = true; if (opts.ref) m.ref = true; m.tv = 2;
     try {
       if (type === 'image') {
         const img = new Image(); img.src = m.url; await img.decode(); m.img = img; m.w = img.naturalWidth; m.h = img.naturalHeight; m.thumb = thumbFrom(img, img.naturalWidth, img.naturalHeight);
@@ -270,8 +270,8 @@ async function importFiles(files, opts) {
 }
 function seekTo(el, t) { return new Promise(res => { const done = () => { el.removeEventListener('seeked', done); res(); }; el.addEventListener('seeked', done); try { el.currentTime = t; } catch (e) { res(); } setTimeout(res, 3000); }); }
 function thumbFrom(src, w, h) {
-  const c = document.createElement('canvas'); const k = 160 / Math.max(w, h); c.width = Math.max(2, Math.round(w * k)); c.height = Math.max(2, Math.round(h * k));
-  try { c.getContext('2d').drawImage(src, 0, 0, c.width, c.height); return c.toDataURL('image/jpeg', 0.7); } catch (e) { return ''; }
+  const c = document.createElement('canvas'); const k = Math.min(1, 360 / Math.max(w, h)); c.width = Math.max(2, Math.round(w * k)); c.height = Math.max(2, Math.round(h * k));
+  try { c.getContext('2d').drawImage(src, 0, 0, c.width, c.height); return c.toDataURL('image/jpeg', 0.85); } catch (e) { return ''; }
 }
 
 // ---------- track height drag + volume line drag ----------

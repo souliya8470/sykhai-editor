@@ -166,7 +166,7 @@ function anResultsHtml() {
   return `<div class="aicard"><h4>ผลที่วัดได้ (${rows.length} คลิป)</h4><table class="aitbl"><tr><td><b>คลิป</b></td><td><b>ยาว</b></td><td><b>ตัด/10 วิ</b></td><td><b>ตัดช่วง 3 วิแรก</b></td><td><b>เสียง</b></td></tr>${rows.map(a => `<tr><td translate="no">${esc(a.creator || a.name)}</td><td>${a.duration_s}s</td><td>${a.pace.cuts_per_10s}</td><td>${a.pace.cuts_first3s}</td><td>${esc((a.audio || {}).type || '')}</td></tr>`).join('')}</table></div>`;
 }
 function anUI() {
-  const vids = [...MEDIA.values()].filter(m => m.type === 'video' && !m.builtin && !m.hidden), hasKey = !!loadKeys().claude;
+  const vids = [...MEDIA.values()].filter(m => m.type === 'video' && !m.builtin && !m.hidden).sort((a, b) => (b.ref ? 1 : 0) - (a.ref ? 1 : 0)), hasKey = !!loadKeys().claude;
   const refOpts = REFAN.refs.map(r => `<option value="${r.video_id}" translate="no">${esc((r.creator || '') + ' · ' + (r.topic_note || ''))}</option>`).join('');
   const sel = (arr, cls, v) => `<select class="${cls}">${arr.map(([k, l]) => `<option value="${k}" ${k === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
   aiDlg('🔬 วิเคราะห์เทคนิคตัดต่อ (วิดีโออ้างอิง)', `<div class="hint">นำคลิปตัวอย่าง (ที่ดาวน์โหลด/อัดหน้าจอมา) เข้าโปรแกรม แล้วให้โปรแกรมวัดว่าเขาตัดต่ออย่างไร: จังหวะตัด, ฮุกใน 3 วินาทีแรก, ทรานสิชัน, สี, ชนิดเสียง และ (ถ้าเปิด AI) ข้อความบนจอ/โครงเรื่อง เก็บเฉพาะตัวเลขที่วัดได้ ไม่เก็บตัวคลิป</div>
