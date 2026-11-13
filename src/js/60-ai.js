@@ -267,16 +267,42 @@ async function aiTranslateText(it) {
 // ============================================================
 //  4) silence + retake cutting
 // ============================================================
-function aiSilenceUI() {
+function aiSilenceUI() {   // v1.47 — Dead Air list: every silence listed, listen / delete one / delete the ticked ones
   const m = selMedia(); if (!m || !m.pcm16) return toast('เลือกคลิปที่มีเสียงก่อน');
-  const items = D.items.filter(it => it.type === 'video' && it.mediaId === m.id); if (!items.length) return toast('วางคลิปนี้ในไทม์ไลน์ก่อน');
-  aiDlg('ตัดช่วงเงียบ', `<div class="hint">ตัดช่วงที่ไม่มีเสียงพูดออกและดึงคลิปต่อกัน (ข้อความ/สติกเกอร์เลื่อนตาม)</div>
+  if (!D.items.some(it => it.type === 'video' && it.mediaId === m.id)) return toast('วางคลิปนี้ในไทม์ไลน์ก่อน');
+  aiDlg('ช่วงเงียบ (Dead Air)', `<div class="hint">รายการช่วงที่ไม่มีเสียงพูด · กด ▶ เพื่อฟังรอบช่วงนั้น · กดเวลาเพื่อไปที่ตำแหน่ง · ลบทีละช่วง หรือติ๊กหลายช่วงแล้วลบทีเดียว (ย้อนกลับได้ ⌘Z)</div>
     <div class="fld"><label>เงียบนานกว่า (วิ)</label><input id="sMin" type="range" min=".25" max="1.5" step=".05" value=".5"><output>0.5</output></div>
     <div class="fld"><label>เว้นหัวท้าย (วิ)</label><input id="sPad" type="range" min=".03" max=".4" step=".01" value=".12"><output>0.12</output></div>
-    <div id="sInfo" class="hint"></div><div class="row"><span class="sp"></span><button class="primary" id="sGo">ตัดเลย</button></div>`, root => {
-    const calc = () => { const min = +$('#sMin', root).value, pad = +$('#sPad', root).value; $('#sMin', root).nextElementSibling.textContent = min; $('#sPad', root).nextElementSibling.textContent = pad; const rs = []; items.forEach(it => findSilences(m, it.in, it.in + it.dur * (it.speed || 1), min, pad).forEach(r => rs.push(r))); root._rs = rs; const tot = rs.reduce((a, r) => a + r[1] - r[0], 0); $('#sInfo', root).textContent = `พบช่วงเงียบ ${rs.length} จุด รวม ${tot.toFixed(1)} วินาที`; };
-    root.oninput = calc; calc();
-    $('#sGo', root).onclick = () => { const n = cutSourceRanges(m.id, root._rs || []); commit('silence'); $('#dlgAi').close(); toast(`ตัดแล้ว ${n} จุด`); };
+    <div id="sInfo" class="hint"></div><div id="sList" class="sillist"></div>
+    <div class="row"><button id="sAll">เลือกทั้งหมด</button><button id="sNone">ยกเลิกทั้งหมด</button><span class="sp"></span><button class="primary" id="sGo">ลบที่เลือก</button></div>`, root => {
+    let rows = [], stopT = 0;
+    const stopPlay = () => { clearInterval(stopT); stopT = 0; if (PB.playing || PB.starting) pause(); };
+    const calc = () => {
+      const min = +$('#sMin', root).value, pad = +$('#sPad', root).value; $('#sMin', root).nextElementSibling.textContent = min; $('#sPad', root).nextElementSibling.textContent = pad;
+      const keep = new Set(rows.filter(r => r.on === false).map(r => Math.round(r.x * 100) + ':' + Math.round(r.y * 100)));
+      rows = []; D.items.filter(it => it.type === 'video' && it.mediaId === m.id).forEach(it => { const sp = it.speed || 1; findSilences(m, it.in, it.in + it.dur * sp, min, pad).forEach(([x, y]) => rows.push({ x, y, ta: srcToTimeline(it, x), tb: srcToTimeline(it, y), on: !keep.has(Math.round(x * 100) + ':' + Math.round(y * 100)) })); });
+      rows.sort((p, q) => p.ta - q.ta); draw();
+    };
+    const draw = () => {
+      const tot = rows.reduce((a, r) => a + (r.tb - r.ta), 0), sel = rows.filter(r => r.on);
+      $('#sInfo', root).textContent = rows.length ? `พบ ${rows.length} ช่วง · รวม ${tot.toFixed(1)} วินาที · เลือกแล้ว ${sel.length} ช่วง (${sel.reduce((a, r) => a + (r.tb - r.ta), 0).toFixed(1)} วินาที)` : 'ไม่พบช่วงเงียบตามเงื่อนไขนี้ — ลองลดค่า "เงียบนานกว่า"';
+      $('#sList', root).innerHTML = rows.map((r, i) => `<div class="silrow"><input type="checkbox" data-i="${i}" ${r.on ? 'checked' : ''}><span class="n">${i + 1}</span><button class="silgo" data-go="${i}" title="ไปที่ตำแหน่ง">${fmt(r.ta)}</button><span class="d">${(r.tb - r.ta).toFixed(2)} วินาที</span><span class="sp"></span><button class="silplay" data-play="${i}" title="ฟังช่วงนี้">▶</button><button class="sildel" data-del="${i}" title="ลบช่วงนี้">✂ ลบ</button></div>`).join('');
+      $('#sGo', root).disabled = !sel.length;
+    };
+    const cutRows = rs => { if (!rs.length) return 0; stopPlay(); const n = cutSourceRanges(m.id, rs.map(r => [r.x, r.y])); commit('silence'); return n; };
+    root.oninput = e => { if (e.target.id === 'sMin' || e.target.id === 'sPad') calc(); };
+    root.onchange = e => { const c = e.target.closest('[data-i]'); if (c) { rows[+c.dataset.i].on = c.checked; draw(); } };
+    root.onclick = e => {
+      const g = e.target.closest('[data-go]'), pl = e.target.closest('[data-play]'), dl = e.target.closest('[data-del]');
+      if (g) { stopPlay(); seek(rows[+g.dataset.go].ta); }
+      else if (pl) { const r = rows[+pl.dataset.play]; stopPlay(); const t0 = Math.max(0, r.ta - .7), t1 = r.tb + .7; seek(t0); play(); stopT = setInterval(() => { if ((!PB.playing && !PB.starting) || PB.t >= t1) stopPlay(); }, 40); }
+      else if (dl) { const r = rows[+dl.dataset.del]; const n = cutRows([r]); toast(n ? 'ลบช่วงเงียบแล้ว' : 'ลบไม่ได้'); rows.splice(+dl.dataset.del, 1); calc(); }
+    };
+    $('#sAll', root).onclick = () => { rows.forEach(r => r.on = true); draw(); };
+    $('#sNone', root).onclick = () => { rows.forEach(r => r.on = false); draw(); };
+    $('#sGo', root).onclick = () => { const n = cutRows(rows.filter(r => r.on)); $('#dlgAi').close(); toast(`ตัดแล้ว ${n} จุด`); };
+    $('#dlgAi').addEventListener('close', stopPlay, { once: true });
+    calc();
   });
 }
 async function aiRetakeUI() {

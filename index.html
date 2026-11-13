@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.46</title>
+<title>Sykhai Editor v1.47</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -422,6 +422,11 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
 #dlgCap #capPrev{border-radius:10px;background:#000;width:216px;height:384px}#dlgCap .caplbl{font-size:12px;font-weight:700;margin:10px 0 5px;color:var(--ac)}
 #dlgCap .caplooks{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}#dlgCap .caplook{padding:0;border:1px solid var(--ln);border-radius:8px;overflow:hidden;background:#000;cursor:pointer}
 #dlgCap .caplook.on{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac)}#dlgCap .caplook canvas{display:block;width:100%;height:auto}#dlgCap .caplook span{display:block;padding:3px 5px;font-size:10px;color:#fff;background:#15161a;text-align:left}
+
+#dlgAi .sillist{max-height:42vh;overflow:auto;margin:6px 0;border:1px solid var(--ln);border-radius:8px}
+#dlgAi .silrow{display:flex;align-items:center;gap:8px;padding:5px 8px;border-bottom:1px solid var(--ln);font-size:13px}#dlgAi .silrow:last-child{border-bottom:0}
+#dlgAi .silrow .n{width:22px;color:var(--mut);text-align:right}#dlgAi .silrow .d{color:var(--mut);font-variant-numeric:tabular-nums}#dlgAi .silrow .sp{flex:1}
+#dlgAi .silrow button{padding:3px 9px}#dlgAi .silgo{font-variant-numeric:tabular-nums;min-width:74px}#dlgAi .sildel{color:#ff8a95}
 
 </style></head>
 <body>
@@ -1813,6 +1818,22 @@ I18N_ROWS.push(
   ['✓ ใช้อยู่', '✓ In use', '✓ ໃຊ້ຢູ່'],
   ['ตั้งโมเดลถอดเสียงแล้ว', 'Transcription model set', 'ຕັ້ງໂມເດວຖອດສຽງແລ້ວ'],
   ['ใช้เวลานานเกิน 120 วินาที', 'took longer than 120 seconds', 'ໃຊ້ເວລາດົນເກີນ 120 ວິນາທີ'],
+  ['ช่วงเงียบ (Dead Air)', 'Silent gaps (Dead Air)', 'ຊ່ວງງຽບ (Dead Air)'],
+  ['รายการช่วงที่ไม่มีเสียงพูด · กด ▶ เพื่อฟังรอบช่วงนั้น · กดเวลาเพื่อไปที่ตำแหน่ง · ลบทีละช่วง หรือติ๊กหลายช่วงแล้วลบทีเดียว (ย้อนกลับได้ ⌘Z)', 'List of gaps with no speech · press ▶ to listen around a gap · press the time to jump there · delete one by one, or tick several and delete together (undo with ⌘Z)', 'ລາຍການຊ່ວງທີ່ບໍ່ມີສຽງເວົ້າ · ກົດ ▶ ເພື່ອຟັງອ້ອມຊ່ວງນັ້ນ · ກົດເວລາເພື່ອໄປຕຳແໜ່ງ · ລຶບທີລະຊ່ວງ ຫຼື ຕິກຫຼາຍຊ່ວງແລ້ວລຶບພ້ອມກັນ (ຍ້ອນກັບໄດ້ ⌘Z)'],
+  ['ไปที่ตำแหน่ง', 'Go to position', 'ໄປທີ່ຕຳແໜ່ງ'],
+  ['ฟังช่วงนี้', 'Listen to this gap', 'ຟັງຊ່ວງນີ້'],
+  ['ลบช่วงนี้', 'Delete this gap', 'ລຶບຊ່ວງນີ້'],
+  ['✂ ลบ', '✂ Delete', '✂ ລຶບ'],
+  ['เลือกทั้งหมด', 'Select all', 'ເລືອກທັງໝົດ'],
+  ['ยกเลิกทั้งหมด', 'Select none', 'ຍົກເລີກທັງໝົດ'],
+  ['ลบที่เลือก', 'Delete selected', 'ລຶບທີ່ເລືອກ'],
+  ['พบ ', 'Found ', 'ພົບ '],
+  [' ช่วง · รวม ', ' gaps · total ', ' ຊ່ວງ · ລວມ '],
+  [' ช่วง (', ' (', ' ຊ່ວງ ('],
+  ['เลือกแล้ว ', 'Selected: ', 'ເລືອກແລ້ວ '],
+  ['ไม่พบช่วงเงียบตามเงื่อนไขนี้ — ลองลดค่า "เงียบนานกว่า"', 'No silent gaps with these settings — try lowering "Silence longer than"', 'ບໍ່ພົບຊ່ວງງຽບຕາມເງື່ອນໄຂນີ້ — ລອງຫຼຸດຄ່າ "ງຽບດົນກວ່າ"'],
+  ['ลบช่วงเงียบแล้ว', 'Silent gap deleted', 'ລຶບຊ່ວງງຽບແລ້ວ'],
+  ['ลบไม่ได้', 'Could not delete', 'ລຶບບໍ່ໄດ້'],
 );
 
 // ---- 00-core.js ----
@@ -1820,9 +1841,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.46
-// APP_VERSION_PREV : 1.45
-// APP_VERSION_PREV_OLDER : 1.44
+// APP_VERSION  : 1.47
+// APP_VERSION_PREV : 1.46
+// APP_VERSION_PREV_OLDER : 1.45
+// 1.47 : Dead Air list — the silence dialog now lists every silent gap (timeline time + length): tap the time to jump there, ▶ to listen around it, ✂ to delete that one, tick several and delete them together, select / un-select all; min length and head/tail padding sliders re-build the list; each delete can be undone
 // 1.46 : "Test Gemini" button (AI tab, step 1) — sends the first 20 s of the clip to several Gemini models, shows the answers side by side with the time taken, one tap makes a model the default; transcription now uses the model's own thinking (like the Gemini website) and gemini-3.8-flash first; time-out 120 s
 // 1.45 : Gemini call can no longer hang — 90 s time-out per try, "low thinking" for Gemini 3 models (much faster transcription), the progress box says which model / try it is on
 // 1.44 : Gemini model list refreshed (gemini-2.5-flash is retired for new keys): flash-latest -> 3.8 flash -> 3.7 flash -> 3.5 flash-lite; a retired / unknown model is skipped at once instead of stopping the job
@@ -1870,7 +1892,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.46';
+const APP_VERSION = '1.47';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -5184,16 +5206,42 @@ async function aiTranslateText(it) {
 // ============================================================
 //  4) silence + retake cutting
 // ============================================================
-function aiSilenceUI() {
+function aiSilenceUI() {   // v1.47 — Dead Air list: every silence listed, listen / delete one / delete the ticked ones
   const m = selMedia(); if (!m || !m.pcm16) return toast('เลือกคลิปที่มีเสียงก่อน');
-  const items = D.items.filter(it => it.type === 'video' && it.mediaId === m.id); if (!items.length) return toast('วางคลิปนี้ในไทม์ไลน์ก่อน');
-  aiDlg('ตัดช่วงเงียบ', `<div class="hint">ตัดช่วงที่ไม่มีเสียงพูดออกและดึงคลิปต่อกัน (ข้อความ/สติกเกอร์เลื่อนตาม)</div>
+  if (!D.items.some(it => it.type === 'video' && it.mediaId === m.id)) return toast('วางคลิปนี้ในไทม์ไลน์ก่อน');
+  aiDlg('ช่วงเงียบ (Dead Air)', `<div class="hint">รายการช่วงที่ไม่มีเสียงพูด · กด ▶ เพื่อฟังรอบช่วงนั้น · กดเวลาเพื่อไปที่ตำแหน่ง · ลบทีละช่วง หรือติ๊กหลายช่วงแล้วลบทีเดียว (ย้อนกลับได้ ⌘Z)</div>
     <div class="fld"><label>เงียบนานกว่า (วิ)</label><input id="sMin" type="range" min=".25" max="1.5" step=".05" value=".5"><output>0.5</output></div>
     <div class="fld"><label>เว้นหัวท้าย (วิ)</label><input id="sPad" type="range" min=".03" max=".4" step=".01" value=".12"><output>0.12</output></div>
-    <div id="sInfo" class="hint"></div><div class="row"><span class="sp"></span><button class="primary" id="sGo">ตัดเลย</button></div>`, root => {
-    const calc = () => { const min = +$('#sMin', root).value, pad = +$('#sPad', root).value; $('#sMin', root).nextElementSibling.textContent = min; $('#sPad', root).nextElementSibling.textContent = pad; const rs = []; items.forEach(it => findSilences(m, it.in, it.in + it.dur * (it.speed || 1), min, pad).forEach(r => rs.push(r))); root._rs = rs; const tot = rs.reduce((a, r) => a + r[1] - r[0], 0); $('#sInfo', root).textContent = `พบช่วงเงียบ ${rs.length} จุด รวม ${tot.toFixed(1)} วินาที`; };
-    root.oninput = calc; calc();
-    $('#sGo', root).onclick = () => { const n = cutSourceRanges(m.id, root._rs || []); commit('silence'); $('#dlgAi').close(); toast(`ตัดแล้ว ${n} จุด`); };
+    <div id="sInfo" class="hint"></div><div id="sList" class="sillist"></div>
+    <div class="row"><button id="sAll">เลือกทั้งหมด</button><button id="sNone">ยกเลิกทั้งหมด</button><span class="sp"></span><button class="primary" id="sGo">ลบที่เลือก</button></div>`, root => {
+    let rows = [], stopT = 0;
+    const stopPlay = () => { clearInterval(stopT); stopT = 0; if (PB.playing || PB.starting) pause(); };
+    const calc = () => {
+      const min = +$('#sMin', root).value, pad = +$('#sPad', root).value; $('#sMin', root).nextElementSibling.textContent = min; $('#sPad', root).nextElementSibling.textContent = pad;
+      const keep = new Set(rows.filter(r => r.on === false).map(r => Math.round(r.x * 100) + ':' + Math.round(r.y * 100)));
+      rows = []; D.items.filter(it => it.type === 'video' && it.mediaId === m.id).forEach(it => { const sp = it.speed || 1; findSilences(m, it.in, it.in + it.dur * sp, min, pad).forEach(([x, y]) => rows.push({ x, y, ta: srcToTimeline(it, x), tb: srcToTimeline(it, y), on: !keep.has(Math.round(x * 100) + ':' + Math.round(y * 100)) })); });
+      rows.sort((p, q) => p.ta - q.ta); draw();
+    };
+    const draw = () => {
+      const tot = rows.reduce((a, r) => a + (r.tb - r.ta), 0), sel = rows.filter(r => r.on);
+      $('#sInfo', root).textContent = rows.length ? `พบ ${rows.length} ช่วง · รวม ${tot.toFixed(1)} วินาที · เลือกแล้ว ${sel.length} ช่วง (${sel.reduce((a, r) => a + (r.tb - r.ta), 0).toFixed(1)} วินาที)` : 'ไม่พบช่วงเงียบตามเงื่อนไขนี้ — ลองลดค่า "เงียบนานกว่า"';
+      $('#sList', root).innerHTML = rows.map((r, i) => `<div class="silrow"><input type="checkbox" data-i="${i}" ${r.on ? 'checked' : ''}><span class="n">${i + 1}</span><button class="silgo" data-go="${i}" title="ไปที่ตำแหน่ง">${fmt(r.ta)}</button><span class="d">${(r.tb - r.ta).toFixed(2)} วินาที</span><span class="sp"></span><button class="silplay" data-play="${i}" title="ฟังช่วงนี้">▶</button><button class="sildel" data-del="${i}" title="ลบช่วงนี้">✂ ลบ</button></div>`).join('');
+      $('#sGo', root).disabled = !sel.length;
+    };
+    const cutRows = rs => { if (!rs.length) return 0; stopPlay(); const n = cutSourceRanges(m.id, rs.map(r => [r.x, r.y])); commit('silence'); return n; };
+    root.oninput = e => { if (e.target.id === 'sMin' || e.target.id === 'sPad') calc(); };
+    root.onchange = e => { const c = e.target.closest('[data-i]'); if (c) { rows[+c.dataset.i].on = c.checked; draw(); } };
+    root.onclick = e => {
+      const g = e.target.closest('[data-go]'), pl = e.target.closest('[data-play]'), dl = e.target.closest('[data-del]');
+      if (g) { stopPlay(); seek(rows[+g.dataset.go].ta); }
+      else if (pl) { const r = rows[+pl.dataset.play]; stopPlay(); const t0 = Math.max(0, r.ta - .7), t1 = r.tb + .7; seek(t0); play(); stopT = setInterval(() => { if ((!PB.playing && !PB.starting) || PB.t >= t1) stopPlay(); }, 40); }
+      else if (dl) { const r = rows[+dl.dataset.del]; const n = cutRows([r]); toast(n ? 'ลบช่วงเงียบแล้ว' : 'ลบไม่ได้'); rows.splice(+dl.dataset.del, 1); calc(); }
+    };
+    $('#sAll', root).onclick = () => { rows.forEach(r => r.on = true); draw(); };
+    $('#sNone', root).onclick = () => { rows.forEach(r => r.on = false); draw(); };
+    $('#sGo', root).onclick = () => { const n = cutRows(rows.filter(r => r.on)); $('#dlgAi').close(); toast(`ตัดแล้ว ${n} จุด`); };
+    $('#dlgAi').addEventListener('close', stopPlay, { once: true });
+    calc();
   });
 }
 async function aiRetakeUI() {

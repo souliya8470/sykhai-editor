@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.46
-// APP_VERSION_PREV : 1.45
-// APP_VERSION_PREV_OLDER : 1.44
+// APP_VERSION  : 1.47
+// APP_VERSION_PREV : 1.46
+// APP_VERSION_PREV_OLDER : 1.45
+// 1.47 : Dead Air list — the silence dialog now lists every silent gap (timeline time + length): tap the time to jump there, ▶ to listen around it, ✂ to delete that one, tick several and delete them together, select / un-select all; min length and head/tail padding sliders re-build the list; each delete can be undone
 // 1.46 : "Test Gemini" button (AI tab, step 1) — sends the first 20 s of the clip to several Gemini models, shows the answers side by side with the time taken, one tap makes a model the default; transcription now uses the model's own thinking (like the Gemini website) and gemini-3.8-flash first; time-out 120 s
 // 1.45 : Gemini call can no longer hang — 90 s time-out per try, "low thinking" for Gemini 3 models (much faster transcription), the progress box says which model / try it is on
 // 1.44 : Gemini model list refreshed (gemini-2.5-flash is retired for new keys): flash-latest -> 3.8 flash -> 3.7 flash -> 3.5 flash-lite; a retired / unknown model is skipped at once instead of stopping the job
@@ -52,7 +53,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.46';
+const APP_VERSION = '1.47';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
