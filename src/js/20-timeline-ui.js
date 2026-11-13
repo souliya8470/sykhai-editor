@@ -31,13 +31,15 @@ const TIC = {
 function trIcons(tr) {
   const st = trSt(tr.id), ks = tr.kind === 'video' ? ['lock', 'hide', 'mute'] : tr.kind === 'text' ? ['lock', 'hide'] : ['lock', 'mute'];
   const tip = { lock: ['ล็อกแถวนี้ (กันแก้ไขโดยไม่ตั้งใจ)', 'ปลดล็อกแถวนี้'], hide: ['ซ่อนภาพของแถวนี้', 'แสดงภาพของแถวนี้'], mute: ['ปิดเสียงของแถวนี้', 'เปิดเสียงของแถวนี้'] };
-  return `<div class="tic-row">` + ks.map(k => `<button class="tic${st[k] ? ' on' : ''}" data-tk="${k}" title="${tip[k][st[k] ? 1 : 0]}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${TIC[k][st[k] ? 1 : 0]}</svg></button>`).join('') + `</div>`;
+  const lo = layerOrder(), li = lo.indexOf(tr.id), lm = li < 0 ? '' : `<button class="tic tlm" data-lm="up" ${li >= lo.length - 1 ? 'disabled' : ''} title="${T('ยกชั้นนี้ขึ้นบน')}">▲</button><button class="tic tlm" data-lm="down" ${li <= 0 ? 'disabled' : ''} title="${T('ลดชั้นนี้ลงล่าง')}">▼</button>`;
+  return `<div class="tic-row">` + lm + ks.map(k => `<button class="tic${st[k] ? ' on' : ''}" data-tk="${k}" title="${tip[k][st[k] ? 1 : 0]}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${TIC[k][st[k] ? 1 : 0]}</svg></button>`).join('') + `</div>`;
 }
 function renderTimeline() {
   const body = $('#tlbody'); if (!body) return;
   const sx = body.scrollLeft, sy = body.scrollTop; const W = tlWidth();
   let h = `<div id="tlinner" style="width:${TL.labelW + W}px"><div id="ruler"><div class="corner"></div><div class="rt" style="width:${W}px">${rulerTicks()}${(D.markers || []).map(m => `<i class="mk" data-id="${m.id}" style="left:${m.t * TL.pps}px" title="${T('มาร์กเกอร์ — ดับเบิลคลิกเพื่อลบ')}">⚑</i>`).join('')}</div></div>`;
-  for (const tr of TRACKS) h += `<div class="trow ${tr.kind}${trSt(tr.id).lock ? ' locked' : ''}${trSt(tr.id).hide ? ' hidt' : ''}${trSt(tr.id).mute ? ' mutet' : ''}" data-track="${tr.id}" style="height:${trackH(tr)}px"><div class="tlabel"><div class="tn">${tr.label}</div>${trIcons(tr)}</div><div class="tlane" style="width:${W}px"></div><div class="trh" title="ลากเพื่อปรับความสูงของแถว"></div></div>`;
+  const ROWS = [...layerOrder().slice().reverse().map(id => TRACKS.find(t => t.id === id)).filter(Boolean), ...TRACKS.filter(t => t.kind === 'audio')];   // top lane = top layer
+  for (const tr of ROWS) h += `<div class="trow ${tr.kind}${trSt(tr.id).lock ? ' locked' : ''}${trSt(tr.id).hide ? ' hidt' : ''}${trSt(tr.id).mute ? ' mutet' : ''}" data-track="${tr.id}" style="height:${trackH(tr)}px"><div class="tlabel"><div class="tn">${tr.label}</div>${trIcons(tr)}</div><div class="tlane" style="width:${W}px"></div><div class="trh" title="ลากเพื่อปรับความสูงของแถว"></div></div>`;
   h += `<div id="playhead"><i></i></div></div>`;
   body.innerHTML = h;
   for (const it of D.items) {
@@ -125,6 +127,7 @@ function initTimelineEvents() {
   const body = $('#tlbody');
   body.addEventListener('pointerdown', e => {
     if (e.button !== 0) return;
+    const lmb = e.target.closest('.tlm'); if (lmb) { e.preventDefault(); e.stopPropagation(); if (!lmb.disabled) layerMove(lmb.closest('.trow').dataset.track, lmb.dataset.lm); return; }
     const tkb = e.target.closest('.tic'); if (tkb) { e.preventDefault(); e.stopPropagation(); trToggle(tkb.closest('.trow').dataset.track, tkb.dataset.tk); return; }
     const jn = e.target.closest('.junc'); if (jn) { select(jn.dataset.id); showTab('trans'); return; }
     const trh = e.target.closest('.trh'); if (trh) { e.preventDefault(); rowResizeStart(e, trh.closest('.trow')); return; }

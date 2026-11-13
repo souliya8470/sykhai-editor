@@ -20,7 +20,7 @@ function initPreviewInteraction() {
     const active = () => it && PB.t >= it.start && PB.t < it.start + it.dur && BOUNDS[it.id];
     if (active()) { const b = BOUNDS[it.id], l = toLocal(b, p); if (Math.abs(l.x - b.w / 2) < 14 && Math.abs(l.y - b.h / 2) < 14) mode = 'scale'; else if (Math.hypot(l.x, l.y + b.h / 2 + 26) < 14) mode = 'rot'; }
     if (!mode) {
-      let hit = null; for (let i = RENDER_ORDER.length - 1; i >= 0 && !hit; i--) { const list = activeAt(RENDER_ORDER[i], PB.t); for (let j = list.length - 1; j >= 0; j--) { const o = list[j], b = BOUNDS[o.id]; if (!b) continue; const l = toLocal(b, p); if (Math.abs(l.x) <= b.w / 2 && Math.abs(l.y) <= b.h / 2) { hit = o; break; } } }
+      let hit = null; const LO = layerOrder(); for (let i = LO.length - 1; i >= 0 && !hit; i--) { const list = activeAt(LO[i], PB.t); for (let j = list.length - 1; j >= 0; j--) { const o = list[j], b = BOUNDS[o.id]; if (!b) continue; const l = toLocal(b, p); if (Math.abs(l.x) <= b.w / 2 && Math.abs(l.y) <= b.h / 2) { hit = o; break; } } }
       if (hit) { it = hit; select(hit.id); mode = 'move'; } else { select(null); return; }
     }
     const b0 = { ...BOUNDS[it.id] }; const s0 = prop(it, 's', PB.t), x0 = prop(it, 'x', PB.t), y0 = prop(it, 'y', PB.t), r0 = prop(it, 'r', PB.t); const start = p; const d0 = Math.hypot(p.x - b0.cx, p.y - b0.cy) || 1; const a0 = Math.atan2(p.y - b0.cy, p.x - b0.cx);

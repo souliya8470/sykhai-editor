@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.34
-// APP_VERSION_PREV : 1.33
-// APP_VERSION_PREV_OLDER : 1.32
+// APP_VERSION  : 1.35
+// APP_VERSION_PREV : 1.34
+// APP_VERSION_PREV_OLDER : 1.33
+// 1.35 : layers like CapCut / Photoshop — the timeline now lists the stack top-down (top lane = drawn on top in the preview and the export; before, V1 was listed first but drawn at the bottom); ▲▼ on every video/text lane move that layer up or down the stack (saved per project in D.lorder)
 // 1.34 : the editor now checks the shop-server inbox every minute while open (desktop) and pulls new reference clips into the library by itself — no need to press the 📥 button
 // 1.33 : Home shows only the projects; the reference-video library moved to its own page (one button with the clip count -> library page with back button and a search box), so 100-200 clips no longer crowd the Home page; ref cards show a Thai/Lao tag; N8N pick = top 20 Thai by plays (Lao list has no view counts)
 // 1.32 : per-project media bin — a new project shows only its own media (D.bin = ids imported/added in that project + ids used by its clips); media from other projects live under 📂 older files (re-add with one tap, or delete for good); the × on a bin item removes it from this project only; AI/food/analyzer lists use the project's media only
@@ -40,7 +41,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.34';
+const APP_VERSION = '1.35';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -85,7 +86,13 @@ function trToggle(id, k) {
   if (k === 'lock' && st.lock && SEL) { const it = getItem(SEL); if (it && it.track === id) select(null); }
   commit('track'); if (typeof DIRTY !== 'undefined') DIRTY = true; renderTimeline();
 }
-const RENDER_ORDER = ['V1', 'V2', 'V3', 'T1', 'T2', 'T3'];
+const RENDER_ORDER = ['V1', 'V2', 'V3', 'T1', 'T2', 'T3'];   // default stack, bottom -> top
+// layer stack of the open project, bottom -> top. The timeline shows it top-down (top lane = top layer, like CapCut / Photoshop).
+function layerOrder() { const d = D && D.lorder; return Array.isArray(d) && d.length === RENDER_ORDER.length && RENDER_ORDER.every(x => d.includes(x)) ? d : RENDER_ORDER; }
+function layerMove(id, dir) {            // dir: 'up' = bring toward the top of the stack, 'down' = send toward the bottom
+  const o = layerOrder().slice(), i = o.indexOf(id), j = dir === 'up' ? i + 1 : i - 1; if (i < 0 || j < 0 || j >= o.length) return;
+  [o[i], o[j]] = [o[j], o[i]]; D.lorder = o; commit('track'); if (typeof DIRTY !== 'undefined') DIRTY = true; renderTimeline();
+}
 
 function newDoc() { return { pid: uid(), created: Date.now(), name: T('โปรเจกต์ใหม่'), w: 1080, h: 1920, fps: 30, items: [], markers: [], duckLevel: 0.22, ver: 1, bin: [] }; }
 let D = newDoc();

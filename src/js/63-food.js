@@ -80,10 +80,11 @@ async function bestWindow(m, want) {
 }
 
 // ---------- C) AI: shot order + hook (optional) ----------
-async function foodAiPlan(shots, brief) {
-  const content = [{ type: 'text', text: `You edit a short vertical (9:16) video for a Lao food/cafe/restaurant business from the shots below (one best moment per clip, one frame each). ${brief ? 'Owner note: ' + brief + '\n' : ''}Order the shots like a good café/food reel: establishing shot (outside / signboard / place) -> menu & detail close-ups -> making process (pouring, cooking, hands) -> the hero shot (best-looking dish or drink) last or second to last; a person talking to camera goes first or last. If two shots are near duplicates or clearly poor (blurry, dark, accidental), put their ids in "skip" (at most ${Math.floor(shots.length / 4)} ids). Also write ONE short hook line for the first seconds: Lao script (not Thai), 2-5 words, wrap the key word in *asterisks*. Return ONLY JSON: {"order":["s1","s2"],"skip":[],"hook":""}` }];
+const PRODUCT_AI = (shots, brief) => `You edit a short vertical (9:16) SALES video for a Lao online shop that sells cosmetics / skincare / health supplements, from the shots below (one best moment per clip, one frame each). ${brief ? 'Product / owner note: ' + brief + '\n' : ''}Order the shots like a good product reel: attention-grabbing opener (a person talking to camera, or the most striking visual) -> product reveal (package, label, held in hand) -> detail shots (texture, swatch, ingredients, close-ups) -> using it / application / demo -> result or proof -> the product hero shot last. If two shots are near duplicates or clearly poor (blurry, dark, accidental, a competitor's brand), put their ids in "skip" (at most ${Math.floor(shots.length / 4)} ids). Also write ONE short hook line for the first seconds: Lao script (not Thai), 2-5 words, wrap the key word in *asterisks*. Hard rules for the hook: no medical or cure claims, no guaranteed results, no before/after health promises, no fake numbers. Return ONLY JSON: {"order":["s1","s2"],"skip":[],"hook":""}`;
+async function foodAiPlan(shots, brief, mode) {
+  const content = [{ type: 'text', text: mode === 'product' ? PRODUCT_AI(shots, brief) : `You edit a short vertical (9:16) video for a Lao food/cafe/restaurant business from the shots below (one best moment per clip, one frame each). ${brief ? 'Owner note: ' + brief + '\n' : ''}Order the shots like a good café/food reel: establishing shot (outside / signboard / place) -> menu & detail close-ups -> making process (pouring, cooking, hands) -> the hero shot (best-looking dish or drink) last or second to last; a person talking to camera goes first or last. If two shots are near duplicates or clearly poor (blurry, dark, accidental), put their ids in "skip" (at most ${Math.floor(shots.length / 4)} ids). Also write ONE short hook line for the first seconds: Lao script (not Thai), 2-5 words, wrap the key word in *asterisks*. Return ONLY JSON: {"order":["s1","s2"],"skip":[],"hook":""}` }];
   shots.forEach((s, i) => { content.push({ type: 'text', text: `--- s${i + 1} "${s.m.name}" ${s.isImg ? 'photo' : (s.m.duration).toFixed(1) + 's clip'}` }); if (s.b64) content.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: s.b64 } }); });
-  const txt = await claude({ system: 'You are an expert short-form food video editor. Reply with JSON only.', content, max_tokens: 800, label: 'จัดลำดับอาหาร', estUsd: .04, useStyle: true });
+  const txt = await claude({ system: mode === 'product' ? 'You are an expert short-form product-sales video editor for the Lao market. Reply with JSON only.' : 'You are an expert short-form food video editor. Reply with JSON only.', content, max_tokens: 800, label: mode === 'product' ? 'จัดลำดับคลิปสินค้า' : 'จัดลำดับอาหาร', estUsd: .04, useStyle: true });
   const j = parseJsonLoose(txt); const ids = shots.map((_, i) => 's' + (i + 1));
   const order = (j.order || []).filter(x => ids.includes(x)).filter((x, i, a) => a.indexOf(x) === i); ids.forEach(x => { if (!order.includes(x)) order.push(x); });
   const skip = (j.skip || []).filter(x => ids.includes(x)).slice(0, Math.floor(shots.length / 4));
@@ -111,8 +112,10 @@ function foodBuild(shots, o) {
     if (!s.isImg && a + len > s.m.duration - .04) len = Math.max(.5, s.m.duration - .04 - a);
     segs.push({ m: s.m, a, b: a + len, transition: 'none' }); t += len;
   });
-  const v = { name: T('คลิปอาหาร'), segs, overlays: o.hook ? [{ seg: 0, line1: o.hook, line2: '' }] : [] };
-  const doc = buildVariantDoc(v, { style: 'hl', footer: '', music: false }); doc.name = T('คลิปอาหาร');
+  const nm = T(o.mode === 'product' ? 'คลิปสินค้า' : 'คลิปอาหาร'), ov = o.hook ? [{ seg: 0, line1: o.hook, line2: '' }] : [];
+  if (o.cta && o.cta.line1) ov.push({ seg: segs.length - 1, line1: o.cta.line1, line2: o.cta.line2 || '' });
+  const v = { name: nm, segs, overlays: ov };
+  const doc = buildVariantDoc(v, { style: 'hl', footer: '', music: false }); doc.name = nm;
   withDoc(doc, () => {
     const vids = D.items.filter(i => i.track === 'V1');
     const keep = o.music ? .35 : 1; vids.forEach(i => { i.vol = keep; });
@@ -137,7 +140,7 @@ async function foodRun(o) {
     }
     let order = shots.map((_, i) => i), hook = '', aiNote = '';
     if (o.ai && loadKeys().claude) {
-      try { aiProg('AI กำลังจัดลำดับช็อตและคิดข้อความฮุก…', 74); const pl = await foodAiPlan(shots, o.brief); order = pl.order.filter(i => !pl.skip.includes(i)); hook = pl.hook; aiNote = 'ai'; }
+      try { aiProg('AI กำลังจัดลำดับช็อตและคิดข้อความฮุก…', 74); const pl = await foodAiPlan(shots, o.brief, o.mode); order = pl.order.filter(i => !pl.skip.includes(i)); hook = pl.hook; aiNote = 'ai'; }
       catch (e) { if (/งบ/.test(e.message)) throw e; console.warn(e); aiNote = 'fail'; }
     }
     let seq = order.map(i => shots[i]);
@@ -146,10 +149,10 @@ async function foodRun(o) {
     while (seq.length > 3 && seq.length * minPer > o.len * 1.15 && guard++ < 30) { let wi = -1, ws = 9; seq.forEach((s, i) => { if (i && i < seq.length - 1 && s.score < ws) { ws = s.score; wi = i; } }); if (wi < 0) break; seq.splice(wi, 1); }
     aiProg('กำลังตัดต่อ…', 92);
     let beatsTl = null; if (beatOk) { const probe = { type: 'audio', mediaId: mus.id, start: 0, in: 0, dur: o.len * 3, loop: true }; beatsTl = musicBeatsOnTimeline(probe, o.len * 3); }
-    const r = foodBuild(seq, { beats: beatsTl, hook, music: mus ? mus.id : null, preset: o.preset });
-    await projSaveNow(); D = r.doc; SEL = null; commit('food'); emit('sel'); seek(0); AI.busy = false; $('#dlgAi').close();
+    const r = foodBuild(seq, { beats: beatsTl, hook: hook || o.hookManual || '', cta: o.cta, mode: o.mode, music: mus ? mus.id : null, preset: o.preset });
+    await projSaveNow(); D = r.doc; SEL = null; commit(o.mode === 'product' ? 'product' : 'food'); emit('sel'); seek(0); AI.busy = false; $('#dlgAi').close();
     const pn = (PRESETS.find(x => x.id === o.preset) || {}).name || '';
-    toast(`${T('สร้างคลิปอาหารแล้ว')} · ${r.n} ${T('ช็อต')} · ${r.total.toFixed(0)} ${T('วินาที')}${beatOk ? ' · ' + T('ตัดตามบีต') + ' ' + bi.bpm + ' BPM' : (o.beat && mus ? ' · ' + T('จับจังหวะเพลงไม่ได้') : '')} — ${T('กด ↶ ย้อนกลับได้')}${aiNote === 'fail' ? ' · ' + T('AI ไม่ตอบ ใช้ลำดับเดิม') : ''}`, 7000);
+    toast(`${T(o.mode === 'product' ? 'สร้างคลิปสินค้าแล้ว' : 'สร้างคลิปอาหารแล้ว')} · ${r.n} ${T('ช็อต')} · ${r.total.toFixed(0)} ${T('วินาที')}${beatOk ? ' · ' + T('ตัดตามบีต') + ' ' + bi.bpm + ' BPM' : (o.beat && mus ? ' · ' + T('จับจังหวะเพลงไม่ได้') : '')} — ${T('กด ↶ ย้อนกลับได้')}${aiNote === 'fail' ? ' · ' + T('AI ไม่ตอบ ใช้ลำดับเดิม') : ''}`, 7000);
   } catch (e) { aiErr(e); }
 }
 
