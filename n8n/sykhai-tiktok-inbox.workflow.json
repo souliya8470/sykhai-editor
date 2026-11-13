@@ -1,0 +1,285 @@
+{
+ "name": "Sykhai Editor - โหลดคลิป TikTok อ้างอิงเข้า inbox",
+ "nodes": [
+  {
+   "parameters": {},
+   "id": "n1",
+   "name": "กดเริ่มเอง",
+   "type": "n8n-nodes-base.manualTrigger",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "weeks",
+       "triggerAtDay": [
+        1
+       ],
+       "triggerAtHour": 2
+      }
+     ]
+    }
+   },
+   "id": "n2",
+   "name": "ทุกวันจันทร์ ตี 2 (ปิดไว้ก่อน)",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    0,
+    200
+   ],
+   "disabled": true
+  },
+  {
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "a1",
+       "name": "server",
+       "value": "http://localhost:8787",
+       "type": "string"
+      },
+      {
+       "id": "a2",
+       "name": "token",
+       "value": "ใส่รหัสผ่านของเซิร์ฟเวอร์ตัดต่อ (ในไฟล์ token.txt)",
+       "type": "string"
+      },
+      {
+       "id": "a3",
+       "name": "listUrl",
+       "value": "https://raw.githubusercontent.com/souliya8470/sykhai-editor/main/reference/reference-videos.json",
+       "type": "string"
+      }
+     ]
+    },
+    "options": {}
+   },
+   "id": "n3",
+   "name": "ตั้งค่า (แก้ 2 ช่องแรก)",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    260,
+    80
+   ]
+  },
+  {
+   "parameters": {
+    "url": "={{ $json.listUrl }}",
+    "options": {
+     "response": {
+      "response": {
+       "responseFormat": "text"
+      }
+     }
+    }
+   },
+   "id": "n4",
+   "name": "อ่านรายการคลิปจาก GitHub",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    520,
+    80
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "// เลือกคลิปที่จะโหลด — ปรับตัวเลขตรงนี้ได้\nconst PER_LANG = 12;          // คลิปที่ยอดวิวสูงสุดของแต่ละภาษา (ไทย / ลาว)\nconst MIN_PLAYS = 0;          // ตัดคลิปที่ยอดวิวต่ำกว่านี้ (0 = ไม่ตัด)\nconst j = $input.first().json;\nconst raw = typeof j.data === 'string' ? JSON.parse(j.data) : j;\nconst vids = (raw.videos || raw).filter(v => v.video_id && v.url && (v.plays || 0) >= MIN_PLAYS);\nconst picked = [];\nfor (const lang of ['thai', 'lao']) {\n  vids.filter(v => v.language === lang).sort((a, b) => (b.plays || 0) - (a.plays || 0)).slice(0, PER_LANG).forEach(v => picked.push(v));\n}\nreturn picked.map(v => ({ json: { video_id: v.video_id, url: v.url, language: v.language, category: v.category, plays: v.plays, creator: v.creator } }));"
+   },
+   "id": "n5",
+   "name": "เลือกคลิปที่จะโหลด",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    780,
+    80
+   ]
+  },
+  {
+   "parameters": {
+    "batchSize": 1,
+    "options": {}
+   },
+   "id": "n6",
+   "name": "ทีละคลิป",
+   "type": "n8n-nodes-base.splitInBatches",
+   "typeVersion": 3,
+   "position": [
+    1040,
+    80
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{ $('ตั้งค่า (แก้ 2 ช่องแรก)').first().json.server }}/fetch",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "x-token",
+       "value": "={{ $('ตั้งค่า (แก้ 2 ช่องแรก)').first().json.token }}"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ id: $json.video_id, url: $json.url }) }}",
+    "options": {
+     "timeout": 300000,
+     "response": {
+      "response": {
+       "neverError": true
+      }
+     }
+    }
+   },
+   "id": "n7",
+   "name": "สั่งเซิร์ฟเวอร์โหลดคลิป",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1300,
+    160
+   ],
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "amount": "={{ $json.status === 'exists' ? 1 : 20 + Math.floor(Math.random() * 20) }}",
+    "unit": "seconds"
+   },
+   "id": "n8",
+   "name": "พักก่อนคลิปต่อไป",
+   "type": "n8n-nodes-base.wait",
+   "typeVersion": 1.1,
+   "position": [
+    1560,
+    160
+   ],
+   "webhookId": "sykhai-wait-1"
+  },
+  {
+   "parameters": {
+    "jsCode": "// ผลของแต่ละคลิปที่สั่งโหลด (มาจากโหนด \"สั่งเซิร์ฟเวอร์โหลดคลิป\")\nconst items = $('สั่งเซิร์ฟเวอร์โหลดคลิป').all().map(i => i.json);\nconst bad = items.filter(i => !i.ok);\nreturn [{ json: {\n  total: items.length,\n  newlyDownloaded: items.filter(i => i.status === 'downloaded').length,\n  alreadyThere: items.filter(i => i.status === 'exists').length,\n  failed: bad.length,\n  firstErrors: bad.map(b => String(b.error || b.message || JSON.stringify(b)).slice(0, 250)).slice(0, 3)\n} }];"
+   },
+   "id": "n9",
+   "name": "สรุปผล",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1300,
+    -40
+   ]
+  }
+ ],
+ "connections": {
+  "กดเริ่มเอง": {
+   "main": [
+    [
+     {
+      "node": "ตั้งค่า (แก้ 2 ช่องแรก)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "ทุกวันจันทร์ ตี 2 (ปิดไว้ก่อน)": {
+   "main": [
+    [
+     {
+      "node": "ตั้งค่า (แก้ 2 ช่องแรก)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "ตั้งค่า (แก้ 2 ช่องแรก)": {
+   "main": [
+    [
+     {
+      "node": "อ่านรายการคลิปจาก GitHub",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "อ่านรายการคลิปจาก GitHub": {
+   "main": [
+    [
+     {
+      "node": "เลือกคลิปที่จะโหลด",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "เลือกคลิปที่จะโหลด": {
+   "main": [
+    [
+     {
+      "node": "ทีละคลิป",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "ทีละคลิป": {
+   "main": [
+    [
+     {
+      "node": "สรุปผล",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "สั่งเซิร์ฟเวอร์โหลดคลิป",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "สั่งเซิร์ฟเวอร์โหลดคลิป": {
+   "main": [
+    [
+     {
+      "node": "พักก่อนคลิปต่อไป",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "พักก่อนคลิปต่อไป": {
+   "main": [
+    [
+     {
+      "node": "ทีละคลิป",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1"
+ }
+}

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.29</title>
+<title>Sykhai Editor v1.30</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -1515,14 +1515,34 @@ I18N_ROWS.push(
   ['ดึงภาพจากคลิปได้น้อยเกินไป', 'Too few frames could be read from the clip', 'ດຶງພາບຈາກຄລິບໄດ້ໜ້ອຍເກີນໄປ'],
 );
 
+// ---- 00-8-i18n-h.js ----
+'use strict';
+// i18n rows H — v1.30: server inbox (clips fetched by N8N/yt-dlp)   [thai, english, lao]
+I18N_ROWS.push(
+  ['ดึงคลิปจากกล่องรับของเซิร์ฟเวอร์', 'Pull clips from the server inbox', 'ດຶງຄລິບຈາກກ່ອງຮັບຂອງເຊີບເວີ'],
+  ['กำลังตรวจกล่องรับ…', 'Checking the inbox…', 'ກຳລັງກວດກ່ອງຮັບ…'],
+  ['มีคลิปรอ', 'Waiting:', 'ມີຄລິບລໍຖ້າ'],
+  ['กล่องรับว่าง — ยังไม่มีคลิปใหม่', 'Inbox is empty — no new clips yet', 'ກ່ອງຮັບຫວ່າງ — ຍັງບໍ່ມີຄລິບໃໝ່'],
+  ['กล่องรับว่าง', 'Inbox is empty', 'ກ່ອງຮັບຫວ່າງ'],
+  ['เซิร์ฟเวอร์ไม่พร้อม — ตรวจ ⚙ ตั้งค่า', 'Server not ready — check ⚙ Settings', 'ເຊີບເວີບໍ່ພ້ອມ — ກວດ ⚙ ຕັ້ງຄ່າ'],
+  ['เซิร์ฟเวอร์ไม่พร้อม', 'Server not ready', 'ເຊີບເວີບໍ່ພ້ອມ'],
+  ['ยังไม่ได้ตั้งค่าเซิร์ฟเวอร์', 'Server not set up yet', 'ຍັງບໍ່ໄດ້ຕັ້ງຄ່າເຊີບເວີ'],
+  ['กำลังดึงคลิปจากกล่องรับ', 'Pulling clip from the inbox', 'ກຳລັງດຶງຄລິບຈາກກ່ອງຮັບ'],
+  ['ดึงคลิปเข้ามาแล้ว', 'Pulled in', 'ດຶງຄລິບເຂົ້າມາແລ້ວ'],
+  ['ดึงคลิปจากกล่องรับไม่สำเร็จ', 'Could not pull clips from the inbox', 'ດຶງຄລິບຈາກກ່ອງຮັບບໍ່ສຳເລັດ'],
+  ['มีคลิปใหม่', 'New:', 'ມີຄລິບໃໝ່'],
+  ['คลิปรอในกล่องรับ — เปิด 🔬 วิเคราะห์ เพื่อดึงเข้า', 'clips waiting in the inbox — open 🔬 Analyse to pull them in', 'ຄລິບລໍຖ້າໃນກ່ອງຮັບ — ເປີດ 🔬 ວິເຄາະ ເພື່ອດຶງເຂົ້າ'],
+);
+
 // ---- 00-core.js ----
 'use strict';
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.29
-// APP_VERSION_PREV : 1.28
-// APP_VERSION_PREV_OLDER : 1.27
+// APP_VERSION  : 1.30
+// APP_VERSION_PREV : 1.29
+// APP_VERSION_PREV_OLDER : 1.28
+// 1.30 : inbox — the shop server can fetch TikTok reference clips by itself (yt-dlp, asked by N8N) into an inbox folder; the editor pulls them into the media list (🔬 analyzer button + automatic on desktop start-up); imported files move to inbox/done
 // 1.29 : reference-video analyzer (AI tab 🔬) — measures how a sample short video is edited, fully in the browser: shots / cuts per 10 s / cuts in the first 3 s / hard vs soft vs flash vs dip transitions / motion level / colour (brightness, saturation, contrast, warmth) / audio type + BPM; auto-crops static phone-app chrome of screen recordings; optional Claude look at text overlay, hook type and structure; results stored locally and exported as reference-videos.json with the `style` blocks filled in + grouped summary (language/category)
 // 1.28 : food one-tap — 🍜 drop food clips and press one button: local best-moment picker (sharpness/exposure/colour/motion per clip), optional AI shot order + hook text, beat detection of the imported music (local, free) with cuts landing on the beat, picked look applied (grade, short mix transition, slow push zoom); 🎵 beat-snap for an existing timeline; 3 food looks (cafe warm, vivid food, street food); transitions no longer extend a clip past the end of its source
 // 1.27 : style presets tab (9 trend looks: neon big text, flash sale, talking review, soft & clean, cinematic, vintage, before/after, glitch Y2K, dark luxe) — animated preview on the project's own footage, one click applies grade + transitions + zoom + text/subtitle style + sticker bursts (undoable); new glowing condensed/neon-script text styles, glow on text, starburst/rays/grid stickers
@@ -1553,7 +1573,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.29';
+const APP_VERSION = '1.30';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -2947,6 +2967,37 @@ async function srvFetchMissing(ids) {
   }
   toast(n ? `โหลดไฟล์จากเซิร์ฟเวอร์แล้ว ${n} ไฟล์` : 'ไม่พบไฟล์บนเซิร์ฟเวอร์', 4000);
   return n;
+}
+// ----- inbox (v1.30): clips the shop server fetched for us (N8N -> yt-dlp). Pulled into the media list, then moved to inbox/done on the server -----
+SRV.inbox = [];
+async function srvInboxList() {
+  if (!srvOn()) return null; if (!SRV.up && !(await srvPing())) return null;
+  try { const r = await srvFetch('/inbox'); if (!r.ok) return null; SRV.inbox = (await r.json()).filter(x => /\.(mp4|mov|m4v|webm)$/i.test(x.name)); return SRV.inbox; } catch (e) { return null; }
+}
+let _inboxBusy = false;
+async function srvInboxImport(opts) {
+  opts = opts || {}; if (_inboxBusy) return 0;
+  const list = await srvInboxList(); if (!list) { if (!opts.quiet) toast('เซิร์ฟเวอร์ไม่พร้อม — ตรวจ ⚙ ตั้งค่า', 5000); return 0; }
+  if (!list.length) { if (!opts.quiet) toast('กล่องรับว่าง — ยังไม่มีคลิปใหม่', 4000); return 0; }
+  _inboxBusy = true; let n = 0, i = 0;
+  try {
+    for (const f of list) {
+      i++; toast(`กำลังดึงคลิปจากกล่องรับ (${i}/${list.length}) ${f.name}`, 60000);
+      try {
+        const r = await srvFetch('/inbox/' + srvId(f.name)); if (!r.ok) continue;
+        const blob = await r.blob(); const file = new File([blob], f.name, { type: blob.type || 'video/mp4' });
+        await importFiles([file], { quiet: true });
+        if ([...MEDIA.values()].some(m => m.name === f.name)) { await srvFetch('/inbox/' + srvId(f.name), { method: 'DELETE' }); n++; }
+      } catch (e) { console.warn('srvInboxImport', e); }
+    }
+  } finally { _inboxBusy = false; }
+  toast(n ? `ดึงคลิปเข้ามาแล้ว ${n} คลิป` : 'ดึงคลิปจากกล่องรับไม่สำเร็จ', 5000);
+  return n;
+}
+async function srvInboxAuto() {         // on start-up: desktop pulls new clips by itself, phones only get a hint (mobile data / small screen)
+  const list = await srvInboxList(); if (!list || !list.length) return;
+  if (IS_PHONE()) { toast(`มีคลิปใหม่ ${list.length} คลิปรอในกล่องรับ — เปิด 🔬 วิเคราะห์ เพื่อดึงเข้า`, 8000); return; }
+  await srvInboxImport({ quiet: true });
 }
 // ----- proxy copies (v1.19): light 540p copies made by the shop server, used for preview on phones -----
 const IS_PHONE = () => matchMedia('(max-width:820px)').matches || matchMedia('(pointer:coarse)').matches;
@@ -5340,6 +5391,7 @@ function anUI() {
   const refOpts = REFAN.refs.map(r => `<option value="${r.video_id}" translate="no">${esc((r.creator || '') + ' · ' + (r.topic_note || ''))}</option>`).join('');
   const sel = (arr, cls, v) => `<select class="${cls}">${arr.map(([k, l]) => `<option value="${k}" ${k === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
   aiDlg('🔬 วิเคราะห์เทคนิคตัดต่อ (วิดีโออ้างอิง)', `<div class="hint">นำคลิปตัวอย่าง (ที่ดาวน์โหลด/อัดหน้าจอมา) เข้าโปรแกรม แล้วให้โปรแกรมวัดว่าเขาตัดต่ออย่างไร: จังหวะตัด, ฮุกใน 3 วินาทีแรก, ทรานสิชัน, สี, ชนิดเสียง และ (ถ้าเปิด AI) ข้อความบนจอ/โครงเรื่อง เก็บเฉพาะตัวเลขที่วัดได้ ไม่เก็บตัวคลิป</div>
+    <div class="row"><button id="anInbox">📥 ดึงคลิปจากกล่องรับของเซิร์ฟเวอร์</button><span class="mini" id="anInboxN"></span></div>
     <div class="row"><button id="anImp">นำเข้า reference-videos.json</button><span class="mini" id="anImpN">${REFAN.refs.length ? 'มีรายการอ้างอิง ' + REFAN.refs.length + ' รายการ' : 'ยังไม่ได้นำเข้า (ไม่จำเป็น)'}</span><input type="file" id="anFile" accept=".json,application/json" style="display:none"></div>
     ${vids.length ? `<div class="kclips">${vids.map(m => { const mt = anMatch(m), r = mt ? anRefOf(mt) : null, done = REFAN.res[mt || 'name:' + m.name]; return `<div class="kcl" data-m="${m.id}"><label><input type="checkbox" class="anck" ${done ? '' : 'checked'}> <span translate="no">${esc(m.name)}</span> <span class="mini">${fmt(m.duration)}${done ? ' ✔' : ''}</span></label>
       <div class="mini"><select class="anref"><option value="">(ไม่ระบุคลิปอ้างอิง)</option>${refOpts.replace(`value="${mt}"`, `value="${mt}" selected`)}</select> ${sel(AN_LANG, 'anlang', r ? r.language : 'lao')} ${sel(AN_CAT, 'ancat', r ? r.category : 'cosmetics')}</div></div>`; }).join('')}</div>` : '<div class="hint">ยังไม่มีคลิปวิดีโอ — นำเข้าคลิปตัวอย่างที่แท็บ “สื่อ” ก่อน</div>'}
@@ -5347,6 +5399,9 @@ function anUI() {
     <div class="fld chk"><label><input type="checkbox" id="anAi" ${REFAN.opt.ai && hasKey ? 'checked' : ''} ${hasKey ? '' : 'disabled'}> ให้ AI ดูภาพช่วย (ข้อความบนจอ ฮุก โครงเรื่อง) ${hasKey ? '' : '(ต้องใส่ Claude API key ก่อน)'}</label></div>
     <div class="row"><span class="sp"></span><button id="anSum">ดูสรุปเป็นกลุ่ม</button><button id="anDl">ดาวน์โหลดผล (JSON)</button><button class="primary" id="anGo" ${vids.length ? '' : 'disabled'}>เริ่มวิเคราะห์</button></div>${anResultsHtml()}`, root => {
     $('#anImp', root).onclick = () => $('#anFile', root).click();
+    $('#anInbox', root).onclick = async () => { const n = await srvInboxImport(); if (n && !AI.busy) anUI(); };
+    $('#anInboxN', root).textContent = srvOn() ? 'กำลังตรวจกล่องรับ…' : 'ยังไม่ได้ตั้งค่าเซิร์ฟเวอร์';
+    if (srvOn()) srvInboxList().then(l => { const el = $('#anInboxN'); if (el) el.textContent = l ? (l.length ? 'มีคลิปรอ ' + l.length + ' คลิป' : 'กล่องรับว่าง') : 'เซิร์ฟเวอร์ไม่พร้อม'; });
     $('#anFile', root).onchange = async e => { try { const j = JSON.parse(await e.target.files[0].text()); REFAN.refs = (j.videos || j).filter(v => v.video_id); refSave(); toast(`นำเข้าแล้ว ${REFAN.refs.length} รายการ`); anUI(); } catch (er) { toast('ไฟล์ JSON อ่านไม่ได้', 4000); } };
     $('#anDl', root).onclick = anExport;
     $('#anSum', root).onclick = () => { const rows = anRows(); if (!rows.length) return toast('ยังไม่มีผลวิเคราะห์'); const s = anSummary(rows); aiDlg('สรุปเป็นกลุ่ม (ภาษา/หมวด)', s.map(g => `<div class="aicard"><h4 translate="no">${esc(g.group)} · ${g.videos}</h4><table class="aitbl" translate="no">${Object.entries(g).filter(([k]) => k !== 'group').map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(v == null ? '-' : String(v))}</td></tr>`).join('')}</table></div>`).join('') + '<div class="row"><span class="sp"></span><button id="anBack">กลับ</button><button class="primary" id="anDl2">ดาวน์โหลดผล (JSON)</button></div>', r2d => { $('#anBack', r2d).onclick = anUI; $('#anDl2', r2d).onclick = anExport; }); };
@@ -5510,7 +5565,7 @@ async function init() {
     else if (e.key === 'Home') { pause(); seek(0); }
   });
   initSplitters(); initToolbar();
-  initHome(); await showHome(); if (srvOn()) srvPing().then(ok => ok && srvLoadSizes()).then(() => srvAdoptProxies());
+  initHome(); await showHome(); if (srvOn()) srvPing().then(ok => ok && srvLoadSizes()).then(() => srvAdoptProxies()).then(() => srvInboxAuto()).catch(() => { });
   tick();
   window.__ready = true;
 }

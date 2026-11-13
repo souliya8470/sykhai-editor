@@ -104,6 +104,37 @@ async function srvFetchMissing(ids) {
   toast(n ? `โหลดไฟล์จากเซิร์ฟเวอร์แล้ว ${n} ไฟล์` : 'ไม่พบไฟล์บนเซิร์ฟเวอร์', 4000);
   return n;
 }
+// ----- inbox (v1.30): clips the shop server fetched for us (N8N -> yt-dlp). Pulled into the media list, then moved to inbox/done on the server -----
+SRV.inbox = [];
+async function srvInboxList() {
+  if (!srvOn()) return null; if (!SRV.up && !(await srvPing())) return null;
+  try { const r = await srvFetch('/inbox'); if (!r.ok) return null; SRV.inbox = (await r.json()).filter(x => /\.(mp4|mov|m4v|webm)$/i.test(x.name)); return SRV.inbox; } catch (e) { return null; }
+}
+let _inboxBusy = false;
+async function srvInboxImport(opts) {
+  opts = opts || {}; if (_inboxBusy) return 0;
+  const list = await srvInboxList(); if (!list) { if (!opts.quiet) toast('เซิร์ฟเวอร์ไม่พร้อม — ตรวจ ⚙ ตั้งค่า', 5000); return 0; }
+  if (!list.length) { if (!opts.quiet) toast('กล่องรับว่าง — ยังไม่มีคลิปใหม่', 4000); return 0; }
+  _inboxBusy = true; let n = 0, i = 0;
+  try {
+    for (const f of list) {
+      i++; toast(`กำลังดึงคลิปจากกล่องรับ (${i}/${list.length}) ${f.name}`, 60000);
+      try {
+        const r = await srvFetch('/inbox/' + srvId(f.name)); if (!r.ok) continue;
+        const blob = await r.blob(); const file = new File([blob], f.name, { type: blob.type || 'video/mp4' });
+        await importFiles([file], { quiet: true });
+        if ([...MEDIA.values()].some(m => m.name === f.name)) { await srvFetch('/inbox/' + srvId(f.name), { method: 'DELETE' }); n++; }
+      } catch (e) { console.warn('srvInboxImport', e); }
+    }
+  } finally { _inboxBusy = false; }
+  toast(n ? `ดึงคลิปเข้ามาแล้ว ${n} คลิป` : 'ดึงคลิปจากกล่องรับไม่สำเร็จ', 5000);
+  return n;
+}
+async function srvInboxAuto() {         // on start-up: desktop pulls new clips by itself, phones only get a hint (mobile data / small screen)
+  const list = await srvInboxList(); if (!list || !list.length) return;
+  if (IS_PHONE()) { toast(`มีคลิปใหม่ ${list.length} คลิปรอในกล่องรับ — เปิด 🔬 วิเคราะห์ เพื่อดึงเข้า`, 8000); return; }
+  await srvInboxImport({ quiet: true });
+}
 // ----- proxy copies (v1.19): light 540p copies made by the shop server, used for preview on phones -----
 const IS_PHONE = () => matchMedia('(max-width:820px)').matches || matchMedia('(pointer:coarse)').matches;
 SRV.px = { ready: new Set(), pending: new Set(), ffmpeg: null, note: '' };

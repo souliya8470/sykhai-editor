@@ -104,6 +104,72 @@ function pxStatus() {
   return { ffmpeg: !!PX.ff, note: PX.note, ready, pending, failed };
 }
 
+
+// ------------------------------------------------------------
+//  Inbox + downloader (v1.30): N8N (or anything) asks the server to fetch TikTok clips with yt-dlp into <root>/inbox,
+//  and the editor then pulls them into its media list ("ดึงคลิปจากกล่องรับ"). Imported files move to inbox/done.
+//  yt-dlp is found next to ffmpeg in ./tools (downloaded automatically on the first request, Windows only).
+// ------------------------------------------------------------
+const INBOX = path.join(ROOT, 'inbox'), INBOX_DONE = path.join(INBOX, 'done'); fs.mkdirSync(INBOX_DONE, { recursive: true });
+const FETCHED_FILE = path.join(ROOT, 'fetched.json');
+const FT = { yt: null, note: 'not checked', q: [], cur: null, busy: false, log: [] };
+const ftLog = s => { const l = new Date().toISOString().slice(0, 19).replace('T', ' ') + '  ' + s; FT.log.push(l); if (FT.log.length > 60) FT.log.shift(); console.log('fetch: ' + s); };
+const readFetched = () => { try { return JSON.parse(fs.readFileSync(FETCHED_FILE, 'utf8')); } catch (e) { return {}; } };
+const markFetched = (id, rec) => { const f = readFetched(); f[id] = rec; try { fs.writeFileSync(FETCHED_FILE, JSON.stringify(f)); } catch (e) { } };
+function findYtdlp() {
+  for (const c of [process.env.SK_YTDLP, path.join(TOOLS, exeName('yt-dlp')), 'yt-dlp']) {
+    if (!c) continue;
+    const r = spawnSync(c, ['--version'], { timeout: 60000, encoding: 'utf8', windowsHide: true });
+    if (r.status === 0) return { bin: c, version: (r.stdout || '').trim() };
+    FT.note = c + ' ใช้ไม่ได้ (' + (r.error ? r.error.code + ' ' + r.error.message : 'status ' + r.status + ' ' + (r.stderr || '').slice(0, 200)) + ')';
+    if (c !== 'yt-dlp') ftLog(FT.note);
+  }
+  return null;
+}
+async function ensureYtdlp() {
+  if (FT.yt) return FT.yt;
+  FT.yt = findYtdlp(); if (FT.yt) { FT.note = 'ready ' + FT.yt.version; return FT.yt; }
+  if (process.platform !== 'win32' || process.env.SK_NO_YTDLP_DOWNLOAD) throw new Error('ไม่พบ yt-dlp — ติดตั้ง yt-dlp แล้วรีสตาร์ทเซิร์ฟเวอร์');
+  const dst = path.join(TOOLS, 'yt-dlp.exe'), tmp = dst + '.part';
+  if (!fs.existsSync(dst)) {
+    ftLog('ไม่พบ yt-dlp — กำลังดาวน์โหลด yt-dlp.exe (ประมาณ 18 MB ครั้งเดียว)…');
+    const r = await fetch('https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe', { signal: AbortSignal.timeout(180000) });
+    if (!r.ok || !r.body) throw new Error('ดาวน์โหลด yt-dlp ไม่ได้ HTTP ' + r.status);
+    await pipeline(Readable.fromWeb(r.body), fs.createWriteStream(tmp)); fs.renameSync(tmp, dst);
+  }
+  FT.yt = findYtdlp();
+  if (!FT.yt) throw new Error('yt-dlp.exe ถูกดาวน์โหลดแล้วแต่รันไม่ได้ — ' + FT.note + ' · ถ้า Windows/Defender บล็อก ให้กด Unblock ที่ไฟล์ ' + dst + ' หรือเพิ่มโฟลเดอร์ tools ใน Exclusions ของ Windows Security');
+  FT.note = 'ready ' + FT.yt.version; return FT.yt;
+}
+const TT_URL = /^https:\/\/((www|m|vm|vt)\.)?tiktok\.com\/[^\s]+$/i;
+const inboxFile = id => { for (const d of [INBOX, INBOX_DONE]) { try { const hit = fs.readdirSync(d).find(f => f.startsWith(id + '.') && !/\.(part|ytdl)$/i.test(f)); if (hit) return path.join(d, hit); } catch (e) { } } return null; };
+function ftRunOne(job) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const yt = await ensureYtdlp();
+      const args = ['--no-playlist', '--no-warnings', '--no-progress', '--no-mtime', '--restrict-filenames', '--socket-timeout', '30', '--retries', '3', '-f', 'b[ext=mp4]/b', '-o', path.join(INBOX, job.id + '.%(ext)s'), job.url];
+      let err = '', out = '', p; p = spawn(yt.bin, args, { windowsHide: true });
+      const timer = setTimeout(() => { try { p.kill(); } catch (e) { } err += ' (timeout 4 min)'; }, 240000);
+      p.stderr.on('data', d => { if (err.length < 3000) err += d; }); p.stdout.on('data', d => { if (out.length < 3000) out += d; });
+      p.on('error', e => { clearTimeout(timer); reject(new Error('เปิด yt-dlp ไม่ได้: ' + e.message + (e.code === 'EPERM' || e.code === 'EACCES' ? ' — Windows บล็อกไฟล์นี้ (Unblock / Exclusions)' : ''))); });
+      p.on('close', code => {
+        clearTimeout(timer);
+        const f = inboxFile(job.id);
+        if (code === 0 && f && f.startsWith(INBOX + path.sep)) { const st = fs.statSync(f); if (st.size < 20000) { try { fs.unlinkSync(f); } catch (e) { } return reject(new Error('ไฟล์ที่ได้เล็กผิดปกติ (' + st.size + ' bytes)')); } return resolve({ name: path.basename(f), size: st.size }); }
+        reject(new Error('yt-dlp ล้มเหลว (code ' + code + '): ' + (err || out).trim().split('\n').slice(-3).join(' | ').slice(0, 500)));
+      });
+    } catch (e) { reject(e); }
+  });
+}
+async function ftPump() {
+  if (FT.busy) return; FT.busy = true;
+  try { while (FT.q.length) { const job = FT.q.shift(); FT.cur = job.id; try { const r = await ftRunOne(job); markFetched(job.id, { t: Date.now(), name: r.name, url: job.url }); ftLog('โหลดแล้ว ' + r.name + ' (' + Math.round(r.size / 1024) + ' KB)'); job.done(null, r); } catch (e) { ftLog('ล้มเหลว ' + job.id + ': ' + e.message); job.done(e); } FT.cur = null; } }
+  finally { FT.busy = false; FT.cur = null; }
+}
+function ftEnqueue(id, url) {
+  return new Promise((resolve, reject) => { FT.q.push({ id, url, done: (e, r) => e ? reject(e) : resolve(r) }); ftPump(); });
+}
+
 const APP_DIR = path.join(__dirname, 'app'); fs.mkdirSync(APP_DIR, { recursive: true });
 const APP_FILE = path.join(APP_DIR, 'index.html');
 const APP_SRC = process.env.SK_APP_URL || 'https://raw.githubusercontent.com/souliya8470/sykhai-editor/main/index.html';
@@ -121,7 +187,7 @@ async function refreshApp(force) {          // keep a local copy of the editor p
 const sha = s => crypto.createHash('sha1').update(String(s)).digest('hex');
 const safeName = s => String(s).replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 120);
 const fileName = s => String(s).replace(/[\\\/:*?"<>|\x00-\x1f]/g, '_').replace(/^\.+/, '_').slice(0, 150) || 'video';   // keeps Thai/Lao letters
-const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': 'GET,PUT,HEAD,DELETE,OPTIONS', 'Access-Control-Allow-Private-Network': 'true', 'Access-Control-Expose-Headers': 'x-name,x-type,x-size,content-length,content-range', 'Access-Control-Max-Age': '600' };
+const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': 'GET,PUT,POST,HEAD,DELETE,OPTIONS', 'Access-Control-Allow-Private-Network': 'true', 'Access-Control-Expose-Headers': 'x-name,x-type,x-size,content-length,content-range', 'Access-Control-Max-Age': '600' };
 const send = (res, code, body, extra) => { const b = body == null ? '' : (typeof body === 'string' || Buffer.isBuffer(body) ? body : JSON.stringify(body)); res.writeHead(code, Object.assign({ 'Content-Type': typeof body === 'object' && !Buffer.isBuffer(body) ? 'application/json' : 'text/plain; charset=utf-8' }, cors, extra)); res.end(b); };
 const readJson = (req, limit = 80e6) => new Promise((res, rej) => { const c = []; let n = 0; req.on('data', d => { n += d.length; if (n > limit) { rej(new Error('too large')); req.destroy(); } else c.push(d); }); req.on('end', () => { try { res(JSON.parse(Buffer.concat(c).toString('utf8'))); } catch (e) { rej(e); } }); req.on('error', rej); });
 const readMeta = f => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return null; } };
@@ -180,6 +246,26 @@ const server = http.createServer(async (req, res) => {
       if (req.method === 'PUT') { const rec = await readJson(req); if (!rec || rec.id !== id) return send(res, 400, 'bad project'); const old = readMeta(f); if (old && old.updated > rec.updated) return send(res, 409, { error: 'newer on server', updated: old.updated }); fs.writeFileSync(f, JSON.stringify(rec)); return send(res, 200, { ok: true }); }
       if (req.method === 'DELETE') { fs.unlink(f, () => { }); return send(res, 200, { ok: true }); }
       const r = readMeta(f); return r ? send(res, 200, r) : send(res, 404, 'not found');
+    }
+    if (kind === 'fetch') {   // POST {url, id} -> downloads one TikTok clip into inbox/ (waits until finished); GET -> status
+      if (req.method === 'POST') {
+        const b = await readJson(req, 1e5); const url = String(b && b.url || '').trim(); let vid = String(b && b.id || '').trim();
+        if (!vid) { const m = /\/video\/(\d{10,25})/.exec(url); vid = m ? m[1] : ''; }
+        if (!/^[A-Za-z0-9_-]{4,60}$/.test(vid)) return send(res, 400, { ok: false, error: 'bad id' });
+        if (!TT_URL.test(url)) return send(res, 400, { ok: false, error: 'only tiktok.com links are accepted' });
+        const have = inboxFile(vid); if (have) return send(res, 200, { ok: true, status: 'exists', name: path.basename(have), where: path.dirname(have) === INBOX ? 'inbox' : 'done' });
+        if (readFetched()[vid]) return send(res, 200, { ok: true, status: 'exists', name: readFetched()[vid].name, where: 'imported' });
+        try { const r = await ftEnqueue(vid, url); return send(res, 200, { ok: true, status: 'downloaded', name: r.name, size: r.size }); }
+        catch (e) { return send(res, 502, { ok: false, status: 'failed', error: String(e.message || e) }); }
+      }
+      return send(res, 200, { yt: FT.yt ? FT.yt.version : null, note: FT.note, running: FT.cur, queued: FT.q.length, fetched: Object.keys(readFetched()).length, inbox: fs.readdirSync(INBOX).filter(f => f !== 'done').length, log: FT.log.slice(-20) });
+    }
+    if (kind === 'inbox') {   // clips waiting for the editor to import them; DELETE = "imported" -> moves to inbox/done
+      if (!id) { const out = fs.readdirSync(INBOX).filter(f => f !== 'done' && !/\.(part|ytdl)$/i.test(f)).map(f => { const st = fs.statSync(path.join(INBOX, f)); return { name: f, size: st.size, savedAt: st.mtimeMs }; }).filter(x => x.size > 0); return send(res, 200, out); }
+      const fn = fileName(id), f = path.join(INBOX, fn);
+      if (req.method === 'PUT') return saveStream(req, res, f, null, {});
+      if (req.method === 'DELETE') { try { fs.renameSync(f, path.join(INBOX_DONE, fn)); } catch (e) { return send(res, 404, 'not found'); } return send(res, 200, { ok: true }); }
+      return serveFile(req, res, f, fn, /\.mp4$/i.test(fn) ? 'video/mp4' : /\.webm$/i.test(fn) ? 'video/webm' : 'application/octet-stream');
     }
     if (kind === 'out') {   // finished videos — stored under their real file name so you can open them in Explorer
       if (!id) { const out = fs.readdirSync(DIRS.out).filter(f => !f.includes('.part')).map(f => { const st = fs.statSync(path.join(DIRS.out, f)); return { name: f, size: st.size, savedAt: st.mtimeMs }; }); return send(res, 200, out); }
