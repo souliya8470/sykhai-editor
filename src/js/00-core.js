@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.42
-// APP_VERSION_PREV : 1.41
-// APP_VERSION_PREV_OLDER : 1.40
+// APP_VERSION  : 1.43
+// APP_VERSION_PREV : 1.42
+// APP_VERSION_PREV_OLDER : 1.41
+// 1.43 : Gemini "model is busy" (503 / 429) no longer stops the job — it retries 3 times, then tries two other Gemini models before giving up
 // 1.42 : animated auto-captions (like the AutoCaptions plugin) — AI card "Animated captions": pick a look (8), pick one of the 22 text animations, words per caption, position, and the spoken word changes colour (karaoke highlight, current word or keep); live preview; makes one text clip per caption with the highlight timing inside it
 // 1.41 : text animation pack — 22 ready-made animations (fade / float / pop / drop / blur / slide / zoom / spin / typewriter / wave / shine sweep / glow pulse / neon flicker / rainbow / impact / glitch / cinematic / elastic / wipe-write / card flip / line rise / beat pulse) in a gallery pop-up with real moving previews of your own text (✨ button in the Text tab and in the text inspector); units are words / letters / lines (Lao & Thai are split with Intl.Segmenter, prefix vowels stay glued to their consonant), speed and split mode adjustable, colour / stroke / glow of the clip are kept; rendered by the same drawText so the export matches
 // 1.40 : Motion Tween (like Premiere Pro) — cut a clip in 2, set position / size of each part, pick a motion style (8 eases: smooth, slow start/end, linear, burst, overshoot, bounce, elastic) in the Transitions tab (click or drag onto the cut) and the picture glides from part 1 to part 2 by itself, no keyframes; one-click "cut at playhead + tween" button, length slider, animated tile previews, ⤳ marker on the cut; FIX: the AI buttons in the right inspector (✂ cut silences, 🎙 analyse, ✨ enhance, translate) did nothing because the AI object was not reachable from the inspector click handler
@@ -48,7 +49,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.42';
+const APP_VERSION = '1.43';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
