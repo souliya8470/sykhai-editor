@@ -27,6 +27,9 @@ function pvDraw(cv, kind, key, ph) {   // ph 0..1 position inside the loop
     if (kind === 'trans') {
       const A = pvItem('__a', '__pvA', 0, 3), B = pvItem('__b', '__pvB', 1, 2, { transIn: key === 'none' ? null : { type: key, dur: 1 } });
       D = { items: [A, B], duckLevel: .22 }; const t = key === 'none' ? (ph < .5 ? .6 : 1.4) : lerp(.55, 2.15, ph); renderFrame(ctx, W, H, t);
+    } else if (kind === 'tween') {
+      const A = pvItem('__a', '__pvA', 0, 1.8, { xf: { x: -.2, y: .2, s: .5, r: -8, o: 1 } }), B = pvItem('__b', '__pvA', 1.8, 1.8, { tween: { d: 1.1, ease: key } });
+      D = { items: [A, B], duckLevel: .22 }; renderFrame(ctx, W, H, lerp(1.0, 2.7, ph));
     } else if (kind === 'preset') {
       const d = presetPreviewDoc(key); D = d; renderFrame(ctx, W, H, clamp(ph, 0, .99) * d.len);
     } else if (kind === 'anim') {
@@ -44,19 +47,20 @@ async function buildTiles() {
     list.forEach(([key, label]) => {
       const t = document.createElement('div'); t.className = 'tile'; t.draggable = true; t.dataset.key = key; t.dataset.kind = kind;
       t.innerHTML = `<canvas width="${PV.W}" height="${PV.H}"></canvas><span>${esc(label)}</span>`; box.appendChild(t);
-      t.addEventListener('dragstart', e => { DRAG = { kind, key }; e.dataTransfer.setData(kind === 'trans' ? 'text/trans' : 'text/fx', kind + ':' + key); e.dataTransfer.effectAllowed = 'copy'; });
+      t.addEventListener('dragstart', e => { DRAG = { kind, key }; e.dataTransfer.setData(kind === 'trans' || kind === 'tween' ? 'text/trans' : 'text/fx', kind + ':' + key); e.dataTransfer.effectAllowed = 'copy'; });
       t.addEventListener('dragend', () => { DRAG = null; });
-      t.addEventListener('click', () => { const it = getItem(SEL); if (kind === 'trans') applyTransition(it, key); else if (kind === 'fx') applyFxPreset(it, key); else applyMaskPreset(it, key); });
+      t.addEventListener('click', () => { const it = getItem(SEL); if (kind === 'tween') { TWS.ease = key; $$('#tilesTween .tile').forEach(x => x.classList.toggle('on', x === t)); applyTween(it, key); } else if (kind === 'trans') applyTransition(it, key); else if (kind === 'fx') applyFxPreset(it, key); else applyMaskPreset(it, key); });
       t.addEventListener('mouseenter', () => pvStart(t)); t.addEventListener('mouseleave', () => pvStop(t));
     });
   };
   fill('#tilesTrans', 'trans', Object.entries(TRANS).map(([k, v]) => [k, v.label]));
+  fill('#tilesTween', 'tween', EASE_LIST);
   fill('#tilesFx', 'fx', FX_PRESETS.map(p => [p.id, p.label]));
   fill('#tilesMk', 'mk', MK_PRESETS);
   await pvSamples(); pvPosters();
 }
 function pvPosters() {
-  $$('.tile').forEach(t => pvDraw($('canvas', t), t.dataset.kind, t.dataset.key, t.dataset.kind === 'trans' ? .45 : t.dataset.kind === 'preset' ? .22 : t.dataset.kind === 'anim' ? ({ in: .2, out: .9, combo: .3 }[t.dataset.key.split(':')[0]]) : .5));
+  $$('.tile').forEach(t => pvDraw($('canvas', t), t.dataset.kind, t.dataset.key, (t.dataset.kind === 'trans' || t.dataset.kind === 'tween') ? .45 : t.dataset.kind === 'preset' ? .22 : t.dataset.kind === 'anim' ? ({ in: .2, out: .9, combo: .3 }[t.dataset.key.split(':')[0]]) : .5));
 }
 function pvStart(t) {
   pvStop(); const cv = $('canvas', t); const t0 = performance.now(); PV.anim = { t, raf: 0 };

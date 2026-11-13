@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.39</title>
+<title>Sykhai Editor v1.40</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -409,6 +409,8 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
 #ruler .corner{position:sticky}#ruler .corner .lwh{position:absolute;right:-3px;top:0;bottom:-2000px;width:7px;cursor:col-resize;z-index:12}
 #ruler .corner .lwh:hover,body.resizing #ruler .corner .lwh{background:rgba(255,255,255,.25)}
 .hhead .brand .ver{margin-left:8px;font-size:12px;font-weight:400;color:var(--mu)}
+
+.tweencard{margin-bottom:12px;padding:9px;border:1px solid var(--ln);border-radius:10px;background:rgba(255,255,255,.03)}.tweencard h4{margin:0 0 5px;font-size:13px}.tweencard .mini{font-size:11px;color:var(--mut,#9aa);line-height:1.45;margin-bottom:7px}.tweencard .row{margin:6px 0}.tweencard .fld{margin:6px 0}.tweencard #tilesTween{margin-top:8px}.tweencard a{color:var(--ac)}
 
 </style></head>
 <body>
@@ -1667,6 +1669,24 @@ I18N_ROWS.push(
   ['ใส่หน้าปกเป็นเฟรมแรกของวิดีโอ (สั้นมาก ~0.13 วิ) เพื่อให้ Facebook / TikTok ใช้เป็น thumbnail', 'Put the cover as the first frame of the video (very short, ~0.13 s) so Facebook / TikTok use it as the thumbnail', 'ໃສ່ໜ້າປົກເປັນເຟຣມທຳອິດຂອງວິດີໂອ (ສັ້ນຫຼາຍ ~0.13 ວິ) ເພື່ອໃຫ້ Facebook / TikTok ໃຊ້ເປັນ thumbnail'],
   ['กำลังทำหน้าปก…', 'Preparing the cover…', 'ກຳລັງເຮັດໜ້າປົກ…'],
   ['ลากเพื่อปรับความกว้างของช่องชื่อแถว', 'Drag to change the width of the lane-name column', 'ລາກເພື່ອປັບຄວາມກວ້າງຂອງຊ່ອງຊື່ແຖວ'],
+  ['ตัดคลิปเป็น 2 ท่อน → ตั้งตำแหน่ง/ขนาดของแต่ละท่อน → เลือกท่อนหลัง แล้วกดแบบการเคลื่อนที่ด้านล่าง (หรือลากไปวางที่รอยตัด) ภาพจะเคลื่อนจากท่อนแรกไปท่อนหลังเอง ไม่ต้องตั้ง Keyframe', 'Cut the clip in 2 → set the position / size of each part → select the 2nd part, then click a motion style below (or drag it onto the cut). The picture glides from part 1 to part 2 by itself, no keyframes needed', 'ຕັດຄລິບເປັນ 2 ທ່ອນ → ຕັ້ງຕຳແໜ່ງ/ຂະໜາດຂອງແຕ່ລະທ່ອນ → ເລືອກທ່ອນຫຼັງ ແລ້ວກົດແບບການເຄື່ອນທີ່ດ້ານລຸ່ມ (ຫຼື ລາກໄປວາງທີ່ຮອຍຕັດ) ພາບຈະເຄື່ອນຈາກທ່ອນທຳອິດໄປທ່ອນຫຼັງເອງ ບໍ່ຕ້ອງຕັ້ງ Keyframe'],
+  ['ตัดที่หัวอ่าน + ใช้ Motion Tween', 'Cut at playhead + use Motion Tween', 'ຕັດທີ່ເສັ້ນຫຼິ້ນ + ໃຊ້ Motion Tween'],
+  ['ความยาวการเคลื่อน (วิ)', 'Motion length (s)', 'ຄວາມຍາວການເຄື່ອນທີ່ (ວິ)'],
+  ['คลิปนี้มี Motion Tween ที่รอยตัดก่อนหน้า', 'This clip has a Motion Tween on the cut before it', 'ຄລິບນີ້ມີ Motion Tween ທີ່ຮອຍຕັດກ່ອນໜ້າ'],
+  ['ลบ Motion Tween', 'Remove Motion Tween', 'ລຶບ Motion Tween'],
+  ['คลิปที่เลือกยังไม่มี Motion Tween', 'The selected clip has no Motion Tween yet', 'ຄລິບທີ່ເລືອກຍັງບໍ່ມີ Motion Tween'],
+  ['เลือกคลิปท่อนหลังที่อยู่ติดกับท่อนก่อนหน้า', 'Select the later clip that sits right after another clip', 'ເລືອກຄລິບທ່ອນຫຼັງທີ່ຢູ່ຕິດກັບທ່ອນກ່ອນໜ້າ'],
+  ['เลือกคลิปบนไทม์ไลน์ก่อน', 'Select a clip on the timeline first', 'ເລືອກຄລິບເທິງໄທມ໌ໄລນ໌ກ່ອນ'],
+  ['Motion Tween ต้องมีคลิปอยู่ติดก่อนหน้า (ตัดคลิปเป็น 2 ท่อน หรือวางคลิปชิดกัน) แล้วเลือกท่อนหลัง', 'Motion Tween needs a clip right before it (cut the clip in 2 or place clips edge to edge), then select the later one', 'Motion Tween ຕ້ອງມີຄລິບຢູ່ຕິດກ່ອນໜ້າ (ຕັດຄລິບເປັນ 2 ທ່ອນ ຫຼື ວາງຄລິບຊິດກັນ) ແລ້ວເລືອກທ່ອນຫຼັງ'],
+  ['เลือกคลิป แล้วเลื่อนหัวอ่านไปกลางคลิปก่อน', 'Select a clip, then move the playhead into the middle of it', 'ເລືອກຄລິບ ແລ້ວເລື່ອນເສັ້ນຫຼິ້ນໄປກາງຄລິບກ່ອນ'],
+  ['นุ่มต้น-นุ่มท้าย', 'Smooth start & end', 'ນຸ່ມຕົ້ນ-ນຸ່ມທ້າຍ'],
+  ['ชะลอท้าย', 'Slow at the end', 'ຊ້າຕອນທ້າຍ'],
+  ['ออกตัวช้า', 'Slow start', 'ເລີ່ມຊ້າ'],
+  ['ความเร็วคงที่', 'Constant speed', 'ຄວາມໄວຄົງທີ່'],
+  ['พุ่งแล้วค่อยหยุด', 'Burst then settle', 'ພຸ່ງແລ້ວຄ່ອຍໆຢຸດ'],
+  ['เลยแล้วดึงกลับ', 'Overshoot & pull back', 'ເກີນແລ້ວດຶງກັບ'],
+  ['กระดอน', 'Bounce', 'ເດັ້ງ'],
+  ['ยืดหยุ่น (สปริง)', 'Elastic (spring)', 'ຍືດຫຍຸ່ນ (ສະປຣິງ)'],
 );
 
 // ---- 00-core.js ----
@@ -1674,9 +1694,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.39
-// APP_VERSION_PREV : 1.38
-// APP_VERSION_PREV_OLDER : 1.37
+// APP_VERSION  : 1.40
+// APP_VERSION_PREV : 1.39
+// APP_VERSION_PREV_OLDER : 1.38
+// 1.40 : Motion Tween (like Premiere Pro) — cut a clip in 2, set position / size of each part, pick a motion style (8 eases: smooth, slow start/end, linear, burst, overshoot, bounce, elastic) in the Transitions tab (click or drag onto the cut) and the picture glides from part 1 to part 2 by itself, no keyframes; one-click "cut at playhead + tween" button, length slider, animated tile previews, ⤳ marker on the cut; FIX: the AI buttons in the right inspector (✂ cut silences, 🎙 analyse, ✨ enhance, translate) did nothing because the AI object was not reachable from the inspector click handler
 // 1.39 : smoother scrubbing — a low-res frame cache (one picture every ~0.2 s of each clip on the timeline, built quietly in the background while idle) is shown instantly while dragging the playhead / a clip instead of black or a stale frame, the exact frame replaces it when the real seek lands; the timeline lane-name column can be dragged wider/narrower (grip at the right edge of the ruler corner, remembered); the version number is shown on the Home page too
 // 1.38 : the chosen cover is also put in front of the exported video as its first frames (~0.13 s, tick box in the export dialog, on by default) so Facebook / TikTok / players take it as the thumbnail by themselves; the JPG is still downloaded next to the MP4
 // 1.37 : CapCut-style editing feel — magnetic main track (clips glued end to end, others slide while you drag, no overlaps), media dropped from the bin snaps to 00:00 / playhead / clip edges (empty timeline = exactly 0) with a drop line, Cover picker (🖼 pick any frame; saved in the project, project-card picture, JPG downloaded next to the MP4), all controls white + thinner lines (sliders, playhead 1 px, selection), live preview while scrubbing/trimming/moving (one seek in flight, jumps to the latest), ruler with minor ticks and frame counting up to 1200 px/s, empty lanes fold to a thin strip
@@ -1717,7 +1738,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.39';
+const APP_VERSION = '1.40';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -1735,9 +1756,13 @@ const EASE = {
   in: t => t * t * t,
   io: t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,
   back: t => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); },
+  elastic: t => t <= 0 ? 0 : t >= 1 ? 1 : Math.pow(2, -10 * t) * Math.sin((t * 10 - .75) * (2 * Math.PI) / 3) + 1,
+  expo: t => t >= 1 ? 1 : 1 - Math.pow(2, -10 * t),
   bounce: t => { const n = 7.5625, d = 2.75; if (t < 1 / d) return n * t * t; if (t < 2 / d) return n * (t -= 1.5 / d) * t + .75; if (t < 2.5 / d) return n * (t -= 2.25 / d) * t + .9375; return n * (t -= 2.625 / d) * t + .984375; },
 };
 
+// ease choices for Motion Tween [key, label]
+const EASE_LIST = [['io', 'นุ่มต้น-นุ่มท้าย'], ['out', 'ชะลอท้าย'], ['in', 'ออกตัวช้า'], ['lin', 'ความเร็วคงที่'], ['expo', 'พุ่งแล้วค่อยหยุด'], ['back', 'เลยแล้วดึงกลับ'], ['bounce', 'กระดอน'], ['elastic', 'ยืดหยุ่น (สปริง)']];
 const bus = new EventTarget();
 const emit = (n, d) => bus.dispatchEvent(new CustomEvent(n, { detail: d }));
 const on = (n, fn) => bus.addEventListener(n, e => fn(e.detail));
@@ -1797,10 +1822,11 @@ function commit(label) {
 function undo() { if (HPOS > 0) { HPOS--; { const b = D.bin; D = JSON.parse(HIST[HPOS]); if (b) D.bin = b; } if (SEL && !getItem(SEL)) SEL = null; emit('doc', 'undo'); emit('sel'); } }
 function redo() { if (HPOS < HIST.length - 1) { HPOS++; { const b = D.bin; D = JSON.parse(HIST[HPOS]); if (b) D.bin = b; } if (SEL && !getItem(SEL)) SEL = null; emit('doc', 'redo'); emit('sel'); } }
 function select(id) { SEL = id; emit('sel'); }
+bus.addEventListener('doc', twRebuild);
 
 // ---------- keyframes ----------
 const XF0 = () => ({ x: 0, y: 0, s: 1, r: 0, o: 1 });
-function prop(it, k, t) {
+function propRaw(it, k, t) {
   const base = it.xf[k];
   const kf = it.kf && it.kf[k];
   if (!kf || !kf.length) return base;
@@ -1810,6 +1836,31 @@ function prop(it, k, t) {
     if (lt <= kf[i].t) { const a = kf[i - 1], b = kf[i]; const p = (lt - a.t) / Math.max(1e-6, b.t - a.t); return lerp(a.v, b.v, EASE.io(p)); }
   }
   return kf[kf.length - 1].v;
+}
+// v1.40: Motion Tween — B.tween = { d, ease } on the cut between B and the clip right before it (same lane). Around the cut (d/2 before, d/2 after)
+// position / scale / rotation / opacity glide from clip A's pose at its end to clip B's pose at its start, so no keyframes are needed.
+const TW = { recs: [] };
+function twPrev(B) {
+  let best = null; for (const o of D.items) { if (o.track !== B.track || o.id === B.id || o.type === 'audio') continue; if (Math.abs(o.start + o.dur - B.start) <= .06 && o.start < B.start) { if (!best || o.start > best.start) best = o; } }
+  return best;
+}
+function twRebuild() {
+  const recs = [];
+  for (const B of D.items) {
+    if (!B.tween) continue; const A = twPrev(B); if (!A) continue;
+    const half = Math.max(.05, Math.min(B.tween.d || .6, A.dur * 1.8, B.dur * 1.8) / 2), tc = B.start, pa = {}, pb = {};
+    for (const k of ['x', 'y', 's', 'r', 'o']) { pa[k] = propRaw(A, k, A.start + A.dur); pb[k] = propRaw(B, k, B.start); }
+    recs.push({ a: A.id, b: B.id, t0: tc - half, t1: tc + half, pa, pb, ease: EASE[B.tween.ease] ? B.tween.ease : 'io' });
+  }
+  TW.recs = recs;
+}
+function prop(it, k, t) {
+  if (TW.recs.length) {
+    for (const r of TW.recs) {
+      if ((r.a === it.id || r.b === it.id) && t >= r.t0 && t <= r.t1 && k in r.pa) return lerp(r.pa[k], r.pb[k], EASE[r.ease]((t - r.t0) / (r.t1 - r.t0)));
+    }
+  }
+  return propRaw(it, k, t);
 }
 
 // ---------- item factories ----------
@@ -1885,7 +1936,7 @@ function splitItem(id, t) {
   const sp = it.speed || 1;
   b.start = t; b.dur = it.dur - lt; if (it.in != null) b.in = it.in + lt * sp;
   it.dur = lt;
-  b.transIn = null; it.transOut = null;
+  b.transIn = null; b.tween = null; it.transOut = null;
   if (it.kf) { for (const k in it.kf) { b.kf[k] = it.kf[k].map(p => ({ t: p.t - lt, v: p.v })).filter(p => p.t >= 0 || true); } }
   D.items.push(b); return b;
 }
@@ -2463,6 +2514,7 @@ function drawSticker(ctx, it, t, W, H) {
 // ============================================================
 const activeAt = (tr, t) => D.items.filter(i => i.track === tr && t >= i.start - 1e-6 && t < i.start + i.dur - 1e-6).sort((a, b) => a.start - b.start);
 function renderFrame(ctx, W, H, t) {
+  twRebuild();
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.filter = 'none';
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
   for (const tr of layerOrder()) {
@@ -2617,7 +2669,7 @@ function renderTimeline() {
     const lane = $(`.trow[data-track="${tr.id}"] .tlane`, body); const list = itemsOn(tr.id).filter(i => i.type === 'video' || i.type === 'image');
     for (let i = 1; i < list.length; i++) {
       const A = list[i - 1], B = list[i]; if (Math.abs(A.start + A.dur - B.start) > .06 && !(B.transIn && B.start < A.start + A.dur)) continue;
-      const j = document.createElement('div'); j.className = 'junc' + (B.transIn ? ' has' : ''); j.dataset.id = B.id; j.style.left = (B.start * TL.pps) + 'px'; j.textContent = B.transIn ? '⇄' : '+'; j.title = 'ลากทรานสิชัน/เอฟเฟกต์มาวางที่นี่ หรือกดเพื่อเลือก'; lane.appendChild(j);
+      const j = document.createElement('div'); j.className = 'junc' + (B.transIn || B.tween ? ' has' : ''); j.dataset.id = B.id; j.style.left = (B.start * TL.pps) + 'px'; j.textContent = B.tween ? '⤳' : B.transIn ? '⇄' : '+'; j.title = 'ลากทรานสิชัน/เอฟเฟกต์มาวางที่นี่ หรือกดเพื่อเลือก'; lane.appendChild(j);
     }
   }
   body.scrollLeft = sx; body.scrollTop = sy; updatePlayhead();
@@ -2740,7 +2792,7 @@ function initTimelineEvents() {
     showDropMark(null);
     if (DRAG && (e.dataTransfer.types.includes('text/trans') || e.dataTransfer.types.includes('text/fx'))) {
       e.preventDefault(); const tg = dropTarget(e); const d = DRAG; DRAG = null; if (!tg) { toast('ปล่อยตรงรอยต่อหรือบนคลิปวิดีโอ/ภาพ'); return; }
-      select(tg.it.id); if (d.kind === 'trans') applyTransition(tg.it, d.key); else if (d.kind === 'fx') applyFxPreset(tg.it, d.key); else applyMaskPreset(tg.it, d.key); return;
+      select(tg.it.id); if (d.kind === 'tween') applyTween(tg.it, d.key); else if (d.kind === 'trans') applyTransition(tg.it, d.key); else if (d.kind === 'fx') applyFxPreset(tg.it, d.key); else applyMaskPreset(tg.it, d.key); return;
     }
     const id = e.dataTransfer.getData('text/mediaid'); if (!id) return; e.preventDefault();
     const row = e.target.closest('.trow'); addMediaToTimeline(id, row ? row.dataset.track : null, dropStart(e, row ? row.dataset.track : null));
@@ -2751,7 +2803,7 @@ function dropTarget(e) {
   if (!row || LANE(row.dataset.track) !== 'visual') return null;
   const t = dropTimeFromEvent(e); const items = itemsOn(row.dataset.track).filter(i => i.type === 'video' || i.type === 'image');
   const over = items.find(i => t >= i.start && t < i.start + i.dur);
-  if (DRAG && DRAG.kind === 'trans') { let best = null, bd = 20 / TL.pps; for (const it of items) { const d = Math.abs(it.start - t); if (d < bd) { bd = d; best = it; } } if (best) return { it: best, mode: 'cut', row }; }
+  if (DRAG && (DRAG.kind === 'trans' || DRAG.kind === 'tween')) { let best = null, bd = 20 / TL.pps; for (const it of items) { const d = Math.abs(it.start - t); if (d < bd) { bd = d; best = it; } } if (best) return { it: best, mode: 'cut', row }; }
   return over ? { it: over, mode: 'clip', row } : null;
 }
 function showDropMark(tg) {
@@ -3491,7 +3543,10 @@ function buildLeft() {
   setTimeout(ltUpd, 0);
   buildVisualPanes();
   // transitions + effects: animated tiles (hover = preview, drag = drop onto timeline)
-  $('#pane-trans').innerHTML = `<div class="hint">เอาเมาส์ชี้เพื่อดูตัวอย่าง · ลากไปวาง “ตรงรอยต่อระหว่างคลิป” บนไทม์ไลน์ หรือเลือกคลิปแล้วกด</div><div class="tiles" id="tilesTrans"></div>`;
+  $('#pane-trans').innerHTML = `<div class="tweencard"><h4>🎞 Motion Tween</h4><div class="mini">${T('ตัดคลิปเป็น 2 ท่อน → ตั้งตำแหน่ง/ขนาดของแต่ละท่อน → เลือกท่อนหลัง แล้วกดแบบการเคลื่อนที่ด้านล่าง (หรือลากไปวางที่รอยตัด) ภาพจะเคลื่อนจากท่อนแรกไปท่อนหลังเอง ไม่ต้องตั้ง Keyframe')}</div><div class="row"><button id="tweenSplit">✂ ${T('ตัดที่หัวอ่าน + ใช้ Motion Tween')}</button></div><div class="fld"><label>${T('ความยาวการเคลื่อน (วิ)')}</label><input id="tweenDur" type="range" min=".2" max="2" step=".05" value=".6"><output id="tweenDurO">0.60</output></div><div id="tweenInfo" class="mini"></div><div class="tiles" id="tilesTween"></div></div><div class="hint">เอาเมาส์ชี้เพื่อดูตัวอย่าง · ลากไปวาง “ตรงรอยต่อระหว่างคลิป” บนไทม์ไลน์ หรือเลือกคลิปแล้วกด</div><div class="tiles" id="tilesTrans"></div>`;
+  $('#tweenSplit').onclick = tweenSplitHere;
+  $('#tweenDur').oninput = e => { const v = parseFloat(e.target.value); TWS.d = v; $('#tweenDurO').textContent = v.toFixed(2); const it = SEL ? getItem(SEL) : null; if (it && it.tween) { it.tween.d = v; twRebuild(); dirty(); } };
+  $('#tweenDur').onchange = () => { const it = SEL ? getItem(SEL) : null; if (it && it.tween) commit('tween'); };
   $('#pane-fx').innerHTML = `<div class="hint">เอาเมาส์ชี้เพื่อดูตัวอย่าง · ลากไปวางบนคลิป หรือเลือกคลิปแล้วกด (ปรับละเอียดได้ที่แผงขวา)</div><div class="tiles" id="tilesFx"></div><div class="hint" style="margin-top:12px">รูปทรง / กรอบ / ซูม</div><div class="tiles" id="tilesMk"></div>`;
   buildTiles();
   // audio
@@ -3529,6 +3584,7 @@ function addSticker(kind, extra) {
 }
 function applyTransition(it, type, dur) {
   if (!it || (it.type !== 'video' && it.type !== 'image')) { toast('เลือกคลิปวิดีโอ/ภาพบนไทม์ไลน์ก่อน'); return; }
+  it.tween = null;
   const prevExt = it.transIn && it.transIn.ext || 0; const prev = it.transIn && it.transIn.prevId ? getItem(it.transIn.prevId) : null;
   if (prev && prevExt) prev.dur = Math.max(0.1, prev.dur - prevExt);
   if (type === 'none') { it.transIn = null; commit('trans'); return; }
@@ -3538,6 +3594,30 @@ function applyTransition(it, type, dur) {
   if (p2) { p2.dur += dur; it.transIn.ext = dur; it.transIn.prevId = p2.id; }
   commit('trans'); seek(Math.max(0, it.start - 0.4)); play();
   setTimeout(() => { if (PB.t > it.start + dur + 0.4) pause(); }, 1500);
+}
+// ---- Motion Tween (v1.40): glide from the previous clip's pose to this clip's pose across the cut ----
+const TWS = { ease: 'io', d: .6 };
+function applyTween(it, ease, d) {
+  if (!it || it.type === 'audio') { toast('เลือกคลิปบนไทม์ไลน์ก่อน'); return false; }
+  if (it.transIn && it.transIn.ext) { const pv = it.transIn.prevId ? getItem(it.transIn.prevId) : null; if (pv) pv.dur = Math.max(.1, pv.dur - it.transIn.ext); }
+  it.transIn = null;
+  if (!twPrev(it)) { toast('Motion Tween ต้องมีคลิปอยู่ติดก่อนหน้า (ตัดคลิปเป็น 2 ท่อน หรือวางคลิปชิดกัน) แล้วเลือกท่อนหลัง'); return false; }
+  it.tween = { d: d || TWS.d, ease: ease || TWS.ease }; commit('tween'); twRebuild(); renderInspector(); renderTweenInfo();
+  seek(Math.max(0, it.start - it.tween.d / 2 - .3)); play();
+  setTimeout(() => { if (PB.t > it.start + it.tween.d / 2 + .3) pause(); }, 2500);
+  return true;
+}
+function removeTween(it) { if (!it || !it.tween) return; it.tween = null; commit('tween'); twRebuild(); renderTweenInfo(); }
+function tweenSplitHere() {   // cut the selected clip at the playhead, then tween the two halves (the user then moves/zooms the 2nd half in the preview)
+  let it = SEL ? getItem(SEL) : null; const t = PB.t;
+  if (!it || !(t > it.start + .05 && t < it.start + it.dur - .05)) { toast('เลือกคลิป แล้วเลื่อนหัวอ่านไปกลางคลิปก่อน'); return; }
+  const b = splitItem(it.id, t); commit('split'); select(b.id); applyTween(b);
+}
+function renderTweenInfo() {
+  const el = $('#tweenInfo'); if (!el) return; const it = SEL ? getItem(SEL) : null; const has = it && it.tween && twPrev(it);
+  el.innerHTML = has ? `✔ ${T('คลิปนี้มี Motion Tween ที่รอยตัดก่อนหน้า')} · <a href="#" id="tweenDel">${T('ลบ Motion Tween')}</a>` : (it ? T('คลิปที่เลือกยังไม่มี Motion Tween') : T('เลือกคลิปท่อนหลังที่อยู่ติดกับท่อนก่อนหน้า'));
+  const d = $('#tweenDel'); if (d) d.onclick = e => { e.preventDefault(); removeTween(it); };
+  const r = $('#tweenDur'); if (r && it && it.tween) { r.value = it.tween.d; $('#tweenDurO').textContent = (+it.tween.d).toFixed(2); }
 }
 function applyFxPreset(it, k) {
   if (!it || (it.type !== 'video' && it.type !== 'image')) { toast('เลือกคลิปวิดีโอ/ภาพก่อน'); return; }
@@ -3694,7 +3774,7 @@ function bindInspector(it) {
     if (act === 'del') cmdDelete(false); else if (act === 'dup') { const b = duplicateItem(it.id); commit('dup'); select(b.id); }
     else if (act === 'clearmutes') { it.mutes = []; commit('mutes'); renderInspector(); }
     else if (act === 'gaps') cmdCloseGaps('V1');
-    else if (window.AI && AI.inspectorAction) AI.inspectorAction(act, it);
+    else if (typeof AI !== 'undefined' && AI.inspectorAction) AI.inspectorAction(act, it);
   };
 }
 function refreshInspectorValues() {
@@ -3703,7 +3783,7 @@ function refreshInspectorValues() {
   $$('#inspector input[type=range][data-p="vol"],#inspector input[type=range][data-p="fadeIn"],#inspector input[type=range][data-p="fadeOut"]').forEach(el => { if (document.activeElement === el) return; const v = it[el.dataset.p] ?? (el.dataset.p === 'vol' ? 1 : 0); el.value = v; const nv = $('.nv', el.parentNode); if (nv) nv.value = fmtOutEl(nv, v); const rs = $('.rst', el.parentNode); if (rs) rs.classList.toggle('mod', Math.abs(v - parseFloat(rs.dataset.d)) > (parseFloat(el.step) || .01) / 2); });
   $$('#inspector .kfb').forEach(b => b.classList.toggle('on', !!KF_ON(it, b.dataset.kf)));
 }
-on('sel', () => { renderInspector(); renderTimeline(); });
+on('sel', () => { renderInspector(); renderTimeline(); renderTweenInfo(); });
 
 // ---- 32-inspector-cc.js ----
 // ============================================================
@@ -3988,6 +4068,9 @@ function pvDraw(cv, kind, key, ph) {   // ph 0..1 position inside the loop
     if (kind === 'trans') {
       const A = pvItem('__a', '__pvA', 0, 3), B = pvItem('__b', '__pvB', 1, 2, { transIn: key === 'none' ? null : { type: key, dur: 1 } });
       D = { items: [A, B], duckLevel: .22 }; const t = key === 'none' ? (ph < .5 ? .6 : 1.4) : lerp(.55, 2.15, ph); renderFrame(ctx, W, H, t);
+    } else if (kind === 'tween') {
+      const A = pvItem('__a', '__pvA', 0, 1.8, { xf: { x: -.2, y: .2, s: .5, r: -8, o: 1 } }), B = pvItem('__b', '__pvA', 1.8, 1.8, { tween: { d: 1.1, ease: key } });
+      D = { items: [A, B], duckLevel: .22 }; renderFrame(ctx, W, H, lerp(1.0, 2.7, ph));
     } else if (kind === 'preset') {
       const d = presetPreviewDoc(key); D = d; renderFrame(ctx, W, H, clamp(ph, 0, .99) * d.len);
     } else if (kind === 'anim') {
@@ -4005,19 +4088,20 @@ async function buildTiles() {
     list.forEach(([key, label]) => {
       const t = document.createElement('div'); t.className = 'tile'; t.draggable = true; t.dataset.key = key; t.dataset.kind = kind;
       t.innerHTML = `<canvas width="${PV.W}" height="${PV.H}"></canvas><span>${esc(label)}</span>`; box.appendChild(t);
-      t.addEventListener('dragstart', e => { DRAG = { kind, key }; e.dataTransfer.setData(kind === 'trans' ? 'text/trans' : 'text/fx', kind + ':' + key); e.dataTransfer.effectAllowed = 'copy'; });
+      t.addEventListener('dragstart', e => { DRAG = { kind, key }; e.dataTransfer.setData(kind === 'trans' || kind === 'tween' ? 'text/trans' : 'text/fx', kind + ':' + key); e.dataTransfer.effectAllowed = 'copy'; });
       t.addEventListener('dragend', () => { DRAG = null; });
-      t.addEventListener('click', () => { const it = getItem(SEL); if (kind === 'trans') applyTransition(it, key); else if (kind === 'fx') applyFxPreset(it, key); else applyMaskPreset(it, key); });
+      t.addEventListener('click', () => { const it = getItem(SEL); if (kind === 'tween') { TWS.ease = key; $$('#tilesTween .tile').forEach(x => x.classList.toggle('on', x === t)); applyTween(it, key); } else if (kind === 'trans') applyTransition(it, key); else if (kind === 'fx') applyFxPreset(it, key); else applyMaskPreset(it, key); });
       t.addEventListener('mouseenter', () => pvStart(t)); t.addEventListener('mouseleave', () => pvStop(t));
     });
   };
   fill('#tilesTrans', 'trans', Object.entries(TRANS).map(([k, v]) => [k, v.label]));
+  fill('#tilesTween', 'tween', EASE_LIST);
   fill('#tilesFx', 'fx', FX_PRESETS.map(p => [p.id, p.label]));
   fill('#tilesMk', 'mk', MK_PRESETS);
   await pvSamples(); pvPosters();
 }
 function pvPosters() {
-  $$('.tile').forEach(t => pvDraw($('canvas', t), t.dataset.kind, t.dataset.key, t.dataset.kind === 'trans' ? .45 : t.dataset.kind === 'preset' ? .22 : t.dataset.kind === 'anim' ? ({ in: .2, out: .9, combo: .3 }[t.dataset.key.split(':')[0]]) : .5));
+  $$('.tile').forEach(t => pvDraw($('canvas', t), t.dataset.kind, t.dataset.key, (t.dataset.kind === 'trans' || t.dataset.kind === 'tween') ? .45 : t.dataset.kind === 'preset' ? .22 : t.dataset.kind === 'anim' ? ({ in: .2, out: .9, combo: .3 }[t.dataset.key.split(':')[0]]) : .5));
 }
 function pvStart(t) {
   pvStop(); const cv = $('canvas', t); const t0 = performance.now(); PV.anim = { t, raf: 0 };

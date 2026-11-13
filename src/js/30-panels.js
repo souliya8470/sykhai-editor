@@ -45,7 +45,10 @@ function buildLeft() {
   setTimeout(ltUpd, 0);
   buildVisualPanes();
   // transitions + effects: animated tiles (hover = preview, drag = drop onto timeline)
-  $('#pane-trans').innerHTML = `<div class="hint">เอาเมาส์ชี้เพื่อดูตัวอย่าง · ลากไปวาง “ตรงรอยต่อระหว่างคลิป” บนไทม์ไลน์ หรือเลือกคลิปแล้วกด</div><div class="tiles" id="tilesTrans"></div>`;
+  $('#pane-trans').innerHTML = `<div class="tweencard"><h4>🎞 Motion Tween</h4><div class="mini">${T('ตัดคลิปเป็น 2 ท่อน → ตั้งตำแหน่ง/ขนาดของแต่ละท่อน → เลือกท่อนหลัง แล้วกดแบบการเคลื่อนที่ด้านล่าง (หรือลากไปวางที่รอยตัด) ภาพจะเคลื่อนจากท่อนแรกไปท่อนหลังเอง ไม่ต้องตั้ง Keyframe')}</div><div class="row"><button id="tweenSplit">✂ ${T('ตัดที่หัวอ่าน + ใช้ Motion Tween')}</button></div><div class="fld"><label>${T('ความยาวการเคลื่อน (วิ)')}</label><input id="tweenDur" type="range" min=".2" max="2" step=".05" value=".6"><output id="tweenDurO">0.60</output></div><div id="tweenInfo" class="mini"></div><div class="tiles" id="tilesTween"></div></div><div class="hint">เอาเมาส์ชี้เพื่อดูตัวอย่าง · ลากไปวาง “ตรงรอยต่อระหว่างคลิป” บนไทม์ไลน์ หรือเลือกคลิปแล้วกด</div><div class="tiles" id="tilesTrans"></div>`;
+  $('#tweenSplit').onclick = tweenSplitHere;
+  $('#tweenDur').oninput = e => { const v = parseFloat(e.target.value); TWS.d = v; $('#tweenDurO').textContent = v.toFixed(2); const it = SEL ? getItem(SEL) : null; if (it && it.tween) { it.tween.d = v; twRebuild(); dirty(); } };
+  $('#tweenDur').onchange = () => { const it = SEL ? getItem(SEL) : null; if (it && it.tween) commit('tween'); };
   $('#pane-fx').innerHTML = `<div class="hint">เอาเมาส์ชี้เพื่อดูตัวอย่าง · ลากไปวางบนคลิป หรือเลือกคลิปแล้วกด (ปรับละเอียดได้ที่แผงขวา)</div><div class="tiles" id="tilesFx"></div><div class="hint" style="margin-top:12px">รูปทรง / กรอบ / ซูม</div><div class="tiles" id="tilesMk"></div>`;
   buildTiles();
   // audio
@@ -83,6 +86,7 @@ function addSticker(kind, extra) {
 }
 function applyTransition(it, type, dur) {
   if (!it || (it.type !== 'video' && it.type !== 'image')) { toast('เลือกคลิปวิดีโอ/ภาพบนไทม์ไลน์ก่อน'); return; }
+  it.tween = null;
   const prevExt = it.transIn && it.transIn.ext || 0; const prev = it.transIn && it.transIn.prevId ? getItem(it.transIn.prevId) : null;
   if (prev && prevExt) prev.dur = Math.max(0.1, prev.dur - prevExt);
   if (type === 'none') { it.transIn = null; commit('trans'); return; }
@@ -92,6 +96,30 @@ function applyTransition(it, type, dur) {
   if (p2) { p2.dur += dur; it.transIn.ext = dur; it.transIn.prevId = p2.id; }
   commit('trans'); seek(Math.max(0, it.start - 0.4)); play();
   setTimeout(() => { if (PB.t > it.start + dur + 0.4) pause(); }, 1500);
+}
+// ---- Motion Tween (v1.40): glide from the previous clip's pose to this clip's pose across the cut ----
+const TWS = { ease: 'io', d: .6 };
+function applyTween(it, ease, d) {
+  if (!it || it.type === 'audio') { toast('เลือกคลิปบนไทม์ไลน์ก่อน'); return false; }
+  if (it.transIn && it.transIn.ext) { const pv = it.transIn.prevId ? getItem(it.transIn.prevId) : null; if (pv) pv.dur = Math.max(.1, pv.dur - it.transIn.ext); }
+  it.transIn = null;
+  if (!twPrev(it)) { toast('Motion Tween ต้องมีคลิปอยู่ติดก่อนหน้า (ตัดคลิปเป็น 2 ท่อน หรือวางคลิปชิดกัน) แล้วเลือกท่อนหลัง'); return false; }
+  it.tween = { d: d || TWS.d, ease: ease || TWS.ease }; commit('tween'); twRebuild(); renderInspector(); renderTweenInfo();
+  seek(Math.max(0, it.start - it.tween.d / 2 - .3)); play();
+  setTimeout(() => { if (PB.t > it.start + it.tween.d / 2 + .3) pause(); }, 2500);
+  return true;
+}
+function removeTween(it) { if (!it || !it.tween) return; it.tween = null; commit('tween'); twRebuild(); renderTweenInfo(); }
+function tweenSplitHere() {   // cut the selected clip at the playhead, then tween the two halves (the user then moves/zooms the 2nd half in the preview)
+  let it = SEL ? getItem(SEL) : null; const t = PB.t;
+  if (!it || !(t > it.start + .05 && t < it.start + it.dur - .05)) { toast('เลือกคลิป แล้วเลื่อนหัวอ่านไปกลางคลิปก่อน'); return; }
+  const b = splitItem(it.id, t); commit('split'); select(b.id); applyTween(b);
+}
+function renderTweenInfo() {
+  const el = $('#tweenInfo'); if (!el) return; const it = SEL ? getItem(SEL) : null; const has = it && it.tween && twPrev(it);
+  el.innerHTML = has ? `✔ ${T('คลิปนี้มี Motion Tween ที่รอยตัดก่อนหน้า')} · <a href="#" id="tweenDel">${T('ลบ Motion Tween')}</a>` : (it ? T('คลิปที่เลือกยังไม่มี Motion Tween') : T('เลือกคลิปท่อนหลังที่อยู่ติดกับท่อนก่อนหน้า'));
+  const d = $('#tweenDel'); if (d) d.onclick = e => { e.preventDefault(); removeTween(it); };
+  const r = $('#tweenDur'); if (r && it && it.tween) { r.value = it.tween.d; $('#tweenDurO').textContent = (+it.tween.d).toFixed(2); }
 }
 function applyFxPreset(it, k) {
   if (!it || (it.type !== 'video' && it.type !== 'image')) { toast('เลือกคลิปวิดีโอ/ภาพก่อน'); return; }
@@ -248,7 +276,7 @@ function bindInspector(it) {
     if (act === 'del') cmdDelete(false); else if (act === 'dup') { const b = duplicateItem(it.id); commit('dup'); select(b.id); }
     else if (act === 'clearmutes') { it.mutes = []; commit('mutes'); renderInspector(); }
     else if (act === 'gaps') cmdCloseGaps('V1');
-    else if (window.AI && AI.inspectorAction) AI.inspectorAction(act, it);
+    else if (typeof AI !== 'undefined' && AI.inspectorAction) AI.inspectorAction(act, it);
   };
 }
 function refreshInspectorValues() {
@@ -257,4 +285,4 @@ function refreshInspectorValues() {
   $$('#inspector input[type=range][data-p="vol"],#inspector input[type=range][data-p="fadeIn"],#inspector input[type=range][data-p="fadeOut"]').forEach(el => { if (document.activeElement === el) return; const v = it[el.dataset.p] ?? (el.dataset.p === 'vol' ? 1 : 0); el.value = v; const nv = $('.nv', el.parentNode); if (nv) nv.value = fmtOutEl(nv, v); const rs = $('.rst', el.parentNode); if (rs) rs.classList.toggle('mod', Math.abs(v - parseFloat(rs.dataset.d)) > (parseFloat(el.step) || .01) / 2); });
   $$('#inspector .kfb').forEach(b => b.classList.toggle('on', !!KF_ON(it, b.dataset.kf)));
 }
-on('sel', () => { renderInspector(); renderTimeline(); });
+on('sel', () => { renderInspector(); renderTimeline(); renderTweenInfo(); });

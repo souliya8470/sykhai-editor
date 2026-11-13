@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.39
-// APP_VERSION_PREV : 1.38
-// APP_VERSION_PREV_OLDER : 1.37
+// APP_VERSION  : 1.40
+// APP_VERSION_PREV : 1.39
+// APP_VERSION_PREV_OLDER : 1.38
+// 1.40 : Motion Tween (like Premiere Pro) — cut a clip in 2, set position / size of each part, pick a motion style (8 eases: smooth, slow start/end, linear, burst, overshoot, bounce, elastic) in the Transitions tab (click or drag onto the cut) and the picture glides from part 1 to part 2 by itself, no keyframes; one-click "cut at playhead + tween" button, length slider, animated tile previews, ⤳ marker on the cut; FIX: the AI buttons in the right inspector (✂ cut silences, 🎙 analyse, ✨ enhance, translate) did nothing because the AI object was not reachable from the inspector click handler
 // 1.39 : smoother scrubbing — a low-res frame cache (one picture every ~0.2 s of each clip on the timeline, built quietly in the background while idle) is shown instantly while dragging the playhead / a clip instead of black or a stale frame, the exact frame replaces it when the real seek lands; the timeline lane-name column can be dragged wider/narrower (grip at the right edge of the ruler corner, remembered); the version number is shown on the Home page too
 // 1.38 : the chosen cover is also put in front of the exported video as its first frames (~0.13 s, tick box in the export dialog, on by default) so Facebook / TikTok / players take it as the thumbnail by themselves; the JPG is still downloaded next to the MP4
 // 1.37 : CapCut-style editing feel — magnetic main track (clips glued end to end, others slide while you drag, no overlaps), media dropped from the bin snaps to 00:00 / playhead / clip edges (empty timeline = exactly 0) with a drop line, Cover picker (🖼 pick any frame; saved in the project, project-card picture, JPG downloaded next to the MP4), all controls white + thinner lines (sliders, playhead 1 px, selection), live preview while scrubbing/trimming/moving (one seek in flight, jumps to the latest), ruler with minor ticks and frame counting up to 1200 px/s, empty lanes fold to a thin strip
@@ -45,7 +46,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.39';
+const APP_VERSION = '1.40';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -63,9 +64,13 @@ const EASE = {
   in: t => t * t * t,
   io: t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,
   back: t => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); },
+  elastic: t => t <= 0 ? 0 : t >= 1 ? 1 : Math.pow(2, -10 * t) * Math.sin((t * 10 - .75) * (2 * Math.PI) / 3) + 1,
+  expo: t => t >= 1 ? 1 : 1 - Math.pow(2, -10 * t),
   bounce: t => { const n = 7.5625, d = 2.75; if (t < 1 / d) return n * t * t; if (t < 2 / d) return n * (t -= 1.5 / d) * t + .75; if (t < 2.5 / d) return n * (t -= 2.25 / d) * t + .9375; return n * (t -= 2.625 / d) * t + .984375; },
 };
 
+// ease choices for Motion Tween [key, label]
+const EASE_LIST = [['io', 'นุ่มต้น-นุ่มท้าย'], ['out', 'ชะลอท้าย'], ['in', 'ออกตัวช้า'], ['lin', 'ความเร็วคงที่'], ['expo', 'พุ่งแล้วค่อยหยุด'], ['back', 'เลยแล้วดึงกลับ'], ['bounce', 'กระดอน'], ['elastic', 'ยืดหยุ่น (สปริง)']];
 const bus = new EventTarget();
 const emit = (n, d) => bus.dispatchEvent(new CustomEvent(n, { detail: d }));
 const on = (n, fn) => bus.addEventListener(n, e => fn(e.detail));
@@ -125,10 +130,11 @@ function commit(label) {
 function undo() { if (HPOS > 0) { HPOS--; { const b = D.bin; D = JSON.parse(HIST[HPOS]); if (b) D.bin = b; } if (SEL && !getItem(SEL)) SEL = null; emit('doc', 'undo'); emit('sel'); } }
 function redo() { if (HPOS < HIST.length - 1) { HPOS++; { const b = D.bin; D = JSON.parse(HIST[HPOS]); if (b) D.bin = b; } if (SEL && !getItem(SEL)) SEL = null; emit('doc', 'redo'); emit('sel'); } }
 function select(id) { SEL = id; emit('sel'); }
+bus.addEventListener('doc', twRebuild);
 
 // ---------- keyframes ----------
 const XF0 = () => ({ x: 0, y: 0, s: 1, r: 0, o: 1 });
-function prop(it, k, t) {
+function propRaw(it, k, t) {
   const base = it.xf[k];
   const kf = it.kf && it.kf[k];
   if (!kf || !kf.length) return base;
@@ -138,6 +144,31 @@ function prop(it, k, t) {
     if (lt <= kf[i].t) { const a = kf[i - 1], b = kf[i]; const p = (lt - a.t) / Math.max(1e-6, b.t - a.t); return lerp(a.v, b.v, EASE.io(p)); }
   }
   return kf[kf.length - 1].v;
+}
+// v1.40: Motion Tween — B.tween = { d, ease } on the cut between B and the clip right before it (same lane). Around the cut (d/2 before, d/2 after)
+// position / scale / rotation / opacity glide from clip A's pose at its end to clip B's pose at its start, so no keyframes are needed.
+const TW = { recs: [] };
+function twPrev(B) {
+  let best = null; for (const o of D.items) { if (o.track !== B.track || o.id === B.id || o.type === 'audio') continue; if (Math.abs(o.start + o.dur - B.start) <= .06 && o.start < B.start) { if (!best || o.start > best.start) best = o; } }
+  return best;
+}
+function twRebuild() {
+  const recs = [];
+  for (const B of D.items) {
+    if (!B.tween) continue; const A = twPrev(B); if (!A) continue;
+    const half = Math.max(.05, Math.min(B.tween.d || .6, A.dur * 1.8, B.dur * 1.8) / 2), tc = B.start, pa = {}, pb = {};
+    for (const k of ['x', 'y', 's', 'r', 'o']) { pa[k] = propRaw(A, k, A.start + A.dur); pb[k] = propRaw(B, k, B.start); }
+    recs.push({ a: A.id, b: B.id, t0: tc - half, t1: tc + half, pa, pb, ease: EASE[B.tween.ease] ? B.tween.ease : 'io' });
+  }
+  TW.recs = recs;
+}
+function prop(it, k, t) {
+  if (TW.recs.length) {
+    for (const r of TW.recs) {
+      if ((r.a === it.id || r.b === it.id) && t >= r.t0 && t <= r.t1 && k in r.pa) return lerp(r.pa[k], r.pb[k], EASE[r.ease]((t - r.t0) / (r.t1 - r.t0)));
+    }
+  }
+  return propRaw(it, k, t);
 }
 
 // ---------- item factories ----------
@@ -213,7 +244,7 @@ function splitItem(id, t) {
   const sp = it.speed || 1;
   b.start = t; b.dur = it.dur - lt; if (it.in != null) b.in = it.in + lt * sp;
   it.dur = lt;
-  b.transIn = null; it.transOut = null;
+  b.transIn = null; b.tween = null; it.transOut = null;
   if (it.kf) { for (const k in it.kf) { b.kf[k] = it.kf[k].map(p => ({ t: p.t - lt, v: p.v })).filter(p => p.t >= 0 || true); } }
   D.items.push(b); return b;
 }

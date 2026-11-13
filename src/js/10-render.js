@@ -558,6 +558,7 @@ function drawSticker(ctx, it, t, W, H) {
 // ============================================================
 const activeAt = (tr, t) => D.items.filter(i => i.track === tr && t >= i.start - 1e-6 && t < i.start + i.dur - 1e-6).sort((a, b) => a.start - b.start);
 function renderFrame(ctx, W, H, t) {
+  twRebuild();
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.filter = 'none';
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
   for (const tr of layerOrder()) {

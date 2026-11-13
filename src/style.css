@@ -402,3 +402,5 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
 #ruler .corner{position:sticky}#ruler .corner .lwh{position:absolute;right:-3px;top:0;bottom:-2000px;width:7px;cursor:col-resize;z-index:12}
 #ruler .corner .lwh:hover,body.resizing #ruler .corner .lwh{background:rgba(255,255,255,.25)}
 .hhead .brand .ver{margin-left:8px;font-size:12px;font-weight:400;color:var(--mu)}
+
+.tweencard{margin-bottom:12px;padding:9px;border:1px solid var(--ln);border-radius:10px;background:rgba(255,255,255,.03)}.tweencard h4{margin:0 0 5px;font-size:13px}.tweencard .mini{font-size:11px;color:var(--mut,#9aa);line-height:1.45;margin-bottom:7px}.tweencard .row{margin:6px 0}.tweencard .fld{margin:6px 0}.tweencard #tilesTween{margin-top:8px}.tweencard a{color:var(--ac)}

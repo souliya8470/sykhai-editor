@@ -84,7 +84,7 @@ function renderTimeline() {
     const lane = $(`.trow[data-track="${tr.id}"] .tlane`, body); const list = itemsOn(tr.id).filter(i => i.type === 'video' || i.type === 'image');
     for (let i = 1; i < list.length; i++) {
       const A = list[i - 1], B = list[i]; if (Math.abs(A.start + A.dur - B.start) > .06 && !(B.transIn && B.start < A.start + A.dur)) continue;
-      const j = document.createElement('div'); j.className = 'junc' + (B.transIn ? ' has' : ''); j.dataset.id = B.id; j.style.left = (B.start * TL.pps) + 'px'; j.textContent = B.transIn ? '⇄' : '+'; j.title = 'ลากทรานสิชัน/เอฟเฟกต์มาวางที่นี่ หรือกดเพื่อเลือก'; lane.appendChild(j);
+      const j = document.createElement('div'); j.className = 'junc' + (B.transIn || B.tween ? ' has' : ''); j.dataset.id = B.id; j.style.left = (B.start * TL.pps) + 'px'; j.textContent = B.tween ? '⤳' : B.transIn ? '⇄' : '+'; j.title = 'ลากทรานสิชัน/เอฟเฟกต์มาวางที่นี่ หรือกดเพื่อเลือก'; lane.appendChild(j);
     }
   }
   body.scrollLeft = sx; body.scrollTop = sy; updatePlayhead();
@@ -207,7 +207,7 @@ function initTimelineEvents() {
     showDropMark(null);
     if (DRAG && (e.dataTransfer.types.includes('text/trans') || e.dataTransfer.types.includes('text/fx'))) {
       e.preventDefault(); const tg = dropTarget(e); const d = DRAG; DRAG = null; if (!tg) { toast('ปล่อยตรงรอยต่อหรือบนคลิปวิดีโอ/ภาพ'); return; }
-      select(tg.it.id); if (d.kind === 'trans') applyTransition(tg.it, d.key); else if (d.kind === 'fx') applyFxPreset(tg.it, d.key); else applyMaskPreset(tg.it, d.key); return;
+      select(tg.it.id); if (d.kind === 'tween') applyTween(tg.it, d.key); else if (d.kind === 'trans') applyTransition(tg.it, d.key); else if (d.kind === 'fx') applyFxPreset(tg.it, d.key); else applyMaskPreset(tg.it, d.key); return;
     }
     const id = e.dataTransfer.getData('text/mediaid'); if (!id) return; e.preventDefault();
     const row = e.target.closest('.trow'); addMediaToTimeline(id, row ? row.dataset.track : null, dropStart(e, row ? row.dataset.track : null));
@@ -218,7 +218,7 @@ function dropTarget(e) {
   if (!row || LANE(row.dataset.track) !== 'visual') return null;
   const t = dropTimeFromEvent(e); const items = itemsOn(row.dataset.track).filter(i => i.type === 'video' || i.type === 'image');
   const over = items.find(i => t >= i.start && t < i.start + i.dur);
-  if (DRAG && DRAG.kind === 'trans') { let best = null, bd = 20 / TL.pps; for (const it of items) { const d = Math.abs(it.start - t); if (d < bd) { bd = d; best = it; } } if (best) return { it: best, mode: 'cut', row }; }
+  if (DRAG && (DRAG.kind === 'trans' || DRAG.kind === 'tween')) { let best = null, bd = 20 / TL.pps; for (const it of items) { const d = Math.abs(it.start - t); if (d < bd) { bd = d; best = it; } } if (best) return { it: best, mode: 'cut', row }; }
   return over ? { it: over, mode: 'clip', row } : null;
 }
 function showDropMark(tg) {
