@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.28
-// APP_VERSION_PREV : 1.27
-// APP_VERSION_PREV_OLDER : 1.26
+// APP_VERSION  : 1.29
+// APP_VERSION_PREV : 1.28
+// APP_VERSION_PREV_OLDER : 1.27
+// 1.29 : reference-video analyzer (AI tab 🔬) — measures how a sample short video is edited, fully in the browser: shots / cuts per 10 s / cuts in the first 3 s / hard vs soft vs flash vs dip transitions / motion level / colour (brightness, saturation, contrast, warmth) / audio type + BPM; auto-crops static phone-app chrome of screen recordings; optional Claude look at text overlay, hook type and structure; results stored locally and exported as reference-videos.json with the `style` blocks filled in + grouped summary (language/category)
 // 1.28 : food one-tap — 🍜 drop food clips and press one button: local best-moment picker (sharpness/exposure/colour/motion per clip), optional AI shot order + hook text, beat detection of the imported music (local, free) with cuts landing on the beat, picked look applied (grade, short mix transition, slow push zoom); 🎵 beat-snap for an existing timeline; 3 food looks (cafe warm, vivid food, street food); transitions no longer extend a clip past the end of its source
 // 1.27 : style presets tab (9 trend looks: neon big text, flash sale, talking review, soft & clean, cinematic, vintage, before/after, glitch Y2K, dark luxe) — animated preview on the project's own footage, one click applies grade + transitions + zoom + text/subtitle style + sticker bursts (undoable); new glowing condensed/neon-script text styles, glow on text, starburst/rays/grid stickers
 // 1.26 : Kitti-style AI editing (AI tab) — ⭐ "let AI cut it all" wizard (many clips -> 3 story angles -> storyboard approved scene by scene, revise by typing -> 9:16 timeline with subtitles, extra angles saved as projects); ✨ auto cut (silence + filler words เอ่อ/อืม + AI retakes in one reviewed list); 💬 auto subtitles from the transcript (optional Lao/Thai translation, editable list, 2 new subtitle text styles)
@@ -34,7 +35,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.28';
+const APP_VERSION = '1.29';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
