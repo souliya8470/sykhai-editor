@@ -186,7 +186,7 @@ function kitClipText() { return KIT.clips.map(c => `${c.id} | ${c.m.name} | ${c.
 const KIT_RULES = 'Rules: use only clip ids above; segment start/end are SOURCE seconds and must align with phrase boundaries (never cut a sentence in half); prefer the best complete take, skip stumbles/repeats/dead air; avoid blurry or dark footage unless it is the only take; keep the speaker\'s voice continuous. Overlay text: "line1" short Lao-script text (2-5 words, wrap the key word in *asterisks*), "line2" optional short Lao detail (translate to Lao if the speech is Thai); leave both empty when the scene needs no text.';
 
 function aiKittiUI() {
-  const vids = [...MEDIA.values()].filter(m => m.type === 'video' && !m.ref); if (!vids.length) return toast('นำเข้าคลิปวิดีโอก่อน');
+  const vids = projMedia().filter(m => m.type === 'video'); if (!vids.length) return toast('นำเข้าคลิปวิดีโอก่อน');
   if (!loadKeys().claude) return toast('ต้องใส่ Claude API key ก่อน (⚙ ตั้งค่า)');
   const hasMus = [...MEDIA.values()].some(m => m.type === 'audio' && !m.builtin);
   aiDlg('ให้ AI ตัดให้ทั้งคลิป', `<div class="hint">① เลือกคลิป → ② AI ดูคลิปแล้วเสนอแนวเรื่อง → ③ ตรวจ storyboard ทีละฉาก → ④ ได้คลิปแนวตั้ง 9:16 ลงไทม์ไลน์ (แก้ต่อได้)</div>

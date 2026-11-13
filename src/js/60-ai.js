@@ -326,7 +326,7 @@ function recordPick(v) { let p = []; try { p = JSON.parse(localStorage.getItem('
 const VAR_TRANS = { none: 'none', fade: 'fade', punch: 'punch', wipe: 'wipeBlur', slide: 'slideL', card: 'card3d', blur: 'blur' };
 
 async function aiVariantsUI() {
-  const vids = [...MEDIA.values()].filter(m => m.type === 'video' && !m.ref); if (!vids.length) return toast('นำเข้าคลิปวิดีโอก่อน'); if (AI.busy) return;
+  const vids = projMedia().filter(m => m.type === 'video'); if (!vids.length) return toast('นำเข้าคลิปวิดีโอก่อน'); if (AI.busy) return;
   if (!loadKeys().claude) return toast('ต้องใส่ Claude API key ก่อน (⚙ ตั้งค่า)'); AI.busy = true;
   try {
     const lang = $('#aiLang').value, eng = $('#aiEng').value; const clips = [];
@@ -378,7 +378,7 @@ function showVariants() {
 //  AI panel + inspector hooks
 // ============================================================
 function renderAiPane() {
-  const box = $('#pane-ai'); if (!box) return; const keep = $('#aiClip') ? $('#aiClip').value : ''; const vids = [...MEDIA.values()].filter(m => m.type === 'video' && !m.ref); const s = costState();
+  const box = $('#pane-ai'); if (!box) return; const keep = $('#aiClip') ? $('#aiClip').value : ''; const vids = projMedia().filter(m => m.type === 'video'); const s = costState();
   box.innerHTML = `<div class="hint">ขั้นตอนแนะนำ: ① ถอดเสียง → ② ราคา → ③ ประโยคเด่น → ④ ตัดช่วงเงียบ/เทคซ้ำ → ⑤ ปรับภาพ หรือกด ⑥ ให้ AI ตัดต่อให้ 4 แบบจากทุกคลิป</div>
   <div class="fld col"><label>คลิปที่ใช้</label><select id="aiClip">${vids.map(m => `<option translate="no" value="${m.id}" ${m.id === keep ? 'selected' : ''}>${esc(m.name)}${getTr(m.id) ? ' ✔' : ''}</option>`).join('') || '<option value="">(ยังไม่มีคลิป)</option>'}</select></div>
   <div class="fld"><label>ภาษาในคลิป</label><select id="aiLang"><option value="lo">ลาว (Gemini)</option><option value="th">ไทย</option></select></div>

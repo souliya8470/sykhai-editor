@@ -154,9 +154,9 @@ async function foodRun(o) {
 }
 
 function foodUI() {
-  const ms = [...MEDIA.values()].filter(m => (m.type === 'video' || m.type === 'image') && !m.builtin && !m.hidden && !m.ref);
+  const ms = projMedia().filter(m => m.type === 'video' || m.type === 'image');
   if (!ms.length) return toast('นำเข้าคลิปอาหารก่อน');
-  const mus = [...MEDIA.values()].filter(m => m.type === 'audio' && !m.builtin && !m.hidden && !m.ref), hasKey = !!loadKeys().claude;
+  const mus = projMedia().filter(m => m.type === 'audio'), hasKey = !!loadKeys().claude;
   const foodIds = ['cafe', 'food', 'street'], others = PRESETS.filter(p => !foodIds.includes(p.id));
   const opt = p => `<option value="${p.id}" ${p.id === (D.preset || FOOD.preset) ? 'selected' : ''}>${p.ico} ${esc(p.name)}</option>`;
   aiDlg('🍜 โยนฟุตอาหาร → ตัดให้อัตโนมัติ', `<div class="hint">เลือกคลิป → กดปุ่มเดียว → โปรแกรมเลือกช่วงที่สวยที่สุดของแต่ละคลิป ตัดให้สั้น จัดลำดับ ใส่สี/ทรานสิชัน/ซูม และตัดตามจังหวะเพลง แล้วแก้ต่อได้</div>

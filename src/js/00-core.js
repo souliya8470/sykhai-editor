@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.31
-// APP_VERSION_PREV : 1.30
-// APP_VERSION_PREV_OLDER : 1.29
+// APP_VERSION  : 1.32
+// APP_VERSION_PREV : 1.31
+// APP_VERSION_PREV_OLDER : 1.30
+// 1.32 : per-project media bin — a new project shows only its own media (D.bin = ids imported/added in that project + ids used by its clips); media from other projects live under 📂 older files (re-add with one tap, or delete for good); the × on a bin item removes it from this project only; AI/food/analyzer lists use the project's media only
 // 1.31 : reference-video library kept apart from projects (Home page 📚 section; not in the media bin, not synced, not used by AI cut-it-all; clips pulled from the server inbox and files named <tiktok id>.mp4 are moved there automatically); media bin grid auto-fills columns (more columns + smaller thumbs when the panel is widened, CapCut-style); thumbnails 360 px / q.85 (old ones upgraded in the background); Home project cards about half the size
 // 1.30 : inbox — the shop server can fetch TikTok reference clips by itself (yt-dlp, asked by N8N) into an inbox folder; the editor pulls them into the media list (🔬 analyzer button + automatic on desktop start-up); imported files move to inbox/done
 // 1.29 : reference-video analyzer (AI tab 🔬) — measures how a sample short video is edited, fully in the browser: shots / cuts per 10 s / cuts in the first 3 s / hard vs soft vs flash vs dip transitions / motion level / colour (brightness, saturation, contrast, warmth) / audio type + BPM; auto-crops static phone-app chrome of screen recordings; optional Claude look at text overlay, hook type and structure; results stored locally and exported as reference-videos.json with the `style` blocks filled in + grouped summary (language/category)
@@ -37,7 +38,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.31';
+const APP_VERSION = '1.32';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -84,8 +85,14 @@ function trToggle(id, k) {
 }
 const RENDER_ORDER = ['V1', 'V2', 'V3', 'T1', 'T2', 'T3'];
 
-function newDoc() { return { pid: uid(), created: Date.now(), name: T('โปรเจกต์ใหม่'), w: 1080, h: 1920, fps: 30, items: [], markers: [], duckLevel: 0.22, ver: 1 }; }
+function newDoc() { return { pid: uid(), created: Date.now(), name: T('โปรเจกต์ใหม่'), w: 1080, h: 1920, fps: 30, items: [], markers: [], duckLevel: 0.22, ver: 1, bin: [] }; }
 let D = newDoc();
+// per-project media bin: D.bin = media ids the user imported/added into THIS project (plus any id used by a clip)
+function binSet() { const s = new Set(D.bin || []); for (const i of D.items) if (i.mediaId) s.add(i.mediaId); return s; }
+function binAdd(id) { if (!D.bin) D.bin = []; if (!D.bin.includes(id)) { D.bin.push(id); emit('doc', 'bin'); } }
+function binDel(id) { if (D.bin) D.bin = D.bin.filter(x => x !== id); emit('doc', 'bin'); }
+// media that belong to this project (no reference clips, no hidden/builtin)
+function projMedia() { const bs = binSet(); return [...MEDIA.values()].filter(m => !m.hidden && !m.ref && !m.builtin && bs.has(m.id)); }
 let SEL = null;             // selected item id
 const getItem = (id) => D.items.find(i => i.id === id);
 const projectEnd = () => D.items.reduce((m, i) => Math.max(m, i.start + i.dur), 0);
@@ -100,8 +107,8 @@ function commit(label) {
   HIST = HIST.slice(0, HPOS + 1); HIST.push(snap); if (HIST.length > 120) HIST.shift(); HPOS = HIST.length - 1;
   emit('doc', label);
 }
-function undo() { if (HPOS > 0) { HPOS--; D = JSON.parse(HIST[HPOS]); if (SEL && !getItem(SEL)) SEL = null; emit('doc', 'undo'); emit('sel'); } }
-function redo() { if (HPOS < HIST.length - 1) { HPOS++; D = JSON.parse(HIST[HPOS]); if (SEL && !getItem(SEL)) SEL = null; emit('doc', 'redo'); emit('sel'); } }
+function undo() { if (HPOS > 0) { HPOS--; { const b = D.bin; D = JSON.parse(HIST[HPOS]); if (b) D.bin = b; } if (SEL && !getItem(SEL)) SEL = null; emit('doc', 'undo'); emit('sel'); } }
+function redo() { if (HPOS < HIST.length - 1) { HPOS++; { const b = D.bin; D = JSON.parse(HIST[HPOS]); if (b) D.bin = b; } if (SEL && !getItem(SEL)) SEL = null; emit('doc', 'redo'); emit('sel'); } }
 function select(id) { SEL = id; emit('sel'); }
 
 // ---------- keyframes ----------

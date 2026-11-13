@@ -226,11 +226,33 @@ function cmdCloseGaps(track) {
 
 // ---------- media bin ----------
 let MF = 'all';
+// "older files" picker: media imported into other projects, re-add to this one or delete for good
+function openOldMedia() {
+  const old = document.getElementById('oldMedia'); if (old) old.remove();
+  const ov = document.createElement('div'); ov.id = 'oldMedia';
+  ov.innerHTML = `<div class="omb"><div class="omh"><b>📂 <span>ไฟล์เก่า</span></b><span class="mini"><span>ไฟล์ที่เคยนำเข้าในโปรเจกต์อื่น — กดเพื่อเพิ่มเข้าโปรเจกต์นี้</span></span><button class="omx">✕</button></div><div class="omg"></div></div>`;
+  document.body.appendChild(ov);
+  const g = ov.querySelector('.omg');
+  const draw = () => {
+    const bs = binSet(); const arr = [...MEDIA.values()].filter(m => !m.hidden && !m.ref && !m.builtin && !bs.has(m.id)).sort((a, b) => (a.name < b.name ? -1 : 1));
+    g.innerHTML = arr.length ? '' : '<div class="empty"><span>ไม่มีไฟล์เก่าแล้ว</span></div>';
+    for (const m of arr) {
+      const d = document.createElement('div'); d.className = 'mi';
+      d.innerHTML = `<div class="mth" style="${m.thumb ? `background-image:url(${m.thumb})` : ''}">${m.type === 'audio' ? '♪' : ''}<span class="dur">${m.type === 'image' ? 'ภาพ' : fmt(m.duration)}</span></div><div class="mn" translate="no" title="${esc(m.name)}">${esc(m.name)}</div><div class="mb"><button data-act="add">+ <span>เพิ่มเข้าโปรเจกต์</span></button><button data-act="del" title="ลบถาวร">🗑</button></div>`;
+      d.querySelector('[data-act="add"]').onclick = () => { binAdd(m.id); renderMediaBin(); draw(); };
+      d.querySelector('[data-act="del"]').onclick = () => { if (!confirm(T('ลบไฟล์นี้ถาวร? (โปรเจกต์อื่นที่ใช้ไฟล์นี้จะหาไฟล์ไม่เจอ)'))) return; MEDIA.delete(m.id); dbDel(m.id); renderMediaBin(); draw(); };
+      g.appendChild(d);
+    }
+    if (!arr.length) { renderMediaBin(); }
+  };
+  ov.onclick = e => { if (e.target === ov || e.target.closest('.omx')) ov.remove(); };
+  draw();
+}
 function renderMediaBin() {
-  const box = $('#mediaList'); if (!box) return; const all = [...MEDIA.values()].filter(m => !m.hidden && !m.ref); const arr = all.filter(m => MF === 'all' || m.type === MF);
+  const box = $('#mediaList'); if (!box) return; const bs = binSet(); const all = [...MEDIA.values()].filter(m => !m.hidden && !m.ref && (m.builtin || bs.has(m.id))); const olderN = [...MEDIA.values()].filter(m => !m.hidden && !m.ref && !m.builtin && !bs.has(m.id)).length; const arr = all.filter(m => MF === 'all' || m.type === MF);
   const mfb = $('#mediaFilter'); if (mfb) {
-    mfb.innerHTML = `<div class="chips">` + [['all', 'ทั้งหมด'], ['video', 'วิดีโอ'], ['image', 'รูปภาพ'], ['audio', 'เสียง']].map(([k, l]) => `<button data-mf="${k}" class="${MF === k ? 'on' : ''}">${l}</button>`).join('') + `<span class="sp"></span><span class="mini">${all.length} <span>ไฟล์</span></span></div>`;
-    mfb.onclick = e => { const b = e.target.closest('[data-mf]'); if (b) { MF = b.dataset.mf; renderMediaBin(); } };
+    mfb.innerHTML = `<div class="chips">` + [['all', 'ทั้งหมด'], ['video', 'วิดีโอ'], ['image', 'รูปภาพ'], ['audio', 'เสียง']].map(([k, l]) => `<button data-mf="${k}" class="${MF === k ? 'on' : ''}">${l}</button>`).join('') + `<span class="sp"></span>${olderN ? `<button data-old="1" class="oldbtn">📂 <span>ไฟล์เก่า</span> ${olderN}</button>` : ''}<span class="mini">${all.length} <span>ไฟล์</span></span></div>`;
+    mfb.onclick = e => { if (e.target.closest('[data-old]')) { openOldMedia(); return; } const b = e.target.closest('[data-mf]'); if (b) { MF = b.dataset.mf; renderMediaBin(); } };
   }
   box.innerHTML = arr.length ? '' : '<div class="empty">ยังไม่มีไฟล์ — กดปุ่ม “นำเข้า” หรือลากไฟล์มาวางที่นี่</div>';
   for (const m of arr) {
@@ -241,7 +263,8 @@ function renderMediaBin() {
     d.addEventListener('dblclick', () => addMediaToTimeline(m.id));
     if (SRC.m && SRC.m.id === m.id) d.classList.add('sel');
     d.querySelector('[data-act="add"]').onclick = () => addMediaToTimeline(m.id);
-    d.querySelector('[data-act="del"]').onclick = () => { if (D.items.some(i => i.mediaId === m.id) && !confirm(T('ไฟล์นี้ถูกใช้ในไทม์ไลน์ — ลบคลิปที่ใช้ไฟล์นี้ด้วย?'))) return; D.items = D.items.filter(i => i.mediaId !== m.id); MEDIA.delete(m.id); dbDel(m.id); commit('media'); renderMediaBin(); };
+    d.querySelector('[data-act="del"]').title = T('เอาออกจากโปรเจกต์นี้');
+    d.querySelector('[data-act="del"]').onclick = () => { if (!D.items.some(i => i.mediaId === m.id) && !m.builtin) { binDel(m.id); renderMediaBin(); toast('เอาออกจากโปรเจกต์นี้แล้ว (ไฟล์ยังอยู่ใน “ไฟล์เก่า”)'); return; } if (D.items.some(i => i.mediaId === m.id) && !confirm(T('ไฟล์นี้ถูกใช้ในไทม์ไลน์ — ลบคลิปที่ใช้ไฟล์นี้ด้วย?'))) return; D.items = D.items.filter(i => i.mediaId !== m.id); MEDIA.delete(m.id); dbDel(m.id); commit('media'); renderMediaBin(); };
     box.appendChild(d);
   }
 }
@@ -263,7 +286,7 @@ async function importFiles(files, opts) {
         el.removeAttribute('src'); el.load();
       }
     } catch (e) { console.warn(e); toast('เปิดไฟล์ไม่ได้: ' + f.name + ' (ลองไฟล์ H.264 / mp4)'); URL.revokeObjectURL(m.url); continue; }
-    MEDIA.set(m.id, m); renderMediaBin(); emit('media-added', m); renderTimeline();
+    MEDIA.set(m.id, m); if (!m.ref) binAdd(m.id); renderMediaBin(); emit('media-added', m); renderTimeline();
     if (type !== 'image') analyzeAudio(m).then(() => { renderMediaBin(); renderTimeline(); dbPut(m); }); else dbPut(m);
   }
   if (!opts.quiet) toast('นำเข้าแล้ว ' + list.length + ' ไฟล์');

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.31</title>
+<title>Sykhai Editor v1.32</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -349,6 +349,13 @@ button.tic.on{color:#ff9f43}
 @media (max-width:820px){.ptitle .pver{display:block}}
 
 .ptitle .pver{cursor:pointer;-webkit-tap-highlight-color:transparent}
+#mediaFilter .oldbtn{font-size:11px;padding:2px 7px;border-radius:6px;border:1px solid var(--line,#444);background:transparent;color:inherit;cursor:pointer;margin-right:6px}
+#oldMedia{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center}
+#oldMedia .omb{background:var(--panel,#1c1c20);border:1px solid var(--line,#444);border-radius:12px;width:min(720px,92vw);max-height:80vh;display:flex;flex-direction:column;overflow:hidden}
+#oldMedia .omh{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line,#444)}
+#oldMedia .omh .mini{flex:1;opacity:.7}
+#oldMedia .omx{background:transparent;border:0;color:inherit;font-size:16px;cursor:pointer}
+#oldMedia .omg{padding:12px;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
 
 </style></head>
 <body>
@@ -1552,6 +1559,13 @@ I18N_ROWS.push(
   ['ลบออกจากคลัง', 'Remove from the library', 'ລຶບອອກຈາກຄັງ'],
   ['ลบคลิปนี้ออกจากคลังอ้างอิง?', 'Remove this clip from the reference library?', 'ລຶບຄລິບນີ້ອອກຈາກຄັງອ້າງອີງບໍ?'],
   ['(อยู่ในคลังอ้างอิงที่หน้าโปรเจกต์)', '(in the reference library on the project page)', '(ຢູ່ໃນຄັງອ້າງອີງທີ່ໜ້າໂປຣເຈັກ)'],
+  ['ไฟล์เก่า', 'Older files', 'ໄຟລ໌ເກົ່າ'],
+  ['ไฟล์ที่เคยนำเข้าในโปรเจกต์อื่น — กดเพื่อเพิ่มเข้าโปรเจกต์นี้', 'Files imported in other projects — tap to add to this one', 'ໄຟລ໌ທີ່ເຄີຍນຳເຂົ້າໃນໂປຣເຈັກອື່ນ — ກົດເພື່ອເພີ່ມເຂົ້າໂປຣເຈັກນີ້'],
+  ['ไม่มีไฟล์เก่าแล้ว', 'No older files', 'ບໍ່ມີໄຟລ໌ເກົ່າແລ້ວ'],
+  ['เพิ่มเข้าโปรเจกต์', 'Add to project', 'ເພີ່ມເຂົ້າໂປຣເຈັກ'],
+  ['เอาออกจากโปรเจกต์นี้', 'Remove from this project', 'ເອົາອອກຈາກໂປຣເຈັກນີ້'],
+  ['เอาออกจากโปรเจกต์นี้แล้ว (ไฟล์ยังอยู่ใน “ไฟล์เก่า”)', 'Removed from this project (the file is still in “Older files”)', 'ເອົາອອກຈາກໂປຣເຈັກນີ້ແລ້ວ (ໄຟລ໌ຍັງຢູ່ໃນ “ໄຟລ໌ເກົ່າ”)'],
+  ['ลบไฟล์นี้ถาวร? (โปรเจกต์อื่นที่ใช้ไฟล์นี้จะหาไฟล์ไม่เจอ)', 'Delete this file for good? (other projects that use it will lose it)', 'ລຶບໄຟລ໌ນີ້ຖາວອນ? (ໂປຣເຈັກອື່ນທີ່ໃຊ້ໄຟລ໌ນີ້ຈະຫາບໍ່ເຫັນ)'],
 );
 
 // ---- 00-core.js ----
@@ -1559,9 +1573,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.31
-// APP_VERSION_PREV : 1.30
-// APP_VERSION_PREV_OLDER : 1.29
+// APP_VERSION  : 1.32
+// APP_VERSION_PREV : 1.31
+// APP_VERSION_PREV_OLDER : 1.30
+// 1.32 : per-project media bin — a new project shows only its own media (D.bin = ids imported/added in that project + ids used by its clips); media from other projects live under 📂 older files (re-add with one tap, or delete for good); the × on a bin item removes it from this project only; AI/food/analyzer lists use the project's media only
 // 1.31 : reference-video library kept apart from projects (Home page 📚 section; not in the media bin, not synced, not used by AI cut-it-all; clips pulled from the server inbox and files named <tiktok id>.mp4 are moved there automatically); media bin grid auto-fills columns (more columns + smaller thumbs when the panel is widened, CapCut-style); thumbnails 360 px / q.85 (old ones upgraded in the background); Home project cards about half the size
 // 1.30 : inbox — the shop server can fetch TikTok reference clips by itself (yt-dlp, asked by N8N) into an inbox folder; the editor pulls them into the media list (🔬 analyzer button + automatic on desktop start-up); imported files move to inbox/done
 // 1.29 : reference-video analyzer (AI tab 🔬) — measures how a sample short video is edited, fully in the browser: shots / cuts per 10 s / cuts in the first 3 s / hard vs soft vs flash vs dip transitions / motion level / colour (brightness, saturation, contrast, warmth) / audio type + BPM; auto-crops static phone-app chrome of screen recordings; optional Claude look at text overlay, hook type and structure; results stored locally and exported as reference-videos.json with the `style` blocks filled in + grouped summary (language/category)
@@ -1594,7 +1609,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.31';
+const APP_VERSION = '1.32';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -1641,8 +1656,14 @@ function trToggle(id, k) {
 }
 const RENDER_ORDER = ['V1', 'V2', 'V3', 'T1', 'T2', 'T3'];
 
-function newDoc() { return { pid: uid(), created: Date.now(), name: T('โปรเจกต์ใหม่'), w: 1080, h: 1920, fps: 30, items: [], markers: [], duckLevel: 0.22, ver: 1 }; }
+function newDoc() { return { pid: uid(), created: Date.now(), name: T('โปรเจกต์ใหม่'), w: 1080, h: 1920, fps: 30, items: [], markers: [], duckLevel: 0.22, ver: 1, bin: [] }; }
 let D = newDoc();
+// per-project media bin: D.bin = media ids the user imported/added into THIS project (plus any id used by a clip)
+function binSet() { const s = new Set(D.bin || []); for (const i of D.items) if (i.mediaId) s.add(i.mediaId); return s; }
+function binAdd(id) { if (!D.bin) D.bin = []; if (!D.bin.includes(id)) { D.bin.push(id); emit('doc', 'bin'); } }
+function binDel(id) { if (D.bin) D.bin = D.bin.filter(x => x !== id); emit('doc', 'bin'); }
+// media that belong to this project (no reference clips, no hidden/builtin)
+function projMedia() { const bs = binSet(); return [...MEDIA.values()].filter(m => !m.hidden && !m.ref && !m.builtin && bs.has(m.id)); }
 let SEL = null;             // selected item id
 const getItem = (id) => D.items.find(i => i.id === id);
 const projectEnd = () => D.items.reduce((m, i) => Math.max(m, i.start + i.dur), 0);
@@ -1657,8 +1678,8 @@ function commit(label) {
   HIST = HIST.slice(0, HPOS + 1); HIST.push(snap); if (HIST.length > 120) HIST.shift(); HPOS = HIST.length - 1;
   emit('doc', label);
 }
-function undo() { if (HPOS > 0) { HPOS--; D = JSON.parse(HIST[HPOS]); if (SEL && !getItem(SEL)) SEL = null; emit('doc', 'undo'); emit('sel'); } }
-function redo() { if (HPOS < HIST.length - 1) { HPOS++; D = JSON.parse(HIST[HPOS]); if (SEL && !getItem(SEL)) SEL = null; emit('doc', 'redo'); emit('sel'); } }
+function undo() { if (HPOS > 0) { HPOS--; { const b = D.bin; D = JSON.parse(HIST[HPOS]); if (b) D.bin = b; } if (SEL && !getItem(SEL)) SEL = null; emit('doc', 'undo'); emit('sel'); } }
+function redo() { if (HPOS < HIST.length - 1) { HPOS++; { const b = D.bin; D = JSON.parse(HIST[HPOS]); if (b) D.bin = b; } if (SEL && !getItem(SEL)) SEL = null; emit('doc', 'redo'); emit('sel'); } }
 function select(id) { SEL = id; emit('sel'); }
 
 // ---------- keyframes ----------
@@ -2560,11 +2581,33 @@ function cmdCloseGaps(track) {
 
 // ---------- media bin ----------
 let MF = 'all';
+// "older files" picker: media imported into other projects, re-add to this one or delete for good
+function openOldMedia() {
+  const old = document.getElementById('oldMedia'); if (old) old.remove();
+  const ov = document.createElement('div'); ov.id = 'oldMedia';
+  ov.innerHTML = `<div class="omb"><div class="omh"><b>📂 <span>ไฟล์เก่า</span></b><span class="mini"><span>ไฟล์ที่เคยนำเข้าในโปรเจกต์อื่น — กดเพื่อเพิ่มเข้าโปรเจกต์นี้</span></span><button class="omx">✕</button></div><div class="omg"></div></div>`;
+  document.body.appendChild(ov);
+  const g = ov.querySelector('.omg');
+  const draw = () => {
+    const bs = binSet(); const arr = [...MEDIA.values()].filter(m => !m.hidden && !m.ref && !m.builtin && !bs.has(m.id)).sort((a, b) => (a.name < b.name ? -1 : 1));
+    g.innerHTML = arr.length ? '' : '<div class="empty"><span>ไม่มีไฟล์เก่าแล้ว</span></div>';
+    for (const m of arr) {
+      const d = document.createElement('div'); d.className = 'mi';
+      d.innerHTML = `<div class="mth" style="${m.thumb ? `background-image:url(${m.thumb})` : ''}">${m.type === 'audio' ? '♪' : ''}<span class="dur">${m.type === 'image' ? 'ภาพ' : fmt(m.duration)}</span></div><div class="mn" translate="no" title="${esc(m.name)}">${esc(m.name)}</div><div class="mb"><button data-act="add">+ <span>เพิ่มเข้าโปรเจกต์</span></button><button data-act="del" title="ลบถาวร">🗑</button></div>`;
+      d.querySelector('[data-act="add"]').onclick = () => { binAdd(m.id); renderMediaBin(); draw(); };
+      d.querySelector('[data-act="del"]').onclick = () => { if (!confirm(T('ลบไฟล์นี้ถาวร? (โปรเจกต์อื่นที่ใช้ไฟล์นี้จะหาไฟล์ไม่เจอ)'))) return; MEDIA.delete(m.id); dbDel(m.id); renderMediaBin(); draw(); };
+      g.appendChild(d);
+    }
+    if (!arr.length) { renderMediaBin(); }
+  };
+  ov.onclick = e => { if (e.target === ov || e.target.closest('.omx')) ov.remove(); };
+  draw();
+}
 function renderMediaBin() {
-  const box = $('#mediaList'); if (!box) return; const all = [...MEDIA.values()].filter(m => !m.hidden && !m.ref); const arr = all.filter(m => MF === 'all' || m.type === MF);
+  const box = $('#mediaList'); if (!box) return; const bs = binSet(); const all = [...MEDIA.values()].filter(m => !m.hidden && !m.ref && (m.builtin || bs.has(m.id))); const olderN = [...MEDIA.values()].filter(m => !m.hidden && !m.ref && !m.builtin && !bs.has(m.id)).length; const arr = all.filter(m => MF === 'all' || m.type === MF);
   const mfb = $('#mediaFilter'); if (mfb) {
-    mfb.innerHTML = `<div class="chips">` + [['all', 'ทั้งหมด'], ['video', 'วิดีโอ'], ['image', 'รูปภาพ'], ['audio', 'เสียง']].map(([k, l]) => `<button data-mf="${k}" class="${MF === k ? 'on' : ''}">${l}</button>`).join('') + `<span class="sp"></span><span class="mini">${all.length} <span>ไฟล์</span></span></div>`;
-    mfb.onclick = e => { const b = e.target.closest('[data-mf]'); if (b) { MF = b.dataset.mf; renderMediaBin(); } };
+    mfb.innerHTML = `<div class="chips">` + [['all', 'ทั้งหมด'], ['video', 'วิดีโอ'], ['image', 'รูปภาพ'], ['audio', 'เสียง']].map(([k, l]) => `<button data-mf="${k}" class="${MF === k ? 'on' : ''}">${l}</button>`).join('') + `<span class="sp"></span>${olderN ? `<button data-old="1" class="oldbtn">📂 <span>ไฟล์เก่า</span> ${olderN}</button>` : ''}<span class="mini">${all.length} <span>ไฟล์</span></span></div>`;
+    mfb.onclick = e => { if (e.target.closest('[data-old]')) { openOldMedia(); return; } const b = e.target.closest('[data-mf]'); if (b) { MF = b.dataset.mf; renderMediaBin(); } };
   }
   box.innerHTML = arr.length ? '' : '<div class="empty">ยังไม่มีไฟล์ — กดปุ่ม “นำเข้า” หรือลากไฟล์มาวางที่นี่</div>';
   for (const m of arr) {
@@ -2575,7 +2618,8 @@ function renderMediaBin() {
     d.addEventListener('dblclick', () => addMediaToTimeline(m.id));
     if (SRC.m && SRC.m.id === m.id) d.classList.add('sel');
     d.querySelector('[data-act="add"]').onclick = () => addMediaToTimeline(m.id);
-    d.querySelector('[data-act="del"]').onclick = () => { if (D.items.some(i => i.mediaId === m.id) && !confirm(T('ไฟล์นี้ถูกใช้ในไทม์ไลน์ — ลบคลิปที่ใช้ไฟล์นี้ด้วย?'))) return; D.items = D.items.filter(i => i.mediaId !== m.id); MEDIA.delete(m.id); dbDel(m.id); commit('media'); renderMediaBin(); };
+    d.querySelector('[data-act="del"]').title = T('เอาออกจากโปรเจกต์นี้');
+    d.querySelector('[data-act="del"]').onclick = () => { if (!D.items.some(i => i.mediaId === m.id) && !m.builtin) { binDel(m.id); renderMediaBin(); toast('เอาออกจากโปรเจกต์นี้แล้ว (ไฟล์ยังอยู่ใน “ไฟล์เก่า”)'); return; } if (D.items.some(i => i.mediaId === m.id) && !confirm(T('ไฟล์นี้ถูกใช้ในไทม์ไลน์ — ลบคลิปที่ใช้ไฟล์นี้ด้วย?'))) return; D.items = D.items.filter(i => i.mediaId !== m.id); MEDIA.delete(m.id); dbDel(m.id); commit('media'); renderMediaBin(); };
     box.appendChild(d);
   }
 }
@@ -2597,7 +2641,7 @@ async function importFiles(files, opts) {
         el.removeAttribute('src'); el.load();
       }
     } catch (e) { console.warn(e); toast('เปิดไฟล์ไม่ได้: ' + f.name + ' (ลองไฟล์ H.264 / mp4)'); URL.revokeObjectURL(m.url); continue; }
-    MEDIA.set(m.id, m); renderMediaBin(); emit('media-added', m); renderTimeline();
+    MEDIA.set(m.id, m); if (!m.ref) binAdd(m.id); renderMediaBin(); emit('media-added', m); renderTimeline();
     if (type !== 'image') analyzeAudio(m).then(() => { renderMediaBin(); renderTimeline(); dbPut(m); }); else dbPut(m);
   }
   if (!opts.quiet) toast('นำเข้าแล้ว ' + list.length + ' ไฟล์');
@@ -3090,7 +3134,7 @@ async function srvGetProxy(id, wait) {            // -> File (mp4) or null. wait
 }
 let _adoptBusy = false, _adoptTimer = 0, _adoptTries = 0;
 function proxyTag() {
-  const vs = [...MEDIA.values()].filter(m => m.type === 'video' && !m.hidden && !m.ref && !m.builtin); if (!vs.length) return '';
+  const vs = projMedia().filter(m => m.type === 'video'); if (!vs.length) return '';
   const n = vs.filter(m => m.purl || m.proxyOnly).length;
   return ' · ⚡' + n + '/' + vs.length + (n < vs.length && SRV.adoptNote ? ' (' + SRV.adoptNote + ')' : '');
 }
@@ -4557,7 +4601,7 @@ function recordPick(v) { let p = []; try { p = JSON.parse(localStorage.getItem('
 const VAR_TRANS = { none: 'none', fade: 'fade', punch: 'punch', wipe: 'wipeBlur', slide: 'slideL', card: 'card3d', blur: 'blur' };
 
 async function aiVariantsUI() {
-  const vids = [...MEDIA.values()].filter(m => m.type === 'video' && !m.ref); if (!vids.length) return toast('นำเข้าคลิปวิดีโอก่อน'); if (AI.busy) return;
+  const vids = projMedia().filter(m => m.type === 'video'); if (!vids.length) return toast('นำเข้าคลิปวิดีโอก่อน'); if (AI.busy) return;
   if (!loadKeys().claude) return toast('ต้องใส่ Claude API key ก่อน (⚙ ตั้งค่า)'); AI.busy = true;
   try {
     const lang = $('#aiLang').value, eng = $('#aiEng').value; const clips = [];
@@ -4609,7 +4653,7 @@ function showVariants() {
 //  AI panel + inspector hooks
 // ============================================================
 function renderAiPane() {
-  const box = $('#pane-ai'); if (!box) return; const keep = $('#aiClip') ? $('#aiClip').value : ''; const vids = [...MEDIA.values()].filter(m => m.type === 'video' && !m.ref); const s = costState();
+  const box = $('#pane-ai'); if (!box) return; const keep = $('#aiClip') ? $('#aiClip').value : ''; const vids = projMedia().filter(m => m.type === 'video'); const s = costState();
   box.innerHTML = `<div class="hint">ขั้นตอนแนะนำ: ① ถอดเสียง → ② ราคา → ③ ประโยคเด่น → ④ ตัดช่วงเงียบ/เทคซ้ำ → ⑤ ปรับภาพ หรือกด ⑥ ให้ AI ตัดต่อให้ 4 แบบจากทุกคลิป</div>
   <div class="fld col"><label>คลิปที่ใช้</label><select id="aiClip">${vids.map(m => `<option translate="no" value="${m.id}" ${m.id === keep ? 'selected' : ''}>${esc(m.name)}${getTr(m.id) ? ' ✔' : ''}</option>`).join('') || '<option value="">(ยังไม่มีคลิป)</option>'}</select></div>
   <div class="fld"><label>ภาษาในคลิป</label><select id="aiLang"><option value="lo">ลาว (Gemini)</option><option value="th">ไทย</option></select></div>
@@ -4826,7 +4870,7 @@ function kitClipText() { return KIT.clips.map(c => `${c.id} | ${c.m.name} | ${c.
 const KIT_RULES = 'Rules: use only clip ids above; segment start/end are SOURCE seconds and must align with phrase boundaries (never cut a sentence in half); prefer the best complete take, skip stumbles/repeats/dead air; avoid blurry or dark footage unless it is the only take; keep the speaker\'s voice continuous. Overlay text: "line1" short Lao-script text (2-5 words, wrap the key word in *asterisks*), "line2" optional short Lao detail (translate to Lao if the speech is Thai); leave both empty when the scene needs no text.';
 
 function aiKittiUI() {
-  const vids = [...MEDIA.values()].filter(m => m.type === 'video' && !m.ref); if (!vids.length) return toast('นำเข้าคลิปวิดีโอก่อน');
+  const vids = projMedia().filter(m => m.type === 'video'); if (!vids.length) return toast('นำเข้าคลิปวิดีโอก่อน');
   if (!loadKeys().claude) return toast('ต้องใส่ Claude API key ก่อน (⚙ ตั้งค่า)');
   const hasMus = [...MEDIA.values()].some(m => m.type === 'audio' && !m.builtin);
   aiDlg('ให้ AI ตัดให้ทั้งคลิป', `<div class="hint">① เลือกคลิป → ② AI ดูคลิปแล้วเสนอแนวเรื่อง → ③ ตรวจ storyboard ทีละฉาก → ④ ได้คลิปแนวตั้ง 9:16 ลงไทม์ไลน์ (แก้ต่อได้)</div>
@@ -5106,9 +5150,9 @@ async function foodRun(o) {
 }
 
 function foodUI() {
-  const ms = [...MEDIA.values()].filter(m => (m.type === 'video' || m.type === 'image') && !m.builtin && !m.hidden && !m.ref);
+  const ms = projMedia().filter(m => m.type === 'video' || m.type === 'image');
   if (!ms.length) return toast('นำเข้าคลิปอาหารก่อน');
-  const mus = [...MEDIA.values()].filter(m => m.type === 'audio' && !m.builtin && !m.hidden && !m.ref), hasKey = !!loadKeys().claude;
+  const mus = projMedia().filter(m => m.type === 'audio'), hasKey = !!loadKeys().claude;
   const foodIds = ['cafe', 'food', 'street'], others = PRESETS.filter(p => !foodIds.includes(p.id));
   const opt = p => `<option value="${p.id}" ${p.id === (D.preset || FOOD.preset) ? 'selected' : ''}>${p.ico} ${esc(p.name)}</option>`;
   aiDlg('🍜 โยนฟุตอาหาร → ตัดให้อัตโนมัติ', `<div class="hint">เลือกคลิป → กดปุ่มเดียว → โปรแกรมเลือกช่วงที่สวยที่สุดของแต่ละคลิป ตัดให้สั้น จัดลำดับ ใส่สี/ทรานสิชัน/ซูม และตัดตามจังหวะเพลง แล้วแก้ต่อได้</div>
@@ -5459,7 +5503,7 @@ function anResultsHtml() {
   return `<div class="aicard"><h4>ผลที่วัดได้ (${rows.length} คลิป)</h4><table class="aitbl"><tr><td><b>คลิป</b></td><td><b>ยาว</b></td><td><b>ตัด/10 วิ</b></td><td><b>ตัดช่วง 3 วิแรก</b></td><td><b>เสียง</b></td></tr>${rows.map(a => `<tr><td translate="no">${esc(a.creator || a.name)}</td><td>${a.duration_s}s</td><td>${a.pace.cuts_per_10s}</td><td>${a.pace.cuts_first3s}</td><td>${esc((a.audio || {}).type || '')}</td></tr>`).join('')}</table></div>`;
 }
 function anUI() {
-  const vids = [...MEDIA.values()].filter(m => m.type === 'video' && !m.builtin && !m.hidden).sort((a, b) => (b.ref ? 1 : 0) - (a.ref ? 1 : 0)), hasKey = !!loadKeys().claude;
+  const bsA = binSet(), vids = [...MEDIA.values()].filter(m => m.type === 'video' && !m.builtin && !m.hidden && (m.ref || bsA.has(m.id))).sort((a, b) => (b.ref ? 1 : 0) - (a.ref ? 1 : 0)), hasKey = !!loadKeys().claude;
   const refOpts = REFAN.refs.map(r => `<option value="${r.video_id}" translate="no">${esc((r.creator || '') + ' · ' + (r.topic_note || ''))}</option>`).join('');
   const sel = (arr, cls, v) => `<select class="${cls}">${arr.map(([k, l]) => `<option value="${k}" ${k === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
   aiDlg('🔬 วิเคราะห์เทคนิคตัดต่อ (วิดีโออ้างอิง)', `<div class="hint">นำคลิปตัวอย่าง (ที่ดาวน์โหลด/อัดหน้าจอมา) เข้าโปรแกรม แล้วให้โปรแกรมวัดว่าเขาตัดต่ออย่างไร: จังหวะตัด, ฮุกใน 3 วินาทีแรก, ทรานสิชัน, สี, ชนิดเสียง และ (ถ้าเปิด AI) ข้อความบนจอ/โครงเรื่อง เก็บเฉพาะตัวเลขที่วัดได้ ไม่เก็บตัวคลิป</div>

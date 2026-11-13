@@ -154,7 +154,7 @@ async function srvGetProxy(id, wait) {            // -> File (mp4) or null. wait
 }
 let _adoptBusy = false, _adoptTimer = 0, _adoptTries = 0;
 function proxyTag() {
-  const vs = [...MEDIA.values()].filter(m => m.type === 'video' && !m.hidden && !m.ref && !m.builtin); if (!vs.length) return '';
+  const vs = projMedia().filter(m => m.type === 'video'); if (!vs.length) return '';
   const n = vs.filter(m => m.purl || m.proxyOnly).length;
   return ' · ⚡' + n + '/' + vs.length + (n < vs.length && SRV.adoptNote ? ' (' + SRV.adoptNote + ')' : '');
 }
