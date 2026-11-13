@@ -491,6 +491,7 @@ function drawText(ctx, it, t, W, H) {
     }
     let totalChars = 0; if (ap.chars < 1) rows.forEach(r => r.toks.forEach(k => totalChars += [...k.s].length));
     let shown = 0, limit = ap.chars < 1 ? Math.floor(totalChars * ap.chars) : Infinity;
+    const TAm = taOn(it) ? taMode(it) : null, TAn = TAm ? taCount(it, rows) : 0; let TAi = 0;   // v1.41 text animation pack (see 14-textfx.js)
     rows.forEach((row, ri) => {
       let rowAlpha = 1;
       if (row.li >= 1 && it.reveal > 0) { const q = clamp((lt - it.reveal * row.li) / .25, 0, 1); rowAlpha = q; if (q <= 0) return; }
@@ -502,16 +503,36 @@ function drawText(ctx, it, t, W, H) {
         if (bg && ei === 0) { ctx.save(); ctx.globalAlpha *= rowAlpha; ctx.fillStyle = bg; rrPath(ctx, x0 - pad, y - lineH / 2 + lineH * .06, row.w + pad * 2, lineH * .88, size * .22); ctx.fill(); ctx.restore(); }
       }
       let x = x0;
+      // paint one string at px; P = optional per-unit animation params, gb = [left, width] of the animated group (for wipes)
+      const paint = (s2, px, col, P, gb) => {
+        ctx.textAlign = 'left'; ctx.save(); ctx.globalAlpha *= rowAlpha * (P ? clamp(P.a, 0, 1) : 1);
+        if (P && P.blur > .3) ctx.filter = `blur(${P.blur.toFixed(1)}px)`;
+        if (P && P.clip != null && gb) { ctx.beginPath(); ctx.rect(gb[0] - size * .3, y - lineH / 2, (gb[1] + size * .6) * P.clip, lineH); ctx.clip(); }
+        if (it.shadow && ei === 0) { ctx.shadowColor = 'rgba(0,0,0,.65)'; ctx.shadowBlur = size * .18; ctx.shadowOffsetY = size * .05; }
+        const gc = (P && P.glow) ? (it.glow || it.color2 || '#ffffff') : it.glow, gm = (P && P.glow) ? P.glow.m : 1;
+        if (gc && ei === 0) { ctx.save(); ctx.shadowColor = gc; ctx.shadowBlur = size * .5 * gm; ctx.fillStyle = gc; ctx.fillText(s2, px, y); ctx.shadowBlur = size * .22 * gm; ctx.fillText(s2, px, y); ctx.restore(); }
+        if (P && P.ghost) P.ghost.forEach(g => { ctx.save(); ctx.globalAlpha *= g.a; ctx.fillStyle = g.col; ctx.fillText(s2, px + g.dx, y + g.dy); ctx.restore(); });
+        if (it.stroke && it.strokeW) { ctx.lineWidth = it.strokeW * Math.min(W, H) / 1080; ctx.strokeStyle = it.stroke; ctx.strokeText(s2, px, y); ctx.shadowColor = 'transparent'; }
+        let fill = col;
+        if (P && P.hue != null) fill = `hsl(${P.hue.toFixed(0)},95%,62%)`;
+        else if (P && P.shine != null) { const g = ctx.createLinearGradient(-blockW / 2, 0, blockW / 2, 0), q = P.shine, lo = clamp(q - .1, 0, 1), mid = clamp(q, 0, 1), hi = clamp(q + .1, 0, 1); g.addColorStop(0, col); g.addColorStop(lo, col); g.addColorStop(mid, '#ffffff'); g.addColorStop(hi, col); g.addColorStop(1, col); fill = g; }
+        ctx.fillStyle = fill; ctx.fillText(s2, px, y); ctx.restore();
+      };
+      // run paint inside the unit's own transform (about its centre)
+      const unit = (s2, px, uw, col, idx, gb) => {
+        const P = taParams(it, lt, idx, TAn, size); const ucx = px + uw / 2;
+        ctx.save(); ctx.translate(ucx + P.dx, y + P.dy); if (P.r) ctx.rotate(P.r * Math.PI / 180); ctx.scale(P.s * P.sx, P.s * P.sy); ctx.translate(-ucx, -y);
+        paint(s2, px, col, P, gb || [px, uw]); ctx.restore();
+      };
       row.toks.forEach(k => {
         let str = k.s;
         if (limit !== Infinity) { const n = [...str].length; if (shown >= limit) { x += k.w; return; } if (shown + n > limit) str = [...str].slice(0, limit - shown).join(''); shown += n; }
         const col = k.hl ? (row.li === 0 ? (it.color2 || '#FFE14D') : it.color) : base;
-        ctx.textAlign = 'left';
-        ctx.save(); ctx.globalAlpha *= rowAlpha;
-        if (it.shadow && ei === 0) { ctx.shadowColor = 'rgba(0,0,0,.65)'; ctx.shadowBlur = size * .18; ctx.shadowOffsetY = size * .05; }
-        if (it.glow && ei === 0) { ctx.save(); ctx.shadowColor = it.glow; ctx.shadowBlur = size * .5; ctx.fillStyle = it.glow; ctx.fillText(str, x, y); ctx.shadowBlur = size * .22; ctx.fillText(str, x, y); ctx.restore(); }
-        if (it.stroke && it.strokeW) { ctx.lineWidth = it.strokeW * Math.min(W, H) / 1080; ctx.strokeStyle = it.stroke; ctx.strokeText(str, x, y); ctx.shadowColor = 'transparent'; }
-        ctx.fillStyle = col; ctx.fillText(str, x, y); ctx.restore();
+        if (TAm && !/^\s+$/.test(str)) {
+          if (TAm === 'char') { const gs = taGraphemes(str); gs.forEach((g, gi) => { const gx = x + ctx.measureText(str.slice(0, g.off)).width, gw = ctx.measureText(g.s).width; unit(g.s, gx, gw, col, TAi++); }); }
+          else if (TAm === 'line') unit(str, x, k.w, col, ri, [x0, row.w]);
+          else unit(str, x, k.w, col, TAi++);
+        } else paint(str, x, col, null);
         x += k.w;
       });
     });

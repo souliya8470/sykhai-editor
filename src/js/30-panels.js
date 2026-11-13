@@ -223,6 +223,8 @@ function renderInspector() {
     h += S('กรอบพื้นหลัง', 'box', [['none', 'ไม่มี'], ['line', 'แถบต่อบรรทัด'], ['line2', 'แถบ: บรรทัดล่างสีต่าง'], ['block', 'ป้ายก้อนเดียว']], it);
     if (it.box && it.box !== 'none') h += C('สีพื้น', 'bg', it, '#000000') + (it.box === 'line2' ? C('สีแถบบรรทัด 2', 'bg2', it, '#E02B3A') : '');
     h += `<div class="sec">แอนิเมชัน</div>` + S('เข้า', 'anim.in', ANIM_IN, it) + S('ออก', 'anim.out', [['none', 'ไม่มี'], ['fade', 'เลือนหาย'], ['down', 'ตกลง']], it) + R('ความเร็ว (วิ)', 'anim.d', .1, 1, .05, it) + R('บรรทัด 2 ตามมาหลัง (วิ)', 'reveal', 0, 2, .05, it) + K('เอฟเฟกต์เงาตามหลัง', 'anim.echo', it, false);
+    h += `<div class="sec">✨ แอนิเมชันข้อความ (แบบสำเร็จรูป)</div><div class="btnrow"><button data-act="taopen">✨ ${it.tanim && TAX_BY[it.tanim.id] ? esc(T(TAX_BY[it.tanim.id].label)) : T('เลือกแบบแอนิเมชันข้อความ…')}</button>${it.tanim ? `<button data-act="tanone">${T('เอาออก')}</button>` : ''}</div>`;
+    if (it.tanim && TAX_BY[it.tanim.id]) h += S('แบ่งขยับเป็น', 'tanim.mode', TA_MODES, it) + R('ความเร็วทั้งประโยค (วิ)', 'tanim.d', .3, 3, .05, it);
   } else if (it.type === 'sticker') {
     h += `<div class="sec">ตำแหน่ง</div>` + R('แนวตั้ง', 'ay', 0, 1, .005, it) + R('ซ้าย-ขวา', 'xf.x', -1, 1, .005, it, 1) + R('ขยับขึ้น-ลง', 'xf.y', -.5, .5, .005, it, 1) + R('ขนาด', 'size', 40, 700, 1, it) + R('ซูม', 'xf.s', .3, 3, .01, it, 1) + R('หมุน', 'xf.r', -180, 180, 1, it, 1) + C('สี', 'color', it, '#FFD60A');
     if (it.kind === 'emoji') h += `<div class="fld"><label>อีโมจิ</label><input data-p="text" value="${esc(it.text)}" maxlength="4"></div>`;
@@ -276,6 +278,7 @@ function bindInspector(it) {
     if (act === 'del') cmdDelete(false); else if (act === 'dup') { const b = duplicateItem(it.id); commit('dup'); select(b.id); }
     else if (act === 'clearmutes') { it.mutes = []; commit('mutes'); renderInspector(); }
     else if (act === 'gaps') cmdCloseGaps('V1');
+    else if (act === 'taopen') taOpen(); else if (act === 'tanone') taSet(it, 'none');
     else if (typeof AI !== 'undefined' && AI.inspectorAction) AI.inspectorAction(act, it);
   };
 }

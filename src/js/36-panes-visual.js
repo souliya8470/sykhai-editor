@@ -27,10 +27,10 @@ function tpDraw(cv, st) {
   const x = cv.getContext('2d'); x.clearRect(0, 0, cv.width, cv.height); x.drawImage(VP.tpc, 135, 399, 270, 162, 0, 0, cv.width, cv.height);
 }
 function buildTextPane() {
-  $('#pane-text').innerHTML = `<div class="hint">กดเพื่อเพิ่มข้อความที่ตำแหน่งหัวอ่าน (เส้นแดง) — ใช้ *คำ* เพื่อทำตัวเหลือง/เน้น</div><div class="vgrid tt-grid">` +
+  $('#pane-text').innerHTML = `<button id="btnTA" class="wide primary" style="margin-bottom:8px">✨ ${T('ห้องแอนิเมชันข้อความ (22 แบบ)')}</button><div class="hint">กดเพื่อเพิ่มข้อความที่ตำแหน่งหัวอ่าน (เส้นแดง) — ใช้ *คำ* เพื่อทำตัวเหลือง/เน้น</div><div class="vgrid tt-grid">` +
     TEXT_STYLES.map(s => `<button class="vt tstyle" data-style="${s.id}"><canvas width="270" height="162"></canvas><span>${esc(s.label)}</span></button>`).join('') +
     `</div><hr><button id="btnFooter" class="wide">+ ใส่ข้อความท้ายจอตลอดคลิป</button>`;
-  $('#pane-text').onclick = e => { const b = e.target.closest('.tstyle'); if (b) addText(b.dataset.style); if (e.target.id === 'btnFooter') addFooter(); };
+  $('#pane-text').onclick = e => { const b = e.target.closest('.tstyle'); if (b) addText(b.dataset.style); if (e.target.id === 'btnFooter') addFooter(); if (e.target.id === 'btnTA') taOpen(); };
   drawTextTiles();
 }
 async function drawTextTiles() { await pvSamples(); $$('#pane-text .tstyle').forEach(b => { const st = TEXT_STYLES.find(s => s.id === b.dataset.style); if (st) tpDraw($('canvas', b), st); }); }

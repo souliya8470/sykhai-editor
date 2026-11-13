@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.40</title>
+<title>Sykhai Editor v1.41</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -412,6 +412,12 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
 
 .tweencard{margin-bottom:12px;padding:9px;border:1px solid var(--ln);border-radius:10px;background:rgba(255,255,255,.03)}.tweencard h4{margin:0 0 5px;font-size:13px}.tweencard .mini{font-size:11px;color:var(--mut,#9aa);line-height:1.45;margin-bottom:7px}.tweencard .row{margin:6px 0}.tweencard .fld{margin:6px 0}.tweencard #tilesTween{margin-top:8px}.tweencard a{color:var(--ac)}
 
+#dlgTA{width:min(860px,94vw)}#dlgTA .tagrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px;margin:10px 0;max-height:62vh;overflow:auto;padding:2px}
+#dlgTA .tatile{position:relative;padding:0;border:1px solid var(--ln);border-radius:9px;overflow:hidden;background:#000;cursor:pointer;text-align:left}
+#dlgTA .tatile:hover{border-color:var(--ac)}#dlgTA .tatile.on{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac)}
+#dlgTA .tatile canvas{display:block;width:100%;aspect-ratio:250/81;background:#000}
+#dlgTA .tatile span{display:block;padding:5px 7px;font-size:11px;color:#fff;background:#15161a}
+
 </style></head>
 <body>
 <div id="app">
@@ -532,6 +538,12 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
   <div class="fld" id="expCoverRow" style="display:none"><label><input type="checkbox" id="expCover" checked> ใส่หน้าปกเป็นเฟรมแรกของวิดีโอ (สั้นมาก ~0.13 วิ) เพื่อให้ Facebook / TikTok ใช้เป็น thumbnail</label></div>
   <div class="progress"><div id="expBar"></div></div><div id="expMsg" class="hint"></div>
   <div class="row"><span class="sp"></span><button id="expCancel">ปิด</button><button id="expGo" class="primary">เริ่มส่งออก</button></div>
+</dialog>
+<dialog id="dlgTA">
+  <h3>✨ แอนิเมชันข้อความ</h3>
+  <div class="hint">ตัวอย่างขยับจริง ใช้ข้อความของเจ้าเอง · กดแบบที่ชอบ แล้วแอนิเมชันจะใส่ให้ข้อความที่เลือกอยู่ (ถ้ายังไม่ได้เลือก จะเพิ่มข้อความใหม่ให้) · ปรับสี ขนาด ความเร็วได้ที่แผงขวา</div>
+  <div id="taGrid" class="tagrid"></div>
+  <div class="row"><button id="taNone">ไม่ใช้แอนิเมชันข้อความ</button><span class="sp"></span><button id="taClose">ปิดหน้าต่างนี้</button></div>
 </dialog>
 <dialog id="dlgCover">
   <h3>เลือกรูปหน้าปก</h3>
@@ -1687,6 +1699,41 @@ I18N_ROWS.push(
   ['เลยแล้วดึงกลับ', 'Overshoot & pull back', 'ເກີນແລ້ວດຶງກັບ'],
   ['กระดอน', 'Bounce', 'ເດັ້ງ'],
   ['ยืดหยุ่น (สปริง)', 'Elastic (spring)', 'ຍືດຫຍຸ່ນ (ສະປຣິງ)'],
+  ['เลือนเข้าทีละคำ', 'Fade in word by word', 'ເລືອນເຂົ້າທີລະຄຳ'],
+  ['ลอยขึ้นทีละคำ', 'Float up word by word', 'ລອຍຂຶ້ນທີລະຄຳ'],
+  ['ป๊อปทีละคำ', 'Pop word by word', 'ປ໊ອບທີລະຄຳ'],
+  ['ตกลงมาเด้ง', 'Drop & bounce', 'ຕົກລົງມາເດັ້ງ'],
+  ['มัวแล้วชัด', 'Blurry to sharp', 'ມົວແລ້ວຊັດ'],
+  ['สไลด์เข้าทีละคำ', 'Slide in word by word', 'ສະໄລດ໌ເຂົ້າທີລະຄຳ'],
+  ['ซูมเข้าทีละคำ', 'Zoom in word by word', 'ຊູມເຂົ້າທີລະຄຳ'],
+  ['หมุนเข้าทีละคำ', 'Spin in word by word', 'ໝຸນເຂົ້າທີລະຄຳ'],
+  ['พิมพ์ดีด', 'Typewriter', 'ພິມດີດ'],
+  ['คลื่นลอยตลอด', 'Floating wave', 'ຄື້ນລອຍຕະຫຼອດ'],
+  ['แสงพาดผ่าน', 'Shine sweep', 'ແສງພາດຜ່ານ'],
+  ['เรืองแสงกะพริบ', 'Glow pulse', 'ເຮືອງແສງກະພິບ'],
+  ['นีออนติดๆ ดับๆ', 'Neon flicker', 'ນີອອນຕິດໆ ດັບໆ'],
+  ['ไล่สีรุ้ง', 'Rainbow colours', 'ໄລ່ສີຮຸ້ງ'],
+  ['กระแทกเข้า', 'Impact slam', 'ກະແທກເຂົ້າ'],
+  ['กลิตช์', 'Glitch', 'ກລິດຊ໌'],
+  ['ชื่อเรื่องหรู (ขยายออก)', 'Cinematic title (expand)', 'ຊື່ເລື່ອງຫຼູຫຼາ (ຂະຫຍາຍອອກ)'],
+  ['ยืดเด้งสปริง', 'Elastic spring', 'ຍືດເດັ້ງສະປຣິງ'],
+  ['ปาดเขียนซ้ายไปขวา', 'Wipe-write left to right', 'ປາດຂຽນຊ້າຍໄປຂວາ'],
+  ['พลิกการ์ด', 'Card flip', 'ພິກການ໌ດ'],
+  ['เลื่อนขึ้นทั้งแถว', 'Rise line by line', 'ເລື່ອນຂຶ້ນທັງແຖວ'],
+  ['เต้นตามจังหวะ', 'Beat pulse', 'ເຕັ້ນຕາມຈັງຫວະ'],
+  ['ทีละคำ', 'Word by word', 'ທີລະຄຳ'],
+  ['ทีละตัวอักษร', 'Letter by letter', 'ທີລະຕົວອັກສອນ'],
+  ['ทั้งแถว', 'Whole line', 'ທັງແຖວ'],
+  ['ห้องแอนิเมชันข้อความ (22 แบบ)', 'Text animation gallery (22 styles)', 'ຫ້ອງແອນິເມຊັນຂໍ້ຄວາມ (22 ແບບ)'],
+  ['เลือกแบบแอนิเมชันข้อความ…', 'Choose a text animation…', 'ເລືອກແບບແອນິເມຊັນຂໍ້ຄວາມ…'],
+  ['เอาออก', 'Remove', 'ເອົາອອກ'],
+  ['✨ แอนิเมชันข้อความ (แบบสำเร็จรูป)', '✨ Text animation (ready-made)', '✨ ແອນິເມຊັນຂໍ້ຄວາມ (ແບບສຳເລັດຮູບ)'],
+  ['แบ่งขยับเป็น', 'Animate by', 'ແບ່ງການຂະຍັບເປັນ'],
+  ['ความเร็วทั้งประโยค (วิ)', 'Total speed (s)', 'ຄວາມໄວທັງປະໂຫຍກ (ວິ)'],
+  ['✨ แอนิเมชันข้อความ', '✨ Text animation', '✨ ແອນິເມຊັນຂໍ້ຄວາມ'],
+  ['ตัวอย่างขยับจริง ใช้ข้อความของเจ้าเอง · กดแบบที่ชอบ แล้วแอนิเมชันจะใส่ให้ข้อความที่เลือกอยู่ (ถ้ายังไม่ได้เลือก จะเพิ่มข้อความใหม่ให้) · ปรับสี ขนาด ความเร็วได้ที่แผงขวา', 'Real moving previews using your own text · click one and it is applied to the selected text (if none is selected, a new text is added) · colour, size and speed can be changed in the right panel', 'ຕົວຢ່າງເຄື່ອນໄຫວຈິງ ໃຊ້ຂໍ້ຄວາມຂອງເຈົ້າເອງ · ກົດແບບທີ່ມັກ ແອນິເມຊັນຈະໃສ່ໃຫ້ຂໍ້ຄວາມທີ່ເລືອກຢູ່ (ຖ້າຍັງບໍ່ໄດ້ເລືອກ ຈະເພີ່ມຂໍ້ຄວາມໃໝ່ໃຫ້) · ປັບສີ ຂະໜາດ ຄວາມໄວໄດ້ທີ່ແຜງຂວາ'],
+  ['ไม่ใช้แอนิเมชันข้อความ', 'No text animation', 'ບໍ່ໃຊ້ແອນິເມຊັນຂໍ້ຄວາມ'],
+  ['ข้อความตัวอย่าง', 'Sample text', 'ຂໍ້ຄວາມຕົວຢ່າງ'],
 );
 
 // ---- 00-core.js ----
@@ -1694,9 +1741,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.40
-// APP_VERSION_PREV : 1.39
-// APP_VERSION_PREV_OLDER : 1.38
+// APP_VERSION  : 1.41
+// APP_VERSION_PREV : 1.40
+// APP_VERSION_PREV_OLDER : 1.39
+// 1.41 : text animation pack — 22 ready-made animations (fade / float / pop / drop / blur / slide / zoom / spin / typewriter / wave / shine sweep / glow pulse / neon flicker / rainbow / impact / glitch / cinematic / elastic / wipe-write / card flip / line rise / beat pulse) in a gallery pop-up with real moving previews of your own text (✨ button in the Text tab and in the text inspector); units are words / letters / lines (Lao & Thai are split with Intl.Segmenter, prefix vowels stay glued to their consonant), speed and split mode adjustable, colour / stroke / glow of the clip are kept; rendered by the same drawText so the export matches
 // 1.40 : Motion Tween (like Premiere Pro) — cut a clip in 2, set position / size of each part, pick a motion style (8 eases: smooth, slow start/end, linear, burst, overshoot, bounce, elastic) in the Transitions tab (click or drag onto the cut) and the picture glides from part 1 to part 2 by itself, no keyframes; one-click "cut at playhead + tween" button, length slider, animated tile previews, ⤳ marker on the cut; FIX: the AI buttons in the right inspector (✂ cut silences, 🎙 analyse, ✨ enhance, translate) did nothing because the AI object was not reachable from the inspector click handler
 // 1.39 : smoother scrubbing — a low-res frame cache (one picture every ~0.2 s of each clip on the timeline, built quietly in the background while idle) is shown instantly while dragging the playhead / a clip instead of black or a stale frame, the exact frame replaces it when the real seek lands; the timeline lane-name column can be dragged wider/narrower (grip at the right edge of the ruler corner, remembered); the version number is shown on the Home page too
 // 1.38 : the chosen cover is also put in front of the exported video as its first frames (~0.13 s, tick box in the export dialog, on by default) so Facebook / TikTok / players take it as the thumbnail by themselves; the JPG is still downloaded next to the MP4
@@ -1738,7 +1786,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.40';
+const APP_VERSION = '1.41';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -2447,6 +2495,7 @@ function drawText(ctx, it, t, W, H) {
     }
     let totalChars = 0; if (ap.chars < 1) rows.forEach(r => r.toks.forEach(k => totalChars += [...k.s].length));
     let shown = 0, limit = ap.chars < 1 ? Math.floor(totalChars * ap.chars) : Infinity;
+    const TAm = taOn(it) ? taMode(it) : null, TAn = TAm ? taCount(it, rows) : 0; let TAi = 0;   // v1.41 text animation pack (see 14-textfx.js)
     rows.forEach((row, ri) => {
       let rowAlpha = 1;
       if (row.li >= 1 && it.reveal > 0) { const q = clamp((lt - it.reveal * row.li) / .25, 0, 1); rowAlpha = q; if (q <= 0) return; }
@@ -2458,16 +2507,36 @@ function drawText(ctx, it, t, W, H) {
         if (bg && ei === 0) { ctx.save(); ctx.globalAlpha *= rowAlpha; ctx.fillStyle = bg; rrPath(ctx, x0 - pad, y - lineH / 2 + lineH * .06, row.w + pad * 2, lineH * .88, size * .22); ctx.fill(); ctx.restore(); }
       }
       let x = x0;
+      // paint one string at px; P = optional per-unit animation params, gb = [left, width] of the animated group (for wipes)
+      const paint = (s2, px, col, P, gb) => {
+        ctx.textAlign = 'left'; ctx.save(); ctx.globalAlpha *= rowAlpha * (P ? clamp(P.a, 0, 1) : 1);
+        if (P && P.blur > .3) ctx.filter = `blur(${P.blur.toFixed(1)}px)`;
+        if (P && P.clip != null && gb) { ctx.beginPath(); ctx.rect(gb[0] - size * .3, y - lineH / 2, (gb[1] + size * .6) * P.clip, lineH); ctx.clip(); }
+        if (it.shadow && ei === 0) { ctx.shadowColor = 'rgba(0,0,0,.65)'; ctx.shadowBlur = size * .18; ctx.shadowOffsetY = size * .05; }
+        const gc = (P && P.glow) ? (it.glow || it.color2 || '#ffffff') : it.glow, gm = (P && P.glow) ? P.glow.m : 1;
+        if (gc && ei === 0) { ctx.save(); ctx.shadowColor = gc; ctx.shadowBlur = size * .5 * gm; ctx.fillStyle = gc; ctx.fillText(s2, px, y); ctx.shadowBlur = size * .22 * gm; ctx.fillText(s2, px, y); ctx.restore(); }
+        if (P && P.ghost) P.ghost.forEach(g => { ctx.save(); ctx.globalAlpha *= g.a; ctx.fillStyle = g.col; ctx.fillText(s2, px + g.dx, y + g.dy); ctx.restore(); });
+        if (it.stroke && it.strokeW) { ctx.lineWidth = it.strokeW * Math.min(W, H) / 1080; ctx.strokeStyle = it.stroke; ctx.strokeText(s2, px, y); ctx.shadowColor = 'transparent'; }
+        let fill = col;
+        if (P && P.hue != null) fill = `hsl(${P.hue.toFixed(0)},95%,62%)`;
+        else if (P && P.shine != null) { const g = ctx.createLinearGradient(-blockW / 2, 0, blockW / 2, 0), q = P.shine, lo = clamp(q - .1, 0, 1), mid = clamp(q, 0, 1), hi = clamp(q + .1, 0, 1); g.addColorStop(0, col); g.addColorStop(lo, col); g.addColorStop(mid, '#ffffff'); g.addColorStop(hi, col); g.addColorStop(1, col); fill = g; }
+        ctx.fillStyle = fill; ctx.fillText(s2, px, y); ctx.restore();
+      };
+      // run paint inside the unit's own transform (about its centre)
+      const unit = (s2, px, uw, col, idx, gb) => {
+        const P = taParams(it, lt, idx, TAn, size); const ucx = px + uw / 2;
+        ctx.save(); ctx.translate(ucx + P.dx, y + P.dy); if (P.r) ctx.rotate(P.r * Math.PI / 180); ctx.scale(P.s * P.sx, P.s * P.sy); ctx.translate(-ucx, -y);
+        paint(s2, px, col, P, gb || [px, uw]); ctx.restore();
+      };
       row.toks.forEach(k => {
         let str = k.s;
         if (limit !== Infinity) { const n = [...str].length; if (shown >= limit) { x += k.w; return; } if (shown + n > limit) str = [...str].slice(0, limit - shown).join(''); shown += n; }
         const col = k.hl ? (row.li === 0 ? (it.color2 || '#FFE14D') : it.color) : base;
-        ctx.textAlign = 'left';
-        ctx.save(); ctx.globalAlpha *= rowAlpha;
-        if (it.shadow && ei === 0) { ctx.shadowColor = 'rgba(0,0,0,.65)'; ctx.shadowBlur = size * .18; ctx.shadowOffsetY = size * .05; }
-        if (it.glow && ei === 0) { ctx.save(); ctx.shadowColor = it.glow; ctx.shadowBlur = size * .5; ctx.fillStyle = it.glow; ctx.fillText(str, x, y); ctx.shadowBlur = size * .22; ctx.fillText(str, x, y); ctx.restore(); }
-        if (it.stroke && it.strokeW) { ctx.lineWidth = it.strokeW * Math.min(W, H) / 1080; ctx.strokeStyle = it.stroke; ctx.strokeText(str, x, y); ctx.shadowColor = 'transparent'; }
-        ctx.fillStyle = col; ctx.fillText(str, x, y); ctx.restore();
+        if (TAm && !/^\s+$/.test(str)) {
+          if (TAm === 'char') { const gs = taGraphemes(str); gs.forEach((g, gi) => { const gx = x + ctx.measureText(str.slice(0, g.off)).width, gw = ctx.measureText(g.s).width; unit(g.s, gx, gw, col, TAi++); }); }
+          else if (TAm === 'line') unit(str, x, k.w, col, ri, [x0, row.w]);
+          else unit(str, x, k.w, col, TAi++);
+        } else paint(str, x, col, null);
         x += k.w;
       });
     });
@@ -2581,6 +2650,116 @@ function scrKick() {
   }
 }
 function scrInit() { setInterval(scrKick, 1200); }
+
+// ---- 14-textfx.js ----
+'use strict';
+// ============================================================
+//  v1.41 — text animation pack (CapCut / Premiere-style one-click text animations)
+//  A text clip can carry it.tanim = { id, d, mode }.  The text is split into units (word / character / line); every unit gets its own
+//  progress p (0..1, staggered over d seconds) and the effect turns p into alpha / offset / scale / rotation / blur / glow / colour.
+//  Lao & Thai have no spaces, so we split with Intl.Segmenter and keep vowel marks together with their consonant.
+// ============================================================
+const _P0 = () => ({ a: 1, dx: 0, dy: 0, s: 1, sx: 1, sy: 1, r: 0, blur: 0 });
+const TAX = [
+  { id: 'fade', label: 'เลือนเข้าทีละคำ', mode: 'word', d: 1.0, fn: p => ({ a: p }) },
+  { id: 'rise', label: 'ลอยขึ้นทีละคำ', mode: 'word', d: 1.0, fn: (p, c) => ({ a: p, dy: (1 - EASE.out(p)) * .7 * c.size }) },
+  { id: 'pop', label: 'ป๊อปทีละคำ', mode: 'word', d: .9, fn: p => ({ s: lerp(.3, 1, EASE.back(p)), a: Math.min(1, p * 3) }) },
+  { id: 'drop', label: 'ตกลงมาเด้ง', mode: 'word', d: 1.1, fn: (p, c) => ({ dy: -(1 - EASE.bounce(p)) * 1.4 * c.size, a: Math.min(1, p * 4) }) },
+  { id: 'blur', label: 'มัวแล้วชัด', mode: 'word', d: 1.0, fn: (p, c) => ({ blur: (1 - p) * c.size * .35, a: p }) },
+  { id: 'slide', label: 'สไลด์เข้าทีละคำ', mode: 'word', d: 1.0, fn: (p, c) => ({ dx: -(1 - EASE.out(p)) * 1.6 * c.size, a: p }) },
+  { id: 'zoom', label: 'ซูมเข้าทีละคำ', mode: 'word', d: .9, fn: p => ({ s: lerp(2.4, 1, EASE.out(p)), a: p }) },
+  { id: 'spin', label: 'หมุนเข้าทีละคำ', mode: 'word', d: 1.0, fn: p => ({ r: (1 - EASE.out(p)) * -90, s: lerp(.3, 1, EASE.out(p)), a: p }) },
+  { id: 'type', label: 'พิมพ์ดีด', mode: 'char', d: 1.6, ud: .02, fn: p => ({ a: p >= 1 ? 1 : 0 }) },
+  { id: 'wave', label: 'คลื่นลอยตลอด', mode: 'word', d: .8, fn: (p, c) => ({ a: p, dy: Math.sin(c.lt * 5 + c.i * .8) * .13 * c.size * p }) },
+  { id: 'shine', label: 'แสงพาดผ่าน', mode: 'word', d: .6, fn: (p, c) => ({ a: Math.min(1, p * 3), shine: ((c.lt * .8) % 1.9) - .35 }) },
+  { id: 'glow', label: 'เรืองแสงกะพริบ', mode: 'word', d: .8, fn: (p, c) => ({ a: p, glow: { m: .55 + .45 * Math.sin(c.lt * 5 + c.i * .5) } }) },
+  { id: 'neon', label: 'นีออนติดๆ ดับๆ', mode: 'word', d: 1.2, fn: (p, c) => ({ a: p <= 0 ? 0 : (p >= 1 ? 1 : (Math.sin(c.lt * 47 + c.i * 9) > .15 ? 1 : .12)), glow: { m: p >= 1 ? 1 : .6 } }) },
+  { id: 'rainbow', label: 'ไล่สีรุ้ง', mode: 'word', d: .8, fn: (p, c) => ({ a: p, hue: (c.lt * 140 + c.i * 38) % 360 }) },
+  { id: 'impact', label: 'กระแทกเข้า', mode: 'word', d: .8, fn: (p, c) => ({ s: lerp(3, 1, EASE.out(p)), a: Math.min(1, p * 4), dx: p < 1 ? Math.sin(c.lt * 70) * .06 * c.size * (1 - p) : 0 }) },
+  { id: 'glitch', label: 'กลิตช์', mode: 'word', d: .9, fn: (p, c) => { const g = (1 - p) + (Math.sin(c.lt * 31 + c.i) > .93 ? .6 : 0); return { a: p > 0 ? 1 : 0, dx: g > .1 ? Math.sin(c.lt * 90 + c.i) * .05 * c.size * g : 0, ghost: g > .1 ? [{ dx: -g * .1 * c.size, dy: 0, col: '#ff2a55', a: .8 }, { dx: g * .1 * c.size, dy: 0, col: '#18e6ff', a: .8 }] : null }; } },
+  { id: 'cine', label: 'ชื่อเรื่องหรู (ขยายออก)', mode: 'word', d: 2.0, ud: 1.6, fn: (p, c) => ({ a: EASE.out(p), dx: -(c.i - (c.n - 1) / 2) * .5 * c.size * (1 - EASE.out(p)) }) },
+  { id: 'elastic', label: 'ยืดเด้งสปริง', mode: 'word', d: 1.1, fn: p => ({ sy: lerp(.1, 1, EASE.elastic(p)), sx: 1 + (1 - EASE.elastic(p)) * .35, a: Math.min(1, p * 5) }) },
+  { id: 'write', label: 'ปาดเขียนซ้ายไปขวา', mode: 'line', d: 1.2, fn: p => ({ clip: EASE.io(p), a: p > 0 ? 1 : 0 }) },
+  { id: 'flip', label: 'พลิกการ์ด', mode: 'word', d: 1.0, fn: p => ({ sy: Math.sin(p * Math.PI / 2), a: p > 0 ? 1 : 0 }) },
+  { id: 'lineup', label: 'เลื่อนขึ้นทั้งแถว', mode: 'line', d: .8, fn: (p, c) => ({ dy: (1 - EASE.out(p)) * 1.0 * c.size, a: p }) },
+  { id: 'pulse', label: 'เต้นตามจังหวะ', mode: 'word', d: .8, fn: (p, c) => ({ s: lerp(.4, 1, EASE.back(p)) * (1 + Math.max(0, Math.sin(c.lt * 6 + c.i * .5)) * .08), a: Math.min(1, p * 3) }) },
+];
+const TAX_BY = {}; TAX.forEach(f => TAX_BY[f.id] = f);
+const TA_MODES = [['word', 'ทีละคำ'], ['char', 'ทีละตัวอักษร'], ['line', 'ทั้งแถว']];
+let _gseg = null;
+const _isLoTh = s => /[฀-໿]/.test(s);
+const _PREFIX_V = /^[เ-ไເ-ໄ]$/;   // Thai เแโใไ / Lao ເແໂໃໄ are written before their consonant
+function taGraphemes(str) {   // [{s, off}] — Lao/Thai prefix vowels stay glued to the next cluster
+  let gs; try { _gseg = _gseg || new Intl.Segmenter(undefined, { granularity: 'grapheme' }); gs = [..._gseg.segment(str)].map(x => ({ s: x.segment, off: x.index })); } catch (e) { let o = 0; gs = [...str].map(ch => { const g = { s: ch, off: o }; o += ch.length; return g; }); }
+  const out = []; for (let i = 0; i < gs.length; i++) { let g = gs[i]; while (_PREFIX_V.test(g.s) && i + 1 < gs.length) { const nx = gs[++i]; g = { s: g.s + nx.s, off: g.off }; } out.push(g); }
+  return out;
+}
+const taOn = it => !!(it && it.tanim && TAX_BY[it.tanim.id]);
+function taMode(it) { return (it.tanim && it.tanim.mode) || TAX_BY[it.tanim.id].mode; }
+// number of units in the whole text (needed for the stagger)
+function taCount(it, rows) {
+  const mode = taMode(it); let n = 0;
+  if (mode === 'line') return rows.length;
+  rows.forEach(r => r.toks.forEach(k => { if (/^\s+$/.test(k.s)) return; n += mode === 'char' ? taGraphemes(k.s).length : 1; }));
+  return n;
+}
+function taParams(it, lt, unitIdx, n, size) {
+  const fx = TAX_BY[it.tanim.id]; const d = Math.max(.15, it.tanim.d || fx.d); const ud = fx.ud ? Math.min(fx.ud, d) : Math.max(.25, d * .5);
+  const stag = n > 1 ? Math.max(0, (d - ud) / (n - 1)) : 0; const p = clamp((lt - unitIdx * stag) / ud, 0, 1);
+  return Object.assign(_P0(), fx.fn(p, { lt, i: unitIdx, n, size, d }));
+}
+function taSet(it, id) {
+  if (!it || it.type !== 'text') return false;
+  if (!id || id === 'none') delete it.tanim; else { const fx = TAX_BY[id]; if (!fx) return false; it.tanim = { id, d: fx.d, mode: fx.mode }; it.anim = Object.assign({}, it.anim || {}, { in: 'none' }); }
+  commit('tanim'); renderInspector();
+  if (it.tanim) { seek(it.start); play(); setTimeout(() => { if (PB.playing && PB.t < it.start + it.dur) { } }, 0); setTimeout(() => { if (PB.t > it.start + (it.tanim ? it.tanim.d : 1) + 1.2) pause(); }, 3500); }
+  return true;
+}
+
+// ---------- gallery dialog ----------
+const TAG = { raf: 0, t0: 0, sel: null, last: 0 };
+function taSample() {
+  const it = SEL ? getItem(SEL) : null; if (it && it.type === 'text' && String(it.text || '').trim()) return String(it.text).split('\n')[0].replace(/\*/g, '').slice(0, 14);
+  return T('ข้อความตัวอย่าง');
+}
+function taPreviewItem(fx, text) {
+  const base = SEL && getItem(SEL) && getItem(SEL).type === 'text' ? getItem(SEL) : null;
+  const it = mkText('clean', text, 0, 6, { ay: .5, anim: { in: 'none' }, size: 96, strokeW: 12, maxW: .98, weight: 800 });
+  if (base) { ['color', 'color2', 'stroke', 'glow', 'font', 'weight', 'shadow'].forEach(k => { if (base[k] != null) it[k] = base[k]; }); if (base.strokeW) it.strokeW = base.strokeW * 96 / (base.size || 60); }
+  it.tanim = { id: fx.id, d: fx.d, mode: fx.mode }; return it;
+}
+function taDrawTile(cv, fx, ph, text) {
+  const W = 540, H = 960; if (!VP.tpc) { VP.tpc = document.createElement('canvas'); VP.tpc.width = W; VP.tpc.height = H; }
+  const c = VP.tpc.getContext('2d'); c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; vpBg(c, W, H);
+  const it = taPreviewItem(fx, text); const hold = 1.4, loop = (it.tanim.d + hold); const t = ph * loop;
+  try { drawText(c, it, t, W, H); } catch (e) { console.warn(e); } delete BOUNDS[it.id];
+  const x = cv.getContext('2d'); x.clearRect(0, 0, cv.width, cv.height); x.drawImage(VP.tpc, 20, 399, 500, 162, 0, 0, cv.width, cv.height);
+}
+async function taOpen() {
+  await pvSamples();
+  const dlg = $('#dlgTA'); const grid = $('#taGrid'); const text = taSample(); TAG.text = text;
+  grid.innerHTML = TAX.map(f => `<button class="tatile" data-id="${f.id}"><canvas width="250" height="81"></canvas><span>${esc(T(f.label))}</span></button>`).join('');
+  const cur = SEL && getItem(SEL) && getItem(SEL).tanim ? getItem(SEL).tanim.id : '';
+  $$('#taGrid .tatile').forEach(b => b.classList.toggle('on', b.dataset.id === cur));
+  dlg.showModal(); TAG.t0 = performance.now(); TAG.last = 0;
+  const loop = now => {
+    if (!dlg.open) { TAG.raf = 0; return; }
+    if (now - TAG.last > 55) { TAG.last = now; $$('#taGrid .tatile').forEach((b, i) => { const fx = TAX[i]; const loopT = fx.d + 1.4; const ph = (((now - TAG.t0) / 1000 + i * .13) % loopT) / loopT; taDrawTile($('canvas', b), fx, ph, TAG.text); }); }
+    TAG.raf = requestAnimationFrame(loop);
+  };
+  cancelAnimationFrame(TAG.raf); TAG.raf = requestAnimationFrame(loop);
+}
+function taPick(id) {
+  let it = SEL ? getItem(SEL) : null;
+  if (!it || it.type !== 'text') it = addText('clean', T('ข้อความตัวอย่าง'), PB.t, 3);
+  $('#dlgTA').close(); taSet(it, id);
+}
+function taInit() {
+  $('#taGrid').onclick = e => { const b = e.target.closest('.tatile'); if (b) taPick(b.dataset.id); };
+  $('#taClose').onclick = () => $('#dlgTA').close();
+  $('#taNone').onclick = () => { const it = SEL ? getItem(SEL) : null; $('#dlgTA').close(); if (it && it.type === 'text') taSet(it, 'none'); };
+  $('#dlgTA').addEventListener('close', () => { cancelAnimationFrame(TAG.raf); TAG.raf = 0; });
+}
 
 // ---- 20-timeline-ui.js ----
 // ============================================================
@@ -3721,6 +3900,8 @@ function renderInspector() {
     h += S('กรอบพื้นหลัง', 'box', [['none', 'ไม่มี'], ['line', 'แถบต่อบรรทัด'], ['line2', 'แถบ: บรรทัดล่างสีต่าง'], ['block', 'ป้ายก้อนเดียว']], it);
     if (it.box && it.box !== 'none') h += C('สีพื้น', 'bg', it, '#000000') + (it.box === 'line2' ? C('สีแถบบรรทัด 2', 'bg2', it, '#E02B3A') : '');
     h += `<div class="sec">แอนิเมชัน</div>` + S('เข้า', 'anim.in', ANIM_IN, it) + S('ออก', 'anim.out', [['none', 'ไม่มี'], ['fade', 'เลือนหาย'], ['down', 'ตกลง']], it) + R('ความเร็ว (วิ)', 'anim.d', .1, 1, .05, it) + R('บรรทัด 2 ตามมาหลัง (วิ)', 'reveal', 0, 2, .05, it) + K('เอฟเฟกต์เงาตามหลัง', 'anim.echo', it, false);
+    h += `<div class="sec">✨ แอนิเมชันข้อความ (แบบสำเร็จรูป)</div><div class="btnrow"><button data-act="taopen">✨ ${it.tanim && TAX_BY[it.tanim.id] ? esc(T(TAX_BY[it.tanim.id].label)) : T('เลือกแบบแอนิเมชันข้อความ…')}</button>${it.tanim ? `<button data-act="tanone">${T('เอาออก')}</button>` : ''}</div>`;
+    if (it.tanim && TAX_BY[it.tanim.id]) h += S('แบ่งขยับเป็น', 'tanim.mode', TA_MODES, it) + R('ความเร็วทั้งประโยค (วิ)', 'tanim.d', .3, 3, .05, it);
   } else if (it.type === 'sticker') {
     h += `<div class="sec">ตำแหน่ง</div>` + R('แนวตั้ง', 'ay', 0, 1, .005, it) + R('ซ้าย-ขวา', 'xf.x', -1, 1, .005, it, 1) + R('ขยับขึ้น-ลง', 'xf.y', -.5, .5, .005, it, 1) + R('ขนาด', 'size', 40, 700, 1, it) + R('ซูม', 'xf.s', .3, 3, .01, it, 1) + R('หมุน', 'xf.r', -180, 180, 1, it, 1) + C('สี', 'color', it, '#FFD60A');
     if (it.kind === 'emoji') h += `<div class="fld"><label>อีโมจิ</label><input data-p="text" value="${esc(it.text)}" maxlength="4"></div>`;
@@ -3774,6 +3955,7 @@ function bindInspector(it) {
     if (act === 'del') cmdDelete(false); else if (act === 'dup') { const b = duplicateItem(it.id); commit('dup'); select(b.id); }
     else if (act === 'clearmutes') { it.mutes = []; commit('mutes'); renderInspector(); }
     else if (act === 'gaps') cmdCloseGaps('V1');
+    else if (act === 'taopen') taOpen(); else if (act === 'tanone') taSet(it, 'none');
     else if (typeof AI !== 'undefined' && AI.inspectorAction) AI.inspectorAction(act, it);
   };
 }
@@ -4141,10 +4323,10 @@ function tpDraw(cv, st) {
   const x = cv.getContext('2d'); x.clearRect(0, 0, cv.width, cv.height); x.drawImage(VP.tpc, 135, 399, 270, 162, 0, 0, cv.width, cv.height);
 }
 function buildTextPane() {
-  $('#pane-text').innerHTML = `<div class="hint">กดเพื่อเพิ่มข้อความที่ตำแหน่งหัวอ่าน (เส้นแดง) — ใช้ *คำ* เพื่อทำตัวเหลือง/เน้น</div><div class="vgrid tt-grid">` +
+  $('#pane-text').innerHTML = `<button id="btnTA" class="wide primary" style="margin-bottom:8px">✨ ${T('ห้องแอนิเมชันข้อความ (22 แบบ)')}</button><div class="hint">กดเพื่อเพิ่มข้อความที่ตำแหน่งหัวอ่าน (เส้นแดง) — ใช้ *คำ* เพื่อทำตัวเหลือง/เน้น</div><div class="vgrid tt-grid">` +
     TEXT_STYLES.map(s => `<button class="vt tstyle" data-style="${s.id}"><canvas width="270" height="162"></canvas><span>${esc(s.label)}</span></button>`).join('') +
     `</div><hr><button id="btnFooter" class="wide">+ ใส่ข้อความท้ายจอตลอดคลิป</button>`;
-  $('#pane-text').onclick = e => { const b = e.target.closest('.tstyle'); if (b) addText(b.dataset.style); if (e.target.id === 'btnFooter') addFooter(); };
+  $('#pane-text').onclick = e => { const b = e.target.closest('.tstyle'); if (b) addText(b.dataset.style); if (e.target.id === 'btnFooter') addFooter(); if (e.target.id === 'btnTA') taOpen(); };
   drawTextTiles();
 }
 async function drawTextTiles() { await pvSamples(); $$('#pane-text .tstyle').forEach(b => { const st = TEXT_STYLES.find(s => s.id === b.dataset.style); if (st) tpDraw($('canvas', b), st); }); }
@@ -6118,7 +6300,7 @@ async function init() {
     else if (e.key === 'ArrowRight') { pause(); seek(PB.t + (e.shiftKey ? 1 : 1 / 30)); }
     else if (e.key === 'Home') { pause(); seek(0); }
   });
-  initSplitters(); initToolbar(); if (typeof coverInit === 'function') coverInit(); scrInit();
+  initSplitters(); initToolbar(); if (typeof coverInit === 'function') coverInit(); scrInit(); taInit();
   initHome(); await showHome(); if (srvOn()) srvPing().then(ok => ok && srvLoadSizes()).then(() => srvAdoptProxies()).then(() => srvInboxAuto()).then(() => srvInboxWatch()).catch(() => { });
   tick();
   window.__ready = true;

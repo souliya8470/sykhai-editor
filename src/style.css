@@ -404,3 +404,9 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
 .hhead .brand .ver{margin-left:8px;font-size:12px;font-weight:400;color:var(--mu)}
 
 .tweencard{margin-bottom:12px;padding:9px;border:1px solid var(--ln);border-radius:10px;background:rgba(255,255,255,.03)}.tweencard h4{margin:0 0 5px;font-size:13px}.tweencard .mini{font-size:11px;color:var(--mut,#9aa);line-height:1.45;margin-bottom:7px}.tweencard .row{margin:6px 0}.tweencard .fld{margin:6px 0}.tweencard #tilesTween{margin-top:8px}.tweencard a{color:var(--ac)}
+
+#dlgTA{width:min(860px,94vw)}#dlgTA .tagrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px;margin:10px 0;max-height:62vh;overflow:auto;padding:2px}
+#dlgTA .tatile{position:relative;padding:0;border:1px solid var(--ln);border-radius:9px;overflow:hidden;background:#000;cursor:pointer;text-align:left}
+#dlgTA .tatile:hover{border-color:var(--ac)}#dlgTA .tatile.on{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac)}
+#dlgTA .tatile canvas{display:block;width:100%;aspect-ratio:250/81;background:#000}
+#dlgTA .tatile span{display:block;padding:5px 7px;font-size:11px;color:#fff;background:#15161a}
