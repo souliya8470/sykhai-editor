@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.48</title>
+<title>Sykhai Editor v1.49</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -427,6 +427,11 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
 #dlgAi .silrow{display:flex;align-items:center;gap:8px;padding:5px 8px;border-bottom:1px solid var(--ln);font-size:13px}#dlgAi .silrow:last-child{border-bottom:0}
 #dlgAi .silrow .n{width:22px;color:var(--mut);text-align:right}#dlgAi .silrow .d{color:var(--mut);font-variant-numeric:tabular-nums}#dlgAi .silrow .sp{flex:1}
 #dlgAi .silrow button{padding:3px 9px}#dlgAi .silgo{font-variant-numeric:tabular-nums;min-width:74px}#dlgAi .sildel{color:#ff8a95}
+
+#dlgAi .lfcats{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}#dlgAi .lfcats button{padding:3px 10px;border-radius:14px}#dlgAi .lfcats button.on{background:var(--ac,#2EE6C5);color:#052}
+#dlgAi .lfgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-height:52vh;overflow:auto;margin:6px 0;padding:2px 8px 2px 2px}
+#dlgAi .lfcard{display:flex;flex-direction:column;gap:4px;text-align:left;padding:8px 10px;border-radius:10px;border:1px solid var(--ln);background:rgba(255,255,255,.03)}#dlgAi .lfcard[hidden]{display:none}#dlgAi .lfcard.on{outline:2px solid var(--ac,#2EE6C5)}
+#dlgAi .lfn{font-size:11px;color:var(--mut)}#dlgAi .lfs{font-size:26px;line-height:1.3;color:#fff;word-break:break-word}
 
 </style></head>
 <body>
@@ -1851,6 +1856,19 @@ I18N_ROWS.push(
   ['ไฟล์ไม่ถูกต้อง', 'Invalid file', 'ໄຟລ໌ບໍ່ຖືກຕ້ອງ'],
   ['นำเข้าข้อความสำเร็จ', 'Transcripts imported', 'ນຳເຂົ້າຂໍ້ຄວາມສຳເລັດ'],
   ['ลบข้อความนี้', 'Delete this transcript', 'ລຶບຂໍ້ຄວາມນີ້'],
+  ['เลือกฟอนต์ข้อความ', 'Choose text font', 'ເລືອກຟອນຂໍ້ຄວາມ'],
+  ['เลือกฟอนต์', 'Choose font', 'ເລືອກຟອນ'],
+  ['ฟอนต์ลาวฟรี (ใช้งานเชิงธุรกิจได้) · กดเพื่อใช้ · ฟอนต์จะโหลดเมื่อเลื่อนมาเห็นเท่านั้น · ฟอนต์ตกแต่งส่วนใหญ่เป็นรุ่นทดลอง', 'Free Lao fonts (commercial use allowed) · press to use · a font loads only when it scrolls into view · most decorative fonts are beta versions', 'ຟອນລາວຟຣີ (ໃຊ້ໃນທຸລະກິດໄດ້) · ກົດເພື່ອໃຊ້ · ຟອນຈະໂຫຼດເມື່ອເລື່ອນມາເຫັນເທົ່ານັ້ນ · ຟອນຕົກແຕ່ງສ່ວນຫຼາຍເປັນລຸ້ນທົດລອງ'],
+  ['กลับไปฟอนต์เดิมของสไตล์', 'Back to the style\'s original font', 'ກັບໄປຟອນເດີມຂອງສະໄຕລ໌'],
+  ['โหลดฟอนต์ไม่ได้ (ไม่มีไฟล์ในโฟลเดอร์ fonts)', 'Could not load the font (file missing in the fonts folder)', 'ໂຫຼດຟອນບໍ່ໄດ້ (ບໍ່ມີໄຟລ໌ໃນໂຟລເດີ fonts)'],
+  ['ทางการ', 'Formal', 'ທາງການ'],
+  ['ลายมือ', 'Handwritten', 'ລາຍມື'],
+  ['ตัวเขียนสวย', 'Script', 'ຕົວຂຽນສວຍ'],
+  ['พู่กัน', 'Brush', 'ພູ່ກັນ'],
+  ['แบบทาสี', 'Painted', 'ແບບທາສີ'],
+  ['แบบโบราณ', 'Traditional', 'ແບບບູຮານ'],
+  ['ตกแต่ง', 'Decorative', 'ຕົກແຕ່ງ'],
+  ['สเตนซิล', 'Stencil', 'ສະເຕັນຊິວ'],
 );
 
 // ---- 00-core.js ----
@@ -1858,9 +1876,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.48
-// APP_VERSION_PREV : 1.47
-// APP_VERSION_PREV_OLDER : 1.46
+// APP_VERSION  : 1.49
+// APP_VERSION_PREV : 1.48
+// APP_VERSION_PREV_OLDER : 1.47
+// 1.49 : Lao font library — 🔤 font picker in the text inspector: 4 formal fonts (Noto Sans / Serif / Looped, Phetsarath) + 44 free decorative Lao fonts (handwritten, script, brush, painted, traditional, fancy, stencil; SIL OFL, commercial use OK). Gallery with live samples of your own text and category filter; fonts are lazy-loaded from fonts/ (not embedded in index.html), preloaded before preview/export; falls back to editor.touktashop.online/fonts/
 // 1.48 : permanent transcript cache — every transcript is stored in the browser (own IndexedDB 'sykhai-tr') under the clip's file name + size + length, so the same video is never sent to Gemini twice (any project, after reload); the AI tab shows it instantly and says it was free; 'transcribe again' needs a confirm; new 📁 manager to download each transcript as <video name>.transcript.json, import it back on another computer, or delete it
 // 1.47 : Dead Air list — the silence dialog now lists every silent gap (timeline time + length): tap the time to jump there, ▶ to listen around it, ✂ to delete that one, tick several and delete them together, select / un-select all; min length and head/tail padding sliders re-build the list; each delete can be undone
 // 1.46 : "Test Gemini" button (AI tab, step 1) — sends the first 20 s of the clip to several Gemini models, shows the answers side by side with the time taken, one tap makes a model the default; transcription now uses the model's own thinking (like the Gemini website) and gemini-3.8-flash first; time-out 120 s
@@ -1910,7 +1929,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.48';
+const APP_VERSION = '1.49';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -2599,6 +2618,7 @@ function textAnimParams(it, lt, W, H) {
 }
 function drawText(ctx, it, t, W, H) {
   const lt = t - it.start; if (lt < 0) return;
+  if (it.font && it.font.indexOf('"LF-') >= 0) lfNeed(it.font);
   const ap = textAnimParams(it, lt, W, H);
   if (ap.a <= 0.001) return;
   const L = layoutText(ctx, it, W, H); const { rows, size, lineH } = L;
@@ -4022,7 +4042,7 @@ function renderInspector() {
     h += `<div class="btnrow"><button data-act="translate">🌐 แปลไทย→ลาว</button></div>`;
     h += S('สไตล์สำเร็จรูป', 'style', TEXT_STYLES.map(s => [s.id, s.label]), it);
     h += `<div class="sec">ตำแหน่ง</div>` + R('แนวตั้ง (0=บน, 1=ล่าง)', 'ay', 0, 1, .005, it) + R('ซ้าย-ขวา', 'xf.x', -1, 1, .005, it, 1) + R('ขยับขึ้น-ลง', 'xf.y', -.5, .5, .005, it, 1) + R('ขนาดซูม', 'xf.s', .3, 3, .01, it, 1) + R('หมุน', 'xf.r', -45, 45, .5, it, 1) + R('ความกว้างสูงสุด', 'maxW', .3, 1, .01, it);
-    h += `<div class="sec">รูปแบบตัวอักษร</div>` + R('ขนาด', 'size', 16, 200, 1, it) + R('น้ำหนัก', 'weight', 400, 900, 100, it) + C('สีบรรทัด 1', 'color', it) + C('สีบรรทัด 2 / เน้น', 'color2', it) + C('สีขอบตัวอักษร', 'stroke', it, '#000000') + R('ความหนาขอบ', 'strokeW', 0, 24, 1, it) + K('เงา', 'shadow', it, false);
+    h += `<div class="sec">รูปแบบตัวอักษร</div><div class="btnrow"><button data-act="lfopen">🔤 ${lfIdOf(it.font) ? esc(LF_BY[lfIdOf(it.font)].name) : T('เลือกฟอนต์')}</button></div>` + R('ขนาด', 'size', 16, 200, 1, it) + R('น้ำหนัก', 'weight', 400, 900, 100, it) + C('สีบรรทัด 1', 'color', it) + C('สีบรรทัด 2 / เน้น', 'color2', it) + C('สีขอบตัวอักษร', 'stroke', it, '#000000') + R('ความหนาขอบ', 'strokeW', 0, 24, 1, it) + K('เงา', 'shadow', it, false);
     h += S('กรอบพื้นหลัง', 'box', [['none', 'ไม่มี'], ['line', 'แถบต่อบรรทัด'], ['line2', 'แถบ: บรรทัดล่างสีต่าง'], ['block', 'ป้ายก้อนเดียว']], it);
     if (it.box && it.box !== 'none') h += C('สีพื้น', 'bg', it, '#000000') + (it.box === 'line2' ? C('สีแถบบรรทัด 2', 'bg2', it, '#E02B3A') : '');
     h += `<div class="sec">แอนิเมชัน</div>` + S('เข้า', 'anim.in', ANIM_IN, it) + S('ออก', 'anim.out', [['none', 'ไม่มี'], ['fade', 'เลือนหาย'], ['down', 'ตกลง']], it) + R('ความเร็ว (วิ)', 'anim.d', .1, 1, .05, it) + R('บรรทัด 2 ตามมาหลัง (วิ)', 'reveal', 0, 2, .05, it) + K('เอฟเฟกต์เงาตามหลัง', 'anim.echo', it, false);
@@ -4081,7 +4101,7 @@ function bindInspector(it) {
     if (act === 'del') cmdDelete(false); else if (act === 'dup') { const b = duplicateItem(it.id); commit('dup'); select(b.id); }
     else if (act === 'clearmutes') { it.mutes = []; commit('mutes'); renderInspector(); }
     else if (act === 'gaps') cmdCloseGaps('V1');
-    else if (act === 'taopen') taOpen(); else if (act === 'tanone') taSet(it, 'none');
+    else if (act === 'lfopen') lfOpen(it); else if (act === 'taopen') taOpen(); else if (act === 'tanone') taSet(it, 'none');
     else if (typeof AI !== 'undefined' && AI.inspectorAction) AI.inspectorAction(act, it);
   };
 }
@@ -4907,7 +4927,7 @@ async function runExport(opts) {
   opts = opts || {}; if (EXP.running) return null;
   const bar = $('#expBar'), msg = $('#expMsg');
   if (!D.items.length) { toast('ยังไม่มีอะไรในไทม์ไลน์'); return null; }
-  EXP.running = true; EXP.cancel = false; pause(); ensureAudio(); await AC.resume();
+  EXP.running = true; EXP.cancel = false; pause(); ensureAudio(); await AC.resume(); try { await lfPreloadDoc(); } catch (e) { }
   const W = opts.w || D.w || 1080, H = opts.h || D.h || 1920, FPS = 30, total = durEnd();
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const ctx = cv.getContext('2d', { alpha: false });
   const mime = pickMime(); const ext = mime.startsWith('video/mp4') ? 'mp4' : 'webm';
@@ -4952,6 +4972,60 @@ async function runExport(opts) {
   if (!opts.noDownload && D.cover && typeof coverDownload === 'function') setTimeout(() => { coverDownload(true).catch(() => { }); }, 1800);
   EXP.blob = blob; if (!opts.noDownload && typeof srvPushOut === 'function') srvPushOut(blob, (D.name || 'video').replace(/[\\/:*?"<>|]/g, '_') + '.' + ext);
   return blob;
+}
+
+// ---- 58-fonts.js ----
+// ============================================================
+//  v1.49 — Lao font library: 4 formal + 44 decorative free fonts (OFL), lazy-loaded from fonts/ when a font is picked
+//  (never embedded in index.html). Files: fonts/<Id>.woff2 (display) and fonts/<Id>-<weight>.woff2 (formal).
+//  Picked fonts are stored in it.font as a CSS stack that starts with "LF-<Id>"; they are preloaded before preview/export.
+// ============================================================
+const LAOFONTS = [["NotoSansLao", "Noto Sans Lao", "formal"], ["NotoSerifLao", "Noto Serif Lao", "formal"], ["NotoSansLaoLooped", "Noto Sans Lao Looped", "formal"], ["Phetsarath", "Phetsarath", "formal"], ["Apsara", "Apsara", "script"], ["BaiLan", "Bai Lan", "traditional"], ["BanGuesthouse", "Ban Guesthouse", "handwritten"], ["Banteay", "Banteay", "traditional"], ["BlueMarketBrush", "Blue Market Brush", "brush"], ["CeruleanOrnament", "Cerulean Ornament", "fancy"], ["Chotmai", "Chotmai", "handwritten"], ["CivicMonoline", "Civic Monoline", "painted"], ["DekNoi", "Dek Noi", "handwritten"], ["ForestWeathered", "Forest Weathered", "brush"], ["Hankha", "Hankha", "painted"], ["HuayTem", "Huay Tem", "script"], ["IndigoChisel", "Indigo Chisel", "traditional"], ["Kamphaeng", "Kamphaeng", "stencil"], ["KdarKhien", "Kdar Khien", "handwritten"], ["Khanom", "Khanom", "fancy"], ["KouangSiWaterfall", "Kouang Si Waterfall", "handwritten"], ["Krathong", "Krathong", "script"], ["Lamvong", "Lamvong", "script"], ["NamOu", "Nam Ou", "script"], ["NganWat", "Ngan Wat", "fancy"], ["NonSawat", "Non Sawat", "script"], ["Paksong", "Paksong", "handwritten"], ["Phsar", "Phsar", "painted"], ["PreahNeak", "Preah Neak", "fancy"], ["RoadsideMenu", "Roadside Menu", "script"], ["Sila", "Sila", "traditional"], ["Songkran", "Songkran", "fancy"], ["StoneFlourish", "Stone Flourish", "script"], ["SuanAhan", "Suan Ahan", "painted"], ["Suksa", "Suksa", "script"], ["TaKot", "Ta Kot", "traditional"], ["TadFane", "Tad Fane", "painted"], ["Talat", "Talat", "handwritten"], ["TerracottaRounded", "Terracotta Rounded", "painted"], ["Thammasat", "Thammasat", "painted"], ["ThangTan", "Thang Tan", "painted"], ["TimberBrush", "Timber Brush", "brush"], ["TukTuk", "Tuk Tuk", "painted"], ["VermilionHeritage", "Vermilion Heritage", "traditional"], ["VillageNotice", "Village Notice", "handwritten"], ["WatPhou", "Wat Phou", "traditional"], ["WoodlandHook", "Woodland Hook", "painted"], ["Yaowarat", "Yaowarat", "painted"]];
+const LF_CATS = [['all', 'ทั้งหมด'], ['formal', 'ทางการ'], ['handwritten', 'ลายมือ'], ['script', 'ตัวเขียนสวย'], ['brush', 'พู่กัน'], ['painted', 'แบบทาสี'], ['traditional', 'แบบโบราณ'], ['fancy', 'ตกแต่ง'], ['stencil', 'สเตนซิล']];
+const LF_BY = {}; LAOFONTS.forEach(r => LF_BY[r[0]] = { id: r[0], name: r[1], cat: r[2] });
+const LF_FORMAL_W = { NotoSansLao: [400, 700, 900], NotoSerifLao: [400, 700, 900], NotoSansLaoLooped: [400, 700, 900], Phetsarath: [400, 700] };
+const LF_BASES = ['fonts/', 'https://editor.touktashop.online/fonts/'];
+const LF_P = new Map();    // id -> Promise<boolean>
+const LF_OK = new Set(), LF_FAIL = new Set();
+const lfStack = id => `"LF-${id}","Noto Sans Lao","Prompt","Noto Sans Thai",sans-serif`;
+const lfIdOf = font => { const m = /"LF-([A-Za-z]+)"/.exec(font || ''); return m && LF_BY[m[1]] ? m[1] : null; };
+function lfEnsure(id) {
+  if (!LF_BY[id]) return Promise.resolve(false);
+  if (LF_P.has(id)) return LF_P.get(id);
+  const faces = LF_FORMAL_W[id] ? LF_FORMAL_W[id].map(w => [w, `${id}-${w}.woff2`]) : [[400, `${id}.woff2`]];
+  const p = Promise.all(faces.map(async ([w, file]) => {
+    for (const b of LF_BASES) { try { const ff = new FontFace('LF-' + id, `url(${b}${file})`, { weight: String(w) }); await ff.load(); document.fonts.add(ff); return true; } catch (e) { } }
+    return false;
+  })).then(r => { const ok = r.every(Boolean); if (ok) { LF_OK.add(id); LF_FAIL.delete(id); } else { LF_P.delete(id); LF_FAIL.add(id); } return ok; });
+  LF_P.set(id, p); return p;
+}
+function lfNeed(font) { const id = lfIdOf(font); if (!id || LF_OK.has(id) || LF_P.has(id) || LF_FAIL.has(id)) return; lfEnsure(id).then(ok => { if (ok) emit('doc'); }); }
+async function lfPreloadDoc() { const ids = new Set(); D.items.forEach(it => { const id = lfIdOf(it.font); if (id) ids.add(id); }); await Promise.all([...ids].map(lfEnsure)); }
+function lfOpen(it) {
+  if (!it || it.type !== 'text') return;
+  const sample = (String(it.text || '').split('\n')[0] || '').trim().slice(0, 22) || 'ສະບາຍດີ ລາຄາພິເສດ';
+  const cur = lfIdOf(it.font); let cat = 'all';
+  const card = r => `<button class="lfcard${cur === r[0] ? ' on' : ''}" data-lf="${r[0]}"><span class="lfn" translate="no">${esc(r[1])}</span><span class="lfs" data-lfs="${r[0]}" translate="no">${esc(sample)}</span></button>`;
+  aiDlg('เลือกฟอนต์ข้อความ', `<div class="hint">ฟอนต์ลาวฟรี (ใช้งานเชิงธุรกิจได้) · กดเพื่อใช้ · ฟอนต์จะโหลดเมื่อเลื่อนมาเห็นเท่านั้น · ฟอนต์ตกแต่งส่วนใหญ่เป็นรุ่นทดลอง</div>
+    <div class="lfcats">${LF_CATS.map(([k, l]) => `<button data-cat="${k}" class="${k === 'all' ? 'on' : ''}">${l}</button>`).join('')}</div>
+    <div class="lfgrid" id="lfGrid">${LAOFONTS.map(card).join('')}</div>
+    <div class="row"><button id="lfReset">กลับไปฟอนต์เดิมของสไตล์</button></div>`, root => {
+    const io = typeof IntersectionObserver !== 'undefined' ? new IntersectionObserver(es => es.forEach(e => { if (!e.isIntersecting) return; io.unobserve(e.target); const id = e.target.dataset.lf; lfEnsure(id).then(ok => { const s = e.target.querySelector('.lfs'); if (ok && s) s.style.fontFamily = `"LF-${id}","Noto Sans Lao",sans-serif`; }); }), { rootMargin: '200px' }) : null;
+    const watch = () => root.querySelectorAll('.lfcard').forEach(c => { if (io) io.observe(c); else lfEnsure(c.dataset.lf); });
+    watch();
+    root.onclick = e => {
+      const cb = e.target.closest('[data-cat]'), c = e.target.closest('[data-lf]');
+      if (cb) { cat = cb.dataset.cat; root.querySelectorAll('[data-cat]').forEach(b => b.classList.toggle('on', b === cb)); root.querySelectorAll('.lfcard').forEach(x => { x.hidden = !(cat === 'all' || LF_BY[x.dataset.lf].cat === cat); }); }
+      else if (c) { lfApply(it, c.dataset.lf); $('#dlgAi').close(); }
+      else if (e.target.id === 'lfReset') { lfApply(it, null); $('#dlgAi').close(); }
+    };
+  });
+}
+async function lfApply(it, id) {
+  if (!id) { const st = TEXT_STYLES.find(s => s.id === it.style); it.font = (st && st.d && st.d.font) || FONT_STACK; commit('font'); renderInspector(); return; }
+  const ok = await lfEnsure(id); if (!ok) return toast('โหลดฟอนต์ไม่ได้ (ไม่มีไฟล์ในโฟลเดอร์ fonts)');
+  it.font = lfStack(id); if (LF_BY[id].cat !== 'formal') it.weight = 400;   // display fonts are already drawn heavy; do not fake-bold them
+  commit('font'); renderInspector();
 }
 
 // ---- 59-trcache.js ----

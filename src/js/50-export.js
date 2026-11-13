@@ -19,7 +19,7 @@ async function runExport(opts) {
   opts = opts || {}; if (EXP.running) return null;
   const bar = $('#expBar'), msg = $('#expMsg');
   if (!D.items.length) { toast('ยังไม่มีอะไรในไทม์ไลน์'); return null; }
-  EXP.running = true; EXP.cancel = false; pause(); ensureAudio(); await AC.resume();
+  EXP.running = true; EXP.cancel = false; pause(); ensureAudio(); await AC.resume(); try { await lfPreloadDoc(); } catch (e) { }
   const W = opts.w || D.w || 1080, H = opts.h || D.h || 1920, FPS = 30, total = durEnd();
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const ctx = cv.getContext('2d', { alpha: false });
   const mime = pickMime(); const ext = mime.startsWith('video/mp4') ? 'mp4' : 'webm';

@@ -471,6 +471,7 @@ function textAnimParams(it, lt, W, H) {
 }
 function drawText(ctx, it, t, W, H) {
   const lt = t - it.start; if (lt < 0) return;
+  if (it.font && it.font.indexOf('"LF-') >= 0) lfNeed(it.font);
   const ap = textAnimParams(it, lt, W, H);
   if (ap.a <= 0.001) return;
   const L = layoutText(ctx, it, W, H); const { rows, size, lineH } = L;
