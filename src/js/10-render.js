@@ -16,6 +16,8 @@ function poolGet(it, create = true) {
   const el = document.createElement('video');
   el.playsInline = true; el.preload = 'auto'; el.crossOrigin = 'anonymous'; el.src = m.purl || m.url;
   el.addEventListener('seeked', dirty); el.addEventListener('loadeddata', dirty); el.addEventListener('canplay', dirty);
+  // scrubbing: a new seek while one is still running cancels it, so a fast drag over a 4K clip never showed a frame. Keep ONE seek in flight, remember the latest wish, and jump there when the frame lands (live preview like CapCut)
+  el.addEventListener('seeked', () => { const rr = POOL.get(it.id); if (rr && rr.want != null && !PB.playing) { const w = rr.want; rr.want = null; if (Math.abs(el.currentTime - w) > 0.02) { try { el.currentTime = w; } catch (e) { } } } });
   const gain = (typeof connectEl === 'function') ? connectEl(el) : null;
   r = { el, last: performance.now(), gain, itemId: it.id };
   POOL.set(it.id, r);

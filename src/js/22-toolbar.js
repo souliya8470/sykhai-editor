@@ -1,14 +1,23 @@
 // ============================================================
 //  Timeline toolbar (CapCut-style): trim left/right, markers, magnet, snapping, zoom
 // ============================================================
-const TLS = { snap: true, magnet: false };
+const TLS = { snap: true, magnet: true };
 try { Object.assign(TLS, JSON.parse(localStorage.getItem('sk_tls') || '{}')); } catch (e) { }
 const snapTol = () => TLS.snap ? 9 : 0;
-// magnetic main track: close gaps on Video 1 whenever the document changes
+// magnetic main track (Video 1, like CapCut): clips are always glued end to end — no gaps, no overlaps (a transition keeps its own small overlap).
+// skipId = the clip being dragged: it floats under the mouse, the others close up around the slot it would take.
+function magnetLayout(skipId) {
+  const list = D.items.filter(i => i.track === 'V1').sort((a, b) => (a.start + a.dur / 2) - (b.start + b.dur / 2)); let t = 0, prev = null;
+  for (const it of list) {
+    const ov = prev && it.transIn && it.transIn.ext && it.transIn.prevId === prev.id ? Math.min(it.transIn.ext, prev.dur * .9) : 0;
+    const st = Math.max(0, t - ov);
+    if (it.id !== skipId) it.start = st;
+    t = st + it.dur; prev = it;
+  }
+}
 function magnetFix(label) {
   if (!TLS.magnet || label === 'init' || label === 'open') return;
-  const list = D.items.filter(i => i.track === 'V1').sort((a, b) => a.start - b.start); let t = 0;
-  for (const it of list) { if (it.start > t + 1e-3) it.start = t; t = Math.max(t, it.start + it.dur); }
+  magnetLayout(null);
 }
 function trimTargets() {
   const t = PB.t; const target = SEL ? getItem(SEL) : null;
@@ -44,6 +53,7 @@ function initToolbar() {
   $('#tbDel').onclick = () => cmdDelete(false); $('#tbRipple').onclick = () => cmdDelete(true); $('#tbMark').onclick = cmdMarker;
   const save = () => { try { localStorage.setItem('sk_tls', JSON.stringify(TLS)); } catch (e) { } };
   $('#tbMagnet').onclick = () => { TLS.magnet = !TLS.magnet; setTog('#tbMagnet', 'magnet'); save(); if (TLS.magnet) { commit('gaps'); toast('เปิดแม่เหล็ก: คลิปบนวิดีโอ 1 จะชิดกันอัตโนมัติ'); } };
+  $('#tbCover').onclick = () => { if (typeof coverOpen === 'function') coverOpen(); };
   $('#tbSnap').onclick = () => { TLS.snap = !TLS.snap; setTog('#tbSnap', 'snap'); save(); };
   setTog('#tbMagnet', 'magnet'); setTog('#tbSnap', 'snap');
   $('#tbZoomIn').onclick = () => setZoom(TL.pps * 1.3); $('#tbZoomOut').onclick = () => setZoom(TL.pps / 1.3);

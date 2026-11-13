@@ -79,6 +79,7 @@ const projDel = async id => { try { await idbTx('projects', 'readwrite', s => s.
 const mediaKeys = async () => { try { return (await idbTx('media', 'readonly', s => s.getAllKeys())) || []; } catch (e) { return []; } };
 
 function projThumb(doc) {
+  if (doc.cover && doc.cover.thumb) return doc.cover.thumb;
   const vis = (doc.items || []).filter(i => i.mediaId && (i.type === 'video' || i.type === 'image')).sort((a, b) => a.start - b.start);
   for (const it of vis) { const m = MEDIA.get(it.mediaId); if (m && m.thumb) return m.thumb; }
   if (doc === D && !HOME.open && PCANVAS) { try { const c = document.createElement('canvas'); c.width = 90; c.height = 160; c.getContext('2d').drawImage(PCANVAS, 0, 0, 90, 160); return c.toDataURL('image/jpeg', .6); } catch (e) { } }

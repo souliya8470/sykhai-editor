@@ -53,6 +53,7 @@ async function runExport(opts) {
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = (D.name || 'video') + '.' + ext; document.body.appendChild(a); a.click(); setTimeout(() => { a.remove(); }, 2000);
   }
   if (bar) bar.style.width = '100%'; if (msg) msg.textContent = `เสร็จแล้ว ✔ (${(blob.size / 1048576).toFixed(1)} MB, .${ext})` + (ext === 'webm' ? ' — เบราว์เซอร์ไม่รองรับ mp4 จึงได้ .webm' : '');
+  if (!opts.noDownload && D.cover && typeof coverDownload === 'function') setTimeout(() => { coverDownload(true).catch(() => { }); }, 1800);
   EXP.blob = blob; if (!opts.noDownload && typeof srvPushOut === 'function') srvPushOut(blob, (D.name || 'video').replace(/[\\/:*?"<>|]/g, '_') + '.' + ext);
   return blob;
 }

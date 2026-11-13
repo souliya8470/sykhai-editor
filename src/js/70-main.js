@@ -6,8 +6,8 @@ function drawOverlay() {
   const it = SEL ? getItem(SEL) : null; if (!it || PB.exporting) return;
   if (PB.t < it.start - 1e-3 || PB.t >= it.start + it.dur) return; const b = BOUNDS[it.id]; if (!b || it.type === 'audio') return;
   c.save(); c.translate(b.cx, b.cy); c.rotate(b.rot * Math.PI / 180);
-  c.strokeStyle = '#2ee6c5'; c.lineWidth = 1.5; c.setLineDash([5, 4]); c.strokeRect(-b.w / 2, -b.h / 2, b.w, b.h); c.setLineDash([]);
-  c.fillStyle = '#fff'; c.strokeStyle = '#2ee6c5'; const hs = 7;
+  c.strokeStyle = '#ffffff'; c.lineWidth = 1; c.setLineDash([5, 4]); c.strokeRect(-b.w / 2, -b.h / 2, b.w, b.h); c.setLineDash([]);
+  c.fillStyle = '#fff'; c.strokeStyle = '#8a909c'; const hs = 7;
   c.fillRect(b.w / 2 - hs, b.h / 2 - hs, hs * 2, hs * 2); c.strokeRect(b.w / 2 - hs, b.h / 2 - hs, hs * 2, hs * 2);
   c.beginPath(); c.moveTo(0, -b.h / 2); c.lineTo(0, -b.h / 2 - 22); c.stroke(); c.beginPath(); c.arc(0, -b.h / 2 - 26, 6, 0, 7); c.fill(); c.stroke();
   c.restore();
@@ -136,7 +136,7 @@ async function init() {
     else if (e.key === 'ArrowRight') { pause(); seek(PB.t + (e.shiftKey ? 1 : 1 / 30)); }
     else if (e.key === 'Home') { pause(); seek(0); }
   });
-  initSplitters(); initToolbar();
+  initSplitters(); initToolbar(); if (typeof coverInit === 'function') coverInit();
   initHome(); await showHome(); if (srvOn()) srvPing().then(ok => ok && srvLoadSizes()).then(() => srvAdoptProxies()).then(() => srvInboxAuto()).then(() => srvInboxWatch()).catch(() => { });
   tick();
   window.__ready = true;

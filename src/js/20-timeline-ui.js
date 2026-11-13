@@ -2,9 +2,9 @@
 //  Timeline UI + media bin
 // ============================================================
 const TL = { pps: 56, labelW: 96 };
-const TRACK_H = { video: 58, text: 42, audio: 46 };
+const TRACK_H = { video: 50, text: 40, audio: 42 };
 let TH = {}; try { TH = JSON.parse(localStorage.getItem('sk_trh') || '{}') || {}; } catch (e) { }
-const trackH = tr => TH[tr.id] || (tr.id === 'V1' ? 84 : TRACK_H[tr.kind]);
+const trackH = tr => TH[tr.id] || (tr.id !== 'V1' && D && !D.items.some(i => i.track === tr.id) ? 24 : tr.id === 'V1' ? 66 : TRACK_H[tr.kind]);   // empty lanes fold to a thin strip (small screens), still a drop target
 const VOL_MAX = 1.5;
 function wfHeight(it) { const tr = TRACKS.find(t => t.id === it.track); const ch = trackH(tr) - 6; return ch >= 66 ? Math.round(ch * .4) : 22; }
 const tlWidth = () => Math.max(projectEnd() + 14, 40) * TL.pps;
@@ -12,10 +12,21 @@ const CLIP_COL = { video: '#1b5c63', image: '#5d4a86', text: '#a9772a', sticker:
 function tcFmt(s) { const f = (D && D.fps) || 30; s = Math.max(0, s); const fr = Math.min(f - 1, Math.round((s % 1) * f)); const t = Math.floor(s); const p2 = n => String(n).padStart(2, '0'); return p2(Math.floor(t / 3600)) + ':' + p2(Math.floor(t % 3600 / 60)) + ':' + p2(t % 60) + ':' + p2(fr); }
 
 function rulerTicks() {
-  const total = tlWidth() / TL.pps; let step = 1; const target = 80 / TL.pps;
-  for (const s of [0.5, 1, 2, 5, 10, 15, 30, 60, 120]) { step = s; if (s >= target) break; }
+  // CapCut-like ruler: labelled major ticks + small minor ticks; zoomed in far enough it counts frames (e.g. 5f 10f 15f)
+  const fps = (D && D.fps) || 30, fr = 1 / fps, total = tlWidth() / TL.pps;
+  const C = [[2 * fr, fr], [5 * fr, fr], [10 * fr, 2 * fr], [15 * fr, 5 * fr], [1, .2], [2, .5], [5, 1], [10, 2], [15, 5], [30, 5], [60, 10], [120, 30], [300, 60], [600, 120]];
+  let pick = C[C.length - 1]; for (const c of C) { if (c[0] * TL.pps >= 74) { pick = c; break; } }
+  const major = pick[0]; let unit = pick[1]; if (unit * TL.pps < 5) unit = major;
+  const k = Math.max(1, Math.round(major / unit)); let n = Math.ceil(total / unit); if (n > 6000) n = 6000;
   let h = '';
-  for (let t = 0; t <= total; t += step) { const x = t * TL.pps; h += `<span style="left:${x}px">${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}${step < 1 ? '.' + Math.round((t % 1) * 10) : ''}</span>`; }
+  for (let i = 0; i <= n; i++) {
+    const t = i * unit, x = t * TL.pps;
+    if (i % k === 0) {
+      const whole = Math.abs(t - Math.round(t)) < 1e-4, ts = Math.round(t);
+      const lb = whole ? Math.floor(ts / 60) + ':' + String(ts % 60).padStart(2, '0') : Math.round((t - Math.floor(t + 1e-6)) * fps) + 'f';
+      h += `<span style="left:${x}px">${lb}</span>`;
+    } else h += `<i class="tk${k % 2 === 0 && i % k === k / 2 ? ' m5' : ''}" style="left:${x}px"></i>`;
+  }
   return h;
 }
 function clipLabel(it) {
@@ -39,7 +50,7 @@ function renderTimeline() {
   const sx = body.scrollLeft, sy = body.scrollTop; const W = tlWidth();
   let h = `<div id="tlinner" style="width:${TL.labelW + W}px"><div id="ruler"><div class="corner"></div><div class="rt" style="width:${W}px">${rulerTicks()}${(D.markers || []).map(m => `<i class="mk" data-id="${m.id}" style="left:${m.t * TL.pps}px" title="${T('มาร์กเกอร์ — ดับเบิลคลิกเพื่อลบ')}">⚑</i>`).join('')}</div></div>`;
   const ROWS = [...layerOrder().slice().reverse().map(id => TRACKS.find(t => t.id === id)).filter(Boolean), ...TRACKS.filter(t => t.kind === 'audio')];   // top lane = top layer
-  for (const tr of ROWS) h += `<div class="trow ${tr.kind}${trSt(tr.id).lock ? ' locked' : ''}${trSt(tr.id).hide ? ' hidt' : ''}${trSt(tr.id).mute ? ' mutet' : ''}" data-track="${tr.id}" style="height:${trackH(tr)}px"><div class="tlabel"><div class="tn">${tr.kind === 'audio' ? tr.label : T('เลเยอร์') + ' ' + (layerOrder().indexOf(tr.id) + 1)}</div>${trIcons(tr)}</div><div class="tlane" style="width:${W}px"></div><div class="trh" title="ลากเพื่อปรับความสูงของแถว"></div></div>`;
+  for (const tr of ROWS) h += `<div class="trow ${tr.kind}${trackH(tr) <= 24 ? ' slim' : ''}${trSt(tr.id).lock ? ' locked' : ''}${trSt(tr.id).hide ? ' hidt' : ''}${trSt(tr.id).mute ? ' mutet' : ''}" data-track="${tr.id}" style="height:${trackH(tr)}px"><div class="tlabel"><div class="tn">${tr.kind === 'audio' ? tr.label : T('เลเยอร์') + ' ' + (layerOrder().indexOf(tr.id) + 1)}</div>${trIcons(tr)}</div><div class="tlane" style="width:${W}px"></div><div class="trh" title="ลากเพื่อปรับความสูงของแถว"></div></div>`;
   h += `<div id="playhead"><i></i></div></div>`;
   body.innerHTML = h;
   for (const it of D.items) {
@@ -115,6 +126,13 @@ function addMediaToTimeline(mediaId, trackId, start) {
   }
   addItem(it); commit('add'); select(it.id); return it;
 }
+// where a media dragged from the bin will land: snaps to 0, the playhead and clip edges; an empty lane always starts at 0 (no slight offset)
+function dropStart(e, trackId) {
+  let t = dropTimeFromEvent(e);
+  const lane = trackId && LANE(trackId) === 'visual' ? trackId : 'V1';
+  if (!D.items.some(i => i.track === lane)) return 0;
+  const tol = Math.max(TLS.snap ? 9 : 0, 14) / TL.pps; return Math.max(0, snapVal(t, snapPoints(null), tol));
+}
 function dropTimeFromEvent(e) { const body = $('#tlbody'); const r = body.getBoundingClientRect(); return Math.max(0, (e.clientX - r.left + body.scrollLeft - TL.labelW) / TL.pps); }
 
 // ---------- pointer interactions ----------
@@ -164,7 +182,10 @@ function initTimelineEvents() {
         if (it.type === 'audio' && m && !it.loop) d = Math.min(d, m.duration - o.in);
         it.dur = d;
       }
+      if (TLS.magnet && it.track === 'V1') magnetLayout(mode === 'move' ? it.id : null);
       renderTimeline(); dirty(); emit('inspect-refresh');
+      // like CapCut: the player follows the edge you are dragging (trim) or keeps showing the frame under the playhead while the clip moves
+      if (mode === 'tl') seek(it.start + .02); else if (mode === 'tr') seek(Math.max(it.start, it.start + it.dur - .04)); else seek(PB.t);
     };
     const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); if (moved) { commit('edit'); } };
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
@@ -175,7 +196,7 @@ function initTimelineEvents() {
   }, { passive: false });
   // drag & drop from media bin
   body.addEventListener('dragover', e => {
-    const ty = e.dataTransfer.types; if (ty.includes('text/mediaid')) { e.preventDefault(); return; }
+    const ty = e.dataTransfer.types; if (ty.includes('text/mediaid')) { e.preventDefault(); const rw = e.target.closest && e.target.closest('.trow'); showDropMark(rw ? { row: rw, mode: 'at', t: dropStart(e, rw.dataset.track) } : null); return; }
     if (ty.includes('text/trans') || ty.includes('text/fx')) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; showDropMark(dropTarget(e)); }
   });
   body.addEventListener('dragleave', e => { if (!body.contains(e.relatedTarget)) showDropMark(null); });
@@ -186,7 +207,7 @@ function initTimelineEvents() {
       select(tg.it.id); if (d.kind === 'trans') applyTransition(tg.it, d.key); else if (d.kind === 'fx') applyFxPreset(tg.it, d.key); else applyMaskPreset(tg.it, d.key); return;
     }
     const id = e.dataTransfer.getData('text/mediaid'); if (!id) return; e.preventDefault();
-    const row = e.target.closest('.trow'); addMediaToTimeline(id, row ? row.dataset.track : null, dropTimeFromEvent(e));
+    const row = e.target.closest('.trow'); addMediaToTimeline(id, row ? row.dataset.track : null, dropStart(e, row ? row.dataset.track : null));
   });
 }
 function dropTarget(e) {
@@ -202,7 +223,8 @@ function showDropMark(tg) {
   if (!tg) { if (m) m.style.display = 'none'; return; }
   if (!m) { m = document.createElement('div'); m.id = 'dropMark'; inner.appendChild(m); } else if (!m.parentNode) inner.appendChild(m);
   const top = tg.row.offsetTop, h = tg.row.offsetHeight; m.style.display = 'block'; m.style.top = top + 'px'; m.style.height = h + 'px';
-  if (tg.mode === 'cut') { m.className = 'cut'; m.style.left = (TL.labelW + tg.it.start * TL.pps - 3) + 'px'; m.style.width = '6px'; }
+  if (tg.mode === 'at') { m.className = 'at'; m.style.left = (TL.labelW + tg.t * TL.pps) + 'px'; m.style.width = '0'; }
+  else if (tg.mode === 'cut') { m.className = 'cut'; m.style.left = (TL.labelW + tg.it.start * TL.pps - 3) + 'px'; m.style.width = '6px'; }
   else { m.className = 'clipm'; m.style.left = (TL.labelW + tg.it.start * TL.pps) + 'px'; m.style.width = (tg.it.dur * TL.pps) + 'px'; }
 }
 function scrubStart(e, already) {
@@ -212,7 +234,7 @@ function scrubStart(e, already) {
   const up = () => { window.removeEventListener('pointermove', f); window.removeEventListener('pointerup', up); if (wasPlaying) play(); };
   window.addEventListener('pointermove', f); window.addEventListener('pointerup', up);
 }
-function setZoom(p) { TL.pps = clamp(p, 8, 400); const z = $('#zoom'); if (z) z.value = Math.log(TL.pps); renderTimeline(); }
+function setZoom(p) { TL.pps = clamp(p, 8, 1200); const z = $('#zoom'); if (z) z.value = Math.log(TL.pps); renderTimeline(); }
 
 // ---------- editing commands ----------
 function cmdSplit() {

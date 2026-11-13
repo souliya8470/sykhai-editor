@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.36</title>
+<title>Sykhai Editor v1.37</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0e0f12;--p1:#191b20;--p2:#212329;--p3:#2a2d35;--ln:#30343d;--tx:#e9ebf0;--mu:#8e95a3;--ac:#2ee6c5;--ac2:#18b99e;--red:#ff4d5e;--ph:#ff3b4e}
+:root{--bg:#0e0f12;--p1:#191b20;--p2:#212329;--p3:#2a2d35;--ln:#30343d;--tx:#e9ebf0;--mu:#8e95a3;--ac:#f2f4f7;--ac2:#c9ced6;--cy:#2ee6c5;--red:#ff4d5e;--ph:#fff}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:13px/1.35 "Prompt","Noto Sans Thai","Noto Sans Lao",system-ui,-apple-system,sans-serif;overflow:hidden}
 button,input,select,textarea{font:inherit;color:inherit}
@@ -105,7 +105,7 @@ dialog h3{margin:0 0 10px}
 .progress{height:8px;background:var(--p1);border-radius:6px;overflow:hidden;margin:10px 0 4px}#expBar{height:100%;width:0;background:var(--ac)}
 #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#000e;color:#fff;padding:9px 16px;border-radius:20px;opacity:0;transition:.25s;z-index:99;pointer-events:none;font-size:13px;max-width:80vw;border:1px solid var(--ln)}
 #toast.on{opacity:1;transform:translateX(-50%)}
-.drop #stage::after,.drop #left::after{content:var(--droptxt,"วางไฟล์ที่นี่");position:absolute;inset:0;background:rgba(46,230,197,.15);border:2px dashed var(--ac);display:flex;align-items:center;justify-content:center;font-size:20px;z-index:20}
+.drop #stage::after,.drop #left::after{content:var(--droptxt,"วางไฟล์ที่นี่");position:absolute;inset:0;background:rgba(255,255,255,.1);border:2px dashed var(--ac);display:flex;align-items:center;justify-content:center;font-size:20px;z-index:20}
 .aicard{background:var(--p2);border:1px solid var(--ln);border-radius:8px;padding:9px;margin:7px 0}
 .aicard h4{margin:0 0 4px;font-size:13px}
 .aitbl{width:100%;border-collapse:collapse;font-size:12px}.aitbl td,.aitbl th{border-bottom:1px solid var(--ln);padding:3px 4px;text-align:left;vertical-align:top}
@@ -114,7 +114,7 @@ dialog h3{margin:0 0 10px}
 .vcard.pick{border-color:var(--ac)}.vcard .vt{flex:1}
 .kclips{max-height:150px;overflow:auto;border:1px solid var(--ln);border-radius:8px;padding:4px 8px;margin:6px 0}.kcl{display:flex;gap:6px;align-items:center;padding:2px 0;font-size:12px}
 .ksheet{display:flex;gap:6px;overflow-x:auto;padding:4px 0;margin:4px 0}.ksheet .kc{flex:none;width:96px;font-size:10px;color:var(--mu)}.ksheet img{width:96px;height:64px;object-fit:cover;border-radius:4px;display:block}.ksheet .kn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.kscene{display:flex;gap:8px;border:1px solid var(--ln);border-radius:8px;padding:6px;margin:5px 0;background:var(--p1)}.kscene.ok{border-color:#2ee6c5}.kscene.drop{opacity:.4}
+.kscene{display:flex;gap:8px;border:1px solid var(--ln);border-radius:8px;padding:6px;margin:5px 0;background:var(--p1)}.kscene.ok{border-color:#fff}.kscene.drop{opacity:.4}
 .kscene img{width:64px;height:96px;object-fit:cover;border-radius:4px;flex:none;background:#000}.kscene .kb{flex:1;min-width:0}.kscene textarea{width:100%;box-sizing:border-box;font-size:12px}.kscene .kt{font-size:11px;color:var(--mu);margin:2px 0}
 .kscene .krow{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}.kscene .krev{display:none;margin-top:4px;gap:5px}.kscene .krev.on{display:flex}.kscene .krev input{flex:1}
 
@@ -128,7 +128,7 @@ dialog h3{margin:0 0 10px}
 .junc:hover{transform:translate(-50%,-50%) scale(1.25)}
 #dropMark{position:absolute;display:none;z-index:9;pointer-events:none}
 #dropMark.cut{background:var(--ac);box-shadow:0 0 12px var(--ac);border-radius:3px}
-#dropMark.clipm{border:2px solid var(--ac);background:rgba(46,230,197,.18);border-radius:6px}
+#dropMark.clipm{border:2px solid var(--ac);background:rgba(255,255,255,.12);border-radius:6px}
 #home{position:fixed;inset:0;z-index:40;background:var(--bg);overflow:auto}
 #home[hidden]{display:none}
 .hwrap{max-width:1100px;margin:0 auto;padding:22px 24px 40px}
@@ -160,13 +160,13 @@ dialog h3{margin:0 0 10px}
 
 /* resizable layout */
 .split{position:absolute;z-index:30;background:transparent;transition:background .12s}
-.split:hover,.split.drag{background:rgba(46,230,197,.55)}
+.split:hover,.split.drag{background:rgba(255,255,255,.5)}
 .split.v{top:46px;bottom:var(--tlh,300px);width:7px;cursor:col-resize}
 #spL{left:calc(var(--lw,300px) - 3px)}#spR{right:calc(var(--rw,310px) - 3px)}
 .split.h{left:0;right:0;height:7px;bottom:calc(var(--tlh,300px) - 3px);cursor:row-resize}
 body.resizing{user-select:none}body.resizing *{cursor:inherit!important}
 .trh{position:absolute;left:0;right:0;bottom:-3px;height:7px;cursor:row-resize;z-index:8}
-.trh:hover,.trh.drag{background:rgba(46,230,197,.55)}
+.trh:hover,.trh.drag{background:rgba(255,255,255,.5)}
 /* clip waveform + volume line */
 .clip.tall .cbg{bottom:var(--wfh);background-size:auto 100%}
 .clip.tall .wf{height:var(--wfh);background:#16464d}
@@ -179,7 +179,7 @@ body.resizing{user-select:none}body.resizing *{cursor:inherit!important}
 .clip .vl.drag b{display:block}
 /* level meter */
 #vu{display:inline-block;width:56px;height:8px;background:#0c0e12;border:1px solid var(--ln);border-radius:4px;overflow:hidden;flex:none}
-#vu i{display:block;height:100%;width:0;background:linear-gradient(90deg,#2ee6c5 0 60%,#ffd60a 60% 85%,#ff4d5e 85%)}
+#vu i{display:block;height:100%;width:0;background:linear-gradient(90deg,#d9dde3 0 60%,#ffd60a 60% 85%,#ff4d5e 85%)}
 
 html[lang=lo] body,html[lang=lo] button,html[lang=lo] input,html[lang=lo] select,html[lang=lo] textarea{font-family:"Noto Sans Lao","Prompt","Noto Sans Thai",system-ui,sans-serif}
 select.uilang{max-width:130px}
@@ -188,7 +188,7 @@ select.uilang{max-width:130px}
 
 #tlbar button{width:30px;height:26px;padding:0;display:inline-flex;align-items:center;justify-content:center;background:transparent;border-color:transparent;color:var(--tx)}
 #tlbar button:hover{background:var(--p3)}
-#tlbar button.tog.on{background:rgba(46,230,197,.16);color:var(--ac);border-color:rgba(46,230,197,.4)}
+#tlbar button.tog.on{background:rgba(255,255,255,.14);color:var(--ac);border-color:rgba(255,255,255,.35)}
 #tlbar .tsep{width:1px;height:18px;background:var(--ln);margin:0 5px}
 #tlbar #zoom{width:110px}
 #ruler .mk{position:absolute;top:0;z-index:4;transform:translateX(-50%);color:#ffd60a;font-size:11px;line-height:12px;cursor:pointer;font-style:normal}
@@ -198,7 +198,7 @@ select.uilang{max-width:130px}
 .clip .fz{position:absolute;bottom:0;height:var(--wfh);background:rgba(0,0,0,.38);pointer-events:none;z-index:1}
 .clip .fz.l{left:0;clip-path:polygon(0 0,100% 0,0 100%)}
 .clip .fz.r{right:0;clip-path:polygon(0 0,100% 0,100% 100%)}
-.clip .fh{position:absolute;bottom:var(--wfh);margin-bottom:-6px;width:12px;height:12px;border-radius:50%;background:#0d2c30;border:2px solid #4ee0c5;box-sizing:border-box;z-index:5;cursor:ew-resize;display:none;text-decoration:none}
+.clip .fh{position:absolute;bottom:var(--wfh);margin-bottom:-6px;width:12px;height:12px;border-radius:50%;background:#0d2c30;border:1px solid #fff;box-sizing:border-box;z-index:5;cursor:ew-resize;display:none;text-decoration:none}
 .clip:hover .fh,.clip.sel .fh,.clip .fh.drag{display:block}
 .clip .fh b{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:600;background:rgba(0,0,0,.8);padding:0 4px;border-radius:3px;display:none;white-space:nowrap;pointer-events:none;color:#fff}
 .clip .fh.drag b{display:block}
@@ -217,7 +217,7 @@ select.uilang{max-width:130px}
 .agrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:6px 0}
 .agrid button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px;font-size:11px;line-height:1.2;text-align:center}
 .agrid button i{font-style:normal;font-size:20px;line-height:1}
-.agrid button.on{background:rgba(46,230,197,.16);border-color:var(--ac);color:var(--ac)}
+.agrid button.on{background:rgba(255,255,255,.14);border-color:var(--ac);color:var(--ac)}
 .alignrow{display:flex;gap:4px;margin:6px 0}.alignrow button{flex:1;padding:3px 0;font-size:15px}
 .chips{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0}.chips button{padding:3px 9px;font-size:12px;border-radius:14px}.chips button.on{background:var(--ac);color:#000;border-color:var(--ac)}
 .fld.dis{opacity:.5}.fld.dis .soon{margin-left:auto;font-size:10px;color:var(--mu);border:1px solid var(--ln);border-radius:8px;padding:0 6px}
@@ -231,7 +231,7 @@ canvas.wheel{display:block;width:120px;height:120px;margin:6px auto;touch-action
 #top{background:transparent;border:0;padding:0 14px}
 .logo{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#3ff0d4,#18a8c9);color:#04251f;font-size:15px;font-weight:700}
 button{border-radius:9px}
-#btnExport{border-radius:20px;padding:6px 16px}
+#btnExport{border-radius:20px;padding:6px 16px;background:var(--cy);border-color:var(--cy);color:#04251f}
 main{padding:0}
 #left{margin:0 4px 0 8px;border:0;border-radius:14px;overflow:hidden}
 #center{margin:0 4px;border-radius:14px;background:var(--p1);padding:0 8px 8px}
@@ -246,7 +246,7 @@ main{padding:0}
 #transport .tpl{display:flex;align-items:center;gap:8px;min-width:0}
 #transport .tpc{display:flex;align-items:center;gap:6px;justify-content:center}
 #transport .tpr{display:flex;gap:5px;justify-content:flex-end;flex-wrap:wrap}
-#tpTime{color:var(--ac);font-size:13px;font-weight:500;white-space:nowrap}
+#tpTime{color:var(--cy);font-size:13px;font-weight:500;white-space:nowrap}
 #tpPlay{width:42px;height:42px;border-radius:50%;padding:0;font-size:16px}
 #tpStart{background:transparent;border-color:transparent;color:var(--mu)}
 /* left tabs: icon over label */
@@ -376,6 +376,37 @@ button.ltarr:hover{background:var(--p3);color:var(--ac)}
 #ltWrap.ov button.ltarr{display:block}
 #ltWrap.ov.atl #ltL,#ltWrap.ov.atr #ltR{opacity:.25;cursor:default}
 
+/* v1.37: CapCut look — white controls, thin lines */
+input[type=range]{-webkit-appearance:none;appearance:none;background:transparent;height:16px;margin:0;accent-color:#fff;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:2px;border-radius:2px;background:#555a66}
+input[type=range]::-moz-range-track{height:2px;border-radius:2px;background:#555a66}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;border-radius:50%;background:#fff;border:0;margin-top:-4.5px;box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;background:#fff;border:0}
+input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
+.icard .fld input[type=range]{height:16px}
+#tlbar #zoom{width:100px}
+#playhead i{left:0;width:1px;background:#fff;box-shadow:0 0 0 .5px rgba(0,0,0,.35)}
+#playhead i::before{left:-5px;top:0;border:5px solid transparent;border-top:8px solid #fff;filter:drop-shadow(0 0 .5px rgba(0,0,0,.6))}
+.clip{border-width:0 1px 0 0;border-color:rgba(0,0,0,.45)}
+.clip.sel{outline:1px solid #fff;outline-offset:-1px;border-color:#fff}
+.clip .th{width:7px}
+.clip:hover .th,.clip.sel .th{background:rgba(255,255,255,.28)}
+.clip .vl{border-top-width:1px}
+.trow{border-bottom-color:#22252b}
+.tlabel{padding:3px 6px}
+#ruler{height:24px}
+#ruler .rt i.tk{position:absolute;bottom:0;width:0;border-left:1px solid #3d424c;height:4px;pointer-events:none}
+#ruler .rt i.tk.m5{height:6px;border-left-color:#555b68}
+#ruler .rt span{border-left:1px solid #555b68;height:14px;top:3px;font-size:10px;line-height:11px;padding-left:3px;pointer-events:none}
+#dropMark.at{border-left:1px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.4);opacity:.95}
+#tlbar button.wide{width:auto;padding:0 9px;gap:5px;font-size:12px}
+#dlgCover{min-width:360px}
+#dlgCover .cvwrap{display:flex;justify-content:center;margin:10px 0;background:#0b0c0f;border-radius:8px;padding:8px}
+#dlgCover canvas{max-height:46vh;max-width:100%;border-radius:4px}
+#dlgCover .cvrow{display:flex;align-items:center;gap:8px;margin:6px 0 10px}#dlgCover .cvrow input{flex:1}
+#dlgCover #cvTime{font-variant-numeric:tabular-nums;color:var(--mu);font-size:12px;min-width:84px;text-align:right}
+.trow.slim .tlabel{padding:3px 6px;display:flex;align-items:center}.trow.slim .tic-row,.trow.slim .trh{display:none}.trow.slim .tn{font-size:10px}
+
 </style></head>
 <body>
 <div id="app">
@@ -437,12 +468,13 @@ button.ltarr:hover{background:var(--p3);color:var(--ac)}
       <button id="tbDel" title="ลบ (Delete)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M9 7V4h6v3M7 7l1 13h8l1-13M10 11v6M14 11v6"/></svg></button>
       <button id="tbRipple" title="ลบแล้วดึงคลิปตามมา (Shift+Delete)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h8M6 7V4h4v3M5 7l1 13h4l1-13"/><path d="M15 12h6M18 9l3 3-3 3"/></svg></button>
       <button id="tbMark" title="ใส่มาร์กเกอร์ที่หัวอ่าน (M) — ดับเบิลคลิกมาร์กเกอร์เพื่อลบ"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v10l-6 6-6-6z"/></svg></button>
+      <button id="tbCover" class="wide" title="เลือกรูปหน้าปกวิดีโอ"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/></svg><span>หน้าปก</span></button>
       <span class="sp"></span>
       <button id="tbMagnet" class="tog" title="แม่เหล็กวิดีโอ 1 — ชิดคลิปอัตโนมัติ ไม่มีช่องว่าง"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 14a7 7 0 0 0 14 0V4h-4v10a3 3 0 0 1-6 0V4H5z"/><path d="M5 8h4M15 8h4"/></svg></button>
       <button id="tbSnap" class="tog on" title="ดูดติดขอบคลิป/มาร์กเกอร์เมื่อลาก"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M3 12h6M21 12h-6"/></svg></button><span class="tsep"></span>
       <button id="tbFit" title="ซูมให้พอดีจอ"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
       <button id="tbZoomOut" title="ซูมออก"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><path d="M8 11h6M16 16l4 4"/></svg></button>
-      <input id="zoom" type="range" min="2" max="6" step="0.05" value="4" title="ซูม">
+      <input id="zoom" type="range" min="2" max="7.09" step="0.05" value="4" title="ซูม">
       <button id="tbZoomIn" title="ซูมเข้า"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><path d="M8 11h6M11 8v6M16 16l4 4"/></svg></button>
     </div>
     <div id="tlbody"></div>
@@ -494,6 +526,15 @@ button.ltarr:hover{background:var(--p3);color:var(--ac)}
   <div class="fld"><label>คุณภาพ</label><select id="expQ"><option value="12000000">สูง (12 Mbps)</option><option value="8000000" selected>มาตรฐาน (8 Mbps)</option><option value="5000000">ประหยัด (5 Mbps)</option></select></div>
   <div class="progress"><div id="expBar"></div></div><div id="expMsg" class="hint"></div>
   <div class="row"><span class="sp"></span><button id="expCancel">ปิด</button><button id="expGo" class="primary">เริ่มส่งออก</button></div>
+</dialog>
+<dialog id="dlgCover">
+  <h3>เลือกรูปหน้าปก</h3>
+  <div class="hint">เลื่อนแถบเพื่อเลือกช่วงเวลาที่อยากใช้เป็นรูปหน้าปก</div>
+  <div class="cvwrap"><canvas id="cvPrev" width="270" height="480"></canvas></div>
+  <div class="cvrow"><button id="cvPrevF" title="เฟรมก่อนหน้า">‹</button><input id="cvT" type="range" min="0" max="1" step="0.01" value="0"><button id="cvNextF" title="เฟรมถัดไป">›</button><span id="cvTime" translate="no">00:00:00:00</span></div>
+  <div class="row"><button id="cvHead">ใช้ตำแหน่งหัวอ่าน</button><span class="sp"></span><button id="cvDel">เอาหน้าปกออก</button><button id="cvDl">ดาวน์โหลดรูปปก (JPG)</button></div>
+  <div class="hint">หน้าปกถูกบันทึกพร้อมโปรเจกต์ และดาวน์โหลดเป็น JPG คู่กับวิดีโอตอนส่งออก</div>
+  <div class="row"><span class="sp"></span><button id="cvClose">ปิดหน้าต่างนี้</button><button id="cvSet" class="primary">ตั้งเป็นหน้าปก</button></div>
 </dialog>
 <dialog id="dlgAi">
   <h3 id="aiTitle">AI</h3>
@@ -1605,6 +1646,20 @@ I18N_ROWS.push(
   ['โหลดแล้วทั้งหมด', 'Downloaded in total', 'ໂຫຼດແລ້ວທັງໝົດ'],
   ['เช็กสถานะเซิร์ฟเวอร์ไม่ได้', 'Cannot check the server status', 'ກວດສະຖານະເຊີບເວີບໍ່ໄດ້'],
   ['เลเยอร์', 'Layer', 'ຊັ້ນ'],
+  ['เลือกรูปหน้าปกวิดีโอ', 'Choose the video cover', 'ເລືອກຮູບໜ້າປົກວິດີໂອ'],
+  ['หน้าปก', 'Cover', 'ໜ້າປົກ'],
+  ['เลือกรูปหน้าปก', 'Choose cover image', 'ເລືອກຮູບໜ້າປົກ'],
+  ['เลื่อนแถบเพื่อเลือกช่วงเวลาที่อยากใช้เป็นรูปหน้าปก', 'Drag the bar to pick the moment you want as the cover', 'ເລື່ອນແຖບເພື່ອເລືອກຊ່ວງເວລາທີ່ຢາກໃຊ້ເປັນຮູບໜ້າປົກ'],
+  ['เฟรมก่อนหน้า', 'Previous frame', 'ເຟຣມກ່ອນໜ້າ'],
+  ['เฟรมถัดไป', 'Next frame', 'ເຟຣມຕໍ່ໄປ'],
+  ['ใช้ตำแหน่งหัวอ่าน', 'Use the playhead position', 'ໃຊ້ຕຳແໜ່ງເສັ້ນຫຼິ້ນ'],
+  ['เอาหน้าปกออก', 'Remove the cover', 'ເອົາໜ້າປົກອອກ'],
+  ['ดาวน์โหลดรูปปก (JPG)', 'Download the cover (JPG)', 'ດາວໂຫຼດຮູບໜ້າປົກ (JPG)'],
+  ['หน้าปกถูกบันทึกพร้อมโปรเจกต์ และดาวน์โหลดเป็น JPG คู่กับวิดีโอตอนส่งออก', 'The cover is saved with the project and downloaded as a JPG next to the video when you export', 'ໜ້າປົກຖືກບັນທຶກພ້ອມໂປຣເຈັກ ແລະ ດາວໂຫຼດເປັນ JPG ຄູ່ກັບວິດີໂອຕອນສົ່ງອອກ'],
+  ['ตั้งเป็นหน้าปก', 'Set as cover', 'ຕັ້ງເປັນໜ້າປົກ'],
+  ['ตั้งหน้าปกแล้ว ✔', 'Cover set ✔', 'ຕັ້ງໜ້າປົກແລ້ວ ✔'],
+  ['ดาวน์โหลดรูปปกแล้ว ✔', 'Cover downloaded ✔', 'ດາວໂຫຼດຮູບໜ້າປົກແລ້ວ ✔'],
+  ['ปิดหน้าต่างนี้', 'Close this window', 'ປິດໜ້າຕ່າງນີ້'],
 );
 
 // ---- 00-core.js ----
@@ -1612,9 +1667,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.36
-// APP_VERSION_PREV : 1.35
-// APP_VERSION_PREV_OLDER : 1.34
+// APP_VERSION  : 1.37
+// APP_VERSION_PREV : 1.36
+// APP_VERSION_PREV_OLDER : 1.35
+// 1.37 : CapCut-style editing feel — magnetic main track (clips glued end to end, others slide while you drag, no overlaps), media dropped from the bin snaps to 00:00 / playhead / clip edges (empty timeline = exactly 0) with a drop line, Cover picker (🖼 pick any frame; saved in the project, project-card picture, JPG downloaded next to the MP4), all controls white + thinner lines (sliders, playhead 1 px, selection), live preview while scrubbing/trimming/moving (one seek in flight, jumps to the latest), ruler with minor ticks and frame counting up to 1200 px/s, empty lanes fold to a thin strip
 // 1.36 : free layers (every picture lane takes video / image / text / sticker; lanes are numbered by stack position), fade in/out now audibly follows the dragged handle (squared ramp), left tab bar keeps fixed-size tabs with ‹ › scroll arrows when narrow, 2nd computer pulls the whole reference library from the server (inbox/done is listed and served)
 // 1.35 : layers like CapCut / Photoshop — the timeline now lists the stack top-down (top lane = drawn on top in the preview and the export; before, V1 was listed first but drawn at the bottom); ▲▼ on every video/text lane move that layer up or down the stack (saved per project in D.lorder)
 // 1.34 : the editor now checks the shop-server inbox every minute while open (desktop) and pulls new reference clips into the library by itself — no need to press the 📥 button
@@ -1652,7 +1708,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.36';
+const APP_VERSION = '1.37';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -1856,6 +1912,8 @@ function poolGet(it, create = true) {
   const el = document.createElement('video');
   el.playsInline = true; el.preload = 'auto'; el.crossOrigin = 'anonymous'; el.src = m.purl || m.url;
   el.addEventListener('seeked', dirty); el.addEventListener('loadeddata', dirty); el.addEventListener('canplay', dirty);
+  // scrubbing: a new seek while one is still running cancels it, so a fast drag over a 4K clip never showed a frame. Keep ONE seek in flight, remember the latest wish, and jump there when the frame lands (live preview like CapCut)
+  el.addEventListener('seeked', () => { const rr = POOL.get(it.id); if (rr && rr.want != null && !PB.playing) { const w = rr.want; rr.want = null; if (Math.abs(el.currentTime - w) > 0.02) { try { el.currentTime = w; } catch (e) { } } } });
   const gain = (typeof connectEl === 'function') ? connectEl(el) : null;
   r = { el, last: performance.now(), gain, itemId: it.id };
   POOL.set(it.id, r);
@@ -2408,9 +2466,9 @@ function renderFrame(ctx, W, H, t) {
 //  Timeline UI + media bin
 // ============================================================
 const TL = { pps: 56, labelW: 96 };
-const TRACK_H = { video: 58, text: 42, audio: 46 };
+const TRACK_H = { video: 50, text: 40, audio: 42 };
 let TH = {}; try { TH = JSON.parse(localStorage.getItem('sk_trh') || '{}') || {}; } catch (e) { }
-const trackH = tr => TH[tr.id] || (tr.id === 'V1' ? 84 : TRACK_H[tr.kind]);
+const trackH = tr => TH[tr.id] || (tr.id !== 'V1' && D && !D.items.some(i => i.track === tr.id) ? 24 : tr.id === 'V1' ? 66 : TRACK_H[tr.kind]);   // empty lanes fold to a thin strip (small screens), still a drop target
 const VOL_MAX = 1.5;
 function wfHeight(it) { const tr = TRACKS.find(t => t.id === it.track); const ch = trackH(tr) - 6; return ch >= 66 ? Math.round(ch * .4) : 22; }
 const tlWidth = () => Math.max(projectEnd() + 14, 40) * TL.pps;
@@ -2418,10 +2476,21 @@ const CLIP_COL = { video: '#1b5c63', image: '#5d4a86', text: '#a9772a', sticker:
 function tcFmt(s) { const f = (D && D.fps) || 30; s = Math.max(0, s); const fr = Math.min(f - 1, Math.round((s % 1) * f)); const t = Math.floor(s); const p2 = n => String(n).padStart(2, '0'); return p2(Math.floor(t / 3600)) + ':' + p2(Math.floor(t % 3600 / 60)) + ':' + p2(t % 60) + ':' + p2(fr); }
 
 function rulerTicks() {
-  const total = tlWidth() / TL.pps; let step = 1; const target = 80 / TL.pps;
-  for (const s of [0.5, 1, 2, 5, 10, 15, 30, 60, 120]) { step = s; if (s >= target) break; }
+  // CapCut-like ruler: labelled major ticks + small minor ticks; zoomed in far enough it counts frames (e.g. 5f 10f 15f)
+  const fps = (D && D.fps) || 30, fr = 1 / fps, total = tlWidth() / TL.pps;
+  const C = [[2 * fr, fr], [5 * fr, fr], [10 * fr, 2 * fr], [15 * fr, 5 * fr], [1, .2], [2, .5], [5, 1], [10, 2], [15, 5], [30, 5], [60, 10], [120, 30], [300, 60], [600, 120]];
+  let pick = C[C.length - 1]; for (const c of C) { if (c[0] * TL.pps >= 74) { pick = c; break; } }
+  const major = pick[0]; let unit = pick[1]; if (unit * TL.pps < 5) unit = major;
+  const k = Math.max(1, Math.round(major / unit)); let n = Math.ceil(total / unit); if (n > 6000) n = 6000;
   let h = '';
-  for (let t = 0; t <= total; t += step) { const x = t * TL.pps; h += `<span style="left:${x}px">${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}${step < 1 ? '.' + Math.round((t % 1) * 10) : ''}</span>`; }
+  for (let i = 0; i <= n; i++) {
+    const t = i * unit, x = t * TL.pps;
+    if (i % k === 0) {
+      const whole = Math.abs(t - Math.round(t)) < 1e-4, ts = Math.round(t);
+      const lb = whole ? Math.floor(ts / 60) + ':' + String(ts % 60).padStart(2, '0') : Math.round((t - Math.floor(t + 1e-6)) * fps) + 'f';
+      h += `<span style="left:${x}px">${lb}</span>`;
+    } else h += `<i class="tk${k % 2 === 0 && i % k === k / 2 ? ' m5' : ''}" style="left:${x}px"></i>`;
+  }
   return h;
 }
 function clipLabel(it) {
@@ -2445,7 +2514,7 @@ function renderTimeline() {
   const sx = body.scrollLeft, sy = body.scrollTop; const W = tlWidth();
   let h = `<div id="tlinner" style="width:${TL.labelW + W}px"><div id="ruler"><div class="corner"></div><div class="rt" style="width:${W}px">${rulerTicks()}${(D.markers || []).map(m => `<i class="mk" data-id="${m.id}" style="left:${m.t * TL.pps}px" title="${T('มาร์กเกอร์ — ดับเบิลคลิกเพื่อลบ')}">⚑</i>`).join('')}</div></div>`;
   const ROWS = [...layerOrder().slice().reverse().map(id => TRACKS.find(t => t.id === id)).filter(Boolean), ...TRACKS.filter(t => t.kind === 'audio')];   // top lane = top layer
-  for (const tr of ROWS) h += `<div class="trow ${tr.kind}${trSt(tr.id).lock ? ' locked' : ''}${trSt(tr.id).hide ? ' hidt' : ''}${trSt(tr.id).mute ? ' mutet' : ''}" data-track="${tr.id}" style="height:${trackH(tr)}px"><div class="tlabel"><div class="tn">${tr.kind === 'audio' ? tr.label : T('เลเยอร์') + ' ' + (layerOrder().indexOf(tr.id) + 1)}</div>${trIcons(tr)}</div><div class="tlane" style="width:${W}px"></div><div class="trh" title="ลากเพื่อปรับความสูงของแถว"></div></div>`;
+  for (const tr of ROWS) h += `<div class="trow ${tr.kind}${trackH(tr) <= 24 ? ' slim' : ''}${trSt(tr.id).lock ? ' locked' : ''}${trSt(tr.id).hide ? ' hidt' : ''}${trSt(tr.id).mute ? ' mutet' : ''}" data-track="${tr.id}" style="height:${trackH(tr)}px"><div class="tlabel"><div class="tn">${tr.kind === 'audio' ? tr.label : T('เลเยอร์') + ' ' + (layerOrder().indexOf(tr.id) + 1)}</div>${trIcons(tr)}</div><div class="tlane" style="width:${W}px"></div><div class="trh" title="ลากเพื่อปรับความสูงของแถว"></div></div>`;
   h += `<div id="playhead"><i></i></div></div>`;
   body.innerHTML = h;
   for (const it of D.items) {
@@ -2521,6 +2590,13 @@ function addMediaToTimeline(mediaId, trackId, start) {
   }
   addItem(it); commit('add'); select(it.id); return it;
 }
+// where a media dragged from the bin will land: snaps to 0, the playhead and clip edges; an empty lane always starts at 0 (no slight offset)
+function dropStart(e, trackId) {
+  let t = dropTimeFromEvent(e);
+  const lane = trackId && LANE(trackId) === 'visual' ? trackId : 'V1';
+  if (!D.items.some(i => i.track === lane)) return 0;
+  const tol = Math.max(TLS.snap ? 9 : 0, 14) / TL.pps; return Math.max(0, snapVal(t, snapPoints(null), tol));
+}
 function dropTimeFromEvent(e) { const body = $('#tlbody'); const r = body.getBoundingClientRect(); return Math.max(0, (e.clientX - r.left + body.scrollLeft - TL.labelW) / TL.pps); }
 
 // ---------- pointer interactions ----------
@@ -2570,7 +2646,10 @@ function initTimelineEvents() {
         if (it.type === 'audio' && m && !it.loop) d = Math.min(d, m.duration - o.in);
         it.dur = d;
       }
+      if (TLS.magnet && it.track === 'V1') magnetLayout(mode === 'move' ? it.id : null);
       renderTimeline(); dirty(); emit('inspect-refresh');
+      // like CapCut: the player follows the edge you are dragging (trim) or keeps showing the frame under the playhead while the clip moves
+      if (mode === 'tl') seek(it.start + .02); else if (mode === 'tr') seek(Math.max(it.start, it.start + it.dur - .04)); else seek(PB.t);
     };
     const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); if (moved) { commit('edit'); } };
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
@@ -2581,7 +2660,7 @@ function initTimelineEvents() {
   }, { passive: false });
   // drag & drop from media bin
   body.addEventListener('dragover', e => {
-    const ty = e.dataTransfer.types; if (ty.includes('text/mediaid')) { e.preventDefault(); return; }
+    const ty = e.dataTransfer.types; if (ty.includes('text/mediaid')) { e.preventDefault(); const rw = e.target.closest && e.target.closest('.trow'); showDropMark(rw ? { row: rw, mode: 'at', t: dropStart(e, rw.dataset.track) } : null); return; }
     if (ty.includes('text/trans') || ty.includes('text/fx')) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; showDropMark(dropTarget(e)); }
   });
   body.addEventListener('dragleave', e => { if (!body.contains(e.relatedTarget)) showDropMark(null); });
@@ -2592,7 +2671,7 @@ function initTimelineEvents() {
       select(tg.it.id); if (d.kind === 'trans') applyTransition(tg.it, d.key); else if (d.kind === 'fx') applyFxPreset(tg.it, d.key); else applyMaskPreset(tg.it, d.key); return;
     }
     const id = e.dataTransfer.getData('text/mediaid'); if (!id) return; e.preventDefault();
-    const row = e.target.closest('.trow'); addMediaToTimeline(id, row ? row.dataset.track : null, dropTimeFromEvent(e));
+    const row = e.target.closest('.trow'); addMediaToTimeline(id, row ? row.dataset.track : null, dropStart(e, row ? row.dataset.track : null));
   });
 }
 function dropTarget(e) {
@@ -2608,7 +2687,8 @@ function showDropMark(tg) {
   if (!tg) { if (m) m.style.display = 'none'; return; }
   if (!m) { m = document.createElement('div'); m.id = 'dropMark'; inner.appendChild(m); } else if (!m.parentNode) inner.appendChild(m);
   const top = tg.row.offsetTop, h = tg.row.offsetHeight; m.style.display = 'block'; m.style.top = top + 'px'; m.style.height = h + 'px';
-  if (tg.mode === 'cut') { m.className = 'cut'; m.style.left = (TL.labelW + tg.it.start * TL.pps - 3) + 'px'; m.style.width = '6px'; }
+  if (tg.mode === 'at') { m.className = 'at'; m.style.left = (TL.labelW + tg.t * TL.pps) + 'px'; m.style.width = '0'; }
+  else if (tg.mode === 'cut') { m.className = 'cut'; m.style.left = (TL.labelW + tg.it.start * TL.pps - 3) + 'px'; m.style.width = '6px'; }
   else { m.className = 'clipm'; m.style.left = (TL.labelW + tg.it.start * TL.pps) + 'px'; m.style.width = (tg.it.dur * TL.pps) + 'px'; }
 }
 function scrubStart(e, already) {
@@ -2618,7 +2698,7 @@ function scrubStart(e, already) {
   const up = () => { window.removeEventListener('pointermove', f); window.removeEventListener('pointerup', up); if (wasPlaying) play(); };
   window.addEventListener('pointermove', f); window.addEventListener('pointerup', up);
 }
-function setZoom(p) { TL.pps = clamp(p, 8, 400); const z = $('#zoom'); if (z) z.value = Math.log(TL.pps); renderTimeline(); }
+function setZoom(p) { TL.pps = clamp(p, 8, 1200); const z = $('#zoom'); if (z) z.value = Math.log(TL.pps); renderTimeline(); }
 
 // ---------- editing commands ----------
 function cmdSplit() {
@@ -2762,14 +2842,23 @@ function initSplitters() {
 // ============================================================
 //  Timeline toolbar (CapCut-style): trim left/right, markers, magnet, snapping, zoom
 // ============================================================
-const TLS = { snap: true, magnet: false };
+const TLS = { snap: true, magnet: true };
 try { Object.assign(TLS, JSON.parse(localStorage.getItem('sk_tls') || '{}')); } catch (e) { }
 const snapTol = () => TLS.snap ? 9 : 0;
-// magnetic main track: close gaps on Video 1 whenever the document changes
+// magnetic main track (Video 1, like CapCut): clips are always glued end to end — no gaps, no overlaps (a transition keeps its own small overlap).
+// skipId = the clip being dragged: it floats under the mouse, the others close up around the slot it would take.
+function magnetLayout(skipId) {
+  const list = D.items.filter(i => i.track === 'V1').sort((a, b) => (a.start + a.dur / 2) - (b.start + b.dur / 2)); let t = 0, prev = null;
+  for (const it of list) {
+    const ov = prev && it.transIn && it.transIn.ext && it.transIn.prevId === prev.id ? Math.min(it.transIn.ext, prev.dur * .9) : 0;
+    const st = Math.max(0, t - ov);
+    if (it.id !== skipId) it.start = st;
+    t = st + it.dur; prev = it;
+  }
+}
 function magnetFix(label) {
   if (!TLS.magnet || label === 'init' || label === 'open') return;
-  const list = D.items.filter(i => i.track === 'V1').sort((a, b) => a.start - b.start); let t = 0;
-  for (const it of list) { if (it.start > t + 1e-3) it.start = t; t = Math.max(t, it.start + it.dur); }
+  magnetLayout(null);
 }
 function trimTargets() {
   const t = PB.t; const target = SEL ? getItem(SEL) : null;
@@ -2805,6 +2894,7 @@ function initToolbar() {
   $('#tbDel').onclick = () => cmdDelete(false); $('#tbRipple').onclick = () => cmdDelete(true); $('#tbMark').onclick = cmdMarker;
   const save = () => { try { localStorage.setItem('sk_tls', JSON.stringify(TLS)); } catch (e) { } };
   $('#tbMagnet').onclick = () => { TLS.magnet = !TLS.magnet; setTog('#tbMagnet', 'magnet'); save(); if (TLS.magnet) { commit('gaps'); toast('เปิดแม่เหล็ก: คลิปบนวิดีโอ 1 จะชิดกันอัตโนมัติ'); } };
+  $('#tbCover').onclick = () => { if (typeof coverOpen === 'function') coverOpen(); };
   $('#tbSnap').onclick = () => { TLS.snap = !TLS.snap; setTog('#tbSnap', 'snap'); save(); };
   setTog('#tbMagnet', 'magnet'); setTog('#tbSnap', 'snap');
   $('#tbZoomIn').onclick = () => setZoom(TL.pps * 1.3); $('#tbZoomOut').onclick = () => setZoom(TL.pps / 1.3);
@@ -2894,6 +2984,7 @@ const projDel = async id => { try { await idbTx('projects', 'readwrite', s => s.
 const mediaKeys = async () => { try { return (await idbTx('media', 'readonly', s => s.getAllKeys())) || []; } catch (e) { return []; } };
 
 function projThumb(doc) {
+  if (doc.cover && doc.cover.thumb) return doc.cover.thumb;
   const vis = (doc.items || []).filter(i => i.mediaId && (i.type === 'video' || i.type === 'image')).sort((a, b) => a.start - b.start);
   for (const it of vis) { const m = MEDIA.get(it.mediaId); if (m && m.thumb) return m.thumb; }
   if (doc === D && !HOME.open && PCANVAS) { try { const c = document.createElement('canvas'); c.width = 90; c.height = 160; c.getContext('2d').drawImage(PCANVAS, 0, 0, 90, 160); return c.toDataURL('image/jpeg', .6); } catch (e) { } }
@@ -4201,7 +4292,7 @@ function syncMedia(force) {
       if (Math.abs(el.currentTime - tt) > 0.35 && now - (r.lastSeek || 0) > 1200) { r.lastSeek = now; try { el.currentTime = tt; } catch (e) { } }
     } else {
       if (!el.paused) el.pause();
-      if (force || Math.abs(el.currentTime - tt) > 0.03) { try { el.currentTime = tt; } catch (e) { } }
+      if (force || Math.abs(el.currentTime - tt) > 0.03) { if (el.seeking && !PB.exporting) r.want = tt; else { r.want = null; try { el.currentTime = tt; } catch (e) { } } }
     }
     setGain(r.gain, PB.playing ? videoGain(it, t) : 0);
     if (PB.playing && isVoice(it, t)) voice = true;
@@ -4379,6 +4470,7 @@ async function runExport(opts) {
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = (D.name || 'video') + '.' + ext; document.body.appendChild(a); a.click(); setTimeout(() => { a.remove(); }, 2000);
   }
   if (bar) bar.style.width = '100%'; if (msg) msg.textContent = `เสร็จแล้ว ✔ (${(blob.size / 1048576).toFixed(1)} MB, .${ext})` + (ext === 'webm' ? ' — เบราว์เซอร์ไม่รองรับ mp4 จึงได้ .webm' : '');
+  if (!opts.noDownload && D.cover && typeof coverDownload === 'function') setTimeout(() => { coverDownload(true).catch(() => { }); }, 1800);
   EXP.blob = blob; if (!opts.noDownload && typeof srvPushOut === 'function') srvPushOut(blob, (D.name || 'video').replace(/[\\/:*?"<>|]/g, '_') + '.' + ext);
   return blob;
 }
@@ -5655,6 +5747,67 @@ async function anRunAll(picks) {
   } catch (e) { aiErr(e); }
 }
 
+// ---- 68-cover.js ----
+// ============================================================
+//  Video cover (v1.37): pick the frame you want as the cover — like CapCut's "Cover"
+//  D.cover = { t, thumb }  (saved with the project; also shown as the project card picture; downloaded as JPG next to the exported MP4)
+// ============================================================
+async function coverStill(t, W, H) {          // full composite of the project at time t -> canvas
+  pause(); const tt = clamp(t, 0, Math.max(0, durEnd() - 0.001)); PB.t = tt; syncMedia(true);
+  const t0 = performance.now(); await sleep(40);
+  while (performance.now() - t0 < 4000) {          // wait (without re-seeking every tick) until every video under the playhead shows the right frame
+    syncMedia(false);
+    const act = D.items.filter(i => i.type === 'video' && tt >= i.start - 1e-3 && tt < i.start + i.dur);
+    if (act.every(i => { const r = POOL.get(i.id); return r && r.el.readyState >= 2 && !r.el.seeking && !r.want; })) break; await sleep(40);
+  }
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const ctx = cv.getContext('2d', { alpha: false }); renderFrame(ctx, W, H, tt); return cv;
+}
+const CV = { t: 0, busy: false, again: false };
+async function coverPreview() {
+  if (CV.busy) { CV.again = true; return; } CV.busy = true;
+  try {
+    do {
+      CV.again = false; const t = CV.t; const cv = $('#cvPrev'); const asp = (D.w || 1080) / (D.h || 1920);
+      const h = 440, w = Math.round(h * asp); cv.width = w; cv.height = h;
+      const st = await coverStill(t, w, h); if (CV.t === t) cv.getContext('2d').drawImage(st, 0, 0); else CV.again = true;
+    } while (CV.again);
+  } finally { CV.busy = false; }
+}
+function coverSetT(t, fromSlider) {
+  CV.t = clamp(t, 0, Math.max(0, durEnd() - 0.001)); const s = $('#cvT'); if (!fromSlider) s.value = CV.t;
+  $('#cvTime').textContent = tcFmt(CV.t); PB.t = CV.t; seek(CV.t); coverPreview();
+}
+function coverOpen() {
+  if (!D.items.length) { toast('ยังไม่มีอะไรในไทม์ไลน์'); return; }
+  const s = $('#cvT'); s.max = Math.max(0.1, durEnd() - 0.001); s.step = 1 / ((D.fps) || 30);
+  $('#cvDel').style.display = D.cover ? '' : 'none';
+  $('#dlgCover').showModal(); coverSetT(D.cover ? D.cover.t : PB.t);
+}
+async function coverDownload(quiet) {
+  if (!D.cover) return; const W = D.w || 1080, H = D.h || 1920; const keep = PB.t;
+  const cv = await coverStill(D.cover.t, W, H); PB.t = keep; seek(keep);
+  const blob = await new Promise(r => cv.toBlob(r, 'image/jpeg', .93)); if (!blob) return;
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = (D.name || 'video') + '-cover.jpg'; document.body.appendChild(a); a.click(); setTimeout(() => { a.remove(); }, 2000);
+  if (!quiet) toast('ดาวน์โหลดรูปปกแล้ว ✔');
+}
+function coverInit() {
+  $('#cvT').oninput = e => coverSetT(parseFloat(e.target.value), true);
+  $('#cvPrevF').onclick = () => coverSetT(CV.t - 1 / ((D.fps) || 30));
+  $('#cvNextF').onclick = () => coverSetT(CV.t + 1 / ((D.fps) || 30));
+  $('#cvHead').onclick = () => coverSetT(PB.t);
+  $('#cvClose').onclick = () => $('#dlgCover').close();
+  $('#cvSet').onclick = async () => {
+    const cv = $('#cvPrev'); const th = document.createElement('canvas'); const asp = (D.w || 1080) / (D.h || 1920); th.height = 300; th.width = Math.round(300 * asp);
+    const st = await coverStill(CV.t, th.width, th.height); th.getContext('2d').drawImage(st, 0, 0);
+    D.cover = { t: CV.t, thumb: th.toDataURL('image/jpeg', .8) }; commit('cover');
+    $('#dlgCover').close(); toast('ตั้งหน้าปกแล้ว ✔');
+  };
+  $('#cvDel').onclick = () => { D.cover = null; commit('cover'); $('#dlgCover').close(); };
+  $('#cvDl').onclick = async () => {
+    const keep = D.cover; const th = { t: CV.t }; D.cover = th; await coverDownload(false); D.cover = keep;
+  };
+}
+
 // ---- 70-main.js ----
 // ============================================================
 //  Main: init, preview overlay, shortcuts, project I/O, dialogs
@@ -5664,8 +5817,8 @@ function drawOverlay() {
   const it = SEL ? getItem(SEL) : null; if (!it || PB.exporting) return;
   if (PB.t < it.start - 1e-3 || PB.t >= it.start + it.dur) return; const b = BOUNDS[it.id]; if (!b || it.type === 'audio') return;
   c.save(); c.translate(b.cx, b.cy); c.rotate(b.rot * Math.PI / 180);
-  c.strokeStyle = '#2ee6c5'; c.lineWidth = 1.5; c.setLineDash([5, 4]); c.strokeRect(-b.w / 2, -b.h / 2, b.w, b.h); c.setLineDash([]);
-  c.fillStyle = '#fff'; c.strokeStyle = '#2ee6c5'; const hs = 7;
+  c.strokeStyle = '#ffffff'; c.lineWidth = 1; c.setLineDash([5, 4]); c.strokeRect(-b.w / 2, -b.h / 2, b.w, b.h); c.setLineDash([]);
+  c.fillStyle = '#fff'; c.strokeStyle = '#8a909c'; const hs = 7;
   c.fillRect(b.w / 2 - hs, b.h / 2 - hs, hs * 2, hs * 2); c.strokeRect(b.w / 2 - hs, b.h / 2 - hs, hs * 2, hs * 2);
   c.beginPath(); c.moveTo(0, -b.h / 2); c.lineTo(0, -b.h / 2 - 22); c.stroke(); c.beginPath(); c.arc(0, -b.h / 2 - 26, 6, 0, 7); c.fill(); c.stroke();
   c.restore();
@@ -5794,7 +5947,7 @@ async function init() {
     else if (e.key === 'ArrowRight') { pause(); seek(PB.t + (e.shiftKey ? 1 : 1 / 30)); }
     else if (e.key === 'Home') { pause(); seek(0); }
   });
-  initSplitters(); initToolbar();
+  initSplitters(); initToolbar(); if (typeof coverInit === 'function') coverInit();
   initHome(); await showHome(); if (srvOn()) srvPing().then(ok => ok && srvLoadSizes()).then(() => srvAdoptProxies()).then(() => srvInboxAuto()).then(() => srvInboxWatch()).catch(() => { });
   tick();
   window.__ready = true;

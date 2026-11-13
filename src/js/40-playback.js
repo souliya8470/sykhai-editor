@@ -255,7 +255,7 @@ function syncMedia(force) {
       if (Math.abs(el.currentTime - tt) > 0.35 && now - (r.lastSeek || 0) > 1200) { r.lastSeek = now; try { el.currentTime = tt; } catch (e) { } }
     } else {
       if (!el.paused) el.pause();
-      if (force || Math.abs(el.currentTime - tt) > 0.03) { try { el.currentTime = tt; } catch (e) { } }
+      if (force || Math.abs(el.currentTime - tt) > 0.03) { if (el.seeking && !PB.exporting) r.want = tt; else { r.want = null; try { el.currentTime = tt; } catch (e) { } } }
     }
     setGain(r.gain, PB.playing ? videoGain(it, t) : 0);
     if (PB.playing && isVoice(it, t)) voice = true;

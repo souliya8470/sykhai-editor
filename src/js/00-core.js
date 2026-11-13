@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.36
-// APP_VERSION_PREV : 1.35
-// APP_VERSION_PREV_OLDER : 1.34
+// APP_VERSION  : 1.37
+// APP_VERSION_PREV : 1.36
+// APP_VERSION_PREV_OLDER : 1.35
+// 1.37 : CapCut-style editing feel — magnetic main track (clips glued end to end, others slide while you drag, no overlaps), media dropped from the bin snaps to 00:00 / playhead / clip edges (empty timeline = exactly 0) with a drop line, Cover picker (🖼 pick any frame; saved in the project, project-card picture, JPG downloaded next to the MP4), all controls white + thinner lines (sliders, playhead 1 px, selection), live preview while scrubbing/trimming/moving (one seek in flight, jumps to the latest), ruler with minor ticks and frame counting up to 1200 px/s, empty lanes fold to a thin strip
 // 1.36 : free layers (every picture lane takes video / image / text / sticker; lanes are numbered by stack position), fade in/out now audibly follows the dragged handle (squared ramp), left tab bar keeps fixed-size tabs with ‹ › scroll arrows when narrow, 2nd computer pulls the whole reference library from the server (inbox/done is listed and served)
 // 1.35 : layers like CapCut / Photoshop — the timeline now lists the stack top-down (top lane = drawn on top in the preview and the export; before, V1 was listed first but drawn at the bottom); ▲▼ on every video/text lane move that layer up or down the stack (saved per project in D.lorder)
 // 1.34 : the editor now checks the shop-server inbox every minute while open (desktop) and pulls new reference clips into the library by itself — no need to press the 📥 button
@@ -42,7 +43,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.36';
+const APP_VERSION = '1.37';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
