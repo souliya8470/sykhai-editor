@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.44</title>
+<title>Sykhai Editor v1.45</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -1795,6 +1795,9 @@ I18N_ROWS.push(
   ['ช่วงแล้ว', 'segments', 'ຊ່ວງແລ້ວ'],
   ['ไม่พบข้อความพูดในคลิปนี้', 'No speech found in this clip', 'ບໍ່ພົບຂໍ້ຄວາມເວົ້າໃນຄລິບນີ້'],
   ['Gemini ไม่ว่างชั่วคราว (ลองใหม่ทุกโมเดลแล้ว) — รอสักครู่แล้วกดใหม่อีกครั้ง', 'Gemini is busy (tried every model) — wait a moment and press again', 'Gemini ບໍ່ຫວ່າງຊົ່ວຄາວ (ລອງໃໝ່ທຸກໂມເດວແລ້ວ) — ລໍຖ້າຈັກໜ້ອຍ ແລ້ວກົດໃໝ່ອີກຄັ້ງ'],
+  ['Gemini ไม่ว่าง — ลองอีกครั้ง', 'Gemini is busy — trying again', 'Gemini ບໍ່ຫວ່າງ — ລອງອີກຄັ້ງ'],
+  ['ครั้งที่', 'try', 'ຄັ້ງທີ'],
+  ['ใช้เวลานานเกิน 90 วินาที', 'took longer than 90 seconds', 'ໃຊ້ເວລາດົນເກີນ 90 ວິນາທີ'],
 );
 
 // ---- 00-core.js ----
@@ -1802,9 +1805,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.44
-// APP_VERSION_PREV : 1.43
-// APP_VERSION_PREV_OLDER : 1.42
+// APP_VERSION  : 1.45
+// APP_VERSION_PREV : 1.44
+// APP_VERSION_PREV_OLDER : 1.43
+// 1.45 : Gemini call can no longer hang — 90 s time-out per try, "low thinking" for Gemini 3 models (much faster transcription), the progress box says which model / try it is on
 // 1.44 : Gemini model list refreshed (gemini-2.5-flash is retired for new keys): flash-latest -> 3.8 flash -> 3.7 flash -> 3.5 flash-lite; a retired / unknown model is skipped at once instead of stopping the job
 // 1.43 : Gemini "model is busy" (503 / 429) no longer stops the job — it retries 3 times, then tries two other Gemini models before giving up
 // 1.42 : animated auto-captions (like the AutoCaptions plugin) — AI card "Animated captions": pick a look (8), pick one of the 22 text animations, words per caption, position, and the spoken word changes colour (karaoke highlight, current word or keep); live preview; makes one text clip per caption with the highlight timing inside it
@@ -1850,7 +1854,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.44';
+const APP_VERSION = '1.45';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -4941,12 +4945,21 @@ async function gemini(parts, { json = true, label = 'gemini' } = {}) {
   if (!costGuard(0.03)) throw new Error('งบ AI ครบเพดาน');
   const first = localStorage.getItem('sk_gmodel') || 'gemini-flash-latest';
   const models = [...new Set([first, 'gemini-flash-latest', 'gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.5-flash-lite'])];   // busy model -> retry, then the next model; retired / unknown model -> next model at once
-  const body = JSON.stringify({ contents: [{ role: 'user', parts }], generationConfig: Object.assign({ temperature: 0.1 }, json ? { responseMimeType: 'application/json' } : {}) });
+  const mkBody = think => JSON.stringify({ contents: [{ role: 'user', parts }], generationConfig: Object.assign({ temperature: 0.1 }, think ? { thinkingConfig: { thinkingLevel: 'low' } } : {}, json ? { responseMimeType: 'application/json' } : {}) });
   let j = {}, r = null, last = '';
   for (let mi = 0; mi < models.length; mi++) {
+    let think = true;   // newer Gemini models think by default (slow) — transcription does not need it; a model that refuses the setting is retried without it
     for (let tri = 0; tri < 3; tri++) {
-      try { r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${models[mi]}:generateContent`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': key }, body }); } catch (e) { r = null; last = String(e.message || e); }
-      if (r) { j = await r.json().catch(() => ({})); if (r.ok) break; last = (j.error && j.error.message) || r.status; const gone = r.status === 404 || /no longer available|not found|not supported|deprecated|shut ?down/i.test(String(last)); if (gone) break; if (![429, 500, 502, 503, 504].includes(r.status)) throw new Error('Gemini: ' + last); }
+      if (mi || tri) aiProg(`Gemini ไม่ว่าง — ลองอีกครั้ง (${models[mi]}, ครั้งที่ ${tri + 1})…`, null);
+      const ac = new AbortController(), to = setTimeout(() => ac.abort(), 90000);   // never wait more than 90 s for one answer
+      try { r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${models[mi]}:generateContent`, { method: 'POST', signal: ac.signal, headers: { 'content-type': 'application/json', 'x-goog-api-key': key }, body: mkBody(think) }); } catch (e) { r = null; last = e.name === 'AbortError' ? 'ใช้เวลานานเกิน 90 วินาที' : String(e.message || e); }
+      clearTimeout(to);
+      if (r) {
+        j = await r.json().catch(() => ({})); if (r.ok) break; last = (j.error && j.error.message) || r.status;
+        if (think && r.status === 400 && /think/i.test(String(last))) { think = false; tri--; continue; }   // this model does not take the thinking setting
+        const gone = r.status === 404 || /no longer available|not found|not supported|deprecated|shut ?down/i.test(String(last)); if (gone) break;
+        if (![429, 500, 502, 503, 504].includes(r.status)) throw new Error('Gemini: ' + last);
+      }
       if (tri < 2) await new Promise(o => setTimeout(o, 2500 * (tri + 1)));   // 2.5 s, 5 s
     }
     if (r && r.ok) break;

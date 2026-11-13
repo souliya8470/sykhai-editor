@@ -44,12 +44,21 @@ async function gemini(parts, { json = true, label = 'gemini' } = {}) {
   if (!costGuard(0.03)) throw new Error('งบ AI ครบเพดาน');
   const first = localStorage.getItem('sk_gmodel') || 'gemini-flash-latest';
   const models = [...new Set([first, 'gemini-flash-latest', 'gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.5-flash-lite'])];   // busy model -> retry, then the next model; retired / unknown model -> next model at once
-  const body = JSON.stringify({ contents: [{ role: 'user', parts }], generationConfig: Object.assign({ temperature: 0.1 }, json ? { responseMimeType: 'application/json' } : {}) });
+  const mkBody = think => JSON.stringify({ contents: [{ role: 'user', parts }], generationConfig: Object.assign({ temperature: 0.1 }, think ? { thinkingConfig: { thinkingLevel: 'low' } } : {}, json ? { responseMimeType: 'application/json' } : {}) });
   let j = {}, r = null, last = '';
   for (let mi = 0; mi < models.length; mi++) {
+    let think = true;   // newer Gemini models think by default (slow) — transcription does not need it; a model that refuses the setting is retried without it
     for (let tri = 0; tri < 3; tri++) {
-      try { r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${models[mi]}:generateContent`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': key }, body }); } catch (e) { r = null; last = String(e.message || e); }
-      if (r) { j = await r.json().catch(() => ({})); if (r.ok) break; last = (j.error && j.error.message) || r.status; const gone = r.status === 404 || /no longer available|not found|not supported|deprecated|shut ?down/i.test(String(last)); if (gone) break; if (![429, 500, 502, 503, 504].includes(r.status)) throw new Error('Gemini: ' + last); }
+      if (mi || tri) aiProg(`Gemini ไม่ว่าง — ลองอีกครั้ง (${models[mi]}, ครั้งที่ ${tri + 1})…`, null);
+      const ac = new AbortController(), to = setTimeout(() => ac.abort(), 90000);   // never wait more than 90 s for one answer
+      try { r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${models[mi]}:generateContent`, { method: 'POST', signal: ac.signal, headers: { 'content-type': 'application/json', 'x-goog-api-key': key }, body: mkBody(think) }); } catch (e) { r = null; last = e.name === 'AbortError' ? 'ใช้เวลานานเกิน 90 วินาที' : String(e.message || e); }
+      clearTimeout(to);
+      if (r) {
+        j = await r.json().catch(() => ({})); if (r.ok) break; last = (j.error && j.error.message) || r.status;
+        if (think && r.status === 400 && /think/i.test(String(last))) { think = false; tri--; continue; }   // this model does not take the thinking setting
+        const gone = r.status === 404 || /no longer available|not found|not supported|deprecated|shut ?down/i.test(String(last)); if (gone) break;
+        if (![429, 500, 502, 503, 504].includes(r.status)) throw new Error('Gemini: ' + last);
+      }
       if (tri < 2) await new Promise(o => setTimeout(o, 2500 * (tri + 1)));   // 2.5 s, 5 s
     }
     if (r && r.ok) break;
