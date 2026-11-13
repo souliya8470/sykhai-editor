@@ -20,7 +20,7 @@ const FX_PRESETS = [
   { id: 'cold', label: 'โทนเย็น', fx: { saturate: .9, hue: 16, brightness: .98, contrast: 1.08 } },
   { id: 'sharp2', label: 'คมชัดมาก + ลดนอยส์', fx: { sharpen: 2, denoise: 1 } },
 ];
-const STICKERS = [['check', 'ถูกต้อง ✔'], ['warning', 'เตือน ⚠'], ['cursor', 'มือชี้'], ['brackets', 'กรอบโฟกัส'], ['arrow', 'ลูกศร'], ['star', 'ดาว'], ['underline', 'ขีดเส้นใต้'], ['circle', 'วงรีวง']];
+const STICKERS = [['check', 'ถูกต้อง ✔'], ['warning', 'เตือน ⚠'], ['cursor', 'มือชี้'], ['brackets', 'กรอบโฟกัส'], ['arrow', 'ลูกศร'], ['star', 'ดาว'], ['underline', 'ขีดเส้นใต้'], ['circle', 'วงรีวง'], ['burst', 'ดาวระเบิด'], ['rays', 'รัศมีแสง'], ['grid', 'กระดาษตาราง']];
 const MASK_OPTS = [['none', 'ไม่มี'], ['circle', 'วงกลม'], ['round', 'มุมมน'], ['frame', 'การ์ดกรอบขาว'], ['featherTop', 'ฟุ้งขอบบน'], ['featherBottom', 'ฟุ้งขอบล่าง'], ['featherAll', 'ฟุ้งรอบด้าน']];
 
 // ---------- tabs ----------
@@ -28,10 +28,11 @@ const TAB_ICONS = {
   media: '<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M10 9l5 3-5 3z"/>', text: '<path d="M5 7V4h14v3M12 4v16M9 20h6"/>',
   sticker: '<circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2.5 4 2.5S16 14 16 14M9 9.5h.01M15 9.5h.01"/>', trans: '<path d="M4 6l7 6-7 6zM20 6l-7 6 7 6z"/>',
   fx: '<path d="M12 3l1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8zM18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z"/>',
+  preset: '<rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/>',
   anim: '<path d="M4 18c3-9 7-12 10-8s4 2 6-4"/><circle cx="18" cy="6" r="2"/>',
   audio: '<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>', ai: '<path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path d="M19 17v4M17 19h4"/>'
 };
-const TABS = [['media', 'สื่อ'], ['audio', 'เสียง'], ['text', 'ข้อความ'], ['sticker', 'สติกเกอร์'], ['fx', 'ฟิลเตอร์'], ['trans', 'ทรานสิชัน'], ['anim', 'แอนิเมชัน'], ['ai', 'AI']];
+const TABS = [['media', 'สื่อ'], ['preset', 'พรีเซ็ต'], ['audio', 'เสียง'], ['text', 'ข้อความ'], ['sticker', 'สติกเกอร์'], ['fx', 'ฟิลเตอร์'], ['trans', 'ทรานสิชัน'], ['anim', 'แอนิเมชัน'], ['ai', 'AI']];
 function buildLeft() {
   $('#leftTabs').innerHTML = TABS.map(([id, l], i) => `<button data-tab="${id}" class="${i ? '' : 'on'}"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${TAB_ICONS[id]}</svg><span>${l}</span></button>`).join('');
   $('#leftTabs').onclick = e => { const b = e.target.closest('button'); if (b) showTab(b.dataset.tab); };
@@ -53,7 +54,7 @@ function buildLeft() {
 function showTab(id) {
   $$('#leftTabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === id));
   $$('.lpane').forEach(p => p.classList.toggle('on', p.id === 'pane-' + id));
-  if (id === 'audio') renderAudioList(); if (id === 'text') drawTextTiles(); if (id === 'sticker') drawStickerTiles(); if (id === 'anim') fillAnimTiles(); if (id === 'ai' && window.renderAiPane) renderAiPane();
+  if (id === 'audio') renderAudioList(); if (id === 'text') drawTextTiles(); if (id === 'sticker') drawStickerTiles(); if (id === 'anim') fillAnimTiles(); if (id === 'ai' && window.renderAiPane) renderAiPane(); if (id === 'preset' && window.presetShow) presetShow();
 }
 function renderAudioList() {
   const box = $('#audioList'); if (!box) return; const arr = [...MEDIA.values()].filter(m => m.type === 'audio');

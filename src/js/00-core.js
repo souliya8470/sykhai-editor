@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.26
-// APP_VERSION_PREV : 1.25
-// APP_VERSION_PREV_OLDER : 1.24
+// APP_VERSION  : 1.27
+// APP_VERSION_PREV : 1.26
+// APP_VERSION_PREV_OLDER : 1.25
+// 1.27 : style presets tab (9 trend looks: neon big text, flash sale, talking review, soft & clean, cinematic, vintage, before/after, glitch Y2K, dark luxe) — animated preview on the project's own footage, one click applies grade + transitions + zoom + text/subtitle style + sticker bursts (undoable); new glowing condensed/neon-script text styles, glow on text, starburst/rays/grid stickers
 // 1.26 : Kitti-style AI editing (AI tab) — ⭐ "let AI cut it all" wizard (many clips -> 3 story angles -> storyboard approved scene by scene, revise by typing -> 9:16 timeline with subtitles, extra angles saved as projects); ✨ auto cut (silence + filler words เอ่อ/อืม + AI retakes in one reviewed list); 💬 auto subtitles from the transcript (optional Lao/Thai translation, editable list, 2 new subtitle text styles)
 // 1.25 : play pre-roll — the clock starts only after every layer at the playhead has its frame decoded (max 0.9 s); fixes the first seconds of playback running at 5-12 fps on iPhone while the playhead already moved
 // 1.24 : phones show a compact live readout in the player bar while playing (render/s, ms, sync ms, decoded f/s + drift, layers, paused/muted counts) so every screen recording carries numbers
@@ -32,7 +33,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.26';
+const APP_VERSION = '1.27';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -132,6 +133,8 @@ function mkSticker(kind, start, dur, extra) {
 
 // ---------- text presets ----------
 const FONT_STACK = '"Prompt","Noto Sans Lao","Noto Sans Thai","Noto Sans Lao Looped",sans-serif';
+const FONT_COND = '"Anton","Bebas Neue","Prompt","Noto Sans Lao","Noto Sans Thai",sans-serif';
+const FONT_SCRIPT = '"Yellowtail","Prompt","Noto Sans Lao","Noto Sans Thai",cursive';
 const TEXT_STYLES = [
   { id: 'hl', label: 'ขาว + เหลือง (2 บรรทัด)', d: { size: 64, weight: 800, color: '#ffffff', color2: '#FFE14D', stroke: '#000000', strokeW: 9, box: 'none', bg: '', ay: .62, text: T('บรรทัดที่ 1\nบรรทัดที่ 2') } },
   { id: 'clean', label: 'ขาว ขอบดำ', d: { size: 60, weight: 800, color: '#ffffff', color2: '#ffffff', stroke: '#000000', strokeW: 9, box: 'none', bg: '', ay: .62, text: T('ข้อความ') } },
@@ -145,6 +148,10 @@ const TEXT_STYLES = [
   { id: 'plain', label: 'ขาว เงานุ่ม', d: { size: 52, weight: 700, color: '#ffffff', color2: '#FFE14D', stroke: '', strokeW: 0, box: 'none', bg: '', shadow: true, ay: .8, text: T('ข้อความทั่วไป') } },
   { id: 'sub', label: 'ซับไตเติล ขาว ขอบดำ', d: { size: 52, weight: 800, color: '#ffffff', color2: '#ffffff', stroke: '#000000', strokeW: 9, box: 'none', bg: '', ay: .78, text: T('ซับไตเติล') } },
   { id: 'subbox', label: 'ซับไตเติล กล่องดำ', d: { size: 44, weight: 700, color: '#ffffff', color2: '#ffffff', stroke: '', strokeW: 0, box: 'block', bg: '#000000b3', ay: .78, text: T('ซับไตเติล') } },
+  { id: 'condGlow', label: 'ตัวใหญ่แคบ แสงเรือง ขาว', d: { font: FONT_COND, size: 150, weight: 800, color: '#ffffff', color2: '#ffffff', stroke: '', strokeW: 0, glow: '#ffffff', box: 'none', bg: '', ay: .42, text: T('หัวข้อใหญ่') } },
+  { id: 'condOrange', label: 'ตัวใหญ่แคบ แสงเรือง ส้ม', d: { font: FONT_COND, size: 140, weight: 800, color: '#ffd3a8', color2: '#ffd3a8', stroke: '', strokeW: 0, glow: '#ff5a00', box: 'none', bg: '', ay: .4, text: T('หัวข้อใหญ่') } },
+  { id: 'neonScript', label: 'ตัวเขียน นีออนเหลือง', d: { font: FONT_SCRIPT, size: 96, weight: 400, color: '#fff35c', color2: '#fff35c', stroke: '', strokeW: 0, glow: '#d6ff00', box: 'none', bg: '', ay: .74, text: T('ข้อความเน้น') } },
+  { id: 'subGlow', label: 'ซับไตเติล แสงเรือง', d: { font: FONT_COND, size: 66, weight: 800, color: '#ffffff', color2: '#ffffff', stroke: '', strokeW: 0, glow: '#ff7a2f', box: 'none', bg: '', ay: .78, text: T('ซับไตเติล') } },
   { id: 'footer', label: 'ข้อความท้ายจอ (เล็ก)', d: { size: 30, weight: 600, color: '#ffffffd9', color2: '#ffffffd9', stroke: '', strokeW: 0, box: 'none', bg: '', shadow: true, ay: .965, text: T('ผลลัพธ์ที่ได้ขึ้นอยู่กับแต่ละบุคคล') } },
 ];
 function mkText(styleId, text, start, dur, extra) {

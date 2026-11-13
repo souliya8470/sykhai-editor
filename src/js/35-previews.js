@@ -27,6 +27,8 @@ function pvDraw(cv, kind, key, ph) {   // ph 0..1 position inside the loop
     if (kind === 'trans') {
       const A = pvItem('__a', '__pvA', 0, 3), B = pvItem('__b', '__pvB', 1, 2, { transIn: key === 'none' ? null : { type: key, dur: 1 } });
       D = { items: [A, B], duckLevel: .22 }; const t = key === 'none' ? (ph < .5 ? .6 : 1.4) : lerp(.55, 2.15, ph); renderFrame(ctx, W, H, t);
+    } else if (kind === 'preset') {
+      const d = presetPreviewDoc(key); D = d; renderFrame(ctx, W, H, clamp(ph, 0, .99) * d.len);
     } else if (kind === 'anim') {
       const [g, k] = key.split(':'); const an = { in: 'none', out: 'none', combo: 'none', dIn: .6, dOut: .6 }; an[g] = k; const dur = g === 'combo' ? 2.2 : 1.6;
       const it = pvItem('__a', '__pvA', 0, dur, { anim: an }); D = { items: [it], duckLevel: .22 }; renderFrame(ctx, W, H, ph * (dur - .02));
@@ -54,12 +56,12 @@ async function buildTiles() {
   await pvSamples(); pvPosters();
 }
 function pvPosters() {
-  $$('.tile').forEach(t => pvDraw($('canvas', t), t.dataset.kind, t.dataset.key, t.dataset.kind === 'trans' ? .45 : t.dataset.kind === 'anim' ? ({ in: .2, out: .9, combo: .3 }[t.dataset.key.split(':')[0]]) : .5));
+  $$('.tile').forEach(t => pvDraw($('canvas', t), t.dataset.kind, t.dataset.key, t.dataset.kind === 'trans' ? .45 : t.dataset.kind === 'preset' ? .22 : t.dataset.kind === 'anim' ? ({ in: .2, out: .9, combo: .3 }[t.dataset.key.split(':')[0]]) : .5));
 }
 function pvStart(t) {
   pvStop(); const cv = $('canvas', t); const t0 = performance.now(); PV.anim = { t, raf: 0 };
   const loop = now => { if (!PV.anim || PV.anim.t !== t) return; const ph = ((now - t0) % 2200) / 2200; pvDraw(cv, t.dataset.kind, t.dataset.key, ph); PV.anim.raf = requestAnimationFrame(loop); };
   PV.anim.raf = requestAnimationFrame(loop);
 }
-function pvStop(t) { if (PV.anim) { cancelAnimationFrame(PV.anim.raf); const old = PV.anim.t; PV.anim = null; pvDraw($('canvas', old), old.dataset.kind, old.dataset.key, old.dataset.kind === 'trans' ? .45 : .5); } }
+function pvStop(t) { if (PV.anim) { cancelAnimationFrame(PV.anim.raf); const old = PV.anim.t; PV.anim = null; pvDraw($('canvas', old), old.dataset.kind, old.dataset.key, old.dataset.kind === 'trans' ? .45 : old.dataset.kind === 'preset' ? .22 : .5); } }
 let _pvT = 0; on('media-added', () => { clearTimeout(_pvT); _pvT = setTimeout(async () => { await pvSamples(); pvPosters(); }, 300); });

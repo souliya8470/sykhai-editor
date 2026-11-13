@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.26</title>
+<title>Sykhai Editor v1.27</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0e0f12;--p1:#191b20;--p2:#212329;--p3:#2a2d35;--ln:#30343d;--tx:#e9ebf0;--mu:#8e95a3;--ac:#2ee6c5;--ac2:#18b99e;--red:#ff4d5e;--ph:#ff3b4e}
 *{box-sizing:border-box}
@@ -379,6 +379,7 @@ button.tic.on{color:#ff9f43}
         </div>
         <div class="lpane" id="pane-text"></div>
         <div class="lpane" id="pane-sticker"></div>
+        <div class="lpane" id="pane-preset"></div>
         <div class="lpane" id="pane-trans"></div>
         <div class="lpane" id="pane-anim"></div>
         <div class="lpane" id="pane-fx"></div>
@@ -1364,14 +1365,69 @@ I18N_ROWS.push(
   ['สร้างคลิปแล้ว — ✂ แก้ต่อได้เลย', 'Clip built — ✂ keep editing', 'ສ້າງຄລິບແລ້ວ — ✂ ແກ້ຕໍ່ໄດ້ເລີຍ']
 );
 
+// ---- v1.27 presets ----
+I18N_ROWS.push(
+  ['พรีเซ็ต', 'Presets', 'ພຣີເຊັດ'],
+  ['เลือกพรีเซ็ต แล้วดูตัวอย่างบนภาพจากคลิปของคุณเอง · เอาเมาส์ชี้เพื่อดูแบบเคลื่อนไหว · กดเพื่อดูใหญ่และใช้', 'Pick a preset and see it on frames from your own clips · hover to see it move · click to enlarge and apply', 'ເລືອກພຣີເຊັດ ແລ້ວເບິ່ງຕົວຢ່າງເທິງພາບຈາກຄລິບຂອງເຈົ້າເອງ · ເອົາເມົາສ໌ຊີ້ເພື່ອເບິ່ງແບບເຄື່ອນໄຫວ · ກົດເພື່ອເບິ່ງໃຫຍ່ ແລະໃຊ້'],
+  ['นีออนตัวใหญ่ (ฮิตตอนนี้)', 'Big neon text (trending)', 'ນີອອນຕົວໃຫຍ່ (ນິຍົມດຽວນີ້)'],
+  ['ตัวหนังสือแคบใหญ่เรืองแสงเต็มจอ + คำเน้นตัวเขียนนีออน โทนส้มแดงอุ่นมืดขอบ ตัดไวแฟลชขาว ดาวระเบิดเด้งตามข้อความ', 'Huge condensed glowing text filling the screen + neon script accent words, warm orange-red tone with dark edges, fast cuts with white flashes, starbursts popping with the text', 'ໂຕໜັງສືແຄບໃຫຍ່ເຮືອງແສງເຕັມຈໍ + ຄຳເນັ້ນໂຕຂຽນນີອອນ ໂທນສົ້ມແດງອຸ່ນມືດຂອບ ຕັດໄວແຟລດຂາວ ດາວລະເບີດເດັ້ງຕາມຂໍ້ຄວາມ'],
+  ['แฟลชขาว · ซูมสลับ · ดาวระเบิด', 'White flash · alternating zoom · starbursts', 'ແຟລດຂາວ · ຊູມສະຫຼັບ · ດາວລະເບີດ'],
+  ['ขายด่วน ไว แรง', 'Flash sale: fast & punchy', 'ຂາຍດ່ວນ ໄວ ແຮງ'],
+  ['สีสด คอนทราสต์แรง ตัดไว ซูมกระแทกทุกช็อต ตัวหนังสือเหลืองใหญ่ขอบดำ เหมาะโปรโมชัน/ลดราคา', 'Vivid colours, strong contrast, fast cuts, a punch zoom on every shot, big yellow text with black outline — good for promotions and discounts', 'ສີສົດ ຄອນທຣາສຕ໌ແຮງ ຕັດໄວ ຊູມກະແທກທຸກຊັອດ ໂຕໜັງສືເຫຼືອງໃຫຍ່ຂອບດຳ ເໝາະກັບໂປຣໂມຊັນ/ຫຼຸດລາຄາ'],
+  ['ซูมกระแทก · ตัวเหลืองใหญ่ · ดาว', 'Punch zoom · big yellow text · stars', 'ຊູມກະແທກ · ໂຕເຫຼືອງໃຫຍ່ · ດາວ'],
+  ['รีวิวคนพูด (จั๊มพ์คัต)', 'Talking review (jump cuts)', 'ຣີວິວຄົນເວົ້າ (ຈັ໊ມຄັດ)'],
+  ['ภาพสว่างคมชัด ตัดต่อเนื่องแบบจั๊มพ์คัต ซูมเข้า-ออกสลับทุกช็อตให้ดูไม่น่าเบื่อ ซับตัวใหญ่ขาวขอบดำ', 'Bright sharp picture, continuous jump cuts, zooming in and out on alternate shots so it never gets boring, big white subtitles with black outline', 'ພາບສະຫວ່າງຄົມຊັດ ຕັດຕໍ່ເນື່ອງແບບຈັ໊ມຄັດ ຊູມເຂົ້າ-ອອກສະຫຼັບທຸກຊັອດໃຫ້ເບິ່ງບໍ່ໜ້າເບື່ອ ຄຳບັນຍາຍໂຕໃຫຍ່ຂາວຂອບດຳ'],
+  ['จั๊มพ์คัต · ซับขาวขอบดำ', 'Jump cuts · white subtitles with black outline', 'ຈັ໊ມຄັດ · ຄຳບັນຍາຍຂາວຂອບດຳ'],
+  ['อ่อนละมุน สะอาดตา', 'Soft & clean', 'ອ່ອນນຸ່ມ ສະອາດຕາ'],
+  ['โทนสว่างนุ่ม ผิวใส เลือนเข้าช้า ๆ ซูมเบา ๆ ข้อความเรียบ เหมาะครีม/สกินแคร์/ความสวยงาม', 'Soft bright tone, clear skin, slow fades, gentle zoom, plain text — good for creams, skincare and beauty', 'ໂທນສະຫວ່າງນຸ່ມ ຜິວໃສ ເລືອນເຂົ້າຊ້າໆ ຊູມເບົາໆ ຂໍ້ຄວາມຮຽບ ເໝາະກັບຄຣີມ/ສະກິນແຄ/ຄວາມງາມ'],
+  ['เลือนนุ่ม · ผิวใส', 'Soft fades · clear skin', 'ເລືອນນຸ່ມ · ຜິວໃສ'],
+  ['ซีนีมาพรีเมียม', 'Premium cinematic', 'ຊີເນມາພຣີມຽມ'],
+  ['โทนฟิล์มเข้ม มุมมืด ภาพนิ่งหรู ซูมช้า เปลี่ยนฉากแบบเลือน เหมาะสินค้าราคาสูง', 'Dark film tone, dark corners, calm luxurious picture, slow zoom, fading scene changes — good for high-priced products', 'ໂທນຟິມເຂັ້ມ ມຸມມືດ ພາບນິ່ງຫຼູ ຊູມຊ້າ ປ່ຽນສາກແບບເລືອນ ເໝາະກັບສິນຄ້າລາຄາສູງ'],
+  ['ฟิล์ม · มุมมืด · ซูมช้า', 'Film · dark corners · slow zoom', 'ຟິມ · ມຸມມືດ · ຊູມຊ້າ'],
+  ['วินเทจ / วล็อก', 'Vintage / vlog', 'ວິນເທຈ / ວລັອກ'],
+  ['สีวินเทจอุ่น ๆ มุมมืดบาง ผ่านดำนุ่ม ๆ ภาพขยับช้า เหมาะวล็อก/บรรยากาศร้าน', 'Warm vintage colours, light dark corners, soft dips to black, slow-moving picture — good for vlogs and shop atmosphere', 'ສີວິນເທຈອຸ່ນໆ ມຸມມືດບາງ ຜ່ານດຳນຸ່ມໆ ພາບຂະຫຍັບຊ້າ ເໝາະກັບວລັອກ/ບັນຍາກາດຮ້ານ'],
+  ['วินเทจ · ผ่านดำ', 'Vintage · dip to black', 'ວິນເທຈ · ຜ່ານດຳ'],
+  ['ก่อน – หลัง', 'Before – after', 'ກ່ອນ – ຫຼັງ'],
+  ['ครึ่งแรกเป็นโทนซีดเย็นพร้อมป้าย “ก่อน” ครึ่งหลังสดใสพร้อมป้าย “หลัง” ปัดฉากกลาง เหมาะโชว์ผลลัพธ์สินค้า', 'The first half is pale and cool with a “Before” label, the second half is bright with an “After” label, wiping in the middle — good for showing product results', 'ເຄິ່ງທຳອິດເປັນໂທນຊີດເຢັນພ້ອມປ້າຍ “ກ່ອນ” ເຄິ່ງຫຼັງສົດໃສພ້ອມປ້າຍ “ຫຼັງ” ປັດສາກກາງ ເໝາະກັບໂຊຜົນລັບສິນຄ້າ'],
+  ['ป้ายก่อน/หลัง · ปัดฉาก', 'Before/after labels · wipe', 'ປ້າຍກ່ອນ/ຫຼັງ · ປັດສາກ'],
+  ['กลิตช์ / Y2K ป๊อป', 'Glitch / Y2K pop', 'ກລິດ / Y2K ປ໊ອບ'],
+  ['สีป๊อปจัด เปลี่ยนฉากแบบกลิตช์ ซูมสลับ ตัวหนังสือขาวขอบน้ำเงิน เหมาะแฟชั่น/วัยรุ่น', 'Very poppy colours, glitch scene changes, alternating zoom, white text with blue outline — good for fashion and teens', 'ສີປ໊ອບຈັດ ປ່ຽນສາກແບບກລິດ ຊູມສະຫຼັບ ໂຕໜັງສືຂາວຂອບນ້ຳເງິນ ເໝາະກັບແຟຊັ່ນ/ໄວໜຸ່ມ'],
+  ['กลิตช์ · สีป๊อป', 'Glitch · pop colours', 'ກລິດ · ສີປ໊ອບ'],
+  ['ดาร์กลักชัวรี', 'Dark luxury', 'ດາກລັກຊູຣີ'],
+  ['โทนดำเข้ม ตัวหนังสือสีทอง เลือนช้า ซูมเบา ให้ความรู้สึกแบรนด์พรีเมียม', 'Deep dark tone, gold text, slow fades, gentle zoom — gives a premium brand feel', 'ໂທນດຳເຂັ້ມ ໂຕໜັງສືສີທອງ ເລືອນຊ້າ ຊູມເບົາ ໃຫ້ຄວາມຮູ້ສຶກແບຣນພຣີມຽມ'],
+  ['ดำ-ทอง · เลือนช้า', 'Black-gold · slow fades', 'ດຳ-ທອງ · ເລືອນຊ້າ'],
+  ['สี / ฟิลเตอร์', 'Colour / filter', 'ສີ / ຟິວເຕີ'],
+  ['ทรานสิชันตรงรอยต่อ', 'Transitions at the cuts', 'ທຣານຊິຊັນຕົງຮອຍຕໍ່'],
+  ['ซูม / ขยับภาพ', 'Zoom / moving picture', 'ຊູມ / ຂະຫຍັບພາບ'],
+  ['สไตล์ข้อความบนจอ', 'On-screen text style', 'ສະໄຕລ໌ຂໍ້ຄວາມເທິງຈໍ'],
+  ['สไตล์ซับ (ถ้ามี)', 'Subtitle style (if any)', 'ສະໄຕລ໌ຄຳບັນຍາຍ (ຖ້າມີ)'],
+  ['สติกเกอร์ดาวระเบิด', 'Starburst stickers', 'ສະຕິກເກີ້ດາວລະເບີດ'],
+  ['ตัวอย่างนี้ใช้ภาพจากคลิปของคุณ · ใช้แล้วกด ↶ ย้อนกลับได้ · ซับสร้างได้ที่แท็บ AI (💬) แล้วมากดพรีเซ็ตอีกครั้ง', 'This preview uses frames from your clips · after applying you can undo with ↶ · create subtitles in the AI tab (💬), then press the preset again', 'ຕົວຢ່າງນີ້ໃຊ້ພາບຈາກຄລິບຂອງເຈົ້າ · ໃຊ້ແລ້ວກົດ ↶ ຍ້ອນກັບໄດ້ · ສ້າງຄຳບັນຍາຍໄດ້ທີ່ແທັບ AI (💬) ແລ້ວມາກົດພຣີເຊັດອີກຄັ້ງ'],
+  ['ใช้พรีเซ็ตนี้', 'Use this preset', 'ໃຊ້ພຣີເຊັດນີ້'],
+  ['เอาคลิปลงไทม์ไลน์ก่อน', 'Put clips on the timeline first', 'ເອົາຄລິບລົງໄທມ໌ໄລນ໌ກ່ອນ'],
+  ['ใช้พรีเซ็ตแล้ว — กด ↶ ย้อนกลับได้', 'Preset applied — press ↶ to undo', 'ໃຊ້ພຣີເຊັດແລ້ວ — ກົດ ↶ ຍ້ອນກັບໄດ້'],
+  ['ตัวใหญ่แคบ แสงเรือง ขาว', 'Big condensed glowing – white', 'ໂຕໃຫຍ່ແຄບ ແສງເຮືອງ ຂາວ'],
+  ['ตัวใหญ่แคบ แสงเรือง ส้ม', 'Big condensed glowing – orange', 'ໂຕໃຫຍ່ແຄບ ແສງເຮືອງ ສົ້ມ'],
+  ['ตัวเขียน นีออนเหลือง', 'Script neon yellow', 'ໂຕຂຽນ ນີອອນເຫຼືອງ'],
+  ['ซับไตเติล แสงเรือง', 'Subtitle – glowing', 'ຄຳບັນຍາຍ ແສງເຮືອງ'],
+  ['หัวข้อใหญ่', 'Big title', 'ຫົວຂໍ້ໃຫຍ່'],
+  ['ข้อความเน้น', 'Accent text', 'ຂໍ້ຄວາມເນັ້ນ'],
+  ['ดาวระเบิด', 'Starburst', 'ດາວລະເບີດ'],
+  ['รัศมีแสง', 'Light rays', 'ລັດສະໝີແສງ'],
+  ['กระดาษตาราง', 'Grid paper', 'ເຈ້ຍຕາຕະລາງ'],
+  ['ก่อน', 'Before', 'ກ່ອນ'],
+  ['หลัง', 'After', 'ຫຼັງ']
+);
+
 // ---- 00-core.js ----
 'use strict';
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.26
-// APP_VERSION_PREV : 1.25
-// APP_VERSION_PREV_OLDER : 1.24
+// APP_VERSION  : 1.27
+// APP_VERSION_PREV : 1.26
+// APP_VERSION_PREV_OLDER : 1.25
+// 1.27 : style presets tab (9 trend looks: neon big text, flash sale, talking review, soft & clean, cinematic, vintage, before/after, glitch Y2K, dark luxe) — animated preview on the project's own footage, one click applies grade + transitions + zoom + text/subtitle style + sticker bursts (undoable); new glowing condensed/neon-script text styles, glow on text, starburst/rays/grid stickers
 // 1.26 : Kitti-style AI editing (AI tab) — ⭐ "let AI cut it all" wizard (many clips -> 3 story angles -> storyboard approved scene by scene, revise by typing -> 9:16 timeline with subtitles, extra angles saved as projects); ✨ auto cut (silence + filler words เอ่อ/อืม + AI retakes in one reviewed list); 💬 auto subtitles from the transcript (optional Lao/Thai translation, editable list, 2 new subtitle text styles)
 // 1.25 : play pre-roll — the clock starts only after every layer at the playhead has its frame decoded (max 0.9 s); fixes the first seconds of playback running at 5-12 fps on iPhone while the playhead already moved
 // 1.24 : phones show a compact live readout in the player bar while playing (render/s, ms, sync ms, decoded f/s + drift, layers, paused/muted counts) so every screen recording carries numbers
@@ -1399,7 +1455,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.26';
+const APP_VERSION = '1.27';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -1499,6 +1555,8 @@ function mkSticker(kind, start, dur, extra) {
 
 // ---------- text presets ----------
 const FONT_STACK = '"Prompt","Noto Sans Lao","Noto Sans Thai","Noto Sans Lao Looped",sans-serif';
+const FONT_COND = '"Anton","Bebas Neue","Prompt","Noto Sans Lao","Noto Sans Thai",sans-serif';
+const FONT_SCRIPT = '"Yellowtail","Prompt","Noto Sans Lao","Noto Sans Thai",cursive';
 const TEXT_STYLES = [
   { id: 'hl', label: 'ขาว + เหลือง (2 บรรทัด)', d: { size: 64, weight: 800, color: '#ffffff', color2: '#FFE14D', stroke: '#000000', strokeW: 9, box: 'none', bg: '', ay: .62, text: T('บรรทัดที่ 1\nบรรทัดที่ 2') } },
   { id: 'clean', label: 'ขาว ขอบดำ', d: { size: 60, weight: 800, color: '#ffffff', color2: '#ffffff', stroke: '#000000', strokeW: 9, box: 'none', bg: '', ay: .62, text: T('ข้อความ') } },
@@ -1512,6 +1570,10 @@ const TEXT_STYLES = [
   { id: 'plain', label: 'ขาว เงานุ่ม', d: { size: 52, weight: 700, color: '#ffffff', color2: '#FFE14D', stroke: '', strokeW: 0, box: 'none', bg: '', shadow: true, ay: .8, text: T('ข้อความทั่วไป') } },
   { id: 'sub', label: 'ซับไตเติล ขาว ขอบดำ', d: { size: 52, weight: 800, color: '#ffffff', color2: '#ffffff', stroke: '#000000', strokeW: 9, box: 'none', bg: '', ay: .78, text: T('ซับไตเติล') } },
   { id: 'subbox', label: 'ซับไตเติล กล่องดำ', d: { size: 44, weight: 700, color: '#ffffff', color2: '#ffffff', stroke: '', strokeW: 0, box: 'block', bg: '#000000b3', ay: .78, text: T('ซับไตเติล') } },
+  { id: 'condGlow', label: 'ตัวใหญ่แคบ แสงเรือง ขาว', d: { font: FONT_COND, size: 150, weight: 800, color: '#ffffff', color2: '#ffffff', stroke: '', strokeW: 0, glow: '#ffffff', box: 'none', bg: '', ay: .42, text: T('หัวข้อใหญ่') } },
+  { id: 'condOrange', label: 'ตัวใหญ่แคบ แสงเรือง ส้ม', d: { font: FONT_COND, size: 140, weight: 800, color: '#ffd3a8', color2: '#ffd3a8', stroke: '', strokeW: 0, glow: '#ff5a00', box: 'none', bg: '', ay: .4, text: T('หัวข้อใหญ่') } },
+  { id: 'neonScript', label: 'ตัวเขียน นีออนเหลือง', d: { font: FONT_SCRIPT, size: 96, weight: 400, color: '#fff35c', color2: '#fff35c', stroke: '', strokeW: 0, glow: '#d6ff00', box: 'none', bg: '', ay: .74, text: T('ข้อความเน้น') } },
+  { id: 'subGlow', label: 'ซับไตเติล แสงเรือง', d: { font: FONT_COND, size: 66, weight: 800, color: '#ffffff', color2: '#ffffff', stroke: '', strokeW: 0, glow: '#ff7a2f', box: 'none', bg: '', ay: .78, text: T('ซับไตเติล') } },
   { id: 'footer', label: 'ข้อความท้ายจอ (เล็ก)', d: { size: 30, weight: 600, color: '#ffffffd9', color2: '#ffffffd9', stroke: '', strokeW: 0, box: 'none', bg: '', shadow: true, ay: .965, text: T('ผลลัพธ์ที่ได้ขึ้นอยู่กับแต่ละบุคคล') } },
 ];
 function mkText(styleId, text, start, dur, extra) {
@@ -2068,6 +2130,7 @@ function drawText(ctx, it, t, W, H) {
         ctx.textAlign = 'left';
         ctx.save(); ctx.globalAlpha *= rowAlpha;
         if (it.shadow && ei === 0) { ctx.shadowColor = 'rgba(0,0,0,.65)'; ctx.shadowBlur = size * .18; ctx.shadowOffsetY = size * .05; }
+        if (it.glow && ei === 0) { ctx.save(); ctx.shadowColor = it.glow; ctx.shadowBlur = size * .5; ctx.fillStyle = it.glow; ctx.fillText(str, x, y); ctx.shadowBlur = size * .22; ctx.fillText(str, x, y); ctx.restore(); }
         if (it.stroke && it.strokeW) { ctx.lineWidth = it.strokeW * Math.min(W, H) / 1080; ctx.strokeStyle = it.stroke; ctx.strokeText(str, x, y); ctx.shadowColor = 'transparent'; }
         ctx.fillStyle = col; ctx.fillText(str, x, y); ctx.restore();
         x += k.w;
@@ -2101,6 +2164,9 @@ function drawSticker(ctx, it, t, W, H) {
     case 'arrow': { const bob = Math.sin(lt * 7) * S * .06; ctx.translate(0, bob); ctx.fillStyle = col; ctx.strokeStyle = '#000'; ctx.lineWidth = S * .05; ctx.lineJoin = 'round';
       ctx.beginPath(); ctx.moveTo(-r * .32, -r); ctx.lineTo(r * .32, -r); ctx.lineTo(r * .32, 0); ctx.lineTo(r * .75, 0); ctx.lineTo(0, r); ctx.lineTo(-r * .75, 0); ctx.lineTo(-r * .32, 0); ctx.closePath(); ctx.stroke(); ctx.fill(); break; }
     case 'star': { ctx.fillStyle = col; ctx.strokeStyle = '#000'; ctx.lineWidth = S * .04; ctx.lineJoin = 'round'; ctx.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rad = i % 2 ? r * .45 : r; ctx.lineTo(Math.cos(a) * rad, Math.sin(a) * rad); } ctx.closePath(); ctx.stroke(); ctx.fill(); break; }
+    case 'burst': { const n = 14; ctx.rotate(lt * .5); ctx.fillStyle = col; ctx.beginPath(); for (let i = 0; i < n * 2; i++) { const a = i * Math.PI / n, rad = i % 2 ? r * .52 : r; ctx.lineTo(Math.cos(a) * rad, Math.sin(a) * rad); } ctx.closePath(); ctx.fill(); break; }
+    case 'rays': { ctx.fillStyle = col; for (let i = 0; i < 9; i++) { ctx.save(); ctx.rotate(-Math.PI / 2 + (i - 4) * .3); ctx.beginPath(); ctx.moveTo(r * .2, -S * .035); ctx.lineTo(r, 0); ctx.lineTo(r * .2, S * .035); ctx.closePath(); ctx.fill(); ctx.restore(); } break; }
+    case 'grid': { ctx.rotate(.12); ctx.fillStyle = col; ctx.fillRect(-r * .8, -r * .8, r * 1.6, r * 1.6); ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = S * .012; for (let i = -3; i <= 3; i++) { ctx.beginPath(); ctx.moveTo(-r * .8, i * r * .23); ctx.lineTo(r * .8, i * r * .23); ctx.moveTo(i * r * .23, -r * .8); ctx.lineTo(i * r * .23, r * .8); ctx.stroke(); } break; }
     case 'underline': { const q = EASE.out(clamp(lt / .4, 0, 1)); ctx.strokeStyle = col; ctx.lineWidth = S * .05; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(-r * 1.6, 0); ctx.quadraticCurveTo(0, S * .08, -r * 1.6 + r * 3.2 * q, -S * .02); ctx.stroke(); break; }
     case 'circle': { const q = EASE.out(clamp(lt / .5, 0, 1)); ctx.strokeStyle = col; ctx.lineWidth = S * .05; ctx.lineCap = 'round'; ctx.beginPath(); ctx.ellipse(0, 0, r * 1.2, r * .75, -.06, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * q); ctx.stroke(); break; }
     case 'emoji': ctx.font = `${S}px "Apple Color Emoji","Noto Color Emoji","Segoe UI Emoji",sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(it.text || '🔥', 0, 0); break;
@@ -2867,7 +2933,7 @@ const FX_PRESETS = [
   { id: 'cold', label: 'โทนเย็น', fx: { saturate: .9, hue: 16, brightness: .98, contrast: 1.08 } },
   { id: 'sharp2', label: 'คมชัดมาก + ลดนอยส์', fx: { sharpen: 2, denoise: 1 } },
 ];
-const STICKERS = [['check', 'ถูกต้อง ✔'], ['warning', 'เตือน ⚠'], ['cursor', 'มือชี้'], ['brackets', 'กรอบโฟกัส'], ['arrow', 'ลูกศร'], ['star', 'ดาว'], ['underline', 'ขีดเส้นใต้'], ['circle', 'วงรีวง']];
+const STICKERS = [['check', 'ถูกต้อง ✔'], ['warning', 'เตือน ⚠'], ['cursor', 'มือชี้'], ['brackets', 'กรอบโฟกัส'], ['arrow', 'ลูกศร'], ['star', 'ดาว'], ['underline', 'ขีดเส้นใต้'], ['circle', 'วงรีวง'], ['burst', 'ดาวระเบิด'], ['rays', 'รัศมีแสง'], ['grid', 'กระดาษตาราง']];
 const MASK_OPTS = [['none', 'ไม่มี'], ['circle', 'วงกลม'], ['round', 'มุมมน'], ['frame', 'การ์ดกรอบขาว'], ['featherTop', 'ฟุ้งขอบบน'], ['featherBottom', 'ฟุ้งขอบล่าง'], ['featherAll', 'ฟุ้งรอบด้าน']];
 
 // ---------- tabs ----------
@@ -2875,10 +2941,11 @@ const TAB_ICONS = {
   media: '<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M10 9l5 3-5 3z"/>', text: '<path d="M5 7V4h14v3M12 4v16M9 20h6"/>',
   sticker: '<circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2.5 4 2.5S16 14 16 14M9 9.5h.01M15 9.5h.01"/>', trans: '<path d="M4 6l7 6-7 6zM20 6l-7 6 7 6z"/>',
   fx: '<path d="M12 3l1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8zM18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z"/>',
+  preset: '<rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/>',
   anim: '<path d="M4 18c3-9 7-12 10-8s4 2 6-4"/><circle cx="18" cy="6" r="2"/>',
   audio: '<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>', ai: '<path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path d="M19 17v4M17 19h4"/>'
 };
-const TABS = [['media', 'สื่อ'], ['audio', 'เสียง'], ['text', 'ข้อความ'], ['sticker', 'สติกเกอร์'], ['fx', 'ฟิลเตอร์'], ['trans', 'ทรานสิชัน'], ['anim', 'แอนิเมชัน'], ['ai', 'AI']];
+const TABS = [['media', 'สื่อ'], ['preset', 'พรีเซ็ต'], ['audio', 'เสียง'], ['text', 'ข้อความ'], ['sticker', 'สติกเกอร์'], ['fx', 'ฟิลเตอร์'], ['trans', 'ทรานสิชัน'], ['anim', 'แอนิเมชัน'], ['ai', 'AI']];
 function buildLeft() {
   $('#leftTabs').innerHTML = TABS.map(([id, l], i) => `<button data-tab="${id}" class="${i ? '' : 'on'}"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${TAB_ICONS[id]}</svg><span>${l}</span></button>`).join('');
   $('#leftTabs').onclick = e => { const b = e.target.closest('button'); if (b) showTab(b.dataset.tab); };
@@ -2900,7 +2967,7 @@ function buildLeft() {
 function showTab(id) {
   $$('#leftTabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === id));
   $$('.lpane').forEach(p => p.classList.toggle('on', p.id === 'pane-' + id));
-  if (id === 'audio') renderAudioList(); if (id === 'text') drawTextTiles(); if (id === 'sticker') drawStickerTiles(); if (id === 'anim') fillAnimTiles(); if (id === 'ai' && window.renderAiPane) renderAiPane();
+  if (id === 'audio') renderAudioList(); if (id === 'text') drawTextTiles(); if (id === 'sticker') drawStickerTiles(); if (id === 'anim') fillAnimTiles(); if (id === 'ai' && window.renderAiPane) renderAiPane(); if (id === 'preset' && window.presetShow) presetShow();
 }
 function renderAudioList() {
   const box = $('#audioList'); if (!box) return; const arr = [...MEDIA.values()].filter(m => m.type === 'audio');
@@ -3381,6 +3448,8 @@ function pvDraw(cv, kind, key, ph) {   // ph 0..1 position inside the loop
     if (kind === 'trans') {
       const A = pvItem('__a', '__pvA', 0, 3), B = pvItem('__b', '__pvB', 1, 2, { transIn: key === 'none' ? null : { type: key, dur: 1 } });
       D = { items: [A, B], duckLevel: .22 }; const t = key === 'none' ? (ph < .5 ? .6 : 1.4) : lerp(.55, 2.15, ph); renderFrame(ctx, W, H, t);
+    } else if (kind === 'preset') {
+      const d = presetPreviewDoc(key); D = d; renderFrame(ctx, W, H, clamp(ph, 0, .99) * d.len);
     } else if (kind === 'anim') {
       const [g, k] = key.split(':'); const an = { in: 'none', out: 'none', combo: 'none', dIn: .6, dOut: .6 }; an[g] = k; const dur = g === 'combo' ? 2.2 : 1.6;
       const it = pvItem('__a', '__pvA', 0, dur, { anim: an }); D = { items: [it], duckLevel: .22 }; renderFrame(ctx, W, H, ph * (dur - .02));
@@ -3408,14 +3477,14 @@ async function buildTiles() {
   await pvSamples(); pvPosters();
 }
 function pvPosters() {
-  $$('.tile').forEach(t => pvDraw($('canvas', t), t.dataset.kind, t.dataset.key, t.dataset.kind === 'trans' ? .45 : t.dataset.kind === 'anim' ? ({ in: .2, out: .9, combo: .3 }[t.dataset.key.split(':')[0]]) : .5));
+  $$('.tile').forEach(t => pvDraw($('canvas', t), t.dataset.kind, t.dataset.key, t.dataset.kind === 'trans' ? .45 : t.dataset.kind === 'preset' ? .22 : t.dataset.kind === 'anim' ? ({ in: .2, out: .9, combo: .3 }[t.dataset.key.split(':')[0]]) : .5));
 }
 function pvStart(t) {
   pvStop(); const cv = $('canvas', t); const t0 = performance.now(); PV.anim = { t, raf: 0 };
   const loop = now => { if (!PV.anim || PV.anim.t !== t) return; const ph = ((now - t0) % 2200) / 2200; pvDraw(cv, t.dataset.kind, t.dataset.key, ph); PV.anim.raf = requestAnimationFrame(loop); };
   PV.anim.raf = requestAnimationFrame(loop);
 }
-function pvStop(t) { if (PV.anim) { cancelAnimationFrame(PV.anim.raf); const old = PV.anim.t; PV.anim = null; pvDraw($('canvas', old), old.dataset.kind, old.dataset.key, old.dataset.kind === 'trans' ? .45 : .5); } }
+function pvStop(t) { if (PV.anim) { cancelAnimationFrame(PV.anim.raf); const old = PV.anim.t; PV.anim = null; pvDraw($('canvas', old), old.dataset.kind, old.dataset.key, old.dataset.kind === 'trans' ? .45 : old.dataset.kind === 'preset' ? .22 : .5); } }
 let _pvT = 0; on('media-added', () => { clearTimeout(_pvT); _pvT = setTimeout(async () => { await pvSamples(); pvPosters(); }, 300); });
 
 // ---- 36-panes-visual.js ----
@@ -4490,7 +4559,7 @@ function subsDialog(m, tr) {
   const hasC = !!loadKeys().claude;
   aiDlg('ซับอัตโนมัติ', `<div class="hint">สร้างซับจากเสียงที่ถอดไว้ แล้วดู/แก้ข้อความก่อนใส่เข้าไทม์ไลน์</div>
     <div class="fld"><label>ภาษาซับ</label><select id="sbLang"><option value="orig">ตามที่พูด</option><option value="Lao" ${hasC ? '' : 'disabled'}>แปลเป็นลาว (Claude)</option><option value="Thai" ${hasC ? '' : 'disabled'}>แปลเป็นไทย (Claude)</option></select></div>
-    <div class="fld"><label>สไตล์</label><select id="sbStyle">${['sub', 'subbox', 'clean', 'plain', 'hl'].map(id => `<option value="${id}">${esc(TEXT_STYLES.find(s => s.id === id).label)}</option>`).join('')}</select></div>
+    <div class="fld"><label>สไตล์</label><select id="sbStyle">${['sub', 'subbox', 'subGlow', 'clean', 'plain', 'hl'].map(id => `<option value="${id}" ${id === (D.presetSub || 'sub') ? 'selected' : ''}>${esc(TEXT_STYLES.find(s => s.id === id).label)}</option>`).join('')}</select></div>
     <div class="fld"><label>ตัวอักษรต่อซับ</label><input id="sbMax" type="range" min="12" max="40" step="1" value="24"><output>24</output></div>
     <div class="fld chk"><label><input type="checkbox" id="sbRep" checked> แทนที่ซับเดิมของคลิปนี้</label></div>
     <div class="row"><span class="sp"></span><button class="primary" id="sbGo">สร้างซับ</button></div>`, root => {
@@ -4654,6 +4723,126 @@ async function kitBuild() {
     D = docs[0]; SEL = null; commit('kitti'); emit('sel'); seek(0); AI.busy = false; $('#dlgAi').close();
     toast(docs.length > 1 ? `สร้างแล้ว ${docs.length} คลิป — คลิปแรกอยู่ในไทม์ไลน์ ที่เหลืออยู่ในหน้าโปรเจกต์` : 'สร้างคลิปแล้ว — ✂ แก้ต่อได้เลย', 5000);
   } catch (e) { aiErr(e); }
+}
+
+// ---- 64-presets.js ----
+// ============================================================
+//  Style presets (trend looks): pick one -> see it on YOUR footage -> apply to the timeline in one click
+//  A preset = colour grade + cut transition + punch-in zoom + text/subtitle style + sticker bursts
+// ============================================================
+if (document.fonts) ['800 80px Anton', '400 80px Yellowtail'].forEach(f => { try { document.fonts.load(f); } catch (e) { } });
+
+const PRESETS = [
+  { id: 'neon', ico: '🔥', name: 'นีออนตัวใหญ่ (ฮิตตอนนี้)', desc: 'ตัวหนังสือแคบใหญ่เรืองแสงเต็มจอ + คำเน้นตัวเขียนนีออน โทนส้มแดงอุ่นมืดขอบ ตัดไวแฟลชขาว ดาวระเบิดเด้งตามข้อความ', tags: 'แฟลชขาว · ซูมสลับ · ดาวระเบิด',
+    fx: { contrast: 1.3, saturate: 1.25, sepia: .38, hue: -12, brightness: .92, vignette: .62 }, trans: ['dipwhite', .16], zoom: ['alt', 1.13], text: 'condGlow', sub: 'subGlow', bursts: ['#ff6f91', '#ffe14d', '#ff5a00'] },
+  { id: 'hype', ico: '⚡', name: 'ขายด่วน ไว แรง', desc: 'สีสด คอนทราสต์แรง ตัดไว ซูมกระแทกทุกช็อต ตัวหนังสือเหลืองใหญ่ขอบดำ เหมาะโปรโมชัน/ลดราคา', tags: 'ซูมกระแทก · ตัวเหลืองใหญ่ · ดาว',
+    fx: { saturate: 1.45, contrast: 1.15, brightness: 1.03 }, trans: ['punch', .2], zoom: ['push', 1.1], text: 'big', sub: 'hl', bursts: ['#ffe14d', '#e0143c'] },
+  { id: 'review', ico: '🎤', name: 'รีวิวคนพูด (จั๊มพ์คัต)', desc: 'ภาพสว่างคมชัด ตัดต่อเนื่องแบบจั๊มพ์คัต ซูมเข้า-ออกสลับทุกช็อตให้ดูไม่น่าเบื่อ ซับตัวใหญ่ขาวขอบดำ', tags: 'จั๊มพ์คัต · ซับขาวขอบดำ',
+    fx: { brightness: 1.06, contrast: 1.08, saturate: 1.1, sharpen: 1 }, trans: ['none', 0], zoom: ['alt', 1.15], text: 'clean', sub: 'sub' },
+  { id: 'soft', ico: '🌸', name: 'อ่อนละมุน สะอาดตา', desc: 'โทนสว่างนุ่ม ผิวใส เลือนเข้าช้า ๆ ซูมเบา ๆ ข้อความเรียบ เหมาะครีม/สกินแคร์/ความสวยงาม', tags: 'เลือนนุ่ม · ผิวใส',
+    fx: { brightness: 1.1, contrast: .94, saturate: 1.05, sepia: .08 }, trans: ['fade', .4], zoom: ['push', 1.05], text: 'plain', sub: 'plain' },
+  { id: 'cine', ico: '🎬', name: 'ซีนีมาพรีเมียม', desc: 'โทนฟิล์มเข้ม มุมมืด ภาพนิ่งหรู ซูมช้า เปลี่ยนฉากแบบเลือน เหมาะสินค้าราคาสูง', tags: 'ฟิล์ม · มุมมืด · ซูมช้า',
+    fx: { contrast: 1.18, saturate: .88, hue: 6, vignette: .5, brightness: .97 }, trans: ['fade', .6], zoom: ['push', 1.07], text: 'plain', sub: 'subbox', textOver: { color: '#f3e3c3' } },
+  { id: 'vlog', ico: '🎞', name: 'วินเทจ / วล็อก', desc: 'สีวินเทจอุ่น ๆ มุมมืดบาง ผ่านดำนุ่ม ๆ ภาพขยับช้า เหมาะวล็อก/บรรยากาศร้าน', tags: 'วินเทจ · ผ่านดำ',
+    fx: { sepia: .4, contrast: .94, saturate: .88, brightness: 1.02, vignette: .35 }, trans: ['dipblack', .35], zoom: ['push', 1.06], text: 'plain', sub: 'subbox' },
+  { id: 'ba', ico: '↔', name: 'ก่อน – หลัง', desc: 'ครึ่งแรกเป็นโทนซีดเย็นพร้อมป้าย “ก่อน” ครึ่งหลังสดใสพร้อมป้าย “หลัง” ปัดฉากกลาง เหมาะโชว์ผลลัพธ์สินค้า', tags: 'ป้ายก่อน/หลัง · ปัดฉาก',
+    fx: { saturate: 1.2, contrast: 1.08, brightness: 1.05 }, fxBefore: { saturate: .55, contrast: .95, brightness: .96, hue: 10 }, ba: true, trans: ['wipeR', .35], zoom: ['push', 1.05], text: 'pill', sub: 'sub' },
+  { id: 'y2k', ico: '👾', name: 'กลิตช์ / Y2K ป๊อป', desc: 'สีป๊อปจัด เปลี่ยนฉากแบบกลิตช์ ซูมสลับ ตัวหนังสือขาวขอบน้ำเงิน เหมาะแฟชั่น/วัยรุ่น', tags: 'กลิตช์ · สีป๊อป',
+    fx: { saturate: 1.6, contrast: 1.15, brightness: 1.02 }, trans: ['glitch', .25], zoom: ['alt', 1.1], text: 'blue', sub: 'hl', bursts: ['#7a5cff', '#ff3d9a'] },
+  { id: 'lux', ico: '🖤', name: 'ดาร์กลักชัวรี', desc: 'โทนดำเข้ม ตัวหนังสือสีทอง เลือนช้า ซูมเบา ให้ความรู้สึกแบรนด์พรีเมียม', tags: 'ดำ-ทอง · เลือนช้า',
+    fx: { contrast: 1.3, saturate: .8, brightness: .94, vignette: .5 }, trans: ['fade', .5], zoom: ['push', 1.04], text: 'plain', sub: 'subbox', textOver: { color: '#e8c26a', color2: '#e8c26a' } },
+];
+
+const cloneJ = o => JSON.parse(JSON.stringify(o));
+function presetTitleItems() { return D.items.filter(i => i.type === 'text' && !i.sub && !i.presetAdd && i.style !== 'footer'); }
+function setTransIn(it, type, dur) {   // same rules as applyTransition(), but without seeking/playing
+  if (!type || type === 'none') { it.transIn = null; return; }
+  dur = Math.min(dur || .4, it.dur * .9);
+  const p2 = D.items.find(o => o.track === it.track && o.id !== it.id && Math.abs(o.start + o.dur - it.start) < .06);
+  it.transIn = { type, dur }; if (p2) { p2.dur += dur; it.transIn.ext = dur; it.transIn.prevId = p2.id; }
+}
+function restyleText(it, styleId, over) {
+  const st = TEXT_STYLES.find(s => s.id === styleId); if (!st) return; const d = cloneJ(st.d); delete d.text; delete d.ay;
+  ['glow', 'stroke', 'strokeW', 'bg', 'bg2', 'shadow'].forEach(k => { delete it[k]; });
+  Object.assign(it, d, over || {}); it.style = st.id; if (!d.font) it.font = FONT_STACK;
+}
+// o: which parts to apply {grade, trans, zoom, text, subs, stick}
+function applyPresetTo(p, o) {
+  o = Object.assign({ grade: 1, trans: 1, zoom: 1, text: 1, subs: 1, stick: 1 }, o || {});
+  D.items = D.items.filter(i => !i.presetAdd);
+  const vids = D.items.filter(i => i.track === 'V1' && (i.type === 'video' || i.type === 'image')).sort((a, b) => a.start - b.start);
+  if (o.trans) vids.forEach(it => { const prev = it.transIn && it.transIn.prevId ? D.items.find(x => x.id === it.transIn.prevId) : null; if (prev && it.transIn.ext) prev.dur = Math.max(.1, prev.dur - it.transIn.ext); it.transIn = null; });
+  const half = p.ba ? Math.ceil(vids.length / 2) : 0;
+  vids.forEach((it, i) => {
+    if (o.grade) it.fx = cloneJ(p.ba && p.fxBefore && i < half && vids.length > 1 ? p.fxBefore : p.fx);
+    if (o.zoom && p.zoom && it.mask.type === 'none') {
+      const [mode, amt] = p.zoom; it.kf = it.kf || {}; delete it.kf.s; it.xf.s = 1;
+      if (mode === 'alt') it.xf.s = i % 2 ? amt : 1; else if (mode === 'push') it.kf.s = [{ t: 0, v: 1 }, { t: it.dur, v: amt }];
+      if (it.type === 'image') it.kb = 'none';
+    }
+  });
+  if (o.trans && p.trans) vids.forEach((it, i) => { if (i) setTransIn(it, p.trans[0], p.trans[1]); });
+  const titles = presetTitleItems();
+  if (o.text) titles.forEach(it => restyleText(it, p.text, p.textOver));
+  if (o.subs) D.items.filter(i => i.type === 'text' && i.sub).forEach(it => restyleText(it, p.sub, p.textOver));
+  if (o.stick && p.bursts) titles.forEach((it, i) => {
+    const dur = Math.min(1.1, it.dur), kinds = ['burst', 'rays', 'grid'], x = i % 2 ? .27 : -.27;
+    const s = mkSticker(kinds[i % 3], it.start, dur, { size: 300, color: p.bursts[i % p.bursts.length], ay: i % 2 ? .24 : .62, presetAdd: 1, xf: Object.assign(XF0(), { x, r: i % 2 ? 12 : -10 }) });
+    s.track = freeTrack('text', s.start, s.dur, 'T3'); D.items.push(s);
+  });
+  if (p.ba && o.text && vids.length > 1) {
+    const mk = (txt, style, v, dur) => { const t = mkText(style, txt, v.start + .1, Math.min(dur, v.dur - .1), { presetAdd: 1, ay: .12, anim: { in: 'pop', out: 'fade', d: .2 } }); t.track = freeTrack('text', t.start, t.dur, 'T3'); D.items.push(t); };
+    mk(T('ก่อน'), 'promo', vids[0], 2.5); mk(T('หลัง'), 'pill', vids[half], 2.5);
+  }
+}
+function applyPreset(id, o) {
+  const p = PRESETS.find(x => x.id === id); if (!p) return;
+  if (!D.items.some(i => i.track === 'V1' && (i.type === 'video' || i.type === 'image'))) return toast('เอาคลิปลงไทม์ไลน์ก่อน');
+  applyPresetTo(p, o); D.preset = id; D.presetSub = p.sub; commit('preset'); renderInspector();
+  toast('ใช้พรีเซ็ตแล้ว — กด ↶ ย้อนกลับได้', 4500);
+}
+
+// ---------- preview on the user's own footage (thumbnails) ----------
+const PRC = {};
+function presetPreviewDoc(id) {
+  if (PRC.key !== PV.key) { for (const k of Object.keys(PRC)) delete PRC[k]; PRC.key = PV.key; }
+  if (PRC[id]) return PRC[id];
+  const p = PRESETS.find(x => x.id === id), prev = D;
+  const items = [pvItem('__a', '__pvA', 0, 1.15), pvItem('__b', '__pvB', 1.15, 1.15), pvItem('__c', '__pvA', 2.3, 1.15)];
+  items.push(mkText('clean', T('ຄຣີມກັນແດດ\nບໍ່ເຫນຽວ'), .15, 1.5, { track: 'T1' }), mkText('sub', T('ຊຶມໄວ ບໍ່ເຫນຽວ'), 1.5, 1.8, { track: 'T2', sub: 1, ay: .8 }));
+  const d = { items, duckLevel: .22, len: 3.4 };
+  D = d; try { applyPresetTo(p, {}); } catch (e) { console.warn(e); } finally { D = prev; }
+  return (PRC[id] = d);
+}
+
+// ---------- pane + dialog ----------
+async function presetShow() {
+  const box = $('#pane-preset'); if (!box) return;
+  if (!box.dataset.built) {
+    box.dataset.built = 1;
+    box.innerHTML = `<div class="hint">เลือกพรีเซ็ต แล้วดูตัวอย่างบนภาพจากคลิปของคุณเอง · เอาเมาส์ชี้เพื่อดูแบบเคลื่อนไหว · กดเพื่อดูใหญ่และใช้</div><div class="tiles" id="tilesPreset"></div>`;
+    const tl = $('#tilesPreset');
+    PRESETS.forEach(p => {
+      const t = document.createElement('div'); t.className = 'tile'; t.dataset.key = p.id; t.dataset.kind = 'preset';
+      t.innerHTML = `<canvas width="${PV.W}" height="${PV.H}"></canvas><span>${p.ico} ${esc(p.name)}</span>`; tl.appendChild(t);
+      t.addEventListener('mouseenter', () => pvStart(t)); t.addEventListener('mouseleave', () => pvStop(t)); t.addEventListener('click', () => { pvStop(); presetDialog(p.id); });
+    });
+  }
+  await pvSamples(); pvPosters();
+}
+function presetDialog(id) {
+  const p = PRESETS.find(x => x.id === id);
+  const chk = (k, l, on = 1) => `<label class="fld chk"><input type="checkbox" data-o="${k}" ${on ? 'checked' : ''}> ${l}</label>`;
+  aiDlg(p.ico + ' ' + p.name, `<div style="display:flex;gap:14px;flex-wrap:wrap"><canvas id="pdCv" width="216" height="384" style="border-radius:10px;background:#000;flex:none"></canvas>
+    <div style="flex:1;min-width:200px"><div class="hint">${esc(p.desc)}</div><div class="mini">${esc(p.tags)}</div>
+    <div style="margin-top:8px">${chk('grade', 'สี / ฟิลเตอร์')}${p.trans && p.trans[0] !== 'none' ? chk('trans', 'ทรานสิชันตรงรอยต่อ') : ''}${chk('zoom', 'ซูม / ขยับภาพ')}${chk('text', 'สไตล์ข้อความบนจอ')}${chk('subs', 'สไตล์ซับ (ถ้ามี)')}${p.bursts ? chk('stick', 'สติกเกอร์ดาวระเบิด') : ''}</div>
+    <div class="mini" style="margin-top:6px">ตัวอย่างนี้ใช้ภาพจากคลิปของคุณ · ใช้แล้วกด ↶ ย้อนกลับได้ · ซับสร้างได้ที่แท็บ AI (💬) แล้วมากดพรีเซ็ตอีกครั้ง</div></div></div>
+    <div class="row"><span class="sp"></span><button class="primary" id="pdGo">ใช้พรีเซ็ตนี้</button></div>`, root => {
+    const cv = $('#pdCv', root), t0 = performance.now(); const dlg = $('#dlgAi');
+    const loop = now => { if (!cv.isConnected || !dlg.open) return; pvDraw(cv, 'preset', id, ((now - t0) % 3600) / 3600); requestAnimationFrame(loop); };
+    requestAnimationFrame(loop);
+    $('#pdGo', root).onclick = () => { const o = {}; root.querySelectorAll('[data-o]').forEach(x => { o[x.dataset.o] = x.checked ? 1 : 0; }); dlg.close(); applyPreset(id, o); };
+  });
 }
 
 // ---- 70-main.js ----

@@ -501,6 +501,7 @@ function drawText(ctx, it, t, W, H) {
         ctx.textAlign = 'left';
         ctx.save(); ctx.globalAlpha *= rowAlpha;
         if (it.shadow && ei === 0) { ctx.shadowColor = 'rgba(0,0,0,.65)'; ctx.shadowBlur = size * .18; ctx.shadowOffsetY = size * .05; }
+        if (it.glow && ei === 0) { ctx.save(); ctx.shadowColor = it.glow; ctx.shadowBlur = size * .5; ctx.fillStyle = it.glow; ctx.fillText(str, x, y); ctx.shadowBlur = size * .22; ctx.fillText(str, x, y); ctx.restore(); }
         if (it.stroke && it.strokeW) { ctx.lineWidth = it.strokeW * Math.min(W, H) / 1080; ctx.strokeStyle = it.stroke; ctx.strokeText(str, x, y); ctx.shadowColor = 'transparent'; }
         ctx.fillStyle = col; ctx.fillText(str, x, y); ctx.restore();
         x += k.w;
@@ -534,6 +535,9 @@ function drawSticker(ctx, it, t, W, H) {
     case 'arrow': { const bob = Math.sin(lt * 7) * S * .06; ctx.translate(0, bob); ctx.fillStyle = col; ctx.strokeStyle = '#000'; ctx.lineWidth = S * .05; ctx.lineJoin = 'round';
       ctx.beginPath(); ctx.moveTo(-r * .32, -r); ctx.lineTo(r * .32, -r); ctx.lineTo(r * .32, 0); ctx.lineTo(r * .75, 0); ctx.lineTo(0, r); ctx.lineTo(-r * .75, 0); ctx.lineTo(-r * .32, 0); ctx.closePath(); ctx.stroke(); ctx.fill(); break; }
     case 'star': { ctx.fillStyle = col; ctx.strokeStyle = '#000'; ctx.lineWidth = S * .04; ctx.lineJoin = 'round'; ctx.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rad = i % 2 ? r * .45 : r; ctx.lineTo(Math.cos(a) * rad, Math.sin(a) * rad); } ctx.closePath(); ctx.stroke(); ctx.fill(); break; }
+    case 'burst': { const n = 14; ctx.rotate(lt * .5); ctx.fillStyle = col; ctx.beginPath(); for (let i = 0; i < n * 2; i++) { const a = i * Math.PI / n, rad = i % 2 ? r * .52 : r; ctx.lineTo(Math.cos(a) * rad, Math.sin(a) * rad); } ctx.closePath(); ctx.fill(); break; }
+    case 'rays': { ctx.fillStyle = col; for (let i = 0; i < 9; i++) { ctx.save(); ctx.rotate(-Math.PI / 2 + (i - 4) * .3); ctx.beginPath(); ctx.moveTo(r * .2, -S * .035); ctx.lineTo(r, 0); ctx.lineTo(r * .2, S * .035); ctx.closePath(); ctx.fill(); ctx.restore(); } break; }
+    case 'grid': { ctx.rotate(.12); ctx.fillStyle = col; ctx.fillRect(-r * .8, -r * .8, r * 1.6, r * 1.6); ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = S * .012; for (let i = -3; i <= 3; i++) { ctx.beginPath(); ctx.moveTo(-r * .8, i * r * .23); ctx.lineTo(r * .8, i * r * .23); ctx.moveTo(i * r * .23, -r * .8); ctx.lineTo(i * r * .23, r * .8); ctx.stroke(); } break; }
     case 'underline': { const q = EASE.out(clamp(lt / .4, 0, 1)); ctx.strokeStyle = col; ctx.lineWidth = S * .05; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(-r * 1.6, 0); ctx.quadraticCurveTo(0, S * .08, -r * 1.6 + r * 3.2 * q, -S * .02); ctx.stroke(); break; }
     case 'circle': { const q = EASE.out(clamp(lt / .5, 0, 1)); ctx.strokeStyle = col; ctx.lineWidth = S * .05; ctx.lineCap = 'round'; ctx.beginPath(); ctx.ellipse(0, 0, r * 1.2, r * .75, -.06, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * q); ctx.stroke(); break; }
     case 'emoji': ctx.font = `${S}px "Apple Color Emoji","Noto Color Emoji","Segoe UI Emoji",sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(it.text || '🔥', 0, 0); break;

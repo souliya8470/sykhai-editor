@@ -143,7 +143,7 @@ function subsDialog(m, tr) {
   const hasC = !!loadKeys().claude;
   aiDlg('ซับอัตโนมัติ', `<div class="hint">สร้างซับจากเสียงที่ถอดไว้ แล้วดู/แก้ข้อความก่อนใส่เข้าไทม์ไลน์</div>
     <div class="fld"><label>ภาษาซับ</label><select id="sbLang"><option value="orig">ตามที่พูด</option><option value="Lao" ${hasC ? '' : 'disabled'}>แปลเป็นลาว (Claude)</option><option value="Thai" ${hasC ? '' : 'disabled'}>แปลเป็นไทย (Claude)</option></select></div>
-    <div class="fld"><label>สไตล์</label><select id="sbStyle">${['sub', 'subbox', 'clean', 'plain', 'hl'].map(id => `<option value="${id}">${esc(TEXT_STYLES.find(s => s.id === id).label)}</option>`).join('')}</select></div>
+    <div class="fld"><label>สไตล์</label><select id="sbStyle">${['sub', 'subbox', 'subGlow', 'clean', 'plain', 'hl'].map(id => `<option value="${id}" ${id === (D.presetSub || 'sub') ? 'selected' : ''}>${esc(TEXT_STYLES.find(s => s.id === id).label)}</option>`).join('')}</select></div>
     <div class="fld"><label>ตัวอักษรต่อซับ</label><input id="sbMax" type="range" min="12" max="40" step="1" value="24"><output>24</output></div>
     <div class="fld chk"><label><input type="checkbox" id="sbRep" checked> แทนที่ซับเดิมของคลิปนี้</label></div>
     <div class="row"><span class="sp"></span><button class="primary" id="sbGo">สร้างซับ</button></div>`, root => {
