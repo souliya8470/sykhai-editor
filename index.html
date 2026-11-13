@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.38</title>
+<title>Sykhai Editor v1.39</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -74,11 +74,11 @@ main{display:grid;grid-template-columns:var(--lw,300px) minmax(0,1fr) var(--rw,3
 #tlbody{flex:1;overflow:auto;position:relative;min-height:0;background:#17191e}
 #tlinner{position:relative;min-height:100%}
 #ruler{display:flex;height:22px;position:sticky;top:0;z-index:6;background:var(--p2);border-bottom:1px solid var(--ln);cursor:pointer}
-#ruler .corner{width:96px;flex:none;position:sticky;left:0;background:var(--p2);z-index:3;border-right:1px solid var(--ln)}
+#ruler .corner{width:var(--tlw,124px);flex:none;position:sticky;left:0;background:var(--p2);z-index:3;border-right:1px solid var(--ln)}
 #ruler .rt{position:relative;height:100%}
 #ruler .rt span{position:absolute;top:4px;font-size:10px;color:var(--mu);padding-left:4px;border-left:1px solid var(--ln);height:18px}
 .trow{display:flex;border-bottom:1px solid #262a32;position:relative}
-.tlabel{width:96px;flex:none;position:sticky;left:0;z-index:5;background:var(--p2);border-right:1px solid var(--ln);font-size:11px;color:var(--mu);padding:4px 6px;overflow:hidden}
+.tlabel{width:var(--tlw,124px);flex:none;position:sticky;left:0;z-index:5;background:var(--p2);border-right:1px solid var(--ln);font-size:11px;color:var(--mu);padding:4px 6px;overflow:hidden}
 .tlane{position:relative;flex:none;background:repeating-linear-gradient(90deg,transparent 0 55px,rgba(255,255,255,.02) 55px 56px)}
 .trow.video .tlabel,.trow.text .tlabel{border-left:3px solid #2d6a8f}.trow.audio .tlabel{border-left:3px solid #2f8a5b}
 .clip{position:absolute;top:3px;bottom:3px;border-radius:5px;background:var(--c);overflow:hidden;border:1px solid rgba(0,0,0,.35);cursor:grab;user-select:none}
@@ -406,6 +406,9 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
 #dlgCover .cvrow{display:flex;align-items:center;gap:8px;margin:6px 0 10px}#dlgCover .cvrow input{flex:1}
 #dlgCover #cvTime{font-variant-numeric:tabular-nums;color:var(--mu);font-size:12px;min-width:84px;text-align:right}
 .trow.slim .tlabel{padding:3px 6px;display:flex;align-items:center}.trow.slim .tic-row,.trow.slim .trh{display:none}.trow.slim .tn{font-size:10px}
+#ruler .corner{position:sticky}#ruler .corner .lwh{position:absolute;right:-3px;top:0;bottom:-2000px;width:7px;cursor:col-resize;z-index:12}
+#ruler .corner .lwh:hover,body.resizing #ruler .corner .lwh{background:rgba(255,255,255,.25)}
+.hhead .brand .ver{margin-left:8px;font-size:12px;font-weight:400;color:var(--mu)}
 
 </style></head>
 <body>
@@ -489,7 +492,7 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
 
 <div id="home">
   <div class="hwrap">
-    <div class="hhead"><div class="brand big">Sykhai <b>Editor</b></div><span class="sp"></span><button id="hmSync" hidden title="ส่งโปรเจกต์/ไฟล์ขึ้นเซิร์ฟเวอร์ และดึงโปรเจกต์ใหม่ลงเครื่องนี้">☁ ซิงค์เซิร์ฟเวอร์</button><button id="hmBack" hidden>← กลับไปแก้ไขต่อ</button><button id="hmImport">📂 นำเข้าไฟล์โปรเจกต์</button><button id="hmSettings" title="ตั้งค่า (ใส่รหัสผ่านเซิร์ฟเวอร์ที่นี่)">⚙ ตั้งค่า</button><button id="hmNew" class="primary">+ โปรเจกต์ใหม่</button></div>
+    <div class="hhead"><div class="brand big">Sykhai <b>Editor</b> <span class="ver" id="verHome"></span></div><span class="sp"></span><button id="hmSync" hidden title="ส่งโปรเจกต์/ไฟล์ขึ้นเซิร์ฟเวอร์ และดึงโปรเจกต์ใหม่ลงเครื่องนี้">☁ ซิงค์เซิร์ฟเวอร์</button><button id="hmBack" hidden>← กลับไปแก้ไขต่อ</button><button id="hmImport">📂 นำเข้าไฟล์โปรเจกต์</button><button id="hmSettings" title="ตั้งค่า (ใส่รหัสผ่านเซิร์ฟเวอร์ที่นี่)">⚙ ตั้งค่า</button><button id="hmNew" class="primary">+ โปรเจกต์ใหม่</button></div>
     <div id="homeMain">
     <div class="htitle">โปรเจกต์ของฉัน</div>
     <div id="homeList"></div>
@@ -1663,6 +1666,7 @@ I18N_ROWS.push(
   ['ปิดหน้าต่างนี้', 'Close this window', 'ປິດໜ້າຕ່າງນີ້'],
   ['ใส่หน้าปกเป็นเฟรมแรกของวิดีโอ (สั้นมาก ~0.13 วิ) เพื่อให้ Facebook / TikTok ใช้เป็น thumbnail', 'Put the cover as the first frame of the video (very short, ~0.13 s) so Facebook / TikTok use it as the thumbnail', 'ໃສ່ໜ້າປົກເປັນເຟຣມທຳອິດຂອງວິດີໂອ (ສັ້ນຫຼາຍ ~0.13 ວິ) ເພື່ອໃຫ້ Facebook / TikTok ໃຊ້ເປັນ thumbnail'],
   ['กำลังทำหน้าปก…', 'Preparing the cover…', 'ກຳລັງເຮັດໜ້າປົກ…'],
+  ['ลากเพื่อปรับความกว้างของช่องชื่อแถว', 'Drag to change the width of the lane-name column', 'ລາກເພື່ອປັບຄວາມກວ້າງຂອງຊ່ອງຊື່ແຖວ'],
 );
 
 // ---- 00-core.js ----
@@ -1670,9 +1674,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.38
-// APP_VERSION_PREV : 1.37
-// APP_VERSION_PREV_OLDER : 1.36
+// APP_VERSION  : 1.39
+// APP_VERSION_PREV : 1.38
+// APP_VERSION_PREV_OLDER : 1.37
+// 1.39 : smoother scrubbing — a low-res frame cache (one picture every ~0.2 s of each clip on the timeline, built quietly in the background while idle) is shown instantly while dragging the playhead / a clip instead of black or a stale frame, the exact frame replaces it when the real seek lands; the timeline lane-name column can be dragged wider/narrower (grip at the right edge of the ruler corner, remembered); the version number is shown on the Home page too
 // 1.38 : the chosen cover is also put in front of the exported video as its first frames (~0.13 s, tick box in the export dialog, on by default) so Facebook / TikTok / players take it as the thumbnail by themselves; the JPG is still downloaded next to the MP4
 // 1.37 : CapCut-style editing feel — magnetic main track (clips glued end to end, others slide while you drag, no overlaps), media dropped from the bin snaps to 00:00 / playhead / clip edges (empty timeline = exactly 0) with a drop line, Cover picker (🖼 pick any frame; saved in the project, project-card picture, JPG downloaded next to the MP4), all controls white + thinner lines (sliders, playhead 1 px, selection), live preview while scrubbing/trimming/moving (one seek in flight, jumps to the latest), ruler with minor ticks and frame counting up to 1200 px/s, empty lanes fold to a thin strip
 // 1.36 : free layers (every picture lane takes video / image / text / sticker; lanes are numbered by stack position), fade in/out now audibly follows the dragged handle (squared ramp), left tab bar keeps fixed-size tabs with ‹ › scroll arrows when narrow, 2nd computer pulls the whole reference library from the server (inbox/done is listed and served)
@@ -1712,7 +1717,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.38';
+const APP_VERSION = '1.39';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -1964,9 +1969,15 @@ function mediaSource(it) {
   const m = MEDIA.get(it.mediaId); if (!m) return null;
   if (it.type === 'image') return m.img && m.img.complete ? m.img : null;
   const el = poolGet(it); if (!el) return null;
-  return (el.readyState >= 2 && el.videoWidth > 0) ? el : null;
+  const ok = el.readyState >= 2 && el.videoWidth > 0;
+  // v1.39: while scrubbing / waiting for a seek, show the nearest low-res cached frame instead of black or a stale frame (CapCut-like). Only the live preview turns SCR.on.
+  if (SCR.on && !PB.exporting) {
+    let tg = timelineToSrc(it, PB.t); if (m.duration) tg = Math.min(tg, Math.max(0, m.duration - .04));
+    if (!ok || (!PB.playing && (el.seeking || Math.abs(el.currentTime - tg) > .06))) { const f = scrFrame(it.mediaId, tg); if (f) return f; }
+  }
+  return ok ? el : null;
 }
-function srcSize(src) { return src.videoWidth ? [src.videoWidth, src.videoHeight] : [src.naturalWidth, src.naturalHeight]; }
+function srcSize(src) { return src.videoWidth ? [src.videoWidth, src.videoHeight] : [src.naturalWidth || src.width, src.naturalHeight || src.height]; }
 
 function filterString(it, extraBlur) {
   const f = it.fx || {}; const parts = [];
@@ -2465,11 +2476,67 @@ function renderFrame(ctx, W, H, t) {
   }
 }
 
+// ---- 12-scrub.js ----
+'use strict';
+// ---------- v1.39: scrub frame cache ----------
+// Seeking a 4K iPhone clip takes 0.3–2 s, so dragging the playhead / a clip showed black or a stale frame. Like CapCut, we keep a small
+// low-res picture every ~0.2 s of every clip used on the timeline (extracted quietly in the background at 4x speed while idle) and draw the
+// nearest one instantly; the exact frame replaces it as soon as the real seek lands.
+const SCR = { on: false, cache: new Map(), fail: new Set(), job: null, bytes: 0, MAX: 200e6, MAXSIDE: 320, MAXF: 240 };
+function scrFrame(mid, t) {
+  const c = SCR.cache.get(mid); if (!c) return null; c.used = performance.now();
+  const i = Math.round(t / c.step);
+  for (let d = 0; d <= 4; d++) { const a = c.f[i - d] || c.f[i + d]; if (a) return a; }
+  return null;
+}
+function scrDrop(mid) { const c = SCR.cache.get(mid); if (!c) return; SCR.bytes -= c.bytes; SCR.cache.delete(mid); }
+function scrEvict(keep) {
+  while (SCR.bytes > SCR.MAX) {
+    let old = null; for (const [id, c] of SCR.cache) { if (id === keep) continue; if (!old || c.used < old.c.used) old = { id, c }; }
+    if (!old) break; scrDrop(old.id); SCR.fail.delete(old.id);
+  }
+}
+const scrIdle = () => !PB.playing && !PB.exporting && !SRC.m && document.visibilityState !== 'hidden';
+async function scrBuild(m) {
+  const v = document.createElement('video'); v.muted = true; v.playsInline = true; v.preload = 'auto'; v.src = m.purl || m.url;
+  const job = SCR.job = { id: m.id, v, paused: false, done: false };
+  await new Promise(res => { v.onloadeddata = res; v.onerror = res; setTimeout(res, 12000); });
+  const dur = v.duration || m.duration, vw = v.videoWidth, vh = v.videoHeight;
+  if (!vw || !dur || !isFinite(dur) || !v.requestVideoFrameCallback) { SCR.fail.add(m.id); SCR.job = null; try { v.removeAttribute('src'); v.load(); } catch (e) { } return; }
+  const k = SCR.MAXSIDE / Math.max(vw, vh), W = Math.max(2, Math.round(vw * k)), H = Math.max(2, Math.round(vh * k));
+  const step = Math.max(.2, dur / SCR.MAXF), c = { step, f: [], bytes: 0, used: performance.now(), W, H };
+  let next = 0, lastTick = performance.now();
+  const finish = () => { if (job.done) return; job.done = true; clearInterval(job.wd); try { v.pause(); v.removeAttribute('src'); v.load(); } catch (e) { } if (SCR.job === job) SCR.job = null; if (c.bytes) { SCR.cache.set(m.id, c); SCR.bytes += c.bytes; scrEvict(m.id); dirty(); } else SCR.fail.add(m.id); };
+  const cb = (now, meta) => {
+    if (job.done) return; lastTick = performance.now(); const t = meta.mediaTime;
+    if (!scrIdle()) { try { v.pause(); } catch (e) { } job.paused = true; return; }       // user plays / exports: stop quietly, resume when idle
+    if (t >= next * step - .02) { const cv = document.createElement('canvas'); cv.width = W; cv.height = H; cv.getContext('2d').drawImage(v, 0, 0, W, H); c.f[next] = cv; c.bytes += W * H * 4; next = Math.floor(t / step) + 1; }
+    if (v.ended || t >= dur - .05) return finish();
+    v.requestVideoFrameCallback(cb);
+  };
+  job.resume = () => { job.paused = false; lastTick = performance.now(); v.requestVideoFrameCallback(cb); v.play().catch(() => finish()); };
+  job.wd = setInterval(() => { if (!job.paused && performance.now() - lastTick > 8000) finish(); }, 1000);
+  v.onended = finish; v.playbackRate = 4; job.resume();
+}
+function scrKick() {
+  if (!scrIdle()) return;
+  const j = SCR.job; if (j) { if (j.paused) j.resume(); return; }
+  const want = []; for (const it of D.items) if (it.type === 'video' && !want.includes(it.mediaId)) want.push(it.mediaId);
+  for (const id of want) {
+    if (SCR.cache.has(id) || SCR.fail.has(id)) continue;
+    const m = MEDIA.get(id); if (!m || m.type !== 'video' || !(m.url || m.purl) || !(m.duration > .5)) continue;
+    scrBuild(m).catch(() => { SCR.fail.add(id); SCR.job = null; }); return;
+  }
+}
+function scrInit() { setInterval(scrKick, 1200); }
+
 // ---- 20-timeline-ui.js ----
 // ============================================================
 //  Timeline UI + media bin
 // ============================================================
-const TL = { pps: 56, labelW: 96 };
+const TL = { pps: 56, labelW: 124 };
+try { const w = parseInt(localStorage.getItem('sk_tlw')); if (w >= 70 && w <= 320) TL.labelW = w; } catch (e) { }
+document.documentElement.style.setProperty('--tlw', TL.labelW + 'px');
 const TRACK_H = { video: 50, text: 40, audio: 42 };
 let TH = {}; try { TH = JSON.parse(localStorage.getItem('sk_trh') || '{}') || {}; } catch (e) { }
 const trackH = tr => TH[tr.id] || (tr.id !== 'V1' && D && !D.items.some(i => i.track === tr.id) ? 24 : tr.id === 'V1' ? 66 : TRACK_H[tr.kind]);   // empty lanes fold to a thin strip (small screens), still a drop target
@@ -2516,7 +2583,7 @@ function trIcons(tr) {
 function renderTimeline() {
   const body = $('#tlbody'); if (!body) return;
   const sx = body.scrollLeft, sy = body.scrollTop; const W = tlWidth();
-  let h = `<div id="tlinner" style="width:${TL.labelW + W}px"><div id="ruler"><div class="corner"></div><div class="rt" style="width:${W}px">${rulerTicks()}${(D.markers || []).map(m => `<i class="mk" data-id="${m.id}" style="left:${m.t * TL.pps}px" title="${T('มาร์กเกอร์ — ดับเบิลคลิกเพื่อลบ')}">⚑</i>`).join('')}</div></div>`;
+  let h = `<div id="tlinner" style="width:${TL.labelW + W}px"><div id="ruler"><div class="corner"><i class="lwh" title="${T('ลากเพื่อปรับความกว้างของช่องชื่อแถว')}"></i></div><div class="rt" style="width:${W}px">${rulerTicks()}${(D.markers || []).map(m => `<i class="mk" data-id="${m.id}" style="left:${m.t * TL.pps}px" title="${T('มาร์กเกอร์ — ดับเบิลคลิกเพื่อลบ')}">⚑</i>`).join('')}</div></div>`;
   const ROWS = [...layerOrder().slice().reverse().map(id => TRACKS.find(t => t.id === id)).filter(Boolean), ...TRACKS.filter(t => t.kind === 'audio')];   // top lane = top layer
   for (const tr of ROWS) h += `<div class="trow ${tr.kind}${trackH(tr) <= 24 ? ' slim' : ''}${trSt(tr.id).lock ? ' locked' : ''}${trSt(tr.id).hide ? ' hidt' : ''}${trSt(tr.id).mute ? ' mutet' : ''}" data-track="${tr.id}" style="height:${trackH(tr)}px"><div class="tlabel"><div class="tn">${tr.kind === 'audio' ? tr.label : T('เลเยอร์') + ' ' + (layerOrder().indexOf(tr.id) + 1)}</div>${trIcons(tr)}</div><div class="tlane" style="width:${W}px"></div><div class="trh" title="ลากเพื่อปรับความสูงของแถว"></div></div>`;
   h += `<div id="playhead"><i></i></div></div>`;
@@ -2616,6 +2683,7 @@ function initTimelineEvents() {
     const lmb = e.target.closest('.tlm'); if (lmb) { e.preventDefault(); e.stopPropagation(); if (!lmb.disabled) layerMove(lmb.closest('.trow').dataset.track, lmb.dataset.lm); return; }
     const tkb = e.target.closest('.tic'); if (tkb) { e.preventDefault(); e.stopPropagation(); trToggle(tkb.closest('.trow').dataset.track, tkb.dataset.tk); return; }
     const jn = e.target.closest('.junc'); if (jn) { select(jn.dataset.id); showTab('trans'); return; }
+    const lwh = e.target.closest('.lwh'); if (lwh) { e.preventDefault(); e.stopPropagation(); labelWDrag(e); return; }
     const trh = e.target.closest('.trh'); if (trh) { e.preventDefault(); rowResizeStart(e, trh.closest('.trow')); return; }
     const vlu = e.target.closest('.vl u'); if (vlu) { e.preventDefault(); e.stopPropagation(); volDragStart(e, vlu.closest('.clip')); return; }
     const fhe = e.target.closest('.fh'); if (fhe) { e.preventDefault(); e.stopPropagation(); fadeDragStart(e, fhe.closest('.clip'), fhe.dataset.side); return; }
@@ -2701,6 +2769,13 @@ function scrubStart(e, already) {
   if (!already) f(e);
   const up = () => { window.removeEventListener('pointermove', f); window.removeEventListener('pointerup', up); if (wasPlaying) play(); };
   window.addEventListener('pointermove', f); window.addEventListener('pointerup', up);
+}
+// the column with the lane names / lock / eye / sound icons can be dragged wider or narrower (grip on the right edge of the ruler corner)
+function labelWDrag(e) {
+  const x0 = e.clientX, w0 = TL.labelW; document.body.classList.add('resizing');
+  const mv = ev => { TL.labelW = clamp(Math.round(w0 + ev.clientX - x0), 70, 320); document.documentElement.style.setProperty('--tlw', TL.labelW + 'px'); const inn = $('#tlinner'); if (inn) inn.style.width = (TL.labelW + tlWidth()) + 'px'; updatePlayhead(); };
+  const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); document.body.classList.remove('resizing'); try { localStorage.setItem('sk_tlw', String(TL.labelW)); } catch (e) { } renderTimeline(); };
+  window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
 }
 function setZoom(p) { TL.pps = clamp(p, 8, 1200); const z = $('#zoom'); if (z) z.value = Math.log(TL.pps); renderTimeline(); }
 
@@ -4386,7 +4461,7 @@ function tick() {
       if (!PB.playing || nowR - PERF.lastR >= 30) {   // while playing: preview at most ~30 fps (video is 30 fps anyway) and adaptive resolution
         const q = PB.playing ? PERF.q : 1, rw = Math.round(PW * q), rh = Math.round(PH * q);
         if (PCANVAS.width !== rw || PCANVAS.height !== rh) { PCANVAS.width = rw; PCANVAS.height = rh; }
-        BS = 1 / q; const a = performance.now(); renderFrame(PCTX, rw, rh, PB.t); BS = 1; const ms = performance.now() - a;
+        BS = 1 / q; const a = performance.now(); SCR.on = true; renderFrame(PCTX, rw, rh, PB.t); SCR.on = false; BS = 1; const ms = performance.now() - a;
         PERF.lastR = nowR; DIRTY = false; PD.rn++; if (PB.playing) perfAdapt(ms, nowR);
       }
       const U0 = performance.now(); if (window.onFrame) window.onFrame(); _ema(PD, 'ui', performance.now() - U0);   // playhead / time move every screen refresh
@@ -5896,7 +5971,7 @@ async function ensureSfx() {
 
 // ---------- init ----------
 async function init() {
-  $('#verTag').textContent = 'v' + APP_VERSION; $('#verTag2').textContent = 'Sykhai Editor v' + APP_VERSION; setInterval(() => { if (!PERF.hud && !PD.cOn) { const e = $('#verTag2'), t = verText(); if (e && e.textContent !== t) e.textContent = t; } }, 1500);
+  $('#verTag').textContent = 'v' + APP_VERSION; $('#verHome').textContent = 'v' + APP_VERSION; $('#verTag2').textContent = 'Sykhai Editor v' + APP_VERSION; setInterval(() => { if (!PERF.hud && !PD.cOn) { const e = $('#verTag2'), t = verText(); if (e && e.textContent !== t) e.textContent = t; } }, 1500);
   PCANVAS = $('#pv'); PCTX = PCANVAS.getContext('2d');
   $('#mnav').onclick = e => { const b = e.target.closest('button'); if (!b) return; $('#app').dataset.m = b.dataset.m; $$('#mnav button').forEach(x => x.classList.toggle('on', x === b)); setTimeout(() => { fitStage(); renderTimeline(); }, 30); };
   $('#app').dataset.m = 'tl';
@@ -5959,7 +6034,7 @@ async function init() {
     else if (e.key === 'ArrowRight') { pause(); seek(PB.t + (e.shiftKey ? 1 : 1 / 30)); }
     else if (e.key === 'Home') { pause(); seek(0); }
   });
-  initSplitters(); initToolbar(); if (typeof coverInit === 'function') coverInit();
+  initSplitters(); initToolbar(); if (typeof coverInit === 'function') coverInit(); scrInit();
   initHome(); await showHome(); if (srvOn()) srvPing().then(ok => ok && srvLoadSizes()).then(() => srvAdoptProxies()).then(() => srvInboxAuto()).then(() => srvInboxWatch()).catch(() => { });
   tick();
   window.__ready = true;

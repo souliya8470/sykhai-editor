@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.38
-// APP_VERSION_PREV : 1.37
-// APP_VERSION_PREV_OLDER : 1.36
+// APP_VERSION  : 1.39
+// APP_VERSION_PREV : 1.38
+// APP_VERSION_PREV_OLDER : 1.37
+// 1.39 : smoother scrubbing — a low-res frame cache (one picture every ~0.2 s of each clip on the timeline, built quietly in the background while idle) is shown instantly while dragging the playhead / a clip instead of black or a stale frame, the exact frame replaces it when the real seek lands; the timeline lane-name column can be dragged wider/narrower (grip at the right edge of the ruler corner, remembered); the version number is shown on the Home page too
 // 1.38 : the chosen cover is also put in front of the exported video as its first frames (~0.13 s, tick box in the export dialog, on by default) so Facebook / TikTok / players take it as the thumbnail by themselves; the JPG is still downloaded next to the MP4
 // 1.37 : CapCut-style editing feel — magnetic main track (clips glued end to end, others slide while you drag, no overlaps), media dropped from the bin snaps to 00:00 / playhead / clip edges (empty timeline = exactly 0) with a drop line, Cover picker (🖼 pick any frame; saved in the project, project-card picture, JPG downloaded next to the MP4), all controls white + thinner lines (sliders, playhead 1 px, selection), live preview while scrubbing/trimming/moving (one seek in flight, jumps to the latest), ruler with minor ticks and frame counting up to 1200 px/s, empty lanes fold to a thin strip
 // 1.36 : free layers (every picture lane takes video / image / text / sticker; lanes are numbered by stack position), fade in/out now audibly follows the dragged handle (squared ramp), left tab bar keeps fixed-size tabs with ‹ › scroll arrows when narrow, 2nd computer pulls the whole reference library from the server (inbox/done is listed and served)
@@ -44,7 +45,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.38';
+const APP_VERSION = '1.39';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];

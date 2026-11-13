@@ -64,9 +64,15 @@ function mediaSource(it) {
   const m = MEDIA.get(it.mediaId); if (!m) return null;
   if (it.type === 'image') return m.img && m.img.complete ? m.img : null;
   const el = poolGet(it); if (!el) return null;
-  return (el.readyState >= 2 && el.videoWidth > 0) ? el : null;
+  const ok = el.readyState >= 2 && el.videoWidth > 0;
+  // v1.39: while scrubbing / waiting for a seek, show the nearest low-res cached frame instead of black or a stale frame (CapCut-like). Only the live preview turns SCR.on.
+  if (SCR.on && !PB.exporting) {
+    let tg = timelineToSrc(it, PB.t); if (m.duration) tg = Math.min(tg, Math.max(0, m.duration - .04));
+    if (!ok || (!PB.playing && (el.seeking || Math.abs(el.currentTime - tg) > .06))) { const f = scrFrame(it.mediaId, tg); if (f) return f; }
+  }
+  return ok ? el : null;
 }
-function srcSize(src) { return src.videoWidth ? [src.videoWidth, src.videoHeight] : [src.naturalWidth, src.naturalHeight]; }
+function srcSize(src) { return src.videoWidth ? [src.videoWidth, src.videoHeight] : [src.naturalWidth || src.width, src.naturalHeight || src.height]; }
 
 function filterString(it, extraBlur) {
   const f = it.fx || {}; const parts = [];

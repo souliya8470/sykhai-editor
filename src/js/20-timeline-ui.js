@@ -1,7 +1,9 @@
 // ============================================================
 //  Timeline UI + media bin
 // ============================================================
-const TL = { pps: 56, labelW: 96 };
+const TL = { pps: 56, labelW: 124 };
+try { const w = parseInt(localStorage.getItem('sk_tlw')); if (w >= 70 && w <= 320) TL.labelW = w; } catch (e) { }
+document.documentElement.style.setProperty('--tlw', TL.labelW + 'px');
 const TRACK_H = { video: 50, text: 40, audio: 42 };
 let TH = {}; try { TH = JSON.parse(localStorage.getItem('sk_trh') || '{}') || {}; } catch (e) { }
 const trackH = tr => TH[tr.id] || (tr.id !== 'V1' && D && !D.items.some(i => i.track === tr.id) ? 24 : tr.id === 'V1' ? 66 : TRACK_H[tr.kind]);   // empty lanes fold to a thin strip (small screens), still a drop target
@@ -48,7 +50,7 @@ function trIcons(tr) {
 function renderTimeline() {
   const body = $('#tlbody'); if (!body) return;
   const sx = body.scrollLeft, sy = body.scrollTop; const W = tlWidth();
-  let h = `<div id="tlinner" style="width:${TL.labelW + W}px"><div id="ruler"><div class="corner"></div><div class="rt" style="width:${W}px">${rulerTicks()}${(D.markers || []).map(m => `<i class="mk" data-id="${m.id}" style="left:${m.t * TL.pps}px" title="${T('มาร์กเกอร์ — ดับเบิลคลิกเพื่อลบ')}">⚑</i>`).join('')}</div></div>`;
+  let h = `<div id="tlinner" style="width:${TL.labelW + W}px"><div id="ruler"><div class="corner"><i class="lwh" title="${T('ลากเพื่อปรับความกว้างของช่องชื่อแถว')}"></i></div><div class="rt" style="width:${W}px">${rulerTicks()}${(D.markers || []).map(m => `<i class="mk" data-id="${m.id}" style="left:${m.t * TL.pps}px" title="${T('มาร์กเกอร์ — ดับเบิลคลิกเพื่อลบ')}">⚑</i>`).join('')}</div></div>`;
   const ROWS = [...layerOrder().slice().reverse().map(id => TRACKS.find(t => t.id === id)).filter(Boolean), ...TRACKS.filter(t => t.kind === 'audio')];   // top lane = top layer
   for (const tr of ROWS) h += `<div class="trow ${tr.kind}${trackH(tr) <= 24 ? ' slim' : ''}${trSt(tr.id).lock ? ' locked' : ''}${trSt(tr.id).hide ? ' hidt' : ''}${trSt(tr.id).mute ? ' mutet' : ''}" data-track="${tr.id}" style="height:${trackH(tr)}px"><div class="tlabel"><div class="tn">${tr.kind === 'audio' ? tr.label : T('เลเยอร์') + ' ' + (layerOrder().indexOf(tr.id) + 1)}</div>${trIcons(tr)}</div><div class="tlane" style="width:${W}px"></div><div class="trh" title="ลากเพื่อปรับความสูงของแถว"></div></div>`;
   h += `<div id="playhead"><i></i></div></div>`;
@@ -148,6 +150,7 @@ function initTimelineEvents() {
     const lmb = e.target.closest('.tlm'); if (lmb) { e.preventDefault(); e.stopPropagation(); if (!lmb.disabled) layerMove(lmb.closest('.trow').dataset.track, lmb.dataset.lm); return; }
     const tkb = e.target.closest('.tic'); if (tkb) { e.preventDefault(); e.stopPropagation(); trToggle(tkb.closest('.trow').dataset.track, tkb.dataset.tk); return; }
     const jn = e.target.closest('.junc'); if (jn) { select(jn.dataset.id); showTab('trans'); return; }
+    const lwh = e.target.closest('.lwh'); if (lwh) { e.preventDefault(); e.stopPropagation(); labelWDrag(e); return; }
     const trh = e.target.closest('.trh'); if (trh) { e.preventDefault(); rowResizeStart(e, trh.closest('.trow')); return; }
     const vlu = e.target.closest('.vl u'); if (vlu) { e.preventDefault(); e.stopPropagation(); volDragStart(e, vlu.closest('.clip')); return; }
     const fhe = e.target.closest('.fh'); if (fhe) { e.preventDefault(); e.stopPropagation(); fadeDragStart(e, fhe.closest('.clip'), fhe.dataset.side); return; }
@@ -233,6 +236,13 @@ function scrubStart(e, already) {
   if (!already) f(e);
   const up = () => { window.removeEventListener('pointermove', f); window.removeEventListener('pointerup', up); if (wasPlaying) play(); };
   window.addEventListener('pointermove', f); window.addEventListener('pointerup', up);
+}
+// the column with the lane names / lock / eye / sound icons can be dragged wider or narrower (grip on the right edge of the ruler corner)
+function labelWDrag(e) {
+  const x0 = e.clientX, w0 = TL.labelW; document.body.classList.add('resizing');
+  const mv = ev => { TL.labelW = clamp(Math.round(w0 + ev.clientX - x0), 70, 320); document.documentElement.style.setProperty('--tlw', TL.labelW + 'px'); const inn = $('#tlinner'); if (inn) inn.style.width = (TL.labelW + tlWidth()) + 'px'; updatePlayhead(); };
+  const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); document.body.classList.remove('resizing'); try { localStorage.setItem('sk_tlw', String(TL.labelW)); } catch (e) { } renderTimeline(); };
+  window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
 }
 function setZoom(p) { TL.pps = clamp(p, 8, 1200); const z = $('#zoom'); if (z) z.value = Math.log(TL.pps); renderTimeline(); }
 

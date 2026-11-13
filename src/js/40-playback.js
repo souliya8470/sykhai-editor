@@ -345,7 +345,7 @@ function tick() {
       if (!PB.playing || nowR - PERF.lastR >= 30) {   // while playing: preview at most ~30 fps (video is 30 fps anyway) and adaptive resolution
         const q = PB.playing ? PERF.q : 1, rw = Math.round(PW * q), rh = Math.round(PH * q);
         if (PCANVAS.width !== rw || PCANVAS.height !== rh) { PCANVAS.width = rw; PCANVAS.height = rh; }
-        BS = 1 / q; const a = performance.now(); renderFrame(PCTX, rw, rh, PB.t); BS = 1; const ms = performance.now() - a;
+        BS = 1 / q; const a = performance.now(); SCR.on = true; renderFrame(PCTX, rw, rh, PB.t); SCR.on = false; BS = 1; const ms = performance.now() - a;
         PERF.lastR = nowR; DIRTY = false; PD.rn++; if (PB.playing) perfAdapt(ms, nowR);
       }
       const U0 = performance.now(); if (window.onFrame) window.onFrame(); _ema(PD, 'ui', performance.now() - U0);   // playhead / time move every screen refresh

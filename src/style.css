@@ -67,11 +67,11 @@ main{display:grid;grid-template-columns:var(--lw,300px) minmax(0,1fr) var(--rw,3
 #tlbody{flex:1;overflow:auto;position:relative;min-height:0;background:#17191e}
 #tlinner{position:relative;min-height:100%}
 #ruler{display:flex;height:22px;position:sticky;top:0;z-index:6;background:var(--p2);border-bottom:1px solid var(--ln);cursor:pointer}
-#ruler .corner{width:96px;flex:none;position:sticky;left:0;background:var(--p2);z-index:3;border-right:1px solid var(--ln)}
+#ruler .corner{width:var(--tlw,124px);flex:none;position:sticky;left:0;background:var(--p2);z-index:3;border-right:1px solid var(--ln)}
 #ruler .rt{position:relative;height:100%}
 #ruler .rt span{position:absolute;top:4px;font-size:10px;color:var(--mu);padding-left:4px;border-left:1px solid var(--ln);height:18px}
 .trow{display:flex;border-bottom:1px solid #262a32;position:relative}
-.tlabel{width:96px;flex:none;position:sticky;left:0;z-index:5;background:var(--p2);border-right:1px solid var(--ln);font-size:11px;color:var(--mu);padding:4px 6px;overflow:hidden}
+.tlabel{width:var(--tlw,124px);flex:none;position:sticky;left:0;z-index:5;background:var(--p2);border-right:1px solid var(--ln);font-size:11px;color:var(--mu);padding:4px 6px;overflow:hidden}
 .tlane{position:relative;flex:none;background:repeating-linear-gradient(90deg,transparent 0 55px,rgba(255,255,255,.02) 55px 56px)}
 .trow.video .tlabel,.trow.text .tlabel{border-left:3px solid #2d6a8f}.trow.audio .tlabel{border-left:3px solid #2f8a5b}
 .clip{position:absolute;top:3px;bottom:3px;border-radius:5px;background:var(--c);overflow:hidden;border:1px solid rgba(0,0,0,.35);cursor:grab;user-select:none}
@@ -399,3 +399,6 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
 #dlgCover .cvrow{display:flex;align-items:center;gap:8px;margin:6px 0 10px}#dlgCover .cvrow input{flex:1}
 #dlgCover #cvTime{font-variant-numeric:tabular-nums;color:var(--mu);font-size:12px;min-width:84px;text-align:right}
 .trow.slim .tlabel{padding:3px 6px;display:flex;align-items:center}.trow.slim .tic-row,.trow.slim .trh{display:none}.trow.slim .tn{font-size:10px}
+#ruler .corner{position:sticky}#ruler .corner .lwh{position:absolute;right:-3px;top:0;bottom:-2000px;width:7px;cursor:col-resize;z-index:12}
+#ruler .corner .lwh:hover,body.resizing #ruler .corner .lwh{background:rgba(255,255,255,.25)}
+.hhead .brand .ver{margin-left:8px;font-size:12px;font-weight:400;color:var(--mu)}
