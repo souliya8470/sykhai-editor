@@ -107,7 +107,7 @@ async function init() {
   $('#setCancel').onclick = () => $('#dlgSettings').close();
   $('#setSave').onclick = () => { saveKeys({ claude: $('#keyClaude').value.trim(), gemini: $('#keyGemini').value.trim() }); localStorage.setItem('sk_cap', String(parseFloat($('#capUsd').value) || 50)); localStorage.setItem('sk_style', $('#styleGuide').value); localStorage.setItem('sk_srv', JSON.stringify({ url: $('#srvUrl').value.trim(), token: $('#srvToken').value.trim() })); srvPing().then(ok => ok && srvLoadSizes()); updateCostBadge(); $('#dlgSettings').close(); toast('บันทึกการตั้งค่าแล้ว'); };
   // export
-  $('#btnExport').onclick = () => { $('#expBar').style.width = '0'; $('#expMsg').textContent = ''; $('#expGo').disabled = false; $('#dlgExport').showModal(); };
+  $('#btnExport').onclick = () => { $('#expBar').style.width = '0'; $('#expMsg').textContent = ''; $('#expGo').disabled = false; $('#expCoverRow').style.display = D.cover ? '' : 'none'; $('#dlgExport').showModal(); };
   $('#expCancel').onclick = () => { if (EXP.running) EXP.cancel = true; $('#dlgExport').close(); };
   $('#expGo').onclick = async () => { $('#expGo').disabled = true; await runExport(); $('#expGo').disabled = false; };
   $('#aiClose').onclick = () => $('#dlgAi').close();

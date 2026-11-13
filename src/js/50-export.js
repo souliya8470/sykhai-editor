@@ -30,8 +30,16 @@ async function runExport(opts) {
   const done = new Promise(res => { rec.onstop = res; });
   MONITOR.gain.value = 0; PB.exporting = true; PB.t = 0; PB.duck = 1;
   msg.textContent = 'กำลังเตรียมคลิป…'; let undoOrig = () => { }; try { undoOrig = await exportUseOriginals(msg); } catch (e) { console.warn(e); } msg.textContent = 'กำลังเตรียมคลิป…'; await waitReady(0, 8000);
+  // cover as the very first frames (~0.13 s): Facebook / TikTok / players take the first frame as the thumbnail, so the chosen cover shows up by itself
+  let coverImg = null;
+  if (D.cover && (opts.coverFirst != null ? opts.coverFirst : (($('#expCover') || {}).checked !== false)) && typeof coverStill === 'function') {
+    try { msg.textContent = 'กำลังทำหน้าปก…'; coverImg = await coverStill(D.cover.t, W, H); } catch (e) { console.warn(e); }
+    PB.t = 0; syncMedia(true); await waitReady(0, 8000);
+  }
   renderFrame(ctx, W, H, 0);
-  rec.start(1000); PB.playing = true; const start = performance.now();
+  rec.start(1000);
+  if (coverImg) { for (let k = 0; k < 5; k++) { ctx.drawImage(coverImg, 0, 0, W, H); await sleep(27); } renderFrame(ctx, W, H, 0); }
+  PB.playing = true; const start = performance.now();
   await new Promise(resolve => {
     const loop = () => {
       if (EXP.cancel) return resolve();

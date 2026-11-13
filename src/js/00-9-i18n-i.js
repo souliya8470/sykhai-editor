@@ -43,4 +43,6 @@ I18N_ROWS.push(
   ['ตั้งหน้าปกแล้ว ✔', 'Cover set ✔', 'ຕັ້ງໜ້າປົກແລ້ວ ✔'],
   ['ดาวน์โหลดรูปปกแล้ว ✔', 'Cover downloaded ✔', 'ດາວໂຫຼດຮູບໜ້າປົກແລ້ວ ✔'],
   ['ปิดหน้าต่างนี้', 'Close this window', 'ປິດໜ້າຕ່າງນີ້'],
+  ['ใส่หน้าปกเป็นเฟรมแรกของวิดีโอ (สั้นมาก ~0.13 วิ) เพื่อให้ Facebook / TikTok ใช้เป็น thumbnail', 'Put the cover as the first frame of the video (very short, ~0.13 s) so Facebook / TikTok use it as the thumbnail', 'ໃສ່ໜ້າປົກເປັນເຟຣມທຳອິດຂອງວິດີໂອ (ສັ້ນຫຼາຍ ~0.13 ວິ) ເພື່ອໃຫ້ Facebook / TikTok ໃຊ້ເປັນ thumbnail'],
+  ['กำลังทำหน้าปก…', 'Preparing the cover…', 'ກຳລັງເຮັດໜ້າປົກ…'],
 );
