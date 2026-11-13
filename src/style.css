@@ -73,7 +73,7 @@ main{display:grid;grid-template-columns:var(--lw,300px) minmax(0,1fr) var(--rw,3
 .trow{display:flex;border-bottom:1px solid #262a32;position:relative}
 .tlabel{width:96px;flex:none;position:sticky;left:0;z-index:5;background:var(--p2);border-right:1px solid var(--ln);font-size:11px;color:var(--mu);padding:4px 6px;overflow:hidden}
 .tlane{position:relative;flex:none;background:repeating-linear-gradient(90deg,transparent 0 55px,rgba(255,255,255,.02) 55px 56px)}
-.trow.video .tlabel{border-left:3px solid #2d6a8f}.trow.text .tlabel{border-left:3px solid #b9852b}.trow.audio .tlabel{border-left:3px solid #2f8a5b}
+.trow.video .tlabel,.trow.text .tlabel{border-left:3px solid #2d6a8f}.trow.audio .tlabel{border-left:3px solid #2f8a5b}
 .clip{position:absolute;top:3px;bottom:3px;border-radius:5px;background:var(--c);overflow:hidden;border:1px solid rgba(0,0,0,.35);cursor:grab;user-select:none}
 .clip.sel{border-color:#fff;outline:2px solid #fff;outline-offset:-2px;box-shadow:none;z-index:2}
 .clip.hid{opacity:.4}
@@ -357,3 +357,14 @@ button.tic.on{color:#ff9f43}
 .rlang{position:absolute;left:4px;top:4px;font-size:10px;padding:1px 5px;border-radius:6px;background:rgba(0,0,0,.65);color:#fff}
 .refstat{margin:0 0 10px;padding:6px 10px;border-radius:8px;background:rgba(52,224,161,.12);font-size:12px}
 button.tlm{font-size:8px;line-height:1;padding:2px 3px}button.tlm[disabled]{opacity:.25;cursor:default}
+
+/* left tab bar: fixed-size tabs (like CapCut); when the panel is narrow they scroll with arrows instead of shrinking */
+#ltWrap{position:relative;display:flex;align-items:stretch;border-bottom:1px solid var(--ln);flex:none}
+#ltWrap #leftTabs{flex:1 1 auto;min-width:0;border-bottom:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;justify-content:flex-start;scroll-behavior:smooth}
+#ltWrap #leftTabs::-webkit-scrollbar{display:none}
+#leftTabs button{flex:0 0 62px;min-width:62px;font-size:10.5px;white-space:nowrap}
+#leftTabs button span{max-width:none;overflow:visible;text-overflow:clip}
+button.ltarr{display:none;flex:0 0 22px;padding:0;margin:0;border:0;border-radius:0;background:var(--p2);color:var(--tx);font-size:18px;line-height:1;cursor:pointer}
+button.ltarr:hover{background:var(--p3);color:var(--ac)}
+#ltWrap.ov button.ltarr{display:block}
+#ltWrap.ov.atl #ltL,#ltWrap.ov.atr #ltR{opacity:.25;cursor:default}

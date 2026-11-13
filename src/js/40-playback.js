@@ -192,13 +192,19 @@ function nextOverlap(it) {   // later clip on same track that overlaps our tail 
   return best;
 }
 function inMute(it, srcT) { return (it.mutes || []).some(m => srcT >= m.a && srcT < m.b); }
+// fade in / out envelope. Ears hear loudness on a log scale, so a straight 0->1 ramp sounds like it is already at full volume after a third of the handle.
+// Squared ramp = a fade that audibly lasts as long as the handle on the clip shows.
+function fadeEnv(it, lt) {
+  let e = 1; if (it.fadeIn) e = Math.min(e, clamp(lt / it.fadeIn, 0, 1)); if (it.fadeOut) e = Math.min(e, clamp((it.dur - lt) / it.fadeOut, 0, 1));
+  return e * e;
+}
 function videoGain(it, t) {
   if (it.hidden || it.muted || trSt(it.track).mute) return 0;
   const m = MEDIA.get(it.mediaId); if (!m || m.hasAudio === false) return 0;
   const lt = t - it.start; let env = 1;
   if (it.transIn && lt < it.transIn.dur) env = Math.min(env, lt / Math.max(.05, it.transIn.dur));
   const nx = nextOverlap(it); if (nx) { const d = it.start + it.dur - nx.start; env = Math.min(env, (it.start + it.dur - t) / Math.max(.05, d)); }
-  if (it.fadeIn) env = Math.min(env, lt / it.fadeIn); if (it.fadeOut) env = Math.min(env, (it.dur - lt) / it.fadeOut);
+  env = Math.min(env, fadeEnv(it, lt));
   const src = timelineToSrc(it, t); if (inMute(it, src)) return 0;
   return (it.vol ?? 1) * clamp(env, 0, 1) * (it.normalize !== false && m.norm ? m.norm : 1);
 }
@@ -273,7 +279,7 @@ function syncMedia(force) {
     if (r.el.paused) { if (target < md) r.el.play().catch(() => { }); }
     const diff = Math.abs(r.el.currentTime - target);
     if (diff > 0.3 && (!loop || diff < md - 0.3)) { try { r.el.currentTime = Math.min(target, md - 0.05); } catch (e) { } }
-    let env = 1; if (it.fadeIn) env = Math.min(env, lt / it.fadeIn); if (it.fadeOut) env = Math.min(env, (it.dur - lt) / it.fadeOut);
+    const env = fadeEnv(it, lt);
     const muteSeg = (it.mutes || []).some(q => lt >= q.a && lt < q.b);
     const g = (muteSeg || trSt(it.track).mute) ? 0 : (it.vol ?? .5) * clamp(env, 0, 1) * (it.duck ? PB.duck : 1);
     setGain(r.gain, g);

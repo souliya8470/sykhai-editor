@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.35
-// APP_VERSION_PREV : 1.34
-// APP_VERSION_PREV_OLDER : 1.33
+// APP_VERSION  : 1.36
+// APP_VERSION_PREV : 1.35
+// APP_VERSION_PREV_OLDER : 1.34
+// 1.36 : free layers (every picture lane takes video / image / text / sticker; lanes are numbered by stack position), fade in/out now audibly follows the dragged handle (squared ramp), left tab bar keeps fixed-size tabs with ‹ › scroll arrows when narrow, 2nd computer pulls the whole reference library from the server (inbox/done is listed and served)
 // 1.35 : layers like CapCut / Photoshop — the timeline now lists the stack top-down (top lane = drawn on top in the preview and the export; before, V1 was listed first but drawn at the bottom); ▲▼ on every video/text lane move that layer up or down the stack (saved per project in D.lorder)
 // 1.34 : the editor now checks the shop-server inbox every minute while open (desktop) and pulls new reference clips into the library by itself — no need to press the 📥 button
 // 1.33 : Home shows only the projects; the reference-video library moved to its own page (one button with the clip count -> library page with back button and a search box), so 100-200 clips no longer crowd the Home page; ref cards show a Thai/Lao tag; N8N pick = top 20 Thai by plays (Lao list has no view counts)
@@ -41,7 +42,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.35';
+const APP_VERSION = '1.36';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -80,6 +81,8 @@ const TRACKS = [
   { id: 'A2', kind: 'audio', label: 'เสียงเอฟเฟกต์' },
 ];
 const TRACK_KIND = Object.fromEntries(TRACKS.map(t => [t.id, t.kind]));
+// free layers: every picture lane (V1-V3, T1-T3) takes ANY visual clip (video, image, text, sticker); only sound lanes are separate
+const LANE = id => TRACK_KIND[id] === 'audio' ? 'audio' : 'visual';
 const trSt = id => (D && D.tst && D.tst[id]) || {};   // per-track state: lock / hide (picture) / mute (sound)
 function trToggle(id, k) {
   D.tst = D.tst || {}; const st = D.tst[id] = D.tst[id] || {}; st[k] = !st[k];

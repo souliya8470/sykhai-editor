@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.33</title>
+<title>Sykhai Editor v1.35</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -362,6 +362,8 @@ button.tic.on{color:#ff9f43}
 .refback{margin-bottom:6px}
 .refq{width:100%;max-width:360px;margin:0 0 12px;padding:8px 10px;border-radius:8px;border:1px solid var(--line,#444);background:transparent;color:inherit}
 .rlang{position:absolute;left:4px;top:4px;font-size:10px;padding:1px 5px;border-radius:6px;background:rgba(0,0,0,.65);color:#fff}
+.refstat{margin:0 0 10px;padding:6px 10px;border-radius:8px;background:rgba(52,224,161,.12);font-size:12px}
+button.tlm{font-size:8px;line-height:1;padding:2px 3px}button.tlm[disabled]{opacity:.25;cursor:default}
 
 </style></head>
 <body>
@@ -454,6 +456,7 @@ button.tic.on{color:#ff9f43}
     <div class="refback"><button id="hmRefBack">← <span>กลับหน้าโปรเจกต์</span></button></div>
     <div class="htitle refhead">📚 คลังวิดีโออ้างอิง <span class="mini">ไว้ให้ AI เรียนรู้แนวตัดต่อ — แยกจากโปรเจกต์ ไม่ปนกับสื่อของโปรเจกต์</span></div>
     <div class="refbar"><button id="hmRefInbox">📥 ดึงคลิปจากกล่องรับของเซิร์ฟเวอร์</button><button id="hmRefAdd">+ เพิ่มคลิปอ้างอิง</button><button id="hmRefAn" class="primary">🔬 วิเคราะห์แนวตัดต่อ</button></div>
+    <div id="refStat" class="refstat" hidden></div>
     <input id="refQ" class="refq" placeholder="ค้นหาคลิปอ้างอิง…" autocomplete="off">
     <div id="refList"></div>
     </div>
@@ -1572,6 +1575,8 @@ I18N_ROWS.push(
   ['ลบออกจากคลัง', 'Remove from the library', 'ລຶບອອກຈາກຄັງ'],
   ['ลบคลิปนี้ออกจากคลังอ้างอิง?', 'Remove this clip from the reference library?', 'ລຶບຄລິບນີ້ອອກຈາກຄັງອ້າງອີງບໍ?'],
   ['(อยู่ในคลังอ้างอิงที่หน้าโปรเจกต์)', '(in the reference library on the project page)', '(ຢູ່ໃນຄັງອ້າງອີງທີ່ໜ້າໂປຣເຈັກ)'],
+  ['ยกชั้นนี้ขึ้นบน', 'Bring this layer up', 'ຍົກຊັ້ນນີ້ຂຶ້ນເທິງ'],
+  ['ลดชั้นนี้ลงล่าง', 'Send this layer down', 'ລົດຊັ້ນນີ້ລົງລຸ່ມ'],
   ['ไฟล์เก่า', 'Older files', 'ໄຟລ໌ເກົ່າ'],
   ['ไฟล์ที่เคยนำเข้าในโปรเจกต์อื่น — กดเพื่อเพิ่มเข้าโปรเจกต์นี้', 'Files imported in other projects — tap to add to this one', 'ໄຟລ໌ທີ່ເຄີຍນຳເຂົ້າໃນໂປຣເຈັກອື່ນ — ກົດເພື່ອເພີ່ມເຂົ້າໂປຣເຈັກນີ້'],
   ['ไม่มีไฟล์เก่าแล้ว', 'No older files', 'ບໍ່ມີໄຟລ໌ເກົ່າແລ້ວ'],
@@ -1582,6 +1587,12 @@ I18N_ROWS.push(
   ['ไว้ให้ AI เรียนรู้แนวตัดต่อ — แยกจากโปรเจกต์', 'For the AI to learn editing styles — kept apart from projects', 'ໄວ້ໃຫ້ AI ຮຽນແນວຕັດຕໍ່ — ແຍກຈາກໂປຣເຈັກ'],
   ['กลับหน้าโปรเจกต์', 'Back to projects', 'ກັບໄປໜ້າໂປຣເຈັກ'],
   ['ค้นหาคลิปอ้างอิง…', 'Search reference clips…', 'ຄົ້ນຫາຄລິບອ້າງອີງ…'],
+  ['⏬ เซิร์ฟเวอร์กำลังโหลด', '⏬ Server is downloading', '⏬ ເຊີບເວີກຳລັງໂຫຼດ'],
+  ['เซิร์ฟเวอร์ไม่ได้โหลดอยู่ตอนนี้', 'Server is not downloading right now', 'ເຊີບເວີບໍ່ໄດ້ໂຫຼດຢູ່ຕອນນີ້'],
+  ['รอคิว', 'Queued', 'ລໍຄິວ'],
+  ['รอดึงเข้าโปรแกรม', 'Waiting to be pulled in', 'ລໍດຶງເຂົ້າໂປຣແກຣມ'],
+  ['โหลดแล้วทั้งหมด', 'Downloaded in total', 'ໂຫຼດແລ້ວທັງໝົດ'],
+  ['เช็กสถานะเซิร์ฟเวอร์ไม่ได้', 'Cannot check the server status', 'ກວດສະຖານະເຊີບເວີບໍ່ໄດ້'],
 );
 
 // ---- 00-core.js ----
@@ -1589,9 +1600,11 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.33
-// APP_VERSION_PREV : 1.32
-// APP_VERSION_PREV_OLDER : 1.31
+// APP_VERSION  : 1.35
+// APP_VERSION_PREV : 1.34
+// APP_VERSION_PREV_OLDER : 1.33
+// 1.35 : layers like CapCut / Photoshop — the timeline now lists the stack top-down (top lane = drawn on top in the preview and the export; before, V1 was listed first but drawn at the bottom); ▲▼ on every video/text lane move that layer up or down the stack (saved per project in D.lorder)
+// 1.34 : the editor now checks the shop-server inbox every minute while open (desktop) and pulls new reference clips into the library by itself — no need to press the 📥 button
 // 1.33 : Home shows only the projects; the reference-video library moved to its own page (one button with the clip count -> library page with back button and a search box), so 100-200 clips no longer crowd the Home page; ref cards show a Thai/Lao tag; N8N pick = top 20 Thai by plays (Lao list has no view counts)
 // 1.32 : per-project media bin — a new project shows only its own media (D.bin = ids imported/added in that project + ids used by its clips); media from other projects live under 📂 older files (re-add with one tap, or delete for good); the × on a bin item removes it from this project only; AI/food/analyzer lists use the project's media only
 // 1.31 : reference-video library kept apart from projects (Home page 📚 section; not in the media bin, not synced, not used by AI cut-it-all; clips pulled from the server inbox and files named <tiktok id>.mp4 are moved there automatically); media bin grid auto-fills columns (more columns + smaller thumbs when the panel is widened, CapCut-style); thumbnails 360 px / q.85 (old ones upgraded in the background); Home project cards about half the size
@@ -1626,7 +1639,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.33';
+const APP_VERSION = '1.35';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -1671,7 +1684,13 @@ function trToggle(id, k) {
   if (k === 'lock' && st.lock && SEL) { const it = getItem(SEL); if (it && it.track === id) select(null); }
   commit('track'); if (typeof DIRTY !== 'undefined') DIRTY = true; renderTimeline();
 }
-const RENDER_ORDER = ['V1', 'V2', 'V3', 'T1', 'T2', 'T3'];
+const RENDER_ORDER = ['V1', 'V2', 'V3', 'T1', 'T2', 'T3'];   // default stack, bottom -> top
+// layer stack of the open project, bottom -> top. The timeline shows it top-down (top lane = top layer, like CapCut / Photoshop).
+function layerOrder() { const d = D && D.lorder; return Array.isArray(d) && d.length === RENDER_ORDER.length && RENDER_ORDER.every(x => d.includes(x)) ? d : RENDER_ORDER; }
+function layerMove(id, dir) {            // dir: 'up' = bring toward the top of the stack, 'down' = send toward the bottom
+  const o = layerOrder().slice(), i = o.indexOf(id), j = dir === 'up' ? i + 1 : i - 1; if (i < 0 || j < 0 || j >= o.length) return;
+  [o[i], o[j]] = [o[j], o[i]]; D.lorder = o; commit('track'); if (typeof DIRTY !== 'undefined') DIRTY = true; renderTimeline();
+}
 
 function newDoc() { return { pid: uid(), created: Date.now(), name: T('โปรเจกต์ใหม่'), w: 1080, h: 1920, fps: 30, items: [], markers: [], duckLevel: 0.22, ver: 1, bin: [] }; }
 let D = newDoc();
@@ -2358,7 +2377,7 @@ const activeAt = (tr, t) => D.items.filter(i => i.track === tr && t >= i.start -
 function renderFrame(ctx, W, H, t) {
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.filter = 'none';
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
-  for (const tr of RENDER_ORDER) {
+  for (const tr of layerOrder()) {
     if (trSt(tr).hide) continue;
     for (const it of activeAt(tr, t)) {
       if (it.hidden) continue;
@@ -2403,13 +2422,15 @@ const TIC = {
 function trIcons(tr) {
   const st = trSt(tr.id), ks = tr.kind === 'video' ? ['lock', 'hide', 'mute'] : tr.kind === 'text' ? ['lock', 'hide'] : ['lock', 'mute'];
   const tip = { lock: ['ล็อกแถวนี้ (กันแก้ไขโดยไม่ตั้งใจ)', 'ปลดล็อกแถวนี้'], hide: ['ซ่อนภาพของแถวนี้', 'แสดงภาพของแถวนี้'], mute: ['ปิดเสียงของแถวนี้', 'เปิดเสียงของแถวนี้'] };
-  return `<div class="tic-row">` + ks.map(k => `<button class="tic${st[k] ? ' on' : ''}" data-tk="${k}" title="${tip[k][st[k] ? 1 : 0]}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${TIC[k][st[k] ? 1 : 0]}</svg></button>`).join('') + `</div>`;
+  const lo = layerOrder(), li = lo.indexOf(tr.id), lm = li < 0 ? '' : `<button class="tic tlm" data-lm="up" ${li >= lo.length - 1 ? 'disabled' : ''} title="${T('ยกชั้นนี้ขึ้นบน')}">▲</button><button class="tic tlm" data-lm="down" ${li <= 0 ? 'disabled' : ''} title="${T('ลดชั้นนี้ลงล่าง')}">▼</button>`;
+  return `<div class="tic-row">` + lm + ks.map(k => `<button class="tic${st[k] ? ' on' : ''}" data-tk="${k}" title="${tip[k][st[k] ? 1 : 0]}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${TIC[k][st[k] ? 1 : 0]}</svg></button>`).join('') + `</div>`;
 }
 function renderTimeline() {
   const body = $('#tlbody'); if (!body) return;
   const sx = body.scrollLeft, sy = body.scrollTop; const W = tlWidth();
   let h = `<div id="tlinner" style="width:${TL.labelW + W}px"><div id="ruler"><div class="corner"></div><div class="rt" style="width:${W}px">${rulerTicks()}${(D.markers || []).map(m => `<i class="mk" data-id="${m.id}" style="left:${m.t * TL.pps}px" title="${T('มาร์กเกอร์ — ดับเบิลคลิกเพื่อลบ')}">⚑</i>`).join('')}</div></div>`;
-  for (const tr of TRACKS) h += `<div class="trow ${tr.kind}${trSt(tr.id).lock ? ' locked' : ''}${trSt(tr.id).hide ? ' hidt' : ''}${trSt(tr.id).mute ? ' mutet' : ''}" data-track="${tr.id}" style="height:${trackH(tr)}px"><div class="tlabel"><div class="tn">${tr.label}</div>${trIcons(tr)}</div><div class="tlane" style="width:${W}px"></div><div class="trh" title="ลากเพื่อปรับความสูงของแถว"></div></div>`;
+  const ROWS = [...layerOrder().slice().reverse().map(id => TRACKS.find(t => t.id === id)).filter(Boolean), ...TRACKS.filter(t => t.kind === 'audio')];   // top lane = top layer
+  for (const tr of ROWS) h += `<div class="trow ${tr.kind}${trSt(tr.id).lock ? ' locked' : ''}${trSt(tr.id).hide ? ' hidt' : ''}${trSt(tr.id).mute ? ' mutet' : ''}" data-track="${tr.id}" style="height:${trackH(tr)}px"><div class="tlabel"><div class="tn">${tr.label}</div>${trIcons(tr)}</div><div class="tlane" style="width:${W}px"></div><div class="trh" title="ลากเพื่อปรับความสูงของแถว"></div></div>`;
   h += `<div id="playhead"><i></i></div></div>`;
   body.innerHTML = h;
   for (const it of D.items) {
@@ -2497,6 +2518,7 @@ function initTimelineEvents() {
   const body = $('#tlbody');
   body.addEventListener('pointerdown', e => {
     if (e.button !== 0) return;
+    const lmb = e.target.closest('.tlm'); if (lmb) { e.preventDefault(); e.stopPropagation(); if (!lmb.disabled) layerMove(lmb.closest('.trow').dataset.track, lmb.dataset.lm); return; }
     const tkb = e.target.closest('.tic'); if (tkb) { e.preventDefault(); e.stopPropagation(); trToggle(tkb.closest('.trow').dataset.track, tkb.dataset.tk); return; }
     const jn = e.target.closest('.junc'); if (jn) { select(jn.dataset.id); showTab('trans'); return; }
     const trh = e.target.closest('.trh'); if (trh) { e.preventDefault(); rowResizeStart(e, trh.closest('.trow')); return; }
@@ -2895,7 +2917,22 @@ async function showHome() {
   $('#hmBack').hidden = !HOME.started; $('#hmSync').hidden = !srvOn();
   await renderHome();
 }
-function setRefPage(on) { HOME.ref = !!on; $('#homeMain').hidden = !!on; $('#refPage').hidden = !on; if (on) { const q = $('#refQ'); if (q) q.value = ''; } renderRefLib(); const w = $('#home'); if (w) w.scrollTop = 0; }
+// live status of the server-side TikTok downloader, shown on the library page (refreshed every 8 s while the page is open)
+let _refStatT = null;
+async function refStatus() {
+  const el = $('#refStat'); if (!el) return;
+  if (!HOME.ref || !srvOn()) { el.hidden = true; return; }
+  try {
+    const r = await srvFetch('/fetch'); if (!r.ok) throw 0; const j = await r.json();
+    const parts = [];
+    parts.push(j.running ? T('⏬ เซิร์ฟเวอร์กำลังโหลด') + ' …' + String(j.running).slice(-6) : T('เซิร์ฟเวอร์ไม่ได้โหลดอยู่ตอนนี้'));
+    if (j.queued) parts.push(T('รอคิว') + ' ' + j.queued);
+    parts.push(T('รอดึงเข้าโปรแกรม') + ' ' + j.inbox);
+    parts.push(T('โหลดแล้วทั้งหมด') + ' ' + j.fetched);
+    el.textContent = parts.join(' · '); el.hidden = false;
+  } catch (e) { el.textContent = T('เช็กสถานะเซิร์ฟเวอร์ไม่ได้'); el.hidden = false; }
+}
+function setRefPage(on) { HOME.ref = !!on; clearInterval(_refStatT); if (on) { refStatus(); _refStatT = setInterval(refStatus, 8000); } else { const e = $('#refStat'); if (e) e.hidden = true; } $('#homeMain').hidden = !!on; $('#refPage').hidden = !on; if (on) { const q = $('#refQ'); if (q) q.value = ''; } renderRefLib(); const w = $('#home'); if (w) w.scrollTop = 0; }
 function hideHome() { HOME.open = false; $('#home').hidden = true; HOME.started = true; }
 
 async function renderHome() {
@@ -3124,7 +3161,7 @@ async function srvInboxImport(opts) {
   _inboxBusy = true; let n = 0, i = 0;
   try {
     for (const f of list) {
-      i++; toast(`กำลังดึงคลิปจากกล่องรับ (${i}/${list.length}) ${f.name}`, 60000);
+      i++; if (!opts.silent) toast(`กำลังดึงคลิปจากกล่องรับ (${i}/${list.length}) ${f.name}`, 60000);
       try {
         const r = await srvFetch('/inbox/' + srvId(f.name)); if (!r.ok) continue;
         const blob = await r.blob(); const file = new File([blob], f.name, { type: blob.type || 'video/mp4' });
@@ -3133,13 +3170,23 @@ async function srvInboxImport(opts) {
       } catch (e) { console.warn('srvInboxImport', e); }
     }
   } finally { _inboxBusy = false; }
-  toast(n ? `ดึงคลิปเข้ามาแล้ว ${n} คลิป (อยู่ในคลังอ้างอิงที่หน้าโปรเจกต์)` : 'ดึงคลิปจากกล่องรับไม่สำเร็จ', 5000); if (n && HOME.open) renderHome();
+  if (!opts.silent || n) toast(n ? `ดึงคลิปเข้ามาแล้ว ${n} คลิป (อยู่ในคลังอ้างอิงที่หน้าโปรเจกต์)` : 'ดึงคลิปจากกล่องรับไม่สำเร็จ', 5000); if (n && HOME.open) renderHome();
+  if (n && typeof renderRefLib === 'function') renderRefLib();
   return n;
 }
 async function srvInboxAuto() {         // on start-up: desktop pulls new clips by itself, phones only get a hint (mobile data / small screen)
   const list = await srvInboxList(); if (!list || !list.length) return;
   if (IS_PHONE()) { toast(`มีคลิปใหม่ ${list.length} คลิปรอในกล่องรับ — เปิด 🔬 วิเคราะห์ เพื่อดึงเข้า`, 8000); return; }
   await srvInboxImport({ quiet: true });
+}
+// v1.34: while the editor stays open on a desktop, check the server inbox every minute and pull new reference clips in by itself (no button needed)
+let _inboxTimer = null;
+function srvInboxWatch() {
+  if (_inboxTimer || IS_PHONE()) return;
+  _inboxTimer = setInterval(async () => {
+    if (document.hidden || _inboxBusy || !srvOn()) return;
+    const l = await srvInboxList(); if (l && l.length) await srvInboxImport({ quiet: true, silent: true });
+  }, 60000);
 }
 // ----- proxy copies (v1.19): light 540p copies made by the shop server, used for preview on phones -----
 const IS_PHONE = () => matchMedia('(max-width:820px)').matches || matchMedia('(pointer:coarse)').matches;
@@ -5102,10 +5149,11 @@ async function bestWindow(m, want) {
 }
 
 // ---------- C) AI: shot order + hook (optional) ----------
-async function foodAiPlan(shots, brief) {
-  const content = [{ type: 'text', text: `You edit a short vertical (9:16) video for a Lao food/cafe/restaurant business from the shots below (one best moment per clip, one frame each). ${brief ? 'Owner note: ' + brief + '\n' : ''}Order the shots like a good café/food reel: establishing shot (outside / signboard / place) -> menu & detail close-ups -> making process (pouring, cooking, hands) -> the hero shot (best-looking dish or drink) last or second to last; a person talking to camera goes first or last. If two shots are near duplicates or clearly poor (blurry, dark, accidental), put their ids in "skip" (at most ${Math.floor(shots.length / 4)} ids). Also write ONE short hook line for the first seconds: Lao script (not Thai), 2-5 words, wrap the key word in *asterisks*. Return ONLY JSON: {"order":["s1","s2"],"skip":[],"hook":""}` }];
+const PRODUCT_AI = (shots, brief) => `You edit a short vertical (9:16) SALES video for a Lao online shop that sells cosmetics / skincare / health supplements, from the shots below (one best moment per clip, one frame each). ${brief ? 'Product / owner note: ' + brief + '\n' : ''}Order the shots like a good product reel: attention-grabbing opener (a person talking to camera, or the most striking visual) -> product reveal (package, label, held in hand) -> detail shots (texture, swatch, ingredients, close-ups) -> using it / application / demo -> result or proof -> the product hero shot last. If two shots are near duplicates or clearly poor (blurry, dark, accidental, a competitor's brand), put their ids in "skip" (at most ${Math.floor(shots.length / 4)} ids). Also write ONE short hook line for the first seconds: Lao script (not Thai), 2-5 words, wrap the key word in *asterisks*. Hard rules for the hook: no medical or cure claims, no guaranteed results, no before/after health promises, no fake numbers. Return ONLY JSON: {"order":["s1","s2"],"skip":[],"hook":""}`;
+async function foodAiPlan(shots, brief, mode) {
+  const content = [{ type: 'text', text: mode === 'product' ? PRODUCT_AI(shots, brief) : `You edit a short vertical (9:16) video for a Lao food/cafe/restaurant business from the shots below (one best moment per clip, one frame each). ${brief ? 'Owner note: ' + brief + '\n' : ''}Order the shots like a good café/food reel: establishing shot (outside / signboard / place) -> menu & detail close-ups -> making process (pouring, cooking, hands) -> the hero shot (best-looking dish or drink) last or second to last; a person talking to camera goes first or last. If two shots are near duplicates or clearly poor (blurry, dark, accidental), put their ids in "skip" (at most ${Math.floor(shots.length / 4)} ids). Also write ONE short hook line for the first seconds: Lao script (not Thai), 2-5 words, wrap the key word in *asterisks*. Return ONLY JSON: {"order":["s1","s2"],"skip":[],"hook":""}` }];
   shots.forEach((s, i) => { content.push({ type: 'text', text: `--- s${i + 1} "${s.m.name}" ${s.isImg ? 'photo' : (s.m.duration).toFixed(1) + 's clip'}` }); if (s.b64) content.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: s.b64 } }); });
-  const txt = await claude({ system: 'You are an expert short-form food video editor. Reply with JSON only.', content, max_tokens: 800, label: 'จัดลำดับอาหาร', estUsd: .04, useStyle: true });
+  const txt = await claude({ system: mode === 'product' ? 'You are an expert short-form product-sales video editor for the Lao market. Reply with JSON only.' : 'You are an expert short-form food video editor. Reply with JSON only.', content, max_tokens: 800, label: mode === 'product' ? 'จัดลำดับคลิปสินค้า' : 'จัดลำดับอาหาร', estUsd: .04, useStyle: true });
   const j = parseJsonLoose(txt); const ids = shots.map((_, i) => 's' + (i + 1));
   const order = (j.order || []).filter(x => ids.includes(x)).filter((x, i, a) => a.indexOf(x) === i); ids.forEach(x => { if (!order.includes(x)) order.push(x); });
   const skip = (j.skip || []).filter(x => ids.includes(x)).slice(0, Math.floor(shots.length / 4));
@@ -5133,8 +5181,10 @@ function foodBuild(shots, o) {
     if (!s.isImg && a + len > s.m.duration - .04) len = Math.max(.5, s.m.duration - .04 - a);
     segs.push({ m: s.m, a, b: a + len, transition: 'none' }); t += len;
   });
-  const v = { name: T('คลิปอาหาร'), segs, overlays: o.hook ? [{ seg: 0, line1: o.hook, line2: '' }] : [] };
-  const doc = buildVariantDoc(v, { style: 'hl', footer: '', music: false }); doc.name = T('คลิปอาหาร');
+  const nm = T(o.mode === 'product' ? 'คลิปสินค้า' : 'คลิปอาหาร'), ov = o.hook ? [{ seg: 0, line1: o.hook, line2: '' }] : [];
+  if (o.cta && o.cta.line1) ov.push({ seg: segs.length - 1, line1: o.cta.line1, line2: o.cta.line2 || '' });
+  const v = { name: nm, segs, overlays: ov };
+  const doc = buildVariantDoc(v, { style: 'hl', footer: '', music: false }); doc.name = nm;
   withDoc(doc, () => {
     const vids = D.items.filter(i => i.track === 'V1');
     const keep = o.music ? .35 : 1; vids.forEach(i => { i.vol = keep; });
@@ -5159,7 +5209,7 @@ async function foodRun(o) {
     }
     let order = shots.map((_, i) => i), hook = '', aiNote = '';
     if (o.ai && loadKeys().claude) {
-      try { aiProg('AI กำลังจัดลำดับช็อตและคิดข้อความฮุก…', 74); const pl = await foodAiPlan(shots, o.brief); order = pl.order.filter(i => !pl.skip.includes(i)); hook = pl.hook; aiNote = 'ai'; }
+      try { aiProg('AI กำลังจัดลำดับช็อตและคิดข้อความฮุก…', 74); const pl = await foodAiPlan(shots, o.brief, o.mode); order = pl.order.filter(i => !pl.skip.includes(i)); hook = pl.hook; aiNote = 'ai'; }
       catch (e) { if (/งบ/.test(e.message)) throw e; console.warn(e); aiNote = 'fail'; }
     }
     let seq = order.map(i => shots[i]);
@@ -5168,10 +5218,10 @@ async function foodRun(o) {
     while (seq.length > 3 && seq.length * minPer > o.len * 1.15 && guard++ < 30) { let wi = -1, ws = 9; seq.forEach((s, i) => { if (i && i < seq.length - 1 && s.score < ws) { ws = s.score; wi = i; } }); if (wi < 0) break; seq.splice(wi, 1); }
     aiProg('กำลังตัดต่อ…', 92);
     let beatsTl = null; if (beatOk) { const probe = { type: 'audio', mediaId: mus.id, start: 0, in: 0, dur: o.len * 3, loop: true }; beatsTl = musicBeatsOnTimeline(probe, o.len * 3); }
-    const r = foodBuild(seq, { beats: beatsTl, hook, music: mus ? mus.id : null, preset: o.preset });
-    await projSaveNow(); D = r.doc; SEL = null; commit('food'); emit('sel'); seek(0); AI.busy = false; $('#dlgAi').close();
+    const r = foodBuild(seq, { beats: beatsTl, hook: hook || o.hookManual || '', cta: o.cta, mode: o.mode, music: mus ? mus.id : null, preset: o.preset });
+    await projSaveNow(); D = r.doc; SEL = null; commit(o.mode === 'product' ? 'product' : 'food'); emit('sel'); seek(0); AI.busy = false; $('#dlgAi').close();
     const pn = (PRESETS.find(x => x.id === o.preset) || {}).name || '';
-    toast(`${T('สร้างคลิปอาหารแล้ว')} · ${r.n} ${T('ช็อต')} · ${r.total.toFixed(0)} ${T('วินาที')}${beatOk ? ' · ' + T('ตัดตามบีต') + ' ' + bi.bpm + ' BPM' : (o.beat && mus ? ' · ' + T('จับจังหวะเพลงไม่ได้') : '')} — ${T('กด ↶ ย้อนกลับได้')}${aiNote === 'fail' ? ' · ' + T('AI ไม่ตอบ ใช้ลำดับเดิม') : ''}`, 7000);
+    toast(`${T(o.mode === 'product' ? 'สร้างคลิปสินค้าแล้ว' : 'สร้างคลิปอาหารแล้ว')} · ${r.n} ${T('ช็อต')} · ${r.total.toFixed(0)} ${T('วินาที')}${beatOk ? ' · ' + T('ตัดตามบีต') + ' ' + bi.bpm + ' BPM' : (o.beat && mus ? ' · ' + T('จับจังหวะเพลงไม่ได้') : '')} — ${T('กด ↶ ย้อนกลับได้')}${aiNote === 'fail' ? ' · ' + T('AI ไม่ตอบ ใช้ลำดับเดิม') : ''}`, 7000);
   } catch (e) { aiErr(e); }
 }
 
@@ -5590,7 +5640,7 @@ function initPreviewInteraction() {
     const active = () => it && PB.t >= it.start && PB.t < it.start + it.dur && BOUNDS[it.id];
     if (active()) { const b = BOUNDS[it.id], l = toLocal(b, p); if (Math.abs(l.x - b.w / 2) < 14 && Math.abs(l.y - b.h / 2) < 14) mode = 'scale'; else if (Math.hypot(l.x, l.y + b.h / 2 + 26) < 14) mode = 'rot'; }
     if (!mode) {
-      let hit = null; for (let i = RENDER_ORDER.length - 1; i >= 0 && !hit; i--) { const list = activeAt(RENDER_ORDER[i], PB.t); for (let j = list.length - 1; j >= 0; j--) { const o = list[j], b = BOUNDS[o.id]; if (!b) continue; const l = toLocal(b, p); if (Math.abs(l.x) <= b.w / 2 && Math.abs(l.y) <= b.h / 2) { hit = o; break; } } }
+      let hit = null; const LO = layerOrder(); for (let i = LO.length - 1; i >= 0 && !hit; i--) { const list = activeAt(LO[i], PB.t); for (let j = list.length - 1; j >= 0; j--) { const o = list[j], b = BOUNDS[o.id]; if (!b) continue; const l = toLocal(b, p); if (Math.abs(l.x) <= b.w / 2 && Math.abs(l.y) <= b.h / 2) { hit = o; break; } } }
       if (hit) { it = hit; select(hit.id); mode = 'move'; } else { select(null); return; }
     }
     const b0 = { ...BOUNDS[it.id] }; const s0 = prop(it, 's', PB.t), x0 = prop(it, 'x', PB.t), y0 = prop(it, 'y', PB.t), r0 = prop(it, 'r', PB.t); const start = p; const d0 = Math.hypot(p.x - b0.cx, p.y - b0.cy) || 1; const a0 = Math.atan2(p.y - b0.cy, p.x - b0.cx);
@@ -5707,7 +5757,7 @@ async function init() {
     else if (e.key === 'Home') { pause(); seek(0); }
   });
   initSplitters(); initToolbar();
-  initHome(); await showHome(); if (srvOn()) srvPing().then(ok => ok && srvLoadSizes()).then(() => srvAdoptProxies()).then(() => srvInboxAuto()).catch(() => { });
+  initHome(); await showHome(); if (srvOn()) srvPing().then(ok => ok && srvLoadSizes()).then(() => srvAdoptProxies()).then(() => srvInboxAuto()).then(() => srvInboxWatch()).catch(() => { });
   tick();
   window.__ready = true;
 }

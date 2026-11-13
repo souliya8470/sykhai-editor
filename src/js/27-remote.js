@@ -106,11 +106,20 @@ async function srvFetchMissing(ids) {
 }
 // ----- inbox (v1.30): clips the shop server fetched for us (N8N -> yt-dlp). Pulled into the media list, then moved to inbox/done on the server -----
 SRV.inbox = [];
+// v1.36: the server keeps every reference clip (inbox + inbox/done), so a 2nd computer pulls the same library.
+// Clips this computer already has (same name) or already pulled once (and the user later removed) are skipped.
+const refSeenGet = () => { try { return new Set(JSON.parse(localStorage.getItem('sk_refseen') || '[]')); } catch (e) { return new Set(); } };
+const refSeenAdd = name => { try { const s = refSeenGet(); s.add(name); localStorage.setItem('sk_refseen', JSON.stringify([...s])); } catch (e) { } };
 async function srvInboxList() {
   if (!srvOn()) return null; if (!SRV.up && !(await srvPing())) return null;
-  try { const r = await srvFetch('/inbox'); if (!r.ok) return null; SRV.inbox = (await r.json()).filter(x => /\.(mp4|mov|m4v|webm)$/i.test(x.name)); return SRV.inbox; } catch (e) { return null; }
+  try {
+    const r = await srvFetch('/inbox?all=1'); if (!r.ok) return null;
+    const have = new Set([...MEDIA.values()].map(m => m.name)), seen = refSeenGet();
+    SRV.inbox = (await r.json()).filter(x => /\.(mp4|mov|m4v|webm)$/i.test(x.name) && (!x.done || (!have.has(x.name) && !seen.has(x.name))));
+    return SRV.inbox;
+  } catch (e) { return null; }
 }
-let _inboxBusy = false;
+let _inboxBusy = false; const _inboxFail = new Set();
 async function srvInboxImport(opts) {
   opts = opts || {}; if (_inboxBusy) return 0;
   const list = await srvInboxList(); if (!list) { if (!opts.quiet) toast('เซิร์ฟเวอร์ไม่พร้อม — ตรวจ ⚙ ตั้งค่า', 5000); return 0; }
@@ -118,13 +127,14 @@ async function srvInboxImport(opts) {
   _inboxBusy = true; let n = 0, i = 0;
   try {
     for (const f of list) {
+      if (_inboxFail.has(f.name)) continue;
       i++; if (!opts.silent) toast(`กำลังดึงคลิปจากกล่องรับ (${i}/${list.length}) ${f.name}`, 60000);
       try {
         const r = await srvFetch('/inbox/' + srvId(f.name)); if (!r.ok) continue;
         const blob = await r.blob(); const file = new File([blob], f.name, { type: blob.type || 'video/mp4' });
         await importFiles([file], { quiet: true, ref: true });
-        if ([...MEDIA.values()].some(m => m.name === f.name)) { await srvFetch('/inbox/' + srvId(f.name), { method: 'DELETE' }); n++; }
-      } catch (e) { console.warn('srvInboxImport', e); }
+        if ([...MEDIA.values()].some(m => m.name === f.name)) { refSeenAdd(f.name); if (!f.done) await srvFetch('/inbox/' + srvId(f.name), { method: 'DELETE' }); n++; }
+      } catch (e) { console.warn('srvInboxImport', e); _inboxFail.add(f.name); }
     }
   } finally { _inboxBusy = false; }
   if (!opts.silent || n) toast(n ? `ดึงคลิปเข้ามาแล้ว ${n} คลิป (อยู่ในคลังอ้างอิงที่หน้าโปรเจกต์)` : 'ดึงคลิปจากกล่องรับไม่สำเร็จ', 5000); if (n && HOME.open) renderHome();

@@ -36,6 +36,13 @@ const TABS = [['media', 'สื่อ'], ['preset', 'พรีเซ็ต'], ['
 function buildLeft() {
   $('#leftTabs').innerHTML = TABS.map(([id, l], i) => `<button data-tab="${id}" class="${i ? '' : 'on'}"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${TAB_ICONS[id]}</svg><span>${l}</span></button>`).join('');
   $('#leftTabs').onclick = e => { const b = e.target.closest('button'); if (b) showTab(b.dataset.tab); };
+  const lt = $('#leftTabs'), lw = $('#ltWrap');
+  const ltUpd = () => { lw.classList.toggle('ov', TABS.length * 62 > lw.clientWidth + 1); lw.classList.toggle('atl', lt.scrollLeft <= 1); lw.classList.toggle('atr', lt.scrollLeft + lt.clientWidth >= lt.scrollWidth - 1); };
+  $('#ltL').onclick = () => { lt.scrollBy({ left: -124, behavior: 'smooth' }); };
+  $('#ltR').onclick = () => { lt.scrollBy({ left: 124, behavior: 'smooth' }); };
+  lt.addEventListener('scroll', ltUpd); window.addEventListener('resize', ltUpd);
+  if (window.ResizeObserver) new ResizeObserver(ltUpd).observe(lw);
+  setTimeout(ltUpd, 0);
   buildVisualPanes();
   // transitions + effects: animated tiles (hover = preview, drag = drop onto timeline)
   $('#pane-trans').innerHTML = `<div class="hint">เอาเมาส์ชี้เพื่อดูตัวอย่าง · ลากไปวาง “ตรงรอยต่อระหว่างคลิป” บนไทม์ไลน์ หรือเลือกคลิปแล้วกด</div><div class="tiles" id="tilesTrans"></div>`;

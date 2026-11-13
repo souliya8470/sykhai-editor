@@ -29,7 +29,7 @@ const TIC = {
   mute: ['<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/>', '<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/>']
 };
 function trIcons(tr) {
-  const st = trSt(tr.id), ks = tr.kind === 'video' ? ['lock', 'hide', 'mute'] : tr.kind === 'text' ? ['lock', 'hide'] : ['lock', 'mute'];
+  const st = trSt(tr.id), ks = LANE(tr.id) === 'visual' ? ['lock', 'hide', 'mute'] : ['lock', 'mute'];
   const tip = { lock: ['ล็อกแถวนี้ (กันแก้ไขโดยไม่ตั้งใจ)', 'ปลดล็อกแถวนี้'], hide: ['ซ่อนภาพของแถวนี้', 'แสดงภาพของแถวนี้'], mute: ['ปิดเสียงของแถวนี้', 'เปิดเสียงของแถวนี้'] };
   const lo = layerOrder(), li = lo.indexOf(tr.id), lm = li < 0 ? '' : `<button class="tic tlm" data-lm="up" ${li >= lo.length - 1 ? 'disabled' : ''} title="${T('ยกชั้นนี้ขึ้นบน')}">▲</button><button class="tic tlm" data-lm="down" ${li <= 0 ? 'disabled' : ''} title="${T('ลดชั้นนี้ลงล่าง')}">▼</button>`;
   return `<div class="tic-row">` + lm + ks.map(k => `<button class="tic${st[k] ? ' on' : ''}" data-tk="${k}" title="${tip[k][st[k] ? 1 : 0]}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${TIC[k][st[k] ? 1 : 0]}</svg></button>`).join('') + `</div>`;
@@ -39,7 +39,7 @@ function renderTimeline() {
   const sx = body.scrollLeft, sy = body.scrollTop; const W = tlWidth();
   let h = `<div id="tlinner" style="width:${TL.labelW + W}px"><div id="ruler"><div class="corner"></div><div class="rt" style="width:${W}px">${rulerTicks()}${(D.markers || []).map(m => `<i class="mk" data-id="${m.id}" style="left:${m.t * TL.pps}px" title="${T('มาร์กเกอร์ — ดับเบิลคลิกเพื่อลบ')}">⚑</i>`).join('')}</div></div>`;
   const ROWS = [...layerOrder().slice().reverse().map(id => TRACKS.find(t => t.id === id)).filter(Boolean), ...TRACKS.filter(t => t.kind === 'audio')];   // top lane = top layer
-  for (const tr of ROWS) h += `<div class="trow ${tr.kind}${trSt(tr.id).lock ? ' locked' : ''}${trSt(tr.id).hide ? ' hidt' : ''}${trSt(tr.id).mute ? ' mutet' : ''}" data-track="${tr.id}" style="height:${trackH(tr)}px"><div class="tlabel"><div class="tn">${tr.label}</div>${trIcons(tr)}</div><div class="tlane" style="width:${W}px"></div><div class="trh" title="ลากเพื่อปรับความสูงของแถว"></div></div>`;
+  for (const tr of ROWS) h += `<div class="trow ${tr.kind}${trSt(tr.id).lock ? ' locked' : ''}${trSt(tr.id).hide ? ' hidt' : ''}${trSt(tr.id).mute ? ' mutet' : ''}" data-track="${tr.id}" style="height:${trackH(tr)}px"><div class="tlabel"><div class="tn">${tr.kind === 'audio' ? tr.label : T('เลเยอร์') + ' ' + (layerOrder().indexOf(tr.id) + 1)}</div>${trIcons(tr)}</div><div class="tlane" style="width:${W}px"></div><div class="trh" title="ลากเพื่อปรับความสูงของแถว"></div></div>`;
   h += `<div id="playhead"><i></i></div></div>`;
   body.innerHTML = h;
   for (const it of D.items) {
@@ -67,7 +67,7 @@ function renderTimeline() {
     el.innerHTML = inner; lane.appendChild(el);
     const cv = $('canvas.wf', el); if (cv) drawWave(cv, it, m);
   }
-  for (const tr of TRACKS.filter(t => t.kind === 'video')) {
+  for (const tr of TRACKS.filter(t => LANE(t.id) === 'visual')) {
     const lane = $(`.trow[data-track="${tr.id}"] .tlane`, body); const list = itemsOn(tr.id).filter(i => i.type === 'video' || i.type === 'image');
     for (let i = 1; i < list.length; i++) {
       const A = list[i - 1], B = list[i]; if (Math.abs(A.start + A.dur - B.start) > .06 && !(B.transIn && B.start < A.start + A.dur)) continue;
@@ -83,7 +83,7 @@ function drawWave(cv, it, m) {
   const P = m.peaks, md = m.duration || 1;
   for (let x = 0; x < w; x++) {
     const lt = (x / w) * it.dur; const tt = (it.in || 0) + lt * (it.speed || 1); const idx = Math.floor(((it.loop ? tt % md : tt) / md) * P.length);
-    let g = vg; if (fi) g *= Math.min(1, lt / fi); if (fo) g *= Math.min(1, (it.dur - lt) / fo);
+    let g = vg; if (fi || fo) g *= fadeEnv(it, lt);   // same curve as the sound, so the drawn wave = what you hear
     const v = Math.min(1, (P[clamp(idx, 0, P.length - 1)] || 0) * g); const bh = Math.max(1, Math.min(h, v * h * 1.25)); c.fillRect(x, h - bh, 1, bh);
   }
 }
@@ -105,7 +105,7 @@ function addMediaToTimeline(mediaId, trackId, start) {
     const st = start ?? PB.t; it = mkAudio(tr, mediaId, st, m.duration);
     if (tr === 'A1') { it.dur = Math.max(it.dur, 0); }
   } else {
-    let tr = trackId && TRACK_KIND[trackId] === 'video' ? trackId : null;
+    let tr = trackId && LANE(trackId) === 'visual' ? trackId : null;
     const dur = m.type === 'image' ? 3 : m.duration;
     let st = start;
     if (st == null) { st = tr ? PB.t : D.items.filter(i => i.track === 'V1').reduce((a, i) => Math.max(a, i.start + i.dur), 0); }
@@ -151,7 +151,7 @@ function initTimelineEvents() {
       if (mode === 'move') {
         let s = Math.max(0, o.start + dt); const s1 = snapVal(s, pts, tol), s2 = snapVal(s + o.dur, pts, tol) - o.dur; s = Math.abs(s1 - s) <= Math.abs(s2 - s) ? s1 : s2; it.start = Math.max(0, s);
         const rowEl = document.elementFromPoint(ev.clientX, ev.clientY); const row = rowEl && rowEl.closest ? rowEl.closest('.trow') : null;
-        if (row && TRACK_KIND[row.dataset.track] === TRACK_KIND[o.track]) it.track = row.dataset.track;
+        if (row && LANE(row.dataset.track) === LANE(o.track)) it.track = row.dataset.track;
       } else if (mode === 'tl') {
         let s = snapVal(o.start + dt, pts, tol); let d = s - o.start;
         if (it.type === 'video' || it.type === 'audio') d = Math.max(d, -(o.in / sp));
@@ -191,7 +191,7 @@ function initTimelineEvents() {
 }
 function dropTarget(e) {
   const el = document.elementFromPoint(e.clientX, e.clientY); const row = el && el.closest ? el.closest('.trow') : null;
-  if (!row || TRACK_KIND[row.dataset.track] !== 'video') return null;
+  if (!row || LANE(row.dataset.track) !== 'visual') return null;
   const t = dropTimeFromEvent(e); const items = itemsOn(row.dataset.track).filter(i => i.type === 'video' || i.type === 'image');
   const over = items.find(i => t >= i.start && t < i.start + i.dur);
   if (DRAG && DRAG.kind === 'trans') { let best = null, bd = 20 / TL.pps; for (const it of items) { const d = Math.abs(it.start - t); if (d < bd) { bd = d; best = it; } } if (best) return { it: best, mode: 'cut', row }; }

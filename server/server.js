@@ -264,11 +264,15 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { yt: FT.yt ? FT.yt.version : null, note: FT.note, running: FT.cur, queued: FT.q.length, fetched: Object.keys(readFetched()).length, inbox: fs.readdirSync(INBOX).filter(f => f !== 'done').length, log: FT.log.slice(-20) });
     }
     if (kind === 'inbox') {   // clips waiting for the editor to import them; DELETE = "imported" -> moves to inbox/done
-      if (!id) { const out = fs.readdirSync(INBOX).filter(f => f !== 'done' && !/\.(part|ytdl)$/i.test(f)).map(f => { const st = fs.statSync(path.join(INBOX, f)); return { name: f, size: st.size, savedAt: st.mtimeMs }; }).filter(x => x.size > 0); return send(res, 200, out); }
+      if (!id) {   // ?all=1 (v1.36) also lists clips already imported (inbox/done) so a SECOND computer can pull the same reference library
+        const all = /[?&]all=1/.test(req.url || ''); const scan = (d, done) => { try { return fs.readdirSync(d).filter(f => f !== 'done' && !/\.(part|ytdl)$/i.test(f)).map(f => { const st = fs.statSync(path.join(d, f)); return { name: f, size: st.size, savedAt: st.mtimeMs, done }; }).filter(x => x.size > 0 && fs.statSync(path.join(d, x.name)).isFile()); } catch (e) { return []; } };
+        return send(res, 200, [...scan(INBOX, false), ...(all ? scan(INBOX_DONE, true) : [])]);
+      }
       const fn = fileName(id), f = path.join(INBOX, fn);
       if (req.method === 'PUT') return saveStream(req, res, f, null, {});
-      if (req.method === 'DELETE') { try { fs.renameSync(f, path.join(INBOX_DONE, fn)); } catch (e) { return send(res, 404, 'not found'); } return send(res, 200, { ok: true }); }
-      return serveFile(req, res, f, fn, /\.mp4$/i.test(fn) ? 'video/mp4' : /\.webm$/i.test(fn) ? 'video/webm' : 'application/octet-stream');
+      if (req.method === 'DELETE') { if (!fs.existsSync(f) && fs.existsSync(path.join(INBOX_DONE, fn))) return send(res, 200, { ok: true, already: true }); try { fs.renameSync(f, path.join(INBOX_DONE, fn)); } catch (e) { return send(res, 404, 'not found'); } return send(res, 200, { ok: true }); }
+      const fd = fs.existsSync(f) ? f : path.join(INBOX_DONE, fn);
+      return serveFile(req, res, fd, fn, /\.mp4$/i.test(fn) ? 'video/mp4' : /\.webm$/i.test(fn) ? 'video/webm' : 'application/octet-stream');
     }
     if (kind === 'out') {   // finished videos — stored under their real file name so you can open them in Explorer
       if (!id) { const out = fs.readdirSync(DIRS.out).filter(f => !f.includes('.part')).map(f => { const st = fs.statSync(path.join(DIRS.out, f)); return { name: f, size: st.size, savedAt: st.mtimeMs }; }); return send(res, 200, out); }
