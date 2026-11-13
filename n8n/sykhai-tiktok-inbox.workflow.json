@@ -170,7 +170,7 @@
   },
   {
    "parameters": {
-    "jsCode": "// ผลของแต่ละคลิปที่สั่งโหลด (มาจากโหนด \"สั่งเซิร์ฟเวอร์โหลดคลิป\")\nconst items = $('สั่งเซิร์ฟเวอร์โหลดคลิป').all().map(i => i.json);\nconst bad = items.filter(i => !i.ok);\nreturn [{ json: {\n  total: items.length,\n  newlyDownloaded: items.filter(i => i.status === 'downloaded').length,\n  alreadyThere: items.filter(i => i.status === 'exists').length,\n  failed: bad.length,\n  firstErrors: bad.map(b => String(b.error || b.message || JSON.stringify(b)).slice(0, 250)).slice(0, 3)\n} }];"
+    "jsCode": "// ผลของแต่ละคลิป (ทางออก done ของ \"ทีละคลิป\" ส่งผลทุกคลิปมาให้)\nconst items = $input.all().map(i => i.json);\nconst bad = items.filter(i => !i.ok);\nreturn [{ json: {\n  total: items.length,\n  newlyDownloaded: items.filter(i => i.status === 'downloaded').length,\n  alreadyThere: items.filter(i => i.status === 'exists').length,\n  failed: bad.length,\n  firstErrors: bad.map(b => String(b.error || b.message || JSON.stringify(b)).slice(0, 250)).slice(0, 3)\n} }];"
    },
    "id": "n9",
    "name": "สรุปผล",
