@@ -83,6 +83,7 @@ async function init() {
   window.addEventListener('resize', fitStage); applyAspect();
   buildLeft(); initTimelineEvents(); initPreviewInteraction();
   try { await Promise.race([Promise.all(['800 40px Prompt', '700 40px "Noto Sans Lao"', '700 40px "Noto Sans Thai"'].map(f => document.fonts.load(f, 'กຂaA'))), sleep(4000)]); } catch (e) { }
+  try { await trcLoad(); } catch (e) { }
   try { const n = await restoreMedia(); const r = migrateRefs(); if (n - r > 0) toast(`กู้คืนไฟล์ที่นำเข้าไว้ ${n - r} ไฟล์`); setTimeout(upgradeThumbs, 2500); } catch (e) { console.warn(e); }
   // migrate legacy single autosave (<=1.02) into the projects list
   try { const ls = localStorage.getItem('sk_autosave'); if (ls) { const d = JSON.parse(ls); let ok = true; if (d && d.items && d.items.length) { d.pid = d.pid || uid(); d.created = d.created || Date.now(); d.name = d.name || 'โปรเจกต์เดิม'; ok = await projPut(projRec(d)); } if (ok) localStorage.removeItem('sk_autosave'); } } catch (e) { console.warn(e); }

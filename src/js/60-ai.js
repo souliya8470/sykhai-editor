@@ -104,8 +104,13 @@ function findSilences(m, a, b, minSil = .45, pad = .12) {
 }
 
 // ---------- transcript store ----------
-function getTr(id) { return D.tr && D.tr[id]; }
-function setTr(id, tr) { D.tr = D.tr || {}; D.tr[id] = tr; commit('tr'); }
+function getTr(id) {   // v1.48: falls back to the permanent transcript cache (same file name) before anything is sent to Gemini again
+  let t = D.tr && D.tr[id]; const m = MEDIA.get(id);
+  if (t) { if (m && !TRC_SAVED.has(t)) { if (trcFind(m, t.lang, t.engine) !== t) trcSave(m, t); else TRC_SAVED.add(t); } return t; }
+  const lg = ($('#aiLang') || {}).value || 'lo'; t = m && trcAny(m, lg); if (!t) return t;
+  D.tr = D.tr || {}; D.tr[id] = t; return t;
+}
+function setTr(id, tr) { D.tr = D.tr || {}; D.tr[id] = tr; const m = MEDIA.get(id); if (m && trcFind(m, tr.lang, tr.engine) !== tr) trcSave(m, tr); commit('tr'); }
 const trText = tr => tr.segs.map((s, i) => `${i}: ${s.text}`).join('\n');
 
 // ---------- progress dialog ----------
@@ -137,7 +142,8 @@ function groupWords(words) {
   segs.forEach(s => s.text = s.text.trim()); return segs.filter(s => s.text);
 }
 const trPrompt = lname => `Transcribe this ${lname}-language audio exactly as spoken, in ${lname} script, no translation. Split it into short natural spoken phrases (about 2-7 seconds each). For each phrase give start and end time in seconds measured from the beginning of THIS audio clip (decimal numbers). Return only JSON: {"segments":[{"start":0.0,"end":2.4,"text":"..."}]}`;
-async function transcribe(m, lang, engine) {
+async function transcribe(m, lang, engine, force) {
+  if (!force) { const hit = trcFind(m, lang, engine); if (hit) { aiProg('ใช้ข้อความที่ถอดเก็บไว้แล้ว (ไม่เสียเงิน API)', 100); setTr(m.id, hit); return hit; } }
   if (!m.pcm16) throw new Error('คลิปนี้ไม่มีเสียง หรือยังวิเคราะห์เสียงไม่เสร็จ');
   if (lang === 'th' && engine === 'whisper') {
     aiProg('กำลังโหลดโมเดลถอดเสียง…', 5); const asr = await getWhisper(); aiProg('กำลังถอดเสียงไทย…', 50);
@@ -182,14 +188,19 @@ function cutSourceRanges(mediaId, ranges) {   // ranges in source seconds, appli
 // ============================================================
 //  1) transcribe UI
 // ============================================================
-async function aiTranscribeUI() {
-  const m = selMedia(); if (!m) return toast('เลือกคลิปก่อน'); const lang = $('#aiLang').value, eng = $('#aiEng').value;
-  if (AI.busy) return; AI.busy = true;
-  try { const tr = await transcribe(m, lang, lang === 'lo' ? 'gemini' : eng); AI.busy = false; showTranscript(m, tr); renderAiPane(); }
+async function aiTranscribeUI(force) {
+  const m = selMedia(); if (!m) return toast('เลือกคลิปก่อน'); const lang = $('#aiLang').value, eng = $('#aiEng').value, en2 = lang === 'lo' ? 'gemini' : eng;
+  if (AI.busy) return; const cached = !force && trcFind(m, lang, en2);
+  if (cached) { setTr(m.id, cached); return showTranscript(m, cached, true); }
+  AI.busy = true;
+  try { const tr = await transcribe(m, lang, en2, true); AI.busy = false; showTranscript(m, tr); renderAiPane(); }
   catch (e) { aiErr(e); }
 }
-function showTranscript(m, tr) {
-  aiDlg('ข้อความที่ถอดได้: ' + m.name, `<div class="hint">${tr.segs.length} ประโยค · ${tr.engine}</div><table class="aitbl">${tr.segs.map(s => `<tr><td style="width:96px">${fmt(s.a)}–${fmt(s.b)}</td><td>${escN(s.text)}</td></tr>`).join('')}</table>`);
+function showTranscript(m, tr, cached) {
+  aiDlg('ข้อความที่ถอดได้: ' + m.name, `<div class="hint">${tr.segs.length} ประโยค · ${tr.engine}${cached ? ' · ✓ ใช้ข้อความที่ถอดเก็บไว้แล้ว (ไม่เสียเงิน)' : ' · ✓ เก็บไว้แล้ว ไม่ต้องถอดซ้ำ'}</div><div class="row"><button id="trDl">⬇ ดาวน์โหลดไฟล์ข้อความ</button><button id="trRe">ถอดใหม่ (เสียเงิน API)</button></div><table class="aitbl">${tr.segs.map(s => `<tr><td style="width:96px">${fmt(s.a)}–${fmt(s.b)}</td><td>${escN(s.text)}</td></tr>`).join('')}</table>`, root => {
+    $('#trDl', root).onclick = () => { const r = trcRec(m); if (r) trcDownload(r); };
+    $('#trRe', root).onclick = () => { if (confirm(T('ถอดใหม่จะเสียเงิน API อีกครั้ง ต้องการทำต่อ?'))) aiTranscribeUI(true); };
+  });
 }
 
 // ============================================================
@@ -434,7 +445,7 @@ function renderAiPane() {
   <div class="aicard"><h4>✨ ตัดอัตโนมัติ</h4><div class="mini">ตัดช่วงเงียบ คำอ้ำอึ้ง (เอ่อ อืม) และเทคพูดซ้ำ ในครั้งเดียว</div><button class="wide" id="aiA">ตัดอัตโนมัติ</button></div>
   <div class="aicard"><h4>✨ คำบรรยายแอนิเมชัน</h4><div class="mini">ซับเด้งทีละคำ เปลี่ยนสีคำที่กำลังพูด เลือกหน้าตาและแอนิเมชันได้</div><button class="wide primary" id="aiCap">สร้างคำบรรยายแอนิเมชัน</button></div>
   <div class="aicard"><h4>💬 ซับอัตโนมัติ</h4><div class="mini">สร้างซับจากเสียงพูด (แปลเป็นลาว/ไทยได้) แล้วแก้ก่อนใส่</div><button class="wide" id="aiB">สร้างซับ</button></div>
-  <div class="aicard"><h4>① ถอดเสียง</h4><button class="wide" id="ai1">ถอดเสียงคลิปนี้</button><button class="wide" id="aiGT" style="margin-top:6px">🔬 ทดสอบ Gemini (เทียบโมเดล)</button></div>
+  <div class="aicard"><h4>① ถอดเสียง</h4><button class="wide" id="ai1">ถอดเสียงคลิปนี้</button><button class="wide" id="aiTC" style="margin-top:6px">📁 ข้อความที่ถอดเก็บไว้</button><button class="wide" id="aiGT" style="margin-top:6px">🔬 ทดสอบ Gemini (เทียบโมเดล)</button></div>
   <div class="aicard"><h4>② ราคาที่พูด</h4><div class="mini">ตัด/ปิดเสียงราคาบาท แล้วใส่ราคากีบที่พิมพ์เอง</div><button class="wide" id="ai2">ตรวจจับราคา</button></div>
   <div class="aicard"><h4>③ ประโยคเด่นขึ้นจอ</h4><div class="mini">เลือกจุดขาย แล้วขึ้นข้อความตอนที่พูด (ไม่ใช่ซับทั้งหมด)</div><button class="wide" id="ai3">เลือกประโยคเด่น</button></div>
   <div class="aicard"><h4>④ ตัดช่วงเงียบ / เทคซ้ำ</h4><div class="btnrow"><button id="ai4a">ตัดช่วงเงียบ</button><button id="ai4b">ตัดเทคซ้ำ (AI)</button></div></div>
@@ -442,7 +453,7 @@ function renderAiPane() {
   <div class="aicard"><h4>⑥ ให้ AI ตัดต่อ 4 แบบ</h4><div class="mini">ใช้ทุกคลิปในรายการสื่อ แล้วให้พนักงานเลือกแบบที่ชอบ</div><button class="wide primary" id="ai6">สร้าง 4 แบบ</button></div>
   <div class="hint small">ใช้ AI เดือนนี้ $${s.usd.toFixed(2)} จากเพดาน $${loadCap()}</div>`;
   const lg = localStorage.getItem('sk_lang'); if (lg) $('#aiLang').value = lg; $('#aiLang').onchange = e => localStorage.setItem('sk_lang', e.target.value);
-  $('#aiCap').onclick = capOpen; $('#aiGT').onclick = aiGemTest; $('#ai1').onclick = aiTranscribeUI; $('#ai2').onclick = aiPriceUI; $('#ai3').onclick = aiKeyPointsUI; $('#ai4a').onclick = aiSilenceUI; $('#ai4b').onclick = aiRetakeUI; $('#ai5').onclick = () => aiEnhanceUI(null); $('#ai6').onclick = aiVariantsUI; $('#aiK').onclick = aiKittiUI; $('#fdA').onclick = foodUI; $('#bsA').onclick = beatSnapTimeline; $('#anA').onclick = anUI; $('#aiA').onclick = aiCleanUI; $('#aiB').onclick = aiSubsUI;
+  $('#aiCap').onclick = capOpen; $('#aiGT').onclick = aiGemTest; $('#ai1').onclick = () => aiTranscribeUI(); $('#aiTC').onclick = trcUI; $('#ai2').onclick = aiPriceUI; $('#ai3').onclick = aiKeyPointsUI; $('#ai4a').onclick = aiSilenceUI; $('#ai4b').onclick = aiRetakeUI; $('#ai5').onclick = () => aiEnhanceUI(null); $('#ai6').onclick = aiVariantsUI; $('#aiK').onclick = aiKittiUI; $('#fdA').onclick = foodUI; $('#bsA').onclick = beatSnapTimeline; $('#anA').onclick = anUI; $('#aiA').onclick = aiCleanUI; $('#aiB').onclick = aiSubsUI;
 }
 AI.inspectorAction = (act, it) => {
   if (act === 'enhance') aiEnhanceUI(it);

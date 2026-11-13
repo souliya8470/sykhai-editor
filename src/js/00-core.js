@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.47
-// APP_VERSION_PREV : 1.46
-// APP_VERSION_PREV_OLDER : 1.45
+// APP_VERSION  : 1.48
+// APP_VERSION_PREV : 1.47
+// APP_VERSION_PREV_OLDER : 1.46
+// 1.48 : permanent transcript cache — every transcript is stored in the browser (own IndexedDB 'sykhai-tr') under the clip's file name + size + length, so the same video is never sent to Gemini twice (any project, after reload); the AI tab shows it instantly and says it was free; 'transcribe again' needs a confirm; new 📁 manager to download each transcript as <video name>.transcript.json, import it back on another computer, or delete it
 // 1.47 : Dead Air list — the silence dialog now lists every silent gap (timeline time + length): tap the time to jump there, ▶ to listen around it, ✂ to delete that one, tick several and delete them together, select / un-select all; min length and head/tail padding sliders re-build the list; each delete can be undone
 // 1.46 : "Test Gemini" button (AI tab, step 1) — sends the first 20 s of the clip to several Gemini models, shows the answers side by side with the time taken, one tap makes a model the default; transcription now uses the model's own thinking (like the Gemini website) and gemini-3.8-flash first; time-out 120 s
 // 1.45 : Gemini call can no longer hang — 90 s time-out per try, "low thinking" for Gemini 3 models (much faster transcription), the progress box says which model / try it is on
@@ -53,7 +54,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.47';
+const APP_VERSION = '1.48';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
