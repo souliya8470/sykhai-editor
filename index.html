@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.45</title>
+<title>Sykhai Editor v1.46</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -1798,6 +1798,21 @@ I18N_ROWS.push(
   ['Gemini ไม่ว่าง — ลองอีกครั้ง', 'Gemini is busy — trying again', 'Gemini ບໍ່ຫວ່າງ — ລອງອີກຄັ້ງ'],
   ['ครั้งที่', 'try', 'ຄັ້ງທີ'],
   ['ใช้เวลานานเกิน 90 วินาที', 'took longer than 90 seconds', 'ໃຊ້ເວລາດົນເກີນ 90 ວິນາທີ'],
+  ['🔬 ทดสอบ Gemini (เทียบโมเดล)', '🔬 Test Gemini (compare models)', '🔬 ທົດສອບ Gemini (ປຽບທຽບໂມເດວ)'],
+  ['ทดสอบ Gemini', 'Test Gemini', 'ທົດສອບ Gemini'],
+  ['ส่งเสียง 20 วินาทีแรกของคลิปไปให้ Gemini หลายโมเดล เทียบผลกัน แล้วกด "ใช้โมเดลนี้" ที่อ่านออกถูกที่สุด', 'The first 20 seconds of the clip are sent to several Gemini models. Compare the results, then press "Use this model" on the one that reads best.', 'ສົ່ງສຽງ 20 ວິນາທີທຳອິດຂອງຄລິບໄປໃຫ້ Gemini ຫຼາຍໂມເດວ ປຽບທຽບຜົນ ແລ້ວກົດ "ໃຊ້ໂມເດວນີ້" ອັນທີ່ອ່ານອອກຖືກທີ່ສຸດ'],
+  ['รอคิว…', 'Waiting…', 'ລໍຄິວ…'],
+  ['กำลังทดสอบ…', 'Testing…', 'ກຳລັງທົດສອບ…'],
+  ['Gemini 3.8 Flash · ปกติ', 'Gemini 3.8 Flash · normal', 'Gemini 3.8 Flash · ປົກກະຕິ'],
+  ['Gemini 3.8 Flash · คิดน้อย', 'Gemini 3.8 Flash · low thinking', 'Gemini 3.8 Flash · ຄິດໜ້ອຍ'],
+  ['Gemini 3.7 Flash · ปกติ', 'Gemini 3.7 Flash · normal', 'Gemini 3.7 Flash · ປົກກະຕິ'],
+  ['Gemini Flash (ล่าสุด) · ปกติ', 'Gemini Flash (latest) · normal', 'Gemini Flash (ລ່າສຸດ) · ປົກກະຕິ'],
+  ['Gemini 3.8 Flash · ข้อความล้วน (ไม่บังคับ JSON)', 'Gemini 3.8 Flash · plain text (no JSON)', 'Gemini 3.8 Flash · ຂໍ້ຄວາມລ້ວນ (ບໍ່ບັງຄັບ JSON)'],
+  ['วินาที', 's', 'ວິນາທີ'],
+  ['ใช้โมเดลนี้', 'Use this model', 'ໃຊ້ໂມເດວນີ້'],
+  ['✓ ใช้อยู่', '✓ In use', '✓ ໃຊ້ຢູ່'],
+  ['ตั้งโมเดลถอดเสียงแล้ว', 'Transcription model set', 'ຕັ້ງໂມເດວຖອດສຽງແລ້ວ'],
+  ['ใช้เวลานานเกิน 120 วินาที', 'took longer than 120 seconds', 'ໃຊ້ເວລາດົນເກີນ 120 ວິນາທີ'],
 );
 
 // ---- 00-core.js ----
@@ -1805,9 +1820,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.45
-// APP_VERSION_PREV : 1.44
-// APP_VERSION_PREV_OLDER : 1.43
+// APP_VERSION  : 1.46
+// APP_VERSION_PREV : 1.45
+// APP_VERSION_PREV_OLDER : 1.44
+// 1.46 : "Test Gemini" button (AI tab, step 1) — sends the first 20 s of the clip to several Gemini models, shows the answers side by side with the time taken, one tap makes a model the default; transcription now uses the model's own thinking (like the Gemini website) and gemini-3.8-flash first; time-out 120 s
 // 1.45 : Gemini call can no longer hang — 90 s time-out per try, "low thinking" for Gemini 3 models (much faster transcription), the progress box says which model / try it is on
 // 1.44 : Gemini model list refreshed (gemini-2.5-flash is retired for new keys): flash-latest -> 3.8 flash -> 3.7 flash -> 3.5 flash-lite; a retired / unknown model is skipped at once instead of stopping the job
 // 1.43 : Gemini "model is busy" (503 / 429) no longer stops the job — it retries 3 times, then tries two other Gemini models before giving up
@@ -1854,7 +1870,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.45';
+const APP_VERSION = '1.46';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -4940,19 +4956,19 @@ async function claude({ system, content, max_tokens = 3000, label = 'claude', es
   const u = j.usage || {}; costAdd(((u.input_tokens || 0) * PRICE.claudeIn + (u.output_tokens || 0) * PRICE.claudeOut) / 1e6, label);
   return (j.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
 }
-async function gemini(parts, { json = true, label = 'gemini' } = {}) {
+async function gemini(parts, { json = true, label = 'gemini', model: forced = null, think: forceThink } = {}) {
   const key = loadKeys().gemini; if (!key) throw new Error('ยังไม่ได้ใส่ Gemini API key (กดปุ่ม ⚙ ตั้งค่า)');
   if (!costGuard(0.03)) throw new Error('งบ AI ครบเพดาน');
-  const first = localStorage.getItem('sk_gmodel') || 'gemini-flash-latest';
-  const models = [...new Set([first, 'gemini-flash-latest', 'gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.5-flash-lite'])];   // busy model -> retry, then the next model; retired / unknown model -> next model at once
-  const mkBody = think => JSON.stringify({ contents: [{ role: 'user', parts }], generationConfig: Object.assign({ temperature: 0.1 }, think ? { thinkingConfig: { thinkingLevel: 'low' } } : {}, json ? { responseMimeType: 'application/json' } : {}) });
+  const first = localStorage.getItem('sk_gmodel') || 'gemini-3.8-flash', thinkLv = forceThink !== undefined ? forceThink : (localStorage.getItem('sk_gthink') || '');
+  const models = forced ? [forced] : [...new Set([first, 'gemini-3.8-flash', 'gemini-flash-latest', 'gemini-3.7-flash', 'gemini-3.5-flash-lite'])];   // busy model -> retry, then the next model; retired / unknown model -> next model at once
+  const mkBody = think => JSON.stringify({ contents: [{ role: 'user', parts }], generationConfig: Object.assign({ temperature: 0.1 }, think ? { thinkingConfig: { thinkingLevel: thinkLv } } : {}, json ? { responseMimeType: 'application/json' } : {}) });
   let j = {}, r = null, last = '';
   for (let mi = 0; mi < models.length; mi++) {
-    let think = true;   // newer Gemini models think by default (slow) — transcription does not need it; a model that refuses the setting is retried without it
+    let think = !!thinkLv;   // optional thinking level (low / medium / high); empty = the model's own default, like the Gemini website
     for (let tri = 0; tri < 3; tri++) {
       if (mi || tri) aiProg(`Gemini ไม่ว่าง — ลองอีกครั้ง (${models[mi]}, ครั้งที่ ${tri + 1})…`, null);
-      const ac = new AbortController(), to = setTimeout(() => ac.abort(), 90000);   // never wait more than 90 s for one answer
-      try { r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${models[mi]}:generateContent`, { method: 'POST', signal: ac.signal, headers: { 'content-type': 'application/json', 'x-goog-api-key': key }, body: mkBody(think) }); } catch (e) { r = null; last = e.name === 'AbortError' ? 'ใช้เวลานานเกิน 90 วินาที' : String(e.message || e); }
+      const ac = new AbortController(), to = setTimeout(() => ac.abort(), 120000);   // never wait more than 120 s for one answer
+      try { r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${models[mi]}:generateContent`, { method: 'POST', signal: ac.signal, headers: { 'content-type': 'application/json', 'x-goog-api-key': key }, body: mkBody(think) }); } catch (e) { r = null; last = e.name === 'AbortError' ? 'ใช้เวลานานเกิน 120 วินาที' : String(e.message || e); }
       clearTimeout(to);
       if (r) {
         j = await r.json().catch(() => ({})); if (r.ok) break; last = (j.error && j.error.message) || r.status;
@@ -4964,6 +4980,7 @@ async function gemini(parts, { json = true, label = 'gemini' } = {}) {
     }
     if (r && r.ok) break;
   }
+  if (forced && (!r || !r.ok)) throw new Error('Gemini: ' + last);
   if (!r || !r.ok) throw new Error('Gemini ไม่ว่างชั่วคราว (ลองใหม่ทุกโมเดลแล้ว) — รอสักครู่แล้วกดใหม่อีกครั้ง · ' + last);
   const u = j.usageMetadata || {}; costAdd(((u.promptTokenCount || 0) * PRICE.gemIn + ((u.candidatesTokenCount || 0) + (u.thoughtsTokenCount || 0)) * PRICE.gemOut) / 1e6, label);
   return ((j.candidates || [])[0]?.content?.parts || []).map(p => p.text || '').join('');
@@ -5036,6 +5053,7 @@ function groupWords(words) {
   }
   segs.forEach(s => s.text = s.text.trim()); return segs.filter(s => s.text);
 }
+const trPrompt = lname => `Transcribe this ${lname}-language audio exactly as spoken, in ${lname} script, no translation. Split it into short natural spoken phrases (about 2-7 seconds each). For each phrase give start and end time in seconds measured from the beginning of THIS audio clip (decimal numbers). Return only JSON: {"segments":[{"start":0.0,"end":2.4,"text":"..."}]}`;
 async function transcribe(m, lang, engine) {
   if (!m.pcm16) throw new Error('คลิปนี้ไม่มีเสียง หรือยังวิเคราะห์เสียงไม่เสร็จ');
   if (lang === 'th' && engine === 'whisper') {
@@ -5048,7 +5066,7 @@ async function transcribe(m, lang, engine) {
   for (let off = 0; off < dur; off += 110) {
     aiProg(`กำลังถอดเสียง (Gemini) ${Math.round(off)}/${Math.round(dur)} วิ…`, 15 + 70 * off / dur);
     const a = off, b = Math.min(dur, off + 110);
-    const prompt = `Transcribe this ${lname}-language audio exactly as spoken, in ${lname} script, no translation. Split it into short natural spoken phrases (about 2-7 seconds each). For each phrase give start and end time in seconds measured from the beginning of THIS audio clip (decimal numbers). Return only JSON: {"segments":[{"start":0.0,"end":2.4,"text":"..."}]}`;
+    const prompt = trPrompt(lname);
     const txt = await gemini([{ text: prompt }, { inline_data: { mime_type: 'audio/wav', data: wavB64(m.pcm16, 16000, a, b) } }], { label: 'ถอดเสียง ' + lname });
     const j = parseJsonLoose(txt); (j.segments || j).forEach(s => { const t = String(s.text || '').trim(); if (t) segs.push({ a: toSec(s.start) + a, b: toSec(s.end) + a, text: t }); });
   }
@@ -5307,7 +5325,7 @@ function renderAiPane() {
   <div class="aicard"><h4>✨ ตัดอัตโนมัติ</h4><div class="mini">ตัดช่วงเงียบ คำอ้ำอึ้ง (เอ่อ อืม) และเทคพูดซ้ำ ในครั้งเดียว</div><button class="wide" id="aiA">ตัดอัตโนมัติ</button></div>
   <div class="aicard"><h4>✨ คำบรรยายแอนิเมชัน</h4><div class="mini">ซับเด้งทีละคำ เปลี่ยนสีคำที่กำลังพูด เลือกหน้าตาและแอนิเมชันได้</div><button class="wide primary" id="aiCap">สร้างคำบรรยายแอนิเมชัน</button></div>
   <div class="aicard"><h4>💬 ซับอัตโนมัติ</h4><div class="mini">สร้างซับจากเสียงพูด (แปลเป็นลาว/ไทยได้) แล้วแก้ก่อนใส่</div><button class="wide" id="aiB">สร้างซับ</button></div>
-  <div class="aicard"><h4>① ถอดเสียง</h4><button class="wide" id="ai1">ถอดเสียงคลิปนี้</button></div>
+  <div class="aicard"><h4>① ถอดเสียง</h4><button class="wide" id="ai1">ถอดเสียงคลิปนี้</button><button class="wide" id="aiGT" style="margin-top:6px">🔬 ทดสอบ Gemini (เทียบโมเดล)</button></div>
   <div class="aicard"><h4>② ราคาที่พูด</h4><div class="mini">ตัด/ปิดเสียงราคาบาท แล้วใส่ราคากีบที่พิมพ์เอง</div><button class="wide" id="ai2">ตรวจจับราคา</button></div>
   <div class="aicard"><h4>③ ประโยคเด่นขึ้นจอ</h4><div class="mini">เลือกจุดขาย แล้วขึ้นข้อความตอนที่พูด (ไม่ใช่ซับทั้งหมด)</div><button class="wide" id="ai3">เลือกประโยคเด่น</button></div>
   <div class="aicard"><h4>④ ตัดช่วงเงียบ / เทคซ้ำ</h4><div class="btnrow"><button id="ai4a">ตัดช่วงเงียบ</button><button id="ai4b">ตัดเทคซ้ำ (AI)</button></div></div>
@@ -5315,7 +5333,7 @@ function renderAiPane() {
   <div class="aicard"><h4>⑥ ให้ AI ตัดต่อ 4 แบบ</h4><div class="mini">ใช้ทุกคลิปในรายการสื่อ แล้วให้พนักงานเลือกแบบที่ชอบ</div><button class="wide primary" id="ai6">สร้าง 4 แบบ</button></div>
   <div class="hint small">ใช้ AI เดือนนี้ $${s.usd.toFixed(2)} จากเพดาน $${loadCap()}</div>`;
   const lg = localStorage.getItem('sk_lang'); if (lg) $('#aiLang').value = lg; $('#aiLang').onchange = e => localStorage.setItem('sk_lang', e.target.value);
-  $('#aiCap').onclick = capOpen; $('#ai1').onclick = aiTranscribeUI; $('#ai2').onclick = aiPriceUI; $('#ai3').onclick = aiKeyPointsUI; $('#ai4a').onclick = aiSilenceUI; $('#ai4b').onclick = aiRetakeUI; $('#ai5').onclick = () => aiEnhanceUI(null); $('#ai6').onclick = aiVariantsUI; $('#aiK').onclick = aiKittiUI; $('#fdA').onclick = foodUI; $('#bsA').onclick = beatSnapTimeline; $('#anA').onclick = anUI; $('#aiA').onclick = aiCleanUI; $('#aiB').onclick = aiSubsUI;
+  $('#aiCap').onclick = capOpen; $('#aiGT').onclick = aiGemTest; $('#ai1').onclick = aiTranscribeUI; $('#ai2').onclick = aiPriceUI; $('#ai3').onclick = aiKeyPointsUI; $('#ai4a').onclick = aiSilenceUI; $('#ai4b').onclick = aiRetakeUI; $('#ai5').onclick = () => aiEnhanceUI(null); $('#ai6').onclick = aiVariantsUI; $('#aiK').onclick = aiKittiUI; $('#fdA').onclick = foodUI; $('#bsA').onclick = beatSnapTimeline; $('#anA').onclick = anUI; $('#aiA').onclick = aiCleanUI; $('#aiB').onclick = aiSubsUI;
 }
 AI.inspectorAction = (act, it) => {
   if (act === 'enhance') aiEnhanceUI(it);
@@ -6246,6 +6264,40 @@ function coverInit() {
   $('#cvDl').onclick = async () => {
     const keep = D.cover; const th = { t: CV.t }; D.cover = th; await coverDownload(false); D.cover = keep;
   };
+}
+
+// ---- 68-gemtest.js ----
+'use strict';
+// ============================================================
+//  v1.46 — Gemini test: the first ~20 s of the chosen clip is sent to several Gemini models, the answers are shown side by side
+//  (time taken + text), and one tap makes a model the default for transcription
+// ============================================================
+const GT_VARIANTS = [   // [label, model, thinking level ('' = model default), plain-text prompt?]
+  ['Gemini 3.8 Flash · ปกติ', 'gemini-3.8-flash', '', false],
+  ['Gemini 3.8 Flash · คิดน้อย', 'gemini-3.8-flash', 'low', false],
+  ['Gemini 3.7 Flash · ปกติ', 'gemini-3.7-flash', '', false],
+  ['Gemini Flash (ล่าสุด) · ปกติ', 'gemini-flash-latest', '', false],
+  ['Gemini 3.8 Flash · ข้อความล้วน (ไม่บังคับ JSON)', 'gemini-3.8-flash', '', true],
+];
+async function aiGemTest() {
+  const m = selMedia(); if (!m) return toast('เลือกคลิปก่อน'); if (!m.pcm16) return toast('คลิปนี้ไม่มีเสียง หรือยังวิเคราะห์เสียงไม่เสร็จ'); if (AI.busy) return;
+  const lang = $('#aiLang').value === 'th' ? 'Thai' : 'Lao', dur = Math.min(20, m.pcm16.length / 16000);
+  const rows = GT_VARIANTS.map((v, i) => `<tr id="gtr${i}"><td style="width:150px"><b>${esc(T(v[0]))}</b></td><td id="gtc${i}" class="mini">${T('รอคิว…')}</td></tr>`).join('');
+  aiDlg('ทดสอบ Gemini', `<div class="hint">${T('ส่งเสียง 20 วินาทีแรกของคลิปไปให้ Gemini หลายโมเดล เทียบผลกัน แล้วกด "ใช้โมเดลนี้" ที่อ่านออกถูกที่สุด')}</div><table class="aitbl">${rows}</table>`, bd => {
+    bd.onclick = e => { const b = e.target.closest('[data-gt]'); if (!b) return; const v = GT_VARIANTS[+b.dataset.gt]; localStorage.setItem('sk_gmodel', v[1]); localStorage.setItem('sk_gthink', v[2]); toast('ตั้งโมเดลถอดเสียงแล้ว'); b.textContent = T('✓ ใช้อยู่'); };
+  });
+  const wav = wavB64(m.pcm16, 16000, 0, dur);
+  for (let i = 0; i < GT_VARIANTS.length; i++) {
+    const v = GT_VARIANTS[i], cell = () => document.getElementById('gtc' + i); if (!cell()) return;   // dialog closed
+    cell().textContent = T('กำลังทดสอบ…'); const t0 = performance.now();
+    try {
+      const prompt = v[3] ? `Transcribe this ${lang}-language audio exactly as spoken, in ${lang} script, no translation. Output only the text.` : trPrompt(lang);
+      const txt = await gemini([{ text: prompt }, { inline_data: { mime_type: 'audio/wav', data: wav } }], { json: !v[3], model: v[1], think: v[2], label: 'ทดสอบ Gemini' });
+      let out = txt; if (!v[3]) { try { const j = parseJsonLoose(txt); out = (j.segments || j).map(s => s.text).join(' / '); } catch (e) { out = txt; } }
+      const sec = ((performance.now() - t0) / 1000).toFixed(1);
+      if (cell()) cell().innerHTML = `<div class="mini">${sec} ${T('วินาที')}</div><div style="font-size:14px;line-height:1.5;margin:3px 0">${escN(out.slice(0, 600))}</div>` + (v[3] ? '' : `<button data-gt="${i}">${T('ใช้โมเดลนี้')}</button>`);
+    } catch (e) { if (cell()) cell().innerHTML = `<div style="color:#ff8a95" class="mini">${escN(String(e.message || e).slice(0, 220))}</div>`; }
+  }
 }
 
 // ---- 69-captions.js ----

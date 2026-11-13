@@ -39,19 +39,19 @@ async function claude({ system, content, max_tokens = 3000, label = 'claude', es
   const u = j.usage || {}; costAdd(((u.input_tokens || 0) * PRICE.claudeIn + (u.output_tokens || 0) * PRICE.claudeOut) / 1e6, label);
   return (j.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
 }
-async function gemini(parts, { json = true, label = 'gemini' } = {}) {
+async function gemini(parts, { json = true, label = 'gemini', model: forced = null, think: forceThink } = {}) {
   const key = loadKeys().gemini; if (!key) throw new Error('ยังไม่ได้ใส่ Gemini API key (กดปุ่ม ⚙ ตั้งค่า)');
   if (!costGuard(0.03)) throw new Error('งบ AI ครบเพดาน');
-  const first = localStorage.getItem('sk_gmodel') || 'gemini-flash-latest';
-  const models = [...new Set([first, 'gemini-flash-latest', 'gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.5-flash-lite'])];   // busy model -> retry, then the next model; retired / unknown model -> next model at once
-  const mkBody = think => JSON.stringify({ contents: [{ role: 'user', parts }], generationConfig: Object.assign({ temperature: 0.1 }, think ? { thinkingConfig: { thinkingLevel: 'low' } } : {}, json ? { responseMimeType: 'application/json' } : {}) });
+  const first = localStorage.getItem('sk_gmodel') || 'gemini-3.8-flash', thinkLv = forceThink !== undefined ? forceThink : (localStorage.getItem('sk_gthink') || '');
+  const models = forced ? [forced] : [...new Set([first, 'gemini-3.8-flash', 'gemini-flash-latest', 'gemini-3.7-flash', 'gemini-3.5-flash-lite'])];   // busy model -> retry, then the next model; retired / unknown model -> next model at once
+  const mkBody = think => JSON.stringify({ contents: [{ role: 'user', parts }], generationConfig: Object.assign({ temperature: 0.1 }, think ? { thinkingConfig: { thinkingLevel: thinkLv } } : {}, json ? { responseMimeType: 'application/json' } : {}) });
   let j = {}, r = null, last = '';
   for (let mi = 0; mi < models.length; mi++) {
-    let think = true;   // newer Gemini models think by default (slow) — transcription does not need it; a model that refuses the setting is retried without it
+    let think = !!thinkLv;   // optional thinking level (low / medium / high); empty = the model's own default, like the Gemini website
     for (let tri = 0; tri < 3; tri++) {
       if (mi || tri) aiProg(`Gemini ไม่ว่าง — ลองอีกครั้ง (${models[mi]}, ครั้งที่ ${tri + 1})…`, null);
-      const ac = new AbortController(), to = setTimeout(() => ac.abort(), 90000);   // never wait more than 90 s for one answer
-      try { r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${models[mi]}:generateContent`, { method: 'POST', signal: ac.signal, headers: { 'content-type': 'application/json', 'x-goog-api-key': key }, body: mkBody(think) }); } catch (e) { r = null; last = e.name === 'AbortError' ? 'ใช้เวลานานเกิน 90 วินาที' : String(e.message || e); }
+      const ac = new AbortController(), to = setTimeout(() => ac.abort(), 120000);   // never wait more than 120 s for one answer
+      try { r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${models[mi]}:generateContent`, { method: 'POST', signal: ac.signal, headers: { 'content-type': 'application/json', 'x-goog-api-key': key }, body: mkBody(think) }); } catch (e) { r = null; last = e.name === 'AbortError' ? 'ใช้เวลานานเกิน 120 วินาที' : String(e.message || e); }
       clearTimeout(to);
       if (r) {
         j = await r.json().catch(() => ({})); if (r.ok) break; last = (j.error && j.error.message) || r.status;
@@ -63,6 +63,7 @@ async function gemini(parts, { json = true, label = 'gemini' } = {}) {
     }
     if (r && r.ok) break;
   }
+  if (forced && (!r || !r.ok)) throw new Error('Gemini: ' + last);
   if (!r || !r.ok) throw new Error('Gemini ไม่ว่างชั่วคราว (ลองใหม่ทุกโมเดลแล้ว) — รอสักครู่แล้วกดใหม่อีกครั้ง · ' + last);
   const u = j.usageMetadata || {}; costAdd(((u.promptTokenCount || 0) * PRICE.gemIn + ((u.candidatesTokenCount || 0) + (u.thoughtsTokenCount || 0)) * PRICE.gemOut) / 1e6, label);
   return ((j.candidates || [])[0]?.content?.parts || []).map(p => p.text || '').join('');
@@ -135,6 +136,7 @@ function groupWords(words) {
   }
   segs.forEach(s => s.text = s.text.trim()); return segs.filter(s => s.text);
 }
+const trPrompt = lname => `Transcribe this ${lname}-language audio exactly as spoken, in ${lname} script, no translation. Split it into short natural spoken phrases (about 2-7 seconds each). For each phrase give start and end time in seconds measured from the beginning of THIS audio clip (decimal numbers). Return only JSON: {"segments":[{"start":0.0,"end":2.4,"text":"..."}]}`;
 async function transcribe(m, lang, engine) {
   if (!m.pcm16) throw new Error('คลิปนี้ไม่มีเสียง หรือยังวิเคราะห์เสียงไม่เสร็จ');
   if (lang === 'th' && engine === 'whisper') {
@@ -147,7 +149,7 @@ async function transcribe(m, lang, engine) {
   for (let off = 0; off < dur; off += 110) {
     aiProg(`กำลังถอดเสียง (Gemini) ${Math.round(off)}/${Math.round(dur)} วิ…`, 15 + 70 * off / dur);
     const a = off, b = Math.min(dur, off + 110);
-    const prompt = `Transcribe this ${lname}-language audio exactly as spoken, in ${lname} script, no translation. Split it into short natural spoken phrases (about 2-7 seconds each). For each phrase give start and end time in seconds measured from the beginning of THIS audio clip (decimal numbers). Return only JSON: {"segments":[{"start":0.0,"end":2.4,"text":"..."}]}`;
+    const prompt = trPrompt(lname);
     const txt = await gemini([{ text: prompt }, { inline_data: { mime_type: 'audio/wav', data: wavB64(m.pcm16, 16000, a, b) } }], { label: 'ถอดเสียง ' + lname });
     const j = parseJsonLoose(txt); (j.segments || j).forEach(s => { const t = String(s.text || '').trim(); if (t) segs.push({ a: toSec(s.start) + a, b: toSec(s.end) + a, text: t }); });
   }
@@ -406,7 +408,7 @@ function renderAiPane() {
   <div class="aicard"><h4>✨ ตัดอัตโนมัติ</h4><div class="mini">ตัดช่วงเงียบ คำอ้ำอึ้ง (เอ่อ อืม) และเทคพูดซ้ำ ในครั้งเดียว</div><button class="wide" id="aiA">ตัดอัตโนมัติ</button></div>
   <div class="aicard"><h4>✨ คำบรรยายแอนิเมชัน</h4><div class="mini">ซับเด้งทีละคำ เปลี่ยนสีคำที่กำลังพูด เลือกหน้าตาและแอนิเมชันได้</div><button class="wide primary" id="aiCap">สร้างคำบรรยายแอนิเมชัน</button></div>
   <div class="aicard"><h4>💬 ซับอัตโนมัติ</h4><div class="mini">สร้างซับจากเสียงพูด (แปลเป็นลาว/ไทยได้) แล้วแก้ก่อนใส่</div><button class="wide" id="aiB">สร้างซับ</button></div>
-  <div class="aicard"><h4>① ถอดเสียง</h4><button class="wide" id="ai1">ถอดเสียงคลิปนี้</button></div>
+  <div class="aicard"><h4>① ถอดเสียง</h4><button class="wide" id="ai1">ถอดเสียงคลิปนี้</button><button class="wide" id="aiGT" style="margin-top:6px">🔬 ทดสอบ Gemini (เทียบโมเดล)</button></div>
   <div class="aicard"><h4>② ราคาที่พูด</h4><div class="mini">ตัด/ปิดเสียงราคาบาท แล้วใส่ราคากีบที่พิมพ์เอง</div><button class="wide" id="ai2">ตรวจจับราคา</button></div>
   <div class="aicard"><h4>③ ประโยคเด่นขึ้นจอ</h4><div class="mini">เลือกจุดขาย แล้วขึ้นข้อความตอนที่พูด (ไม่ใช่ซับทั้งหมด)</div><button class="wide" id="ai3">เลือกประโยคเด่น</button></div>
   <div class="aicard"><h4>④ ตัดช่วงเงียบ / เทคซ้ำ</h4><div class="btnrow"><button id="ai4a">ตัดช่วงเงียบ</button><button id="ai4b">ตัดเทคซ้ำ (AI)</button></div></div>
@@ -414,7 +416,7 @@ function renderAiPane() {
   <div class="aicard"><h4>⑥ ให้ AI ตัดต่อ 4 แบบ</h4><div class="mini">ใช้ทุกคลิปในรายการสื่อ แล้วให้พนักงานเลือกแบบที่ชอบ</div><button class="wide primary" id="ai6">สร้าง 4 แบบ</button></div>
   <div class="hint small">ใช้ AI เดือนนี้ $${s.usd.toFixed(2)} จากเพดาน $${loadCap()}</div>`;
   const lg = localStorage.getItem('sk_lang'); if (lg) $('#aiLang').value = lg; $('#aiLang').onchange = e => localStorage.setItem('sk_lang', e.target.value);
-  $('#aiCap').onclick = capOpen; $('#ai1').onclick = aiTranscribeUI; $('#ai2').onclick = aiPriceUI; $('#ai3').onclick = aiKeyPointsUI; $('#ai4a').onclick = aiSilenceUI; $('#ai4b').onclick = aiRetakeUI; $('#ai5').onclick = () => aiEnhanceUI(null); $('#ai6').onclick = aiVariantsUI; $('#aiK').onclick = aiKittiUI; $('#fdA').onclick = foodUI; $('#bsA').onclick = beatSnapTimeline; $('#anA').onclick = anUI; $('#aiA').onclick = aiCleanUI; $('#aiB').onclick = aiSubsUI;
+  $('#aiCap').onclick = capOpen; $('#aiGT').onclick = aiGemTest; $('#ai1').onclick = aiTranscribeUI; $('#ai2').onclick = aiPriceUI; $('#ai3').onclick = aiKeyPointsUI; $('#ai4a').onclick = aiSilenceUI; $('#ai4b').onclick = aiRetakeUI; $('#ai5').onclick = () => aiEnhanceUI(null); $('#ai6').onclick = aiVariantsUI; $('#aiK').onclick = aiKittiUI; $('#fdA').onclick = foodUI; $('#bsA').onclick = beatSnapTimeline; $('#anA').onclick = anUI; $('#aiA').onclick = aiCleanUI; $('#aiB').onclick = aiSubsUI;
 }
 AI.inspectorAction = (act, it) => {
   if (act === 'enhance') aiEnhanceUI(it);
