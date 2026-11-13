@@ -388,6 +388,7 @@ function renderAiPane() {
   <div class="aicard"><h4>🔬 วิเคราะห์เทคนิคตัดต่อ</h4><div class="mini">วัดจังหวะตัด ฮุก ทรานสิชัน สี เสียง จากคลิปตัวอย่าง เพื่อนำไปสร้างพรีเซ็ต</div><button class="wide" id="anA">เปิดตัววิเคราะห์</button></div>
   <div class="aicard"><h4>⭐ ให้ AI ตัดให้ทั้งคลิป</h4><div class="mini">โยนคลิปดิบหลายอัน → AI เสนอแนวเรื่อง → ตรวจ storyboard ทีละฉาก → ได้คลิป 9:16 พร้อมซับ</div><button class="wide primary" id="aiK">เริ่ม</button></div>
   <div class="aicard"><h4>✨ ตัดอัตโนมัติ</h4><div class="mini">ตัดช่วงเงียบ คำอ้ำอึ้ง (เอ่อ อืม) และเทคพูดซ้ำ ในครั้งเดียว</div><button class="wide" id="aiA">ตัดอัตโนมัติ</button></div>
+  <div class="aicard"><h4>✨ คำบรรยายแอนิเมชัน</h4><div class="mini">ซับเด้งทีละคำ เปลี่ยนสีคำที่กำลังพูด เลือกหน้าตาและแอนิเมชันได้</div><button class="wide primary" id="aiCap">สร้างคำบรรยายแอนิเมชัน</button></div>
   <div class="aicard"><h4>💬 ซับอัตโนมัติ</h4><div class="mini">สร้างซับจากเสียงพูด (แปลเป็นลาว/ไทยได้) แล้วแก้ก่อนใส่</div><button class="wide" id="aiB">สร้างซับ</button></div>
   <div class="aicard"><h4>① ถอดเสียง</h4><button class="wide" id="ai1">ถอดเสียงคลิปนี้</button></div>
   <div class="aicard"><h4>② ราคาที่พูด</h4><div class="mini">ตัด/ปิดเสียงราคาบาท แล้วใส่ราคากีบที่พิมพ์เอง</div><button class="wide" id="ai2">ตรวจจับราคา</button></div>
@@ -397,7 +398,7 @@ function renderAiPane() {
   <div class="aicard"><h4>⑥ ให้ AI ตัดต่อ 4 แบบ</h4><div class="mini">ใช้ทุกคลิปในรายการสื่อ แล้วให้พนักงานเลือกแบบที่ชอบ</div><button class="wide primary" id="ai6">สร้าง 4 แบบ</button></div>
   <div class="hint small">ใช้ AI เดือนนี้ $${s.usd.toFixed(2)} จากเพดาน $${loadCap()}</div>`;
   const lg = localStorage.getItem('sk_lang'); if (lg) $('#aiLang').value = lg; $('#aiLang').onchange = e => localStorage.setItem('sk_lang', e.target.value);
-  $('#ai1').onclick = aiTranscribeUI; $('#ai2').onclick = aiPriceUI; $('#ai3').onclick = aiKeyPointsUI; $('#ai4a').onclick = aiSilenceUI; $('#ai4b').onclick = aiRetakeUI; $('#ai5').onclick = () => aiEnhanceUI(null); $('#ai6').onclick = aiVariantsUI; $('#aiK').onclick = aiKittiUI; $('#fdA').onclick = foodUI; $('#bsA').onclick = beatSnapTimeline; $('#anA').onclick = anUI; $('#aiA').onclick = aiCleanUI; $('#aiB').onclick = aiSubsUI;
+  $('#aiCap').onclick = capOpen; $('#ai1').onclick = aiTranscribeUI; $('#ai2').onclick = aiPriceUI; $('#ai3').onclick = aiKeyPointsUI; $('#ai4a').onclick = aiSilenceUI; $('#ai4b').onclick = aiRetakeUI; $('#ai5').onclick = () => aiEnhanceUI(null); $('#ai6').onclick = aiVariantsUI; $('#aiK').onclick = aiKittiUI; $('#fdA').onclick = foodUI; $('#bsA').onclick = beatSnapTimeline; $('#anA').onclick = anUI; $('#aiA').onclick = aiCleanUI; $('#aiB').onclick = aiSubsUI;
 }
 AI.inspectorAction = (act, it) => {
   if (act === 'enhance') aiEnhanceUI(it);

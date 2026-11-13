@@ -491,7 +491,8 @@ function drawText(ctx, it, t, W, H) {
     }
     let totalChars = 0; if (ap.chars < 1) rows.forEach(r => r.toks.forEach(k => totalChars += [...k.s].length));
     let shown = 0, limit = ap.chars < 1 ? Math.floor(totalChars * ap.chars) : Infinity;
-    const TAm = taOn(it) ? taMode(it) : null, TAn = TAm ? taCount(it, rows) : 0; let TAi = 0;   // v1.41 text animation pack (see 14-textfx.js)
+    const TAm = taOn(it) ? taMode(it) : null, TAn = TAm ? taCount(it, rows) : 0; let TAi = 0;
+    let KWi = 0;   // v1.41+: karaoke highlight — it.kar = { t:[start..], e:[end..], c:colour, mode:'cur'|'acc' } (times relative to the clip start, one per spoken word / token)   // v1.41 text animation pack (see 14-textfx.js)
     rows.forEach((row, ri) => {
       let rowAlpha = 1;
       if (row.li >= 1 && it.reveal > 0) { const q = clamp((lt - it.reveal * row.li) / .25, 0, 1); rowAlpha = q; if (q <= 0) return; }
@@ -527,7 +528,8 @@ function drawText(ctx, it, t, W, H) {
       row.toks.forEach(k => {
         let str = k.s;
         if (limit !== Infinity) { const n = [...str].length; if (shown >= limit) { x += k.w; return; } if (shown + n > limit) str = [...str].slice(0, limit - shown).join(''); shown += n; }
-        const col = k.hl ? (row.li === 0 ? (it.color2 || '#FFE14D') : it.color) : base;
+        let col = k.hl ? (row.li === 0 ? (it.color2 || '#FFE14D') : it.color) : base;
+        if (it.kar && !/^\s+$/.test(k.s)) { const wi = KWi++, ka = it.kar; const on = ka.mode === 'acc' ? lt >= ka.t[wi] : (lt >= ka.t[wi] && lt < (ka.e[wi] ?? 1e9)); if (on) col = ka.c || it.color2 || '#FFE14D'; }
         if (TAm && !/^\s+$/.test(str)) {
           if (TAm === 'char') { const gs = taGraphemes(str); gs.forEach((g, gi) => { const gx = x + ctx.measureText(str.slice(0, g.off)).width, gw = ctx.measureText(g.s).width; unit(g.s, gx, gw, col, TAi++); }); }
           else if (TAm === 'line') unit(str, x, k.w, col, ri, [x0, row.w]);

@@ -410,3 +410,8 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
 #dlgTA .tatile:hover{border-color:var(--ac)}#dlgTA .tatile.on{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac)}
 #dlgTA .tatile canvas{display:block;width:100%;aspect-ratio:250/81;background:#000}
 #dlgTA .tatile span{display:block;padding:5px 7px;font-size:11px;color:#fff;background:#15161a}
+
+#dlgCap{width:min(780px,95vw)}#dlgCap .capwrap{display:flex;gap:16px;margin:10px 0;flex-wrap:wrap}#dlgCap .capleft{flex:1;min-width:300px}#dlgCap .capright{width:216px;display:flex;flex-direction:column;gap:6px;align-items:center}
+#dlgCap #capPrev{border-radius:10px;background:#000;width:216px;height:384px}#dlgCap .caplbl{font-size:12px;font-weight:700;margin:10px 0 5px;color:var(--ac)}
+#dlgCap .caplooks{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}#dlgCap .caplook{padding:0;border:1px solid var(--ln);border-radius:8px;overflow:hidden;background:#000;cursor:pointer}
+#dlgCap .caplook.on{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac)}#dlgCap .caplook canvas{display:block;width:100%;height:auto}#dlgCap .caplook span{display:block;padding:3px 5px;font-size:10px;color:#fff;background:#15161a;text-align:left}

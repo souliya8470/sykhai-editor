@@ -117,6 +117,24 @@
   <div class="progress"><div id="expBar"></div></div><div id="expMsg" class="hint"></div>
   <div class="row"><span class="sp"></span><button id="expCancel">ปิด</button><button id="expGo" class="primary">เริ่มส่งออก</button></div>
 </dialog>
+<dialog id="dlgCap">
+  <h3>✨ คำบรรยายแอนิเมชัน (ซับเด้งทีละคำ)</h3>
+  <div class="hint">เลือกหน้าตา → เลือกแอนิเมชัน → กดสร้าง ระบบถอดเสียงแล้วใส่คำบรรยายทั้งคลิปให้ · คำที่กำลังพูดจะเปลี่ยนสี · แก้ข้อความ/สี/แอนิเมชันของแต่ละช่วงทีหลังได้ที่แผงขวา</div>
+  <div class="capwrap">
+    <div class="capleft">
+      <div class="caplbl">1 · หน้าตาตัวอักษร</div><div id="capLooks" class="caplooks"></div>
+      <div class="caplbl">2 · แอนิเมชัน</div><div class="fld"><select id="capAnim"></select></div>
+      <div class="caplbl">3 · การแบ่งและตำแหน่ง</div>
+      <div class="fld"><label>จำนวนคำต่อช่วง</label><input id="capWords" type="range" min="1" max="8" step="1" value="4"><output id="capWordsO">4</output></div>
+      <div class="fld"><label>ตำแหน่ง</label><select id="capPos"><option value="0.74">ล่าง</option><option value="0.5">กลาง</option><option value="0.2">บน</option></select></div>
+      <div class="fld chk"><label><input type="checkbox" id="capKar" checked> เปลี่ยนสีคำที่กำลังพูด</label></div>
+      <div class="fld"><label>แบบเปลี่ยนสี</label><select id="capMode"><option value="cur">เฉพาะคำที่พูดอยู่</option><option value="acc">สะสมคำที่พูดแล้ว</option></select></div>
+      <div class="fld"><label>สีเน้น</label><input type="color" id="capColor" value="#FFE14D"></div>
+    </div>
+    <div class="capright"><canvas id="capPrev" width="216" height="384"></canvas><div id="capStat" class="mini"></div></div>
+  </div>
+  <div class="row"><button id="capClose">ปิดหน้าต่างนี้</button><span class="sp"></span><button id="capGo" class="primary">สร้างคำบรรยาย</button></div>
+</dialog>
 <dialog id="dlgTA">
   <h3>✨ แอนิเมชันข้อความ</h3>
   <div class="hint">ตัวอย่างขยับจริง ใช้ข้อความของเจ้าเอง · กดแบบที่ชอบ แล้วแอนิเมชันจะใส่ให้ข้อความที่เลือกอยู่ (ถ้ายังไม่ได้เลือก จะเพิ่มข้อความใหม่ให้) · ปรับสี ขนาด ความเร็วได้ที่แผงขวา</div>
