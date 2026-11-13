@@ -118,7 +118,7 @@ async function srvInboxImport(opts) {
   _inboxBusy = true; let n = 0, i = 0;
   try {
     for (const f of list) {
-      i++; toast(`กำลังดึงคลิปจากกล่องรับ (${i}/${list.length}) ${f.name}`, 60000);
+      i++; if (!opts.silent) toast(`กำลังดึงคลิปจากกล่องรับ (${i}/${list.length}) ${f.name}`, 60000);
       try {
         const r = await srvFetch('/inbox/' + srvId(f.name)); if (!r.ok) continue;
         const blob = await r.blob(); const file = new File([blob], f.name, { type: blob.type || 'video/mp4' });
@@ -127,13 +127,23 @@ async function srvInboxImport(opts) {
       } catch (e) { console.warn('srvInboxImport', e); }
     }
   } finally { _inboxBusy = false; }
-  toast(n ? `ดึงคลิปเข้ามาแล้ว ${n} คลิป (อยู่ในคลังอ้างอิงที่หน้าโปรเจกต์)` : 'ดึงคลิปจากกล่องรับไม่สำเร็จ', 5000); if (n && HOME.open) renderHome();
+  if (!opts.silent || n) toast(n ? `ดึงคลิปเข้ามาแล้ว ${n} คลิป (อยู่ในคลังอ้างอิงที่หน้าโปรเจกต์)` : 'ดึงคลิปจากกล่องรับไม่สำเร็จ', 5000); if (n && HOME.open) renderHome();
+  if (n && typeof renderRefLib === 'function') renderRefLib();
   return n;
 }
 async function srvInboxAuto() {         // on start-up: desktop pulls new clips by itself, phones only get a hint (mobile data / small screen)
   const list = await srvInboxList(); if (!list || !list.length) return;
   if (IS_PHONE()) { toast(`มีคลิปใหม่ ${list.length} คลิปรอในกล่องรับ — เปิด 🔬 วิเคราะห์ เพื่อดึงเข้า`, 8000); return; }
   await srvInboxImport({ quiet: true });
+}
+// v1.34: while the editor stays open on a desktop, check the server inbox every minute and pull new reference clips in by itself (no button needed)
+let _inboxTimer = null;
+function srvInboxWatch() {
+  if (_inboxTimer || IS_PHONE()) return;
+  _inboxTimer = setInterval(async () => {
+    if (document.hidden || _inboxBusy || !srvOn()) return;
+    const l = await srvInboxList(); if (l && l.length) await srvInboxImport({ quiet: true, silent: true });
+  }, 60000);
 }
 // ----- proxy copies (v1.19): light 540p copies made by the shop server, used for preview on phones -----
 const IS_PHONE = () => matchMedia('(max-width:820px)').matches || matchMedia('(pointer:coarse)').matches;

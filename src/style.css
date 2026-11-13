@@ -355,3 +355,4 @@ button.tic.on{color:#ff9f43}
 .refback{margin-bottom:6px}
 .refq{width:100%;max-width:360px;margin:0 0 12px;padding:8px 10px;border-radius:8px;border:1px solid var(--line,#444);background:transparent;color:inherit}
 .rlang{position:absolute;left:4px;top:4px;font-size:10px;padding:1px 5px;border-radius:6px;background:rgba(0,0,0,.65);color:#fff}
+.refstat{margin:0 0 10px;padding:6px 10px;border-radius:8px;background:rgba(52,224,161,.12);font-size:12px}

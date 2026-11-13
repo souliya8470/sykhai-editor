@@ -10,7 +10,22 @@ async function showHome() {
   $('#hmBack').hidden = !HOME.started; $('#hmSync').hidden = !srvOn();
   await renderHome();
 }
-function setRefPage(on) { HOME.ref = !!on; $('#homeMain').hidden = !!on; $('#refPage').hidden = !on; if (on) { const q = $('#refQ'); if (q) q.value = ''; } renderRefLib(); const w = $('#home'); if (w) w.scrollTop = 0; }
+// live status of the server-side TikTok downloader, shown on the library page (refreshed every 8 s while the page is open)
+let _refStatT = null;
+async function refStatus() {
+  const el = $('#refStat'); if (!el) return;
+  if (!HOME.ref || !srvOn()) { el.hidden = true; return; }
+  try {
+    const r = await srvFetch('/fetch'); if (!r.ok) throw 0; const j = await r.json();
+    const parts = [];
+    parts.push(j.running ? T('⏬ เซิร์ฟเวอร์กำลังโหลด') + ' …' + String(j.running).slice(-6) : T('เซิร์ฟเวอร์ไม่ได้โหลดอยู่ตอนนี้'));
+    if (j.queued) parts.push(T('รอคิว') + ' ' + j.queued);
+    parts.push(T('รอดึงเข้าโปรแกรม') + ' ' + j.inbox);
+    parts.push(T('โหลดแล้วทั้งหมด') + ' ' + j.fetched);
+    el.textContent = parts.join(' · '); el.hidden = false;
+  } catch (e) { el.textContent = T('เช็กสถานะเซิร์ฟเวอร์ไม่ได้'); el.hidden = false; }
+}
+function setRefPage(on) { HOME.ref = !!on; clearInterval(_refStatT); if (on) { refStatus(); _refStatT = setInterval(refStatus, 8000); } else { const e = $('#refStat'); if (e) e.hidden = true; } $('#homeMain').hidden = !!on; $('#refPage').hidden = !on; if (on) { const q = $('#refQ'); if (q) q.value = ''; } renderRefLib(); const w = $('#home'); if (w) w.scrollTop = 0; }
 function hideHome() { HOME.open = false; $('#home').hidden = true; HOME.started = true; }
 
 async function renderHome() {

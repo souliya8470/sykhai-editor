@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.33</title>
+<title>Sykhai Editor v1.34</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -362,6 +362,7 @@ button.tic.on{color:#ff9f43}
 .refback{margin-bottom:6px}
 .refq{width:100%;max-width:360px;margin:0 0 12px;padding:8px 10px;border-radius:8px;border:1px solid var(--line,#444);background:transparent;color:inherit}
 .rlang{position:absolute;left:4px;top:4px;font-size:10px;padding:1px 5px;border-radius:6px;background:rgba(0,0,0,.65);color:#fff}
+.refstat{margin:0 0 10px;padding:6px 10px;border-radius:8px;background:rgba(52,224,161,.12);font-size:12px}
 
 </style></head>
 <body>
@@ -454,6 +455,7 @@ button.tic.on{color:#ff9f43}
     <div class="refback"><button id="hmRefBack">← <span>กลับหน้าโปรเจกต์</span></button></div>
     <div class="htitle refhead">📚 คลังวิดีโออ้างอิง <span class="mini">ไว้ให้ AI เรียนรู้แนวตัดต่อ — แยกจากโปรเจกต์ ไม่ปนกับสื่อของโปรเจกต์</span></div>
     <div class="refbar"><button id="hmRefInbox">📥 ดึงคลิปจากกล่องรับของเซิร์ฟเวอร์</button><button id="hmRefAdd">+ เพิ่มคลิปอ้างอิง</button><button id="hmRefAn" class="primary">🔬 วิเคราะห์แนวตัดต่อ</button></div>
+    <div id="refStat" class="refstat" hidden></div>
     <input id="refQ" class="refq" placeholder="ค้นหาคลิปอ้างอิง…" autocomplete="off">
     <div id="refList"></div>
     </div>
@@ -1582,6 +1584,12 @@ I18N_ROWS.push(
   ['ไว้ให้ AI เรียนรู้แนวตัดต่อ — แยกจากโปรเจกต์', 'For the AI to learn editing styles — kept apart from projects', 'ໄວ້ໃຫ້ AI ຮຽນແນວຕັດຕໍ່ — ແຍກຈາກໂປຣເຈັກ'],
   ['กลับหน้าโปรเจกต์', 'Back to projects', 'ກັບໄປໜ້າໂປຣເຈັກ'],
   ['ค้นหาคลิปอ้างอิง…', 'Search reference clips…', 'ຄົ້ນຫາຄລິບອ້າງອີງ…'],
+  ['⏬ เซิร์ฟเวอร์กำลังโหลด', '⏬ Server is downloading', '⏬ ເຊີບເວີກຳລັງໂຫຼດ'],
+  ['เซิร์ฟเวอร์ไม่ได้โหลดอยู่ตอนนี้', 'Server is not downloading right now', 'ເຊີບເວີບໍ່ໄດ້ໂຫຼດຢູ່ຕອນນີ້'],
+  ['รอคิว', 'Queued', 'ລໍຄິວ'],
+  ['รอดึงเข้าโปรแกรม', 'Waiting to be pulled in', 'ລໍດຶງເຂົ້າໂປຣແກຣມ'],
+  ['โหลดแล้วทั้งหมด', 'Downloaded in total', 'ໂຫຼດແລ້ວທັງໝົດ'],
+  ['เช็กสถานะเซิร์ฟเวอร์ไม่ได้', 'Cannot check the server status', 'ກວດສະຖານະເຊີບເວີບໍ່ໄດ້'],
 );
 
 // ---- 00-core.js ----
@@ -1589,9 +1597,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.33
-// APP_VERSION_PREV : 1.32
-// APP_VERSION_PREV_OLDER : 1.31
+// APP_VERSION  : 1.34
+// APP_VERSION_PREV : 1.33
+// APP_VERSION_PREV_OLDER : 1.32
+// 1.34 : the editor now checks the shop-server inbox every minute while open (desktop) and pulls new reference clips into the library by itself — no need to press the 📥 button
 // 1.33 : Home shows only the projects; the reference-video library moved to its own page (one button with the clip count -> library page with back button and a search box), so 100-200 clips no longer crowd the Home page; ref cards show a Thai/Lao tag; N8N pick = top 20 Thai by plays (Lao list has no view counts)
 // 1.32 : per-project media bin — a new project shows only its own media (D.bin = ids imported/added in that project + ids used by its clips); media from other projects live under 📂 older files (re-add with one tap, or delete for good); the × on a bin item removes it from this project only; AI/food/analyzer lists use the project's media only
 // 1.31 : reference-video library kept apart from projects (Home page 📚 section; not in the media bin, not synced, not used by AI cut-it-all; clips pulled from the server inbox and files named <tiktok id>.mp4 are moved there automatically); media bin grid auto-fills columns (more columns + smaller thumbs when the panel is widened, CapCut-style); thumbnails 360 px / q.85 (old ones upgraded in the background); Home project cards about half the size
@@ -1626,7 +1635,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.33';
+const APP_VERSION = '1.34';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -2895,7 +2904,22 @@ async function showHome() {
   $('#hmBack').hidden = !HOME.started; $('#hmSync').hidden = !srvOn();
   await renderHome();
 }
-function setRefPage(on) { HOME.ref = !!on; $('#homeMain').hidden = !!on; $('#refPage').hidden = !on; if (on) { const q = $('#refQ'); if (q) q.value = ''; } renderRefLib(); const w = $('#home'); if (w) w.scrollTop = 0; }
+// live status of the server-side TikTok downloader, shown on the library page (refreshed every 8 s while the page is open)
+let _refStatT = null;
+async function refStatus() {
+  const el = $('#refStat'); if (!el) return;
+  if (!HOME.ref || !srvOn()) { el.hidden = true; return; }
+  try {
+    const r = await srvFetch('/fetch'); if (!r.ok) throw 0; const j = await r.json();
+    const parts = [];
+    parts.push(j.running ? T('⏬ เซิร์ฟเวอร์กำลังโหลด') + ' …' + String(j.running).slice(-6) : T('เซิร์ฟเวอร์ไม่ได้โหลดอยู่ตอนนี้'));
+    if (j.queued) parts.push(T('รอคิว') + ' ' + j.queued);
+    parts.push(T('รอดึงเข้าโปรแกรม') + ' ' + j.inbox);
+    parts.push(T('โหลดแล้วทั้งหมด') + ' ' + j.fetched);
+    el.textContent = parts.join(' · '); el.hidden = false;
+  } catch (e) { el.textContent = T('เช็กสถานะเซิร์ฟเวอร์ไม่ได้'); el.hidden = false; }
+}
+function setRefPage(on) { HOME.ref = !!on; clearInterval(_refStatT); if (on) { refStatus(); _refStatT = setInterval(refStatus, 8000); } else { const e = $('#refStat'); if (e) e.hidden = true; } $('#homeMain').hidden = !!on; $('#refPage').hidden = !on; if (on) { const q = $('#refQ'); if (q) q.value = ''; } renderRefLib(); const w = $('#home'); if (w) w.scrollTop = 0; }
 function hideHome() { HOME.open = false; $('#home').hidden = true; HOME.started = true; }
 
 async function renderHome() {
@@ -3124,7 +3148,7 @@ async function srvInboxImport(opts) {
   _inboxBusy = true; let n = 0, i = 0;
   try {
     for (const f of list) {
-      i++; toast(`กำลังดึงคลิปจากกล่องรับ (${i}/${list.length}) ${f.name}`, 60000);
+      i++; if (!opts.silent) toast(`กำลังดึงคลิปจากกล่องรับ (${i}/${list.length}) ${f.name}`, 60000);
       try {
         const r = await srvFetch('/inbox/' + srvId(f.name)); if (!r.ok) continue;
         const blob = await r.blob(); const file = new File([blob], f.name, { type: blob.type || 'video/mp4' });
@@ -3133,13 +3157,23 @@ async function srvInboxImport(opts) {
       } catch (e) { console.warn('srvInboxImport', e); }
     }
   } finally { _inboxBusy = false; }
-  toast(n ? `ดึงคลิปเข้ามาแล้ว ${n} คลิป (อยู่ในคลังอ้างอิงที่หน้าโปรเจกต์)` : 'ดึงคลิปจากกล่องรับไม่สำเร็จ', 5000); if (n && HOME.open) renderHome();
+  if (!opts.silent || n) toast(n ? `ดึงคลิปเข้ามาแล้ว ${n} คลิป (อยู่ในคลังอ้างอิงที่หน้าโปรเจกต์)` : 'ดึงคลิปจากกล่องรับไม่สำเร็จ', 5000); if (n && HOME.open) renderHome();
+  if (n && typeof renderRefLib === 'function') renderRefLib();
   return n;
 }
 async function srvInboxAuto() {         // on start-up: desktop pulls new clips by itself, phones only get a hint (mobile data / small screen)
   const list = await srvInboxList(); if (!list || !list.length) return;
   if (IS_PHONE()) { toast(`มีคลิปใหม่ ${list.length} คลิปรอในกล่องรับ — เปิด 🔬 วิเคราะห์ เพื่อดึงเข้า`, 8000); return; }
   await srvInboxImport({ quiet: true });
+}
+// v1.34: while the editor stays open on a desktop, check the server inbox every minute and pull new reference clips in by itself (no button needed)
+let _inboxTimer = null;
+function srvInboxWatch() {
+  if (_inboxTimer || IS_PHONE()) return;
+  _inboxTimer = setInterval(async () => {
+    if (document.hidden || _inboxBusy || !srvOn()) return;
+    const l = await srvInboxList(); if (l && l.length) await srvInboxImport({ quiet: true, silent: true });
+  }, 60000);
 }
 // ----- proxy copies (v1.19): light 540p copies made by the shop server, used for preview on phones -----
 const IS_PHONE = () => matchMedia('(max-width:820px)').matches || matchMedia('(pointer:coarse)').matches;
@@ -5707,7 +5741,7 @@ async function init() {
     else if (e.key === 'Home') { pause(); seek(0); }
   });
   initSplitters(); initToolbar();
-  initHome(); await showHome(); if (srvOn()) srvPing().then(ok => ok && srvLoadSizes()).then(() => srvAdoptProxies()).then(() => srvInboxAuto()).catch(() => { });
+  initHome(); await showHome(); if (srvOn()) srvPing().then(ok => ok && srvLoadSizes()).then(() => srvAdoptProxies()).then(() => srvInboxAuto()).then(() => srvInboxWatch()).catch(() => { });
   tick();
   window.__ready = true;
 }

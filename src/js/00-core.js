@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.33
-// APP_VERSION_PREV : 1.32
-// APP_VERSION_PREV_OLDER : 1.31
+// APP_VERSION  : 1.34
+// APP_VERSION_PREV : 1.33
+// APP_VERSION_PREV_OLDER : 1.32
+// 1.34 : the editor now checks the shop-server inbox every minute while open (desktop) and pulls new reference clips into the library by itself — no need to press the 📥 button
 // 1.33 : Home shows only the projects; the reference-video library moved to its own page (one button with the clip count -> library page with back button and a search box), so 100-200 clips no longer crowd the Home page; ref cards show a Thai/Lao tag; N8N pick = top 20 Thai by plays (Lao list has no view counts)
 // 1.32 : per-project media bin — a new project shows only its own media (D.bin = ids imported/added in that project + ids used by its clips); media from other projects live under 📂 older files (re-add with one tap, or delete for good); the × on a bin item removes it from this project only; AI/food/analyzer lists use the project's media only
 // 1.31 : reference-video library kept apart from projects (Home page 📚 section; not in the media bin, not synced, not used by AI cut-it-all; clips pulled from the server inbox and files named <tiktok id>.mp4 are moved there automatically); media bin grid auto-fills columns (more columns + smaller thumbs when the panel is widened, CapCut-style); thumbnails 360 px / q.85 (old ones upgraded in the background); Home project cards about half the size
@@ -39,7 +40,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.33';
+const APP_VERSION = '1.34';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];

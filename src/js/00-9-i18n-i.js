@@ -20,4 +20,10 @@ I18N_ROWS.push(
   ['ไว้ให้ AI เรียนรู้แนวตัดต่อ — แยกจากโปรเจกต์', 'For the AI to learn editing styles — kept apart from projects', 'ໄວ້ໃຫ້ AI ຮຽນແນວຕັດຕໍ່ — ແຍກຈາກໂປຣເຈັກ'],
   ['กลับหน้าโปรเจกต์', 'Back to projects', 'ກັບໄປໜ້າໂປຣເຈັກ'],
   ['ค้นหาคลิปอ้างอิง…', 'Search reference clips…', 'ຄົ້ນຫາຄລິບອ້າງອີງ…'],
+  ['⏬ เซิร์ฟเวอร์กำลังโหลด', '⏬ Server is downloading', '⏬ ເຊີບເວີກຳລັງໂຫຼດ'],
+  ['เซิร์ฟเวอร์ไม่ได้โหลดอยู่ตอนนี้', 'Server is not downloading right now', 'ເຊີບເວີບໍ່ໄດ້ໂຫຼດຢູ່ຕອນນີ້'],
+  ['รอคิว', 'Queued', 'ລໍຄິວ'],
+  ['รอดึงเข้าโปรแกรม', 'Waiting to be pulled in', 'ລໍດຶງເຂົ້າໂປຣແກຣມ'],
+  ['โหลดแล้วทั้งหมด', 'Downloaded in total', 'ໂຫຼດແລ້ວທັງໝົດ'],
+  ['เช็กสถานะเซิร์ฟเวอร์ไม่ได้', 'Cannot check the server status', 'ກວດສະຖານະເຊີບເວີບໍ່ໄດ້'],
 );
