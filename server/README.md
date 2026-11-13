@@ -28,3 +28,7 @@
 - `inbox/` คลิปที่เซิร์ฟเวอร์โหลดมาให้ (ชื่อ `<video_id>.mp4`) รอโปรแกรมตัดต่อดึงเข้าลิสต์มีเดีย · ดึงแล้วย้ายไป `inbox/done/`
 - `POST /fetch` `{url, id}` — ให้เซิร์ฟเวอร์โหลดคลิป TikTok หนึ่งคลิปด้วย yt-dlp (ดาวน์โหลด yt-dlp.exe ลง `tools` เองครั้งแรก) · `GET /fetch` ดูสถานะ+log
 - ชุดอัตโนมัติด้วย N8N ดูโฟลเดอร์ `n8n/`
+
+
+## Fonts (v1.49+)
+The server also answers `GET /fonts/<name>.woff2` (public Lao fonts, no token). It serves `app/fonts/` first; a missing file is pulled once from GitHub (`SK_FONT_URL` to change the source) and cached there. You can also just copy the repo's `fonts` folder into `app/fonts/`.

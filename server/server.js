@@ -176,6 +176,8 @@ function ftEnqueue(id, url) {
 const APP_DIR = path.join(__dirname, 'app'); fs.mkdirSync(APP_DIR, { recursive: true });
 const APP_FILE = path.join(APP_DIR, 'index.html');
 const APP_SRC = process.env.SK_APP_URL || 'https://raw.githubusercontent.com/souliya8470/sykhai-editor/main/index.html';
+const FONT_DIR = path.join(APP_DIR, 'fonts'); fs.mkdirSync(FONT_DIR, { recursive: true });
+const FONT_SRC = process.env.SK_FONT_URL || 'https://raw.githubusercontent.com/souliya8470/sykhai-editor/main/fonts/';
 let refreshing = false;
 async function refreshApp(force) {          // keep a local copy of the editor page; falls back to the old copy if GitHub is unreachable
   if (refreshing) return; let age = Infinity; try { age = Date.now() - fs.statSync(APP_FILE).mtimeMs; } catch (e) { }
@@ -229,6 +231,17 @@ const server = http.createServer(async (req, res) => {
       refreshApp(false);
       html = html.replace('<head>', '<head><meta name="sk-server" content="1">');
       return send(res, 200, html, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+    }
+    if (req.method === 'GET' && parts.length === 2 && parts[0] === 'fonts' && /^[A-Za-z0-9_-]+\.woff2$/.test(parts[1])) {   // Lao font files for the editor page (public OFL fonts, no secrets): local copy first, else pulled once from GitHub and cached
+      const fp = path.join(FONT_DIR, parts[1]);
+      if (!fs.existsSync(fp)) {
+        try {
+          const r = await fetch(FONT_SRC + parts[1], { signal: AbortSignal.timeout(20000) }); if (!r.ok) throw new Error('HTTP ' + r.status);
+          const b = Buffer.from(await r.arrayBuffer()); if (b.length < 1000 || b.toString('latin1', 0, 4) !== 'wOF2') throw new Error('unexpected content');
+          fs.writeFileSync(fp + '.tmp', b); fs.renameSync(fp + '.tmp', fp);
+        } catch (e) { return send(res, 404, 'font not found'); }
+      }
+      return send(res, 200, fs.readFileSync(fp), { 'Content-Type': 'font/woff2', 'Cache-Control': 'public, max-age=31536000, immutable' });
     }
     if ((req.headers['x-token'] || u.searchParams.get('t')) !== TOKEN) return send(res, 401, 'unauthorized');
     const [kind, id] = parts;
