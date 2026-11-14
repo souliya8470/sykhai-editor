@@ -52,5 +52,8 @@ I18N_ROWS.push(
   ['3D (ขอบหนาหลังตัวอักษร)', '3D (thick edge behind the letters)', '3D (ຂອບໜາຢູ່ຫຼັງຕົວອັກສອນ)'],
   ['ความลึก', 'Depth', 'ຄວາມເລິກ'],
   ['เปลี่ยนลุค (แพ็ก)', 'Change look (pack)', 'ປ່ຽນແບບ (ແພັກ)'],
-  ['ไล่สี / ขอบ / 3D', 'Gradient / outline / 3D', 'ໄລ່ສີ / ຂອບ / 3D']
+  ['ไล่สี / ขอบ / 3D', 'Gradient / outline / 3D', 'ໄລ່ສີ / ຂອບ / 3D'],
+  // v1.58: shop Lao fonts
+  ['ฟอนต์ที่เพิ่มจากเครื่องร้านยังไม่ได้ตรวจสิทธิ์การใช้เชิงพาณิชย์', 'Fonts added from the shop PC have not been checked for commercial-use rights', 'ຟອນທີ່ເພີ່ມຈາກເຄື່ອງຮ້ານຍັງບໍ່ໄດ້ກວດສິດການນຳໃຊ້ເຊິງການຄ້າ'],
+  ['ฟอนต์นี้อยู่บนเซิร์ฟเวอร์ร้าน — ต้องเชื่อมต่อเซิร์ฟเวอร์ก่อน (⚙ ตั้งค่า)', 'This font lives on the shop server — connect the server first (⚙ Settings)', 'ຟອນນີ້ຢູ່ເທິງເຊີບເວີຮ້ານ — ຕ້ອງເຊື່ອມຕໍ່ເຊີບເວີກ່ອນ (⚙ ຕັ້ງຄ່າ)']
 );

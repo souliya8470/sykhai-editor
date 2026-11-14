@@ -22,7 +22,7 @@ const capLook = id => CAP_LOOKS.find(l => l[0] === id) || CAP_LOOKS[0];
 function capItem(text, extra) {   // a caption text item (not yet on the timeline) in the chosen look
   const l = capLook(CAPS.look); const o = Object.assign({ sub: 1, anim: { in: 'none', out: 'none', d: 0 }, reveal: 0, maxW: .9 }, l[3], { ay: CAPS.pos }, extra || {});
   const it = mkText(l[2], text, 0, 3, o); it.color2 = CAPS.color || l[4];
-  if (CAPS.font && LF_BY[CAPS.font]) { it.font = lfStack(CAPS.font); if (LF_BY[CAPS.font].cat !== 'formal') it.weight = 400; }   // v1.55: font from the Lao font library
+  if (CAPS.font && LF_BY[CAPS.font]) { it.font = lfStack(CAPS.font); if (!LF_W[CAPS.font]) it.weight = 400; }   // v1.55: font from the Lao font library
   if (CAPS.anim && CAPS.anim !== 'none' && TAX_BY[CAPS.anim]) it.tanim = { id: CAPS.anim, d: Math.min(TAX_BY[CAPS.anim].d, .7), mode: TAX_BY[CAPS.anim].mode };
   return it;
 }
