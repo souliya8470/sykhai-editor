@@ -192,7 +192,7 @@ async function refreshApp(force) {          // keep a local copy of the editor p
 const sha = s => crypto.createHash('sha1').update(String(s)).digest('hex');
 const safeName = s => String(s).replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 120);
 const fileName = s => String(s).replace(/[\\\/:*?"<>|\x00-\x1f]/g, '_').replace(/^\.+/, '_').slice(0, 150) || 'video';   // keeps Thai/Lao letters
-const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': 'GET,PUT,POST,HEAD,DELETE,OPTIONS', 'Access-Control-Allow-Private-Network': 'true', 'Access-Control-Expose-Headers': 'x-name,x-type,x-size,content-length,content-range', 'Access-Control-Max-Age': '600' };
+const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'x-token, x-name, x-type, content-type, range, accept', 'Access-Control-Allow-Methods': 'GET,PUT,POST,HEAD,DELETE,OPTIONS', 'Access-Control-Allow-Private-Network': 'true', 'Access-Control-Expose-Headers': 'x-name,x-type,x-size,content-length,content-range', 'Access-Control-Max-Age': '600' };
 const send = (res, code, body, extra) => { const b = body == null ? '' : (typeof body === 'string' || Buffer.isBuffer(body) ? body : JSON.stringify(body)); res.writeHead(code, Object.assign({ 'Content-Type': typeof body === 'object' && !Buffer.isBuffer(body) ? 'application/json' : 'text/plain; charset=utf-8' }, cors, extra)); res.end(b); };
 const readJson = (req, limit = 80e6) => new Promise((res, rej) => { const c = []; let n = 0; req.on('data', d => { n += d.length; if (n > limit) { rej(new Error('too large')); req.destroy(); } else c.push(d); }); req.on('end', () => { try { res(JSON.parse(Buffer.concat(c).toString('utf8'))); } catch (e) { rej(e); } }); req.on('error', rej); });
 const readMeta = f => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return null; } };
@@ -224,7 +224,7 @@ function saveStream(req, res, dst, metaPath, meta, onDone) {
 
 const server = http.createServer(async (req, res) => {
   try {
-    if (req.method === 'OPTIONS') return send(res, 204, '');
+    if (req.method === 'OPTIONS') { const rh = req.headers['access-control-request-headers']; return send(res, 204, '', rh ? { 'Access-Control-Allow-Headers': rh } : {}); }   // v1.54: list/echo the headers instead of '*' — iPhone Safari does not honour '*' ("Load failed")
     const u = new URL(req.url, 'http://x'); const parts = u.pathname.split('/').filter(Boolean).map(decodeURIComponent);
     if (req.method === 'GET' && (u.pathname === '/' || u.pathname === '/index.html')) {   // the editor page itself (no secrets inside)
       let html; try { html = fs.readFileSync(APP_FILE, 'utf8'); } catch (e) { return send(res, 503, 'ยังไม่มีไฟล์โปรแกรมตัดต่อ (app/index.html) — รอสักครู่แล้วรีเฟรช'); }
