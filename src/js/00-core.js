@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.55
-// APP_VERSION_PREV : 1.54
-// APP_VERSION_PREV_OLDER : 1.53
+// APP_VERSION  : 1.56
+// APP_VERSION_PREV : 1.55
+// APP_VERSION_PREV_OLDER : 1.54
+// 1.56 : 🚀 Auto Cut (AI tab, first card) — one button: transcribe once (Lao = Gemini, Thai = Whisper; cached) -> cut silences + exact-position filler words (+ retakes when a Claude key exists) -> animated captions (every word, or only the key words / prices chosen by AI; look + 1/2 rows chosen in the dialog, settings remembered) -> result dialog with “watch” and “undo everything” (one click back to before Auto Cut). Also: transcripts are now shared through the shop server (server.js /tr, folder <SykhaiEditor>/transcripts): saved there when transcribed, pulled by every other computer / phone that opens the same clip (name + size + length), checked right before any Gemini call and at start-up; ☁ sync button in “saved transcripts”. Needs the new server.js (restart start.bat once); without it everything still works from the browser cache.
 // 1.55 : auto-captions — new options: 2 stacked rows for fast speech (the second row keeps the normal colour, only the spoken word is highlighted), minimum display time (a short caption is glued to the next one or held on screen until the next caption starts), keyword-only mode (Gemini reads the saved transcript and returns the key phrases of each sentence; the answer is saved with the transcript so it is not asked twice), calm default animations (new “soft” text animations), and a font choice from the Lao font library inside the caption dialog.
 // 1.54 : server.js CORS — the shop server now lists / echoes the allowed request headers instead of '*' (iPhone Safari may refuse '*' and then every call from editor.touktashop.online to the shop server fails with “Load failed”); the editor page itself is unchanged except for the new number. The server only picks this up after start.bat is restarted
 // 1.53 : iPhone — fields inside dialogs are 16 px on touch screens, so Safari no longer zooms the whole page (and leaves it scrolled sideways with the Save button off-screen) when a field such as the server address / password is tapped
@@ -61,7 +62,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.55';
+const APP_VERSION = '1.56';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];

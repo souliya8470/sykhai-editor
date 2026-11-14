@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.55</title>
+<title>Sykhai Editor v1.56</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -1945,14 +1945,48 @@ I18N_ROWS.push(
   ['วันนี้มีโปรพิเศษมาก ซื้อเลย รับฟรีของแถมทันที ส่งฟรีทั่วเวียงจันทน์', 'Special deal today, buy now, free gift right away, free delivery all over Vientiane', 'ມື້ນີ້ມີໂປຮພິເສດຫຼາຍ ຊື້ເລີຍ ຮັບຟຣີຂອງແຖມທັນທີ ສົ່ງຟຣີທົ່ວວຽງຈັນ'],
 );
 
+// ---- 00-9-i18n-l.js ----
+// i18n rows L — v1.56: Auto Cut one-button + transcripts shared with the shop server   [thai, english, lao]
+I18N_ROWS.push(
+  ['Auto Cut — ปุ่มเดียว', 'Auto Cut — one button', 'Auto Cut — ປຸ່ມດຽວ'],
+  ['ตัดช่วงเงียบ คำอ้ำอึ้ง ใส่ซับแอนิเมชันให้อัตโนมัติ แล้วเปิดให้ตรวจก่อนโพสต์ (ยกเลิกได้)', 'Cuts silences and filler words and adds animated captions automatically, then leaves it open for you to check before posting (can be undone)', 'ຕັດຊ່ວງງຽບ ຄຳລັງເລ ແລະໃສ່ຄຳບັນຍາຍແອນິເມຊັນໃຫ້ອັດຕະໂນມັດ ແລ້ວເປີດໄວ້ໃຫ້ກວດກ່ອນໂພສ (ຍົກເລີກໄດ້)'],
+  ['เริ่ม Auto Cut', 'Start Auto Cut', 'ເລີ່ມ Auto Cut'],
+  ['เลือกสิ่งที่ให้ทำ แล้วกดเริ่ม · ถอดเสียงแค่ 1 ครั้ง (เก็บไว้ ไม่ถอดซ้ำ) · ทำเสร็จแล้วกดยกเลิกทั้งหมดได้', 'Choose what to do, then press Start · the speech is transcribed only once (kept, never transcribed again) · you can undo everything afterwards', 'ເລືອກສິ່ງທີ່ຕ້ອງການໃຫ້ເຮັດ ແລ້ວກົດເລີ່ມ · ຖອດສຽງພຽງເທື່ອດຽວ (ເກັບໄວ້ ບໍ່ຖອດຊ້ຳ) · ເຮັດແລ້ວຍົກເລີກທັງໝົດໄດ້'],
+  ['ตัดคำอ้ำอึ้ง (เอ่อ อืม)', 'Cut filler words (uh, um)', 'ຕັດຄຳລັງເລ (ເອີ ອືມ)'],
+  ['ตัดเทคพูดผิด/พูดซ้ำ (ต้องใช้ Claude API key)', 'Cut false starts / repeated takes (needs a Claude API key)', 'ຕັດຕອນເວົ້າຜິດ/ເວົ້າຊ້ຳ (ຕ້ອງມີ Claude API key)'],
+  ['ใส่ซับแอนิเมชัน', 'Add animated captions', 'ໃສ່ຄຳບັນຍາຍແອນິເມຊັນ'],
+  ['หน้าตาซับ', 'Caption look', 'ໜ້າຕາຄຳບັນຍາຍ'],
+  ['ไม่ได้ตัดอะไร (ไม่พบช่วงเงียบ/คำอ้ำอึ้ง)', 'Nothing was cut (no silences / filler words found)', 'ບໍ່ໄດ້ຕັດຫຍັງ (ບໍ່ພົບຊ່ວງງຽບ/ຄຳລັງເລ)'],
+  ['ลดไป', 'shortened by', 'ສັ້ນລົງ'],
+  ['ไม่พบข้อความพูดในคลิปนี้ จึงยังไม่ได้ใส่ซับ', 'No speech was found in this clip, so no captions were added', 'ບໍ່ພົບຂໍ້ຄວາມເວົ້າໃນຄລິບນີ້ ຈຶ່ງຍັງບໍ່ໄດ້ໃສ່ຄຳບັນຍາຍ'],
+  ['AI ไม่พบคำสำคัญในคลิปนี้ จึงยังไม่ได้ใส่ซับ', 'The AI found no key words in this clip, so no captions were added', 'AI ບໍ່ພົບຄຳສຳຄັນໃນຄລິບນີ້ ຈຶ່ງຍັງບໍ່ໄດ້ໃສ່ຄຳບັນຍາຍ'],
+  ['AI เลือกคำสำคัญไม่ได้ จึงใส่ซับทุกคำที่พูดแทน', 'The AI could not pick key words, so every spoken word was captioned instead', 'AI ເລືອກຄຳສຳຄັນບໍ່ໄດ້ ຈຶ່ງໃສ່ຄຳບັນຍາຍທຸກຄຳທີ່ເວົ້າແທນ'],
+  ['หาเทคที่พูดซ้ำไม่ได้ (ข้ามขั้นนี้)', 'Could not look for repeated takes (this step was skipped)', 'ຫາຕອນທີ່ເວົ້າຊ້ຳບໍ່ໄດ້ (ຂ້າມຂັ້ນຕອນນີ້)'],
+  ['ตรวจดูทั้งคลิปก่อนโพสต์ทุกครั้ง — AI อาจตัดหรือเลือกคำพลาดได้ แก้ต่อที่ไทม์ไลน์ได้เลย', 'Always watch the whole clip before posting — the AI can cut or pick the wrong word. You can keep editing on the timeline.', 'ກວດເບິ່ງທັງຄລິບກ່ອນໂພສທຸກເທື່ອ — AI ອາດຕັດ ຫຼືເລືອກຄຳຜິດໄດ້ ແກ້ໄຂຕໍ່ໃນໄທມ໌ໄລນ໌ໄດ້ເລີຍ'],
+  ['ดูผลลัพธ์', 'Watch result', 'ເບິ່ງຜົນລັບ'],
+  ['ยกเลิกทั้งหมด', 'Undo everything', 'ຍົກເລີກທັງໝົດ'],
+  ['มีการแก้ไขต่อจาก Auto Cut แล้ว — ใช้ปุ่ม ↶ ย้อนกลับทีละขั้นแทน', 'There are edits after Auto Cut — use the ↶ undo button step by step instead', 'ມີການແກ້ໄຂຕໍ່ຈາກ Auto Cut ແລ້ວ — ໃຫ້ໃຊ້ປຸ່ມ ↶ ຍ້ອນກັບເທື່ອລະຂັ້ນແທນ'],
+  ['ยกเลิก Auto Cut แล้ว', 'Auto Cut undone', 'ຍົກເລີກ Auto Cut ແລ້ວ'],
+  ['กำลังเตรียมคลิป…', 'Preparing the clip…', 'ກຳລັງກຽມຄລິບ…'],
+  ['กำลังหาช่วงเงียบ…', 'Looking for silences…', 'ກຳລັງຊອກຫາຊ່ວງງຽບ…'],
+  ['กำลังใส่ซับ…', 'Adding captions…', 'ກຳລັງໃສ່ຄຳບັນຍາຍ…'],
+  ['Auto Cut เสร็จแล้ว', 'Auto Cut finished', 'Auto Cut ສຳເລັດແລ້ວ'],
+  ['แชร์กับเซิร์ฟเวอร์ร้านด้วย — ทุกเครื่องใช้ข้อความเดียวกัน ไม่ต้องถอดซ้ำ', 'Also shared with the shop server — every computer uses the same text, no re-transcribing', 'ແບ່ງປັນກັບເຊີເວີຮ້ານນຳ — ທຸກເຄື່ອງໃຊ້ຂໍ້ຄວາມດຽວກັນ ບໍ່ຕ້ອງຖອດຊ້ຳ'],
+  ['ติดต่อเซิร์ฟเวอร์ร้านไม่ได้ตอนนี้ — เก็บในเครื่องนี้ก่อน แล้วจะซิงค์ให้เมื่อต่อได้', 'The shop server is not reachable right now — kept on this device for now, it will sync when connected', 'ຕິດຕໍ່ເຊີເວີຮ້ານບໍ່ໄດ້ດຽວນີ້ — ເກັບໃນເຄື່ອງນີ້ກ່ອນ ແລ້ວຈະຊິງຄ໌ໃຫ້ເມື່ອເຊື່ອມຕໍ່ໄດ້'],
+  ['ยังไม่ได้ต่อเซิร์ฟเวอร์ร้าน — ข้อความเก็บเฉพาะในเครื่องนี้', 'Not connected to the shop server — the text is kept on this device only', 'ຍັງບໍ່ໄດ້ເຊື່ອມຕໍ່ເຊີເວີຮ້ານ — ຂໍ້ຄວາມເກັບສະເພາະໃນເຄື່ອງນີ້'],
+  ['ซิงค์แล้ว', 'Synced', 'ຊິງຄ໌ແລ້ວ'],
+  ['ซิงค์ไม่ได้ — ต่อเซิร์ฟเวอร์ร้านไม่ได้', 'Could not sync — the shop server is not reachable', 'ຊິງຄ໌ບໍ່ໄດ້ — ເຊື່ອມຕໍ່ເຊີເວີຮ້ານບໍ່ໄດ້'],
+);
+
 // ---- 00-core.js ----
 'use strict';
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.55
-// APP_VERSION_PREV : 1.54
-// APP_VERSION_PREV_OLDER : 1.53
+// APP_VERSION  : 1.56
+// APP_VERSION_PREV : 1.55
+// APP_VERSION_PREV_OLDER : 1.54
+// 1.56 : 🚀 Auto Cut (AI tab, first card) — one button: transcribe once (Lao = Gemini, Thai = Whisper; cached) -> cut silences + exact-position filler words (+ retakes when a Claude key exists) -> animated captions (every word, or only the key words / prices chosen by AI; look + 1/2 rows chosen in the dialog, settings remembered) -> result dialog with “watch” and “undo everything” (one click back to before Auto Cut). Also: transcripts are now shared through the shop server (server.js /tr, folder <SykhaiEditor>/transcripts): saved there when transcribed, pulled by every other computer / phone that opens the same clip (name + size + length), checked right before any Gemini call and at start-up; ☁ sync button in “saved transcripts”. Needs the new server.js (restart start.bat once); without it everything still works from the browser cache.
 // 1.55 : auto-captions — new options: 2 stacked rows for fast speech (the second row keeps the normal colour, only the spoken word is highlighted), minimum display time (a short caption is glued to the next one or held on screen until the next caption starts), keyword-only mode (Gemini reads the saved transcript and returns the key phrases of each sentence; the answer is saved with the transcript so it is not asked twice), calm default animations (new “soft” text animations), and a font choice from the Lao font library inside the caption dialog.
 // 1.54 : server.js CORS — the shop server now lists / echoes the allowed request headers instead of '*' (iPhone Safari may refuse '*' and then every call from editor.touktashop.online to the shop server fails with “Load failed”); the editor page itself is unchanged except for the new number. The server only picks this up after start.bat is restarted
 // 1.53 : iPhone — fields inside dialogs are 16 px on touch screens, so Safari no longer zooms the whole page (and leaves it scrolled sideways with the Save button off-screen) when a field such as the server address / password is tapped
@@ -2009,7 +2043,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.55';
+const APP_VERSION = '1.56';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -5237,7 +5271,7 @@ async function trcPut(rec) {
   catch (e) { console.warn('trcPut', e); }
 }
 async function trcDel(key) {
-  TRC.delete(key);
+  TRC.delete(key); try { if (SRV.up) srvFetch('/tr/' + encodeURIComponent(key), { method: 'DELETE' }).catch(() => { }); } catch (e) { }
   try { const db = await trcDb(); await new Promise(res => { const tx = db.transaction('tr', 'readwrite'); tx.objectStore('tr').delete(key); tx.oncomplete = res; tx.onerror = res; }); db.close(); } catch (e) { }
 }
 function trcRec(m) {      // exact key first; otherwise same file name + (almost) same length, e.g. a re-saved copy
@@ -5248,7 +5282,7 @@ function trcRec(m) {      // exact key first; otherwise same file name + (almost
 function trcSave(m, tr) {
   const k = trKey(m); if (!k || !tr || !tr.segs) return; let rec = TRC.get(k);
   if (!rec) { rec = { key: k, name: m.name, size: m.file.size, duration: m.duration, tr: {} }; TRC.set(k, rec); }
-  rec.tr[trVar(tr.lang, tr.engine)] = tr; rec.savedAt = Date.now(); TRC_SAVED.add(tr); trcPut(rec);
+  rec.tr[trVar(tr.lang, tr.engine)] = tr; rec.savedAt = Date.now(); TRC_SAVED.add(tr); trcPut(rec); trcPush(rec);
 }
 function trcFind(m, lang, engine) { const r = trcRec(m); return r && r.tr[trVar(lang, engine)] || null; }
 function trcAny(m, lang) { const r = trcRec(m); if (!r) return null; const ks = Object.keys(r.tr); const k = ks.find(x => x.startsWith(lang + ':')) || ks[0]; return k ? r.tr[k] : null; }
@@ -5267,17 +5301,57 @@ async function trcImport(files) {
   }
   return n;
 }
+
+// ---------- v1.56: shared copy on the shop server ----------
+//  A transcript is saved in this browser AND on the shop server (<SykhaiEditor>/transcripts). When any other computer / phone opens the same clip
+//  (same name + size + length) it takes the text from the server instead of sending the video to Gemini again. Works only while the server is reachable;
+//  otherwise everything keeps working from this browser and syncs the next time the server is reachable.
+const TRS = { busy: null, at: 0, last: null };
+async function trcPush(rec) {
+  try {
+    if (!rec || !srvOn() || !SRV.up) return false;
+    const r = await srvFetch('/tr/' + encodeURIComponent(rec.key), { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ key: rec.key, name: rec.name, size: rec.size, duration: rec.duration, savedAt: rec.savedAt, tr: rec.tr }) });
+    return r.ok;
+  } catch (e) { return false; }
+}
+async function trcSyncRun() {
+  const res = { pulled: 0, pushed: 0, ok: false };
+  if (!srvOn()) return res; if (!SRV.up && !(await srvPing())) return res;
+  const r = await srvFetch('/tr'); if (!r.ok) return res; const list = await r.json(); if (!Array.isArray(list)) return res;
+  const remote = new Map(list.map(x => [x.key, x]));
+  for (const x of list) {            // server -> here: records or variants this browser does not have yet
+    const loc = TRC.get(x.key); const have = loc ? Object.keys(loc.tr) : [];
+    if (!(x.v || []).some(v => !have.includes(v))) continue;
+    try {
+      const rr = await srvFetch('/tr/' + encodeURIComponent(x.key)); if (!rr.ok) continue; const rec = await rr.json(); if (!rec || !rec.key || !rec.tr) continue;
+      let cur = TRC.get(rec.key); if (!cur) { cur = { key: rec.key, name: rec.name, size: rec.size, duration: rec.duration, savedAt: rec.savedAt || Date.now(), tr: {} }; TRC.set(cur.key, cur); }
+      for (const [k, v] of Object.entries(rec.tr)) if (!cur.tr[k] && v && v.segs) { cur.tr[k] = v; TRC_SAVED.add(v); }
+      cur.savedAt = Math.max(cur.savedAt || 0, rec.savedAt || 0); await trcPut(cur); res.pulled++;
+    } catch (e) { console.warn('trc pull', e); }
+  }
+  for (const rec of [...TRC.values()]) {   // here -> server: records the server has never seen
+    const rv = remote.get(rec.key); const rvv = rv ? rv.v || [] : [];
+    if (Object.keys(rec.tr).some(k => !rvv.includes(k))) { if (await trcPush(rec)) res.pushed++; }
+  }
+  res.ok = true; return res;
+}
+function trcSync(force) {   // one run at a time; at most every 45 s unless forced
+  if (TRS.busy) return TRS.busy; if (!force && Date.now() - TRS.at < 45000) return Promise.resolve(TRS.last || { pulled: 0, pushed: 0, ok: false });
+  TRS.busy = trcSyncRun().catch(e => { console.warn('trcSync', e); return { pulled: 0, pushed: 0, ok: false }; }).then(r => { TRS.busy = null; TRS.at = Date.now(); TRS.last = r; return r; }); return TRS.busy;
+}
+const trcSyncQuick = () => Promise.race([trcSync(false), new Promise(res => setTimeout(() => res(null), 6000))]);   // never makes the person wait long
 function trcUI() {
   const rows = () => [...TRC.values()].sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0));
   const body = () => rows().length ? `<table class="aitbl">${rows().map((r, i) => `<tr><td translate="no">${escN(r.name)}</td><td>${Object.entries(r.tr).map(([k, v]) => `${k.split(':')[0].toUpperCase()} ${v.segs.length}`).join(' · ')}</td><td>${r.savedAt ? new Date(r.savedAt).toLocaleDateString() : ''}</td><td><button data-dl="${i}" title="ดาวน์โหลดไฟล์ข้อความ">⬇</button> <button data-rm="${i}" title="ลบข้อความนี้">🗑</button></td></tr>`).join('')}</table>` : `<div class="hint">ยังไม่มีข้อความที่ถอดเก็บไว้</div>`;
-  aiDlg('ข้อความที่ถอดเก็บไว้', `<div class="hint">เก็บอัตโนมัติตามชื่อไฟล์วิดีโอ · คลิปเดิมไม่ต้องถอดซ้ำ (ไม่เสียเงิน API) · ใช้ได้ทุกโปรเจกต์</div><div id="trcList">${body()}</div>
-    <div class="row"><button id="trcImp">นำเข้าไฟล์ข้อความ (.json)</button><button id="trcAll">⬇ ดาวน์โหลดทั้งหมด</button><span class="sp"></span><input type="file" id="trcFile" accept=".json,application/json" multiple hidden></div>`, root => {
+  aiDlg('ข้อความที่ถอดเก็บไว้', `<div class="hint">เก็บอัตโนมัติตามชื่อไฟล์วิดีโอ · คลิปเดิมไม่ต้องถอดซ้ำ (ไม่เสียเงิน API) · ใช้ได้ทุกโปรเจกต์</div><div class="hint" id="trcSrv">${srvOn() ? (SRV.up ? '☁ ' + T('แชร์กับเซิร์ฟเวอร์ร้านด้วย — ทุกเครื่องใช้ข้อความเดียวกัน ไม่ต้องถอดซ้ำ') : '☁ ' + T('ติดต่อเซิร์ฟเวอร์ร้านไม่ได้ตอนนี้ — เก็บในเครื่องนี้ก่อน แล้วจะซิงค์ให้เมื่อต่อได้')) : T('ยังไม่ได้ต่อเซิร์ฟเวอร์ร้าน — ข้อความเก็บเฉพาะในเครื่องนี้')}</div><div id="trcList">${body()}</div>
+    <div class="row"><button id="trcImp">นำเข้าไฟล์ข้อความ (.json)</button><button id="trcAll">⬇ ดาวน์โหลดทั้งหมด</button><button id="trcSyn">☁ ซิงค์เซิร์ฟเวอร์</button><span class="sp"></span><input type="file" id="trcFile" accept=".json,application/json" multiple hidden></div>`, root => {
     const redraw = () => { $('#trcList', root).innerHTML = body(); };
     root.onclick = e => {
       const dl = e.target.closest('[data-dl]'), rm = e.target.closest('[data-rm]');
       if (dl) trcDownload(rows()[+dl.dataset.dl]);
       else if (rm) { const r = rows()[+rm.dataset.rm]; if (confirm(T('ลบข้อความที่ถอดของ') + ' ' + r.name + ' ?')) { trcDel(r.key).then(redraw); } }
     };
+    $('#trcSyn', root).onclick = async () => { const b = $('#trcSyn', root); b.disabled = true; const r = await trcSync(true); b.disabled = false; redraw(); toast(r.ok ? T('ซิงค์แล้ว') + ` · ⬇ ${r.pulled} · ⬆ ${r.pushed}` : T('ซิงค์ไม่ได้ — ต่อเซิร์ฟเวอร์ร้านไม่ได้')); };
     $('#trcImp', root).onclick = () => $('#trcFile', root).click();
     $('#trcFile', root).onchange = async e => { const n = await trcImport([...e.target.files]); toast(n ? 'นำเข้าข้อความสำเร็จ' : 'ไฟล์ไม่ถูกต้อง'); redraw(); };
     $('#trcAll', root).onclick = () => { const all = rows(); if (!all.length) return; const blob = new Blob([JSON.stringify(all.map(r => ({ sykhaiTranscript: 1, name: r.name, size: r.size, duration: r.duration, savedAt: r.savedAt, tr: r.tr })))], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'sykhai-transcripts.json'; document.body.appendChild(a); a.click(); a.remove(); };
@@ -5430,6 +5504,7 @@ function groupWords(words) {
 }
 const trPrompt = lname => `Transcribe this ${lname}-language audio exactly as spoken, in ${lname} script, no translation. Split it into short natural spoken phrases (about 2-7 seconds each). For each phrase give start and end time in seconds measured from the beginning of THIS audio clip (decimal numbers). Return only JSON: {"segments":[{"start":0.0,"end":2.4,"text":"..."}]}`;
 async function transcribe(m, lang, engine, force) {
+  if (!force) { await trcSyncQuick(); }   // v1.56: look on the shop server first — another computer may already have transcribed this clip
   if (!force) { const hit = trcFind(m, lang, engine); if (hit) { aiProg('ใช้ข้อความที่ถอดเก็บไว้แล้ว (ไม่เสียเงิน API)', 100); setTr(m.id, hit); return hit; } }
   if (!m.pcm16) throw new Error('คลิปนี้ไม่มีเสียง หรือยังวิเคราะห์เสียงไม่เสร็จ');
   if (lang === 'th' && engine === 'whisper') {
@@ -5725,6 +5800,7 @@ function renderAiPane() {
   <div class="fld col"><label>คลิปที่ใช้</label><select id="aiClip">${vids.map(m => `<option translate="no" value="${m.id}" ${m.id === keep ? 'selected' : ''}>${esc(m.name)}${getTr(m.id) ? ' ✔' : ''}</option>`).join('') || '<option value="">(ยังไม่มีคลิป)</option>'}</select></div>
   <div class="fld"><label>ภาษาในคลิป</label><select id="aiLang"><option value="lo">ลาว (Gemini)</option><option value="th">ไทย</option></select></div>
   <div class="fld"><label>ตัวถอดเสียงไทย</label><select id="aiEng"><option value="whisper">Whisper ในเครื่อง (ฟรี แม่น)</option><option value="gemini">Gemini</option></select></div>
+  <div class="aicard"><h4>🚀 Auto Cut — ปุ่มเดียว</h4><div class="mini">ตัดช่วงเงียบ คำอ้ำอึ้ง ใส่ซับแอนิเมชันให้อัตโนมัติ แล้วเปิดให้ตรวจก่อนโพสต์ (ยกเลิกได้)</div><button class="wide primary" id="acBtn">เริ่ม Auto Cut</button></div>
   <div class="aicard"><h4>🍜 โยนฟุตอาหาร → ปุ่มเดียว</h4><div class="mini">เลือกช่วงที่สวยที่สุดของแต่ละคลิป ตัดสั้น เรียงลำดับ ใส่สี/ทรานสิชัน/ซูม ตัดตามจังหวะเพลง</div><button class="wide primary" id="fdA">เริ่ม</button></div>
   <div class="aicard"><h4>🎵 ตัดตามบีตเพลง</h4><div class="mini">จัดจุดตัดคลิปที่มีอยู่ในไทม์ไลน์ให้ตรงจังหวะเพลงที่ใส่ไว้</div><button class="wide" id="bsA">จัดจังหวะ</button></div>
   <div class="aicard"><h4>🔬 วิเคราะห์เทคนิคตัดต่อ</h4><div class="mini">วัดจังหวะตัด ฮุก ทรานสิชัน สี เสียง จากคลิปตัวอย่าง เพื่อนำไปสร้างพรีเซ็ต</div><button class="wide" id="anA">เปิดตัววิเคราะห์</button></div>
@@ -5740,7 +5816,7 @@ function renderAiPane() {
   <div class="aicard"><h4>⑥ ให้ AI ตัดต่อ 4 แบบ</h4><div class="mini">ใช้ทุกคลิปในรายการสื่อ แล้วให้พนักงานเลือกแบบที่ชอบ</div><button class="wide primary" id="ai6">สร้าง 4 แบบ</button></div>
   <div class="hint small">ใช้ AI เดือนนี้ $${s.usd.toFixed(2)} จากเพดาน $${loadCap()}</div>`;
   const lg = localStorage.getItem('sk_lang'); if (lg) $('#aiLang').value = lg; $('#aiLang').onchange = e => localStorage.setItem('sk_lang', e.target.value);
-  $('#aiCap').onclick = capOpen; $('#aiGT').onclick = aiGemTest; $('#ai1').onclick = () => aiTranscribeUI(); $('#aiTC').onclick = trcUI; $('#ai2').onclick = aiPriceUI; $('#ai3').onclick = aiKeyPointsUI; $('#ai4a').onclick = aiSilenceUI; $('#ai4b').onclick = aiRetakeUI; $('#ai5').onclick = () => aiEnhanceUI(null); $('#ai6').onclick = aiVariantsUI; $('#aiK').onclick = aiKittiUI; $('#fdA').onclick = foodUI; $('#bsA').onclick = beatSnapTimeline; $('#anA').onclick = anUI; $('#aiA').onclick = aiCleanUI; $('#aiB').onclick = aiSubsUI;
+  $('#acBtn').onclick = acUI; $('#aiCap').onclick = capOpen; $('#aiGT').onclick = aiGemTest; $('#ai1').onclick = () => aiTranscribeUI(); $('#aiTC').onclick = trcUI; $('#ai2').onclick = aiPriceUI; $('#ai3').onclick = aiKeyPointsUI; $('#ai4a').onclick = aiSilenceUI; $('#ai4b').onclick = aiRetakeUI; $('#ai5').onclick = () => aiEnhanceUI(null); $('#ai6').onclick = aiVariantsUI; $('#aiK').onclick = aiKittiUI; $('#fdA').onclick = foodUI; $('#bsA').onclick = beatSnapTimeline; $('#anA').onclick = anUI; $('#aiA').onclick = aiCleanUI; $('#aiB').onclick = aiSubsUI;
 }
 AI.inspectorAction = (act, it) => {
   if (act === 'enhance') aiEnhanceUI(it);
@@ -6868,6 +6944,89 @@ function capInit() {
   };
 }
 
+// ---- 69-zautocut.js ----
+// ============================================================
+//  v1.56 — Auto Cut: ONE button.
+//   transcribe once (Lao = Gemini, Thai = Whisper in the browser; kept forever and shared through the shop server)
+//   -> cut silences + filler words (+ retakes when a Claude key exists)
+//   -> animated captions (every word, or only the key words / prices chosen by AI)
+//   -> the project stays open for checking; "undo everything" goes back to before Auto Cut.
+//  It only chains tools that already exist (findSilences, findFillers, cutSourceRanges, capApply, capKeywords).
+// ============================================================
+const ACUT = { o: { sil: true, min: .5, fil: true, ret: false, cap: true, look: '', rows: 1, kw: 'all' } };
+try { Object.assign(ACUT.o, JSON.parse(localStorage.getItem('sk_ac') || '{}')); } catch (e) { }
+
+function acUI() {
+  const m = selMedia(); if (!m) return toast('เลือกคลิปก่อน'); if (!m.pcm16) return toast('คลิปนี้ไม่มีเสียง หรือยังวิเคราะห์เสียงไม่เสร็จ');
+  const o = ACUT.o, hasC = !!loadKeys().claude, look = o.look || CAPS.look;
+  aiDlg('Auto Cut', `<div class="hint">เลือกสิ่งที่ให้ทำ แล้วกดเริ่ม · ถอดเสียงแค่ 1 ครั้ง (เก็บไว้ ไม่ถอดซ้ำ) · ทำเสร็จแล้วกดยกเลิกทั้งหมดได้</div>
+    <div class="fld col"><label>คลิปที่ใช้</label><div translate="no">${esc(m.name)}</div></div>
+    <div class="fld chk"><label><input type="checkbox" id="acSil" ${o.sil ? 'checked' : ''}> ✂ ตัดช่วงเงียบ</label></div>
+    <div class="fld"><label>เงียบนานกว่า (วิ)</label><input id="acMin" type="range" min=".25" max="1.5" step=".05" value="${o.min}"><output>${o.min}</output></div>
+    <div class="fld chk"><label><input type="checkbox" id="acFil" ${o.fil ? 'checked' : ''}> ✂ ตัดคำอ้ำอึ้ง (เอ่อ อืม)</label></div>
+    <div class="fld chk"><label><input type="checkbox" id="acRet" ${hasC && o.ret ? 'checked' : ''} ${hasC ? '' : 'disabled'}> ✂ ตัดเทคพูดผิด/พูดซ้ำ (ต้องใช้ Claude API key)</label></div>
+    <div class="fld chk"><label><input type="checkbox" id="acCap" ${o.cap ? 'checked' : ''}> 💬 ใส่ซับแอนิเมชัน</label></div>
+    <div class="fld"><label>หน้าตาซับ</label><select id="acLook">${CAP_LOOKS.map(l => `<option value="${l[0]}" ${l[0] === look ? 'selected' : ''}>${esc(T(l[1]))}</option>`).join('')}</select></div>
+    <div class="fld"><label>จำนวนแถว</label><select id="acRows"><option value="1" ${o.rows !== 2 ? 'selected' : ''}>1 แถว</option><option value="2" ${o.rows === 2 ? 'selected' : ''}>ซ้อน 2 แถว (คนพูดเร็ว)</option></select></div>
+    <div class="fld"><label>ข้อความที่แสดง</label><select id="acKw"><option value="all" ${o.kw !== 'key' ? 'selected' : ''}>ทุกคำที่พูด</option><option value="key" ${o.kw === 'key' ? 'selected' : ''}>เฉพาะคำสำคัญ (AI เลือก)</option></select></div>
+    <div class="row"><span class="sp"></span><button class="primary" id="acGo">เริ่ม Auto Cut</button></div>`, root => {
+    $('#acMin', root).oninput = e => { e.target.nextElementSibling.textContent = e.target.value; };
+    $('#acGo', root).onclick = () => {
+      const v = { sil: $('#acSil', root).checked, min: +$('#acMin', root).value, fil: $('#acFil', root).checked, ret: $('#acRet', root).checked, cap: $('#acCap', root).checked, look: $('#acLook', root).value, rows: +$('#acRows', root).value === 2 ? 2 : 1, kw: $('#acKw', root).value === 'key' ? 'key' : 'all' };
+      if (!v.sil && !v.fil && !v.ret && !v.cap) return toast('เลือกอย่างน้อย 1 อย่าง');
+      ACUT.o = v; try { localStorage.setItem('sk_ac', JSON.stringify(v)); } catch (e) { }
+      acRun(m, v);
+    };
+  });
+}
+
+async function acRun(m, o) {
+  if (AI.busy) return; AI.busy = true;
+  const h0 = HPOS, st = { cuts: 0, saved: 0, caps: 0, tr: 0, notes: [] };
+  try {
+    aiProg('กำลังเตรียมคลิป…', 3); ensureOnTimeline(m);
+    let tr = null;
+    if (o.fil || o.ret || o.cap) { tr = getTr(m.id) || await ensureTranscript(m); st.tr = tr.segs.length; }
+    // ---- 1) cut ----
+    const rs = [];
+    if (o.sil) { aiProg('กำลังหาช่วงเงียบ…', 55); D.items.filter(it => it.type === 'video' && it.mediaId === m.id).forEach(it => findSilences(m, it.in, it.in + it.dur * (it.speed || 1), o.min, .12).forEach(r => rs.push([r[0], r[1]]))); }
+    if (o.fil && tr) findFillers(tr).filter(f => !f.approx).forEach(f => rs.push([snapValley(m, f.a - .02, .1), snapValley(m, f.b + .03, .1)]));   // only fillers whose position is exact (never a guessed spot)
+    if (o.ret && tr) { aiProg('AI กำลังหาเทคที่พูดซ้ำ/พูดผิด…', 62); try { (await findRetakes(m, tr)).forEach(r => rs.push([r.a, r.b])); } catch (e) { console.warn('retakes', e); st.notes.push('retake'); } }
+    const merged = mergeRanges(rs);
+    if (merged.length) { st.saved = merged.reduce((a, r) => a + r[1] - r[0], 0); st.cuts = cutSourceRanges(m.id, merged); commit('autocut'); }
+    // ---- 2) captions ----
+    if (o.cap) {
+      if (!tr || !tr.segs.length) st.notes.push('nospeech');
+      else {
+        CAPS.look = o.look || CAPS.look; CAPS.rows = o.rows; CAPS.kw = o.kw; let kw = null;
+        if (CAPS.kw === 'key') { aiProg('กำลังให้ AI เลือกคำสำคัญจากข้อความที่ถอดไว้…', 75); try { kw = await capKeywords(tr); } catch (e) { console.warn('capKeywords', e); st.notes.push('kwfail'); CAPS.kw = 'all'; } }
+        if (CAPS.font) { try { await lfEnsure(CAPS.font); } catch (e) { } }
+        aiProg('กำลังใส่ซับ…', 90); st.caps = capApply(m, tr, kw);
+        if (!st.caps) st.notes.push(kw ? 'nokey' : 'nospeech');
+      }
+    }
+    AI.busy = false; acDone(m, st, h0, HPOS);
+  } catch (e) { aiErr(e); }
+}
+
+function acDone(m, st, h0, hEnd) {
+  const L = [];
+  L.push(st.cuts ? `<li>✂ ${T('ตัดออก')} <b>${st.cuts}</b> ${T('จุด')} · ${T('ลดไป')} <b>${st.saved.toFixed(1)}</b> ${T('วินาที')}</li>` : `<li>✂ ${T('ไม่ได้ตัดอะไร (ไม่พบช่วงเงียบ/คำอ้ำอึ้ง)')}</li>`);
+  if (st.caps) L.push(`<li>💬 ${T('ใส่ซับ')} <b>${st.caps}</b> ${T('ช่วง')}</li>`);
+  const N = { nospeech: 'ไม่พบข้อความพูดในคลิปนี้ จึงยังไม่ได้ใส่ซับ', nokey: 'AI ไม่พบคำสำคัญในคลิปนี้ จึงยังไม่ได้ใส่ซับ', kwfail: 'AI เลือกคำสำคัญไม่ได้ จึงใส่ซับทุกคำที่พูดแทน', retake: 'หาเทคที่พูดซ้ำไม่ได้ (ข้ามขั้นนี้)' };
+  st.notes.forEach(k => N[k] && L.push(`<li style="color:#ffb86b">⚠ ${T(N[k])}</li>`));
+  aiDlg('Auto Cut เสร็จแล้ว', `<ul style="margin:0 0 8px 18px;padding:0">${L.join('')}</ul>
+    <div class="hint">ตรวจดูทั้งคลิปก่อนโพสต์ทุกครั้ง — AI อาจตัดหรือเลือกคำพลาดได้ แก้ต่อที่ไทม์ไลน์ได้เลย</div>
+    <div class="row"><button class="primary" id="acPlay">▶ ดูผลลัพธ์</button><button id="acUndo">↶ ยกเลิกทั้งหมด</button><span class="sp"></span><button id="acClose">ปิด</button></div>`, root => {
+    $('#acPlay', root).onclick = () => { $('#dlgAi').close(); seek(0); play(); };
+    $('#acClose', root).onclick = () => $('#dlgAi').close();
+    $('#acUndo', root).onclick = () => {
+      if (HPOS !== hEnd) return toast('มีการแก้ไขต่อจาก Auto Cut แล้ว — ใช้ปุ่ม ↶ ย้อนกลับทีละขั้นแทน');
+      for (let i = hEnd - h0; i > 0; i--) undo(); $('#dlgAi').close(); toast('ยกเลิก Auto Cut แล้ว');
+    };
+  });
+}
+
 // ---- 70-main.js ----
 // ============================================================
 //  Main: init, preview overlay, shortcuts, project I/O, dialogs
@@ -7019,7 +7178,7 @@ async function init() {
     else if (e.key === 'Home') { pause(); seek(0); }
   });
   initSplitters(); initToolbar(); if (typeof coverInit === 'function') coverInit(); scrInit(); taInit(); capInit();
-  initHome(); await showHome(); await srvApplyLink(); if (srvOn()) srvPing().then(ok => ok && srvLoadSizes()).then(() => srvAdoptProxies()).then(() => srvInboxAuto()).then(() => srvInboxWatch()).catch(() => { });
+  initHome(); await showHome(); await srvApplyLink(); if (srvOn()) srvPing().then(ok => ok && srvLoadSizes()).then(() => trcSync(true)).then(() => srvAdoptProxies()).then(() => srvInboxAuto()).then(() => srvInboxWatch()).catch(() => { });
   tick();
   window.__ready = true;
 }

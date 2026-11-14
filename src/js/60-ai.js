@@ -143,6 +143,7 @@ function groupWords(words) {
 }
 const trPrompt = lname => `Transcribe this ${lname}-language audio exactly as spoken, in ${lname} script, no translation. Split it into short natural spoken phrases (about 2-7 seconds each). For each phrase give start and end time in seconds measured from the beginning of THIS audio clip (decimal numbers). Return only JSON: {"segments":[{"start":0.0,"end":2.4,"text":"..."}]}`;
 async function transcribe(m, lang, engine, force) {
+  if (!force) { await trcSyncQuick(); }   // v1.56: look on the shop server first — another computer may already have transcribed this clip
   if (!force) { const hit = trcFind(m, lang, engine); if (hit) { aiProg('ใช้ข้อความที่ถอดเก็บไว้แล้ว (ไม่เสียเงิน API)', 100); setTr(m.id, hit); return hit; } }
   if (!m.pcm16) throw new Error('คลิปนี้ไม่มีเสียง หรือยังวิเคราะห์เสียงไม่เสร็จ');
   if (lang === 'th' && engine === 'whisper') {
@@ -438,6 +439,7 @@ function renderAiPane() {
   <div class="fld col"><label>คลิปที่ใช้</label><select id="aiClip">${vids.map(m => `<option translate="no" value="${m.id}" ${m.id === keep ? 'selected' : ''}>${esc(m.name)}${getTr(m.id) ? ' ✔' : ''}</option>`).join('') || '<option value="">(ยังไม่มีคลิป)</option>'}</select></div>
   <div class="fld"><label>ภาษาในคลิป</label><select id="aiLang"><option value="lo">ลาว (Gemini)</option><option value="th">ไทย</option></select></div>
   <div class="fld"><label>ตัวถอดเสียงไทย</label><select id="aiEng"><option value="whisper">Whisper ในเครื่อง (ฟรี แม่น)</option><option value="gemini">Gemini</option></select></div>
+  <div class="aicard"><h4>🚀 Auto Cut — ปุ่มเดียว</h4><div class="mini">ตัดช่วงเงียบ คำอ้ำอึ้ง ใส่ซับแอนิเมชันให้อัตโนมัติ แล้วเปิดให้ตรวจก่อนโพสต์ (ยกเลิกได้)</div><button class="wide primary" id="acBtn">เริ่ม Auto Cut</button></div>
   <div class="aicard"><h4>🍜 โยนฟุตอาหาร → ปุ่มเดียว</h4><div class="mini">เลือกช่วงที่สวยที่สุดของแต่ละคลิป ตัดสั้น เรียงลำดับ ใส่สี/ทรานสิชัน/ซูม ตัดตามจังหวะเพลง</div><button class="wide primary" id="fdA">เริ่ม</button></div>
   <div class="aicard"><h4>🎵 ตัดตามบีตเพลง</h4><div class="mini">จัดจุดตัดคลิปที่มีอยู่ในไทม์ไลน์ให้ตรงจังหวะเพลงที่ใส่ไว้</div><button class="wide" id="bsA">จัดจังหวะ</button></div>
   <div class="aicard"><h4>🔬 วิเคราะห์เทคนิคตัดต่อ</h4><div class="mini">วัดจังหวะตัด ฮุก ทรานสิชัน สี เสียง จากคลิปตัวอย่าง เพื่อนำไปสร้างพรีเซ็ต</div><button class="wide" id="anA">เปิดตัววิเคราะห์</button></div>
@@ -453,7 +455,7 @@ function renderAiPane() {
   <div class="aicard"><h4>⑥ ให้ AI ตัดต่อ 4 แบบ</h4><div class="mini">ใช้ทุกคลิปในรายการสื่อ แล้วให้พนักงานเลือกแบบที่ชอบ</div><button class="wide primary" id="ai6">สร้าง 4 แบบ</button></div>
   <div class="hint small">ใช้ AI เดือนนี้ $${s.usd.toFixed(2)} จากเพดาน $${loadCap()}</div>`;
   const lg = localStorage.getItem('sk_lang'); if (lg) $('#aiLang').value = lg; $('#aiLang').onchange = e => localStorage.setItem('sk_lang', e.target.value);
-  $('#aiCap').onclick = capOpen; $('#aiGT').onclick = aiGemTest; $('#ai1').onclick = () => aiTranscribeUI(); $('#aiTC').onclick = trcUI; $('#ai2').onclick = aiPriceUI; $('#ai3').onclick = aiKeyPointsUI; $('#ai4a').onclick = aiSilenceUI; $('#ai4b').onclick = aiRetakeUI; $('#ai5').onclick = () => aiEnhanceUI(null); $('#ai6').onclick = aiVariantsUI; $('#aiK').onclick = aiKittiUI; $('#fdA').onclick = foodUI; $('#bsA').onclick = beatSnapTimeline; $('#anA').onclick = anUI; $('#aiA').onclick = aiCleanUI; $('#aiB').onclick = aiSubsUI;
+  $('#acBtn').onclick = acUI; $('#aiCap').onclick = capOpen; $('#aiGT').onclick = aiGemTest; $('#ai1').onclick = () => aiTranscribeUI(); $('#aiTC').onclick = trcUI; $('#ai2').onclick = aiPriceUI; $('#ai3').onclick = aiKeyPointsUI; $('#ai4a').onclick = aiSilenceUI; $('#ai4b').onclick = aiRetakeUI; $('#ai5').onclick = () => aiEnhanceUI(null); $('#ai6').onclick = aiVariantsUI; $('#aiK').onclick = aiKittiUI; $('#fdA').onclick = foodUI; $('#bsA').onclick = beatSnapTimeline; $('#anA').onclick = anUI; $('#aiA').onclick = aiCleanUI; $('#aiB').onclick = aiSubsUI;
 }
 AI.inspectorAction = (act, it) => {
   if (act === 'enhance') aiEnhanceUI(it);

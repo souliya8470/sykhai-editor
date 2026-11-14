@@ -10,7 +10,7 @@ const PORT = +process.env.SK_PORT || 8787;
 const TOKEN = (process.env.SK_TOKEN || '').trim();
 const HOST = process.env.SK_HOST || '0.0.0.0';
 if (!TOKEN || TOKEN.length < 6 || TOKEN === 'CHANGE_ME') { console.error('ตั้งรหัสผ่านก่อน: SK_TOKEN (อย่างน้อย 6 ตัวอักษร)'); process.exit(1); }
-const DIRS = { media: path.join(ROOT, 'media'), projects: path.join(ROOT, 'projects'), out: path.join(ROOT, 'out') };
+const DIRS = { media: path.join(ROOT, 'media'), projects: path.join(ROOT, 'projects'), out: path.join(ROOT, 'out'), tr: path.join(ROOT, 'transcripts') };
 Object.values(DIRS).forEach(d => fs.mkdirSync(d, { recursive: true }));
 
 // ------------------------------------------------------------
@@ -255,6 +255,17 @@ const server = http.createServer(async (req, res) => {
       if (!meta) return send(res, 404, 'not found');
       if (u.searchParams.get('proxy')) return serveFile(req, res, proxyFile(key), meta.name, 'video/mp4');
       return serveFile(req, res, path.join(DIRS.media, key + '.bin'), meta.name, meta.type);
+    }
+    if (kind === 'tr') {   // v1.56 — shared transcript store: a clip is transcribed ONCE (Gemini costs money) and every computer / phone reuses the text. key = "name|size|duration"
+      if (!id) { const out = fs.readdirSync(DIRS.tr).filter(f => f.endsWith('.json')).map(f => readMeta(path.join(DIRS.tr, f))).filter(r => r && r.key).map(r => ({ key: r.key, name: r.name, size: r.size, duration: r.duration, savedAt: r.savedAt, v: Object.keys(r.tr || {}) })); return send(res, 200, out); }
+      const f = path.join(DIRS.tr, sha(id) + '.json');
+      if (req.method === 'PUT') {
+        const rec = await readJson(req, 30e6); if (!rec || rec.key !== id || !rec.tr || typeof rec.tr !== 'object') return send(res, 400, 'bad transcript');
+        const old = readMeta(f); if (old && old.tr) rec.tr = Object.assign({}, old.tr, rec.tr);   // keep variants (lo:gemini / th:whisper ...) the other computer saved
+        rec.savedAt = Math.max(rec.savedAt || 0, old && old.savedAt || 0) || Date.now(); fs.writeFileSync(f + '.tmp', JSON.stringify(rec)); fs.renameSync(f + '.tmp', f); return send(res, 200, { ok: true });
+      }
+      if (req.method === 'DELETE') { fs.unlink(f, () => { }); return send(res, 200, { ok: true }); }
+      const r = readMeta(f); return r ? send(res, 200, r) : send(res, 404, 'not found');
     }
     if (kind === 'projects') {
       if (!id) { const out = fs.readdirSync(DIRS.projects).filter(f => f.endsWith('.json')).map(f => { const r = readMeta(path.join(DIRS.projects, f)); if (r) delete r.doc; return r; }).filter(Boolean); return send(res, 200, out); }
