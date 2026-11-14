@@ -141,6 +141,9 @@ dialog h3{margin:0 0 10px}
 .pact button{padding:2px 7px;background:rgba(18,19,22,.85)}
 #homeFoot{margin-top:18px}
 #srvBadge{background:var(--p2);border:1px solid var(--ln);border-radius:20px;padding:3px 10px;color:var(--ac);font-size:12px}#srvBadge.off{color:var(--mu)}
+#srvPull{background:var(--ac);color:#111;border:0;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}#srvPull[hidden]{display:none}
+#srvDl{position:fixed;left:50%;bottom:70px;transform:translateX(-50%);z-index:99999;background:var(--p2);border:1px solid var(--ln);border-radius:12px;padding:10px 14px;min-width:290px;max-width:92vw;box-shadow:0 8px 30px #000a;font-size:13px;display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center}#srvDl[hidden]{display:none}
+#srvDl .dlt{grid-column:1/3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#srvDl progress{grid-column:1/3;width:100%;height:10px;accent-color:var(--ac)}#srvDl .dlm{color:var(--mu);font-size:12px}#srvDl .dlx{padding:2px 10px;font-size:12px}
 
 .mi.sel{outline:2px solid var(--ac);outline-offset:-1px}
 .mi{cursor:pointer}

@@ -89,7 +89,7 @@ async function openById(id) {
   resetDoc(D); hideHome();
   const miss = [...new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => mediaNameFromId(i.mediaId)))];
   const missIds = [...new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => i.mediaId))];
-  if (missIds.length && srvOn()) { await srvFetchMissing(missIds); renderMediaBin(); renderTimeline(); window.onFrame(); }
+  if (missIds.length && srvOn()) await srvPullMissing();
   const still = [...new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => mediaNameFromId(i.mediaId)))];
   if (still.length) toast('ไฟล์เหล่านี้หายจากเครื่องนี้ ต้องนำเข้าใหม่: ' + still.join(', '), 7000);
   else { srvQueueMedia([...new Set(D.items.map(i => i.mediaId).filter(Boolean))]); srvAdoptProxies(); }

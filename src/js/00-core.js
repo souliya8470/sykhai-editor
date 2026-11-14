@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.49
-// APP_VERSION_PREV : 1.48
-// APP_VERSION_PREV_OLDER : 1.47
+// APP_VERSION  : 1.50
+// APP_VERSION_PREV : 1.49
+// APP_VERSION_PREV_OLDER : 1.48
+// 1.50 : staff link — ⚙ settings has “copy staff link”: one link (editor.touktashop.online/#sk=…) that fills in the shop-server address + password on any device (the part after # never goes to a server; the user confirms before it is saved); away from the shop (internet address, phone) project videos are pulled as the light 540p copy with a real progress bar (MB / %), cancel, automatic resume if the connection drops; a visible “⬇ pull files from server” button appears whenever the open project has missing videos; ⚙ option to always use light copy / always originals; export still fetches the originals
 // 1.49 : Lao font library — 🔤 font picker in the text inspector: 4 formal fonts (Noto Sans / Serif / Looped, Phetsarath) + 44 free decorative Lao fonts (handwritten, script, brush, painted, traditional, fancy, stencil; SIL OFL, commercial use OK). Gallery with live samples of your own text and category filter; fonts are lazy-loaded from fonts/ (not embedded in index.html), preloaded before preview/export; falls back to editor.touktashop.online/fonts/
 // 1.48 : permanent transcript cache — every transcript is stored in the browser (own IndexedDB 'sykhai-tr') under the clip's file name + size + length, so the same video is never sent to Gemini twice (any project, after reload); the AI tab shows it instantly and says it was free; 'transcribe again' needs a confirm; new 📁 manager to download each transcript as <video name>.transcript.json, import it back on another computer, or delete it
 // 1.47 : Dead Air list — the silence dialog now lists every silent gap (timeline time + length): tap the time to jump there, ▶ to listen around it, ✂ to delete that one, tick several and delete them together, select / un-select all; min length and head/tail padding sliders re-build the list; each delete can be undone
@@ -55,7 +56,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.49';
+const APP_VERSION = '1.50';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];

@@ -10,12 +10,92 @@ const srvOn = () => { const c = srvCfg(); return !!(c.url && c.token); };
 const srvUrl = p => srvCfg().url.trim().replace(/\/+$/, '') + p;
 const srvFetch = (p, o = {}) => fetch(srvUrl(p), Object.assign({}, o, { headers: Object.assign({ 'x-token': srvCfg().token }, o.headers) }));
 const srvId = id => encodeURIComponent(id);
+// v1.50: is the server "away" (reached over the internet, not the shop network / Tailscale)?  Then big videos are pulled as light 540p copies.
+const SRV_PRIV = /^(localhost$|127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.|.*\.local$)/i;
+const srvAway = () => { try { return !SRV_PRIV.test(new URL(srvCfg().url).hostname); } catch (e) { return false; } };
+const srvPullMode = () => { try { return localStorage.getItem('sk_pull') || 'auto'; } catch (e) { return 'auto'; } };   // auto | light | full
+const srvLight = () => { const m = srvPullMode(); return m === 'light' ? true : m === 'full' ? false : (IS_PHONE() || srvAway()); };
+
+// v1.50: staff link  https://editor.touktashop.online/#sk=<base64url {u,t}>  — the part after # is never sent to any server;
+// it is read once, the address bar is cleaned, and the user confirms before the shop server is saved on this device.
+SRV.link = null;
+(function () {
+  try {
+    const m = /^#sk=([A-Za-z0-9_-]+)/.exec(location.hash); if (!m) return;
+    const j = JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g, '+').replace(/_/g, '/')))));
+    if (/^https?:\/\/[^\s/]+/i.test(j.u || '') && String(j.t || '').length >= 6) SRV.link = { u: String(j.u).trim().replace(/\/+$/, ''), t: String(j.t).trim() };
+    history.replaceState(null, '', location.pathname + location.search);
+  } catch (e) { }
+})();
+function srvStaffLink() {
+  let c = {}; try { c = JSON.parse(localStorage.getItem('sk_srv') || '{}'); } catch (e) { }
+  const u = (c.url || (SRV_SELF ? location.origin : '')).trim().replace(/\/+$/, ''), t = (c.token || '').trim();
+  if (!u || !t) return { err: 'ยังไม่ได้ตั้งค่าเซิร์ฟเวอร์ (ที่อยู่ + รหัสผ่าน) — กรอกแล้วกดบันทึกก่อน' };
+  let host = ''; try { host = new URL(u).hostname; } catch (e) { return { err: 'ที่อยู่เซิร์ฟเวอร์ไม่ถูกต้อง' }; }
+  const b = btoa(unescape(encodeURIComponent(JSON.stringify({ u, t })))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const base = /(^|\.)(touktashop\.online|pages\.dev)$/i.test(location.hostname) ? location.origin + '/' : 'https://editor.touktashop.online/';
+  return { link: base + '#sk=' + b, lan: SRV_PRIV.test(host) };
+}
+async function srvCopyStaffLink() {
+  const r = srvStaffLink(); if (r.err) { toast(r.err, 6000); return; }
+  try { await navigator.clipboard.writeText(r.link); toast(r.lan ? 'คัดลอกลิงก์แล้ว — แต่ที่อยู่เซิร์ฟเวอร์เป็นแบบในร้าน ใช้ได้เฉพาะที่ร้านเท่านั้น (ใช้ที่อยู่ ts.net เพื่อให้ใช้นอกร้านได้)' : 'คัดลอกลิงก์พนักงานแล้ว — ส่งให้เฉพาะคนที่ไว้ใจ (มีรหัสผ่านอยู่ในลิงก์)', 8000); }
+  catch (e) { prompt(T('คัดลอกลิงก์นี้ (Ctrl+C) แล้วส่งให้พนักงาน:'), r.link); }
+}
+async function srvApplyLink() {
+  const L = SRV.link; if (!L) return; SRV.link = null;
+  let host = ''; try { host = new URL(L.u).host; } catch (e) { return; }
+  const cur = srvCfg();
+  if (!confirm(T('เชื่อมต่อเซิร์ฟเวอร์ร้านตามลิงก์พนักงานนี้?') + '\n' + host + (cur.url && cur.url.replace(/\/+$/, '') !== L.u && !SRV_SELF ? '\n' + T('(จะแทนที่เซิร์ฟเวอร์เดิม)') : ''))) return;
+  try { localStorage.setItem('sk_srv', JSON.stringify({ url: L.u, token: L.t })); } catch (e) { }
+  const ok = await srvPing();
+  toast(ok ? 'เชื่อมต่อเซิร์ฟเวอร์ร้านแล้ว ✔ กำลังซิงค์โปรเจกต์…' : 'บันทึกแล้ว แต่ติดต่อเซิร์ฟเวอร์ไม่ได้: ' + SRV.err, 6000);
+  if (ok) { await srvLoadSizes(); srvSyncAll(); }
+}
+
+// v1.50: download with a visible progress bar; if the connection drops it resumes from the byte it reached (server supports Range)
+SRV.dl = null; SRV.cancel = false;
+function srvDlShow(d) {            // d = { name, i, n, got, total, note } or null to hide
+  let el = document.getElementById('srvDl');
+  if (!d) { if (el) el.hidden = true; SRV.dl = null; updateSrvBadge(); return; }
+  SRV.dl = d; const now = Date.now(); if (!d.force && SRV.dlT && now - SRV.dlT < 200) return; SRV.dlT = now;
+  if (!el) {
+    el = document.createElement('div'); el.id = 'srvDl';
+    el.innerHTML = '<div class="dlt"><span class="lb"></span> <span class="nm" translate="no"></span></div><progress max="100" value="0"></progress><div class="dlm"></div><button class="dlx">ยกเลิก</button>';
+    el.querySelector('.dlx').onclick = () => { SRV.cancel = true; };
+    document.body.appendChild(el);
+  }
+  el.hidden = false;
+  const pct = d.total ? Math.min(100, d.got / d.total * 100) : 0, mb = x => (x / 1048576).toFixed(x > 1e8 ? 0 : 1);
+  const lb = el.querySelector('.lb'), lt = d.pre || (d.light ? 'ดึงสำเนาเบา' : 'ดึงไฟล์'); if (lb.dataset.k !== lt) { lb.dataset.k = lt; lb.textContent = lt; }
+  el.querySelector('.nm').textContent = (d.n > 1 ? `(${d.i}/${d.n}) ` : '') + d.name;
+  const p = el.querySelector('progress'); if (d.total) { p.max = 100; p.value = pct; } else p.removeAttribute('value');
+  const dm = el.querySelector('.dlm'); const dt = d.note ? d.note : d.total ? `${mb(d.got)} / ${mb(d.total)} MB · ${Math.round(pct)}%` : `${mb(d.got)} MB`; if (dm.dataset.k !== dt) { dm.dataset.k = dt; dm.textContent = dt; }
+  updateSrvBadge();
+}
+async function srvDownload(path, onp) {
+  const parts = []; let got = 0, total = 0, hdr = null, fails = 0;
+  for (;;) {
+    if (SRV.cancel) throw new Error('cancelled');
+    let r; try { r = await srvFetch(path, got ? { headers: { Range: 'bytes=' + got + '-' } } : {}); } catch (e) { if (++fails > 8) throw e; await sleep(1500 * fails); continue; }
+    if (!r.ok && r.status !== 206) throw new Error('HTTP ' + r.status);
+    if (!hdr) hdr = r.headers;
+    if (r.status === 200 && got) { parts.length = 0; got = 0; }                       // server ignored Range -> start over
+    total = +r.headers.get('x-size') || (got + (+r.headers.get('content-length') || 0));
+    if (!r.body || !r.body.getReader) { parts.push(await r.blob()); got = total = total || 1; onp && onp(got, total); break; }
+    const rd = r.body.getReader();
+    try { for (;;) { if (SRV.cancel) { try { rd.cancel(); } catch (_) { } throw new Error('cancelled'); } const { done, value } = await rd.read(); if (done) break; parts.push(value); got += value.length; onp && onp(got, total); } }
+    catch (e) { if (e.message === 'cancelled') throw e; if (++fails > 8) throw e; await sleep(1500 * fails); continue; }
+    if (!total || got >= total) break;
+    if (++fails > 8) throw new Error('incomplete');
+  }
+  return { blob: new Blob(parts, { type: hdr.get('content-type') || '' }), headers: hdr };
+}
 
 function updateSrvBadge() {
   const b = $('#srvBadge'); if (!b) return;
   if (!srvOn()) { b.hidden = true; return; }
   b.hidden = false; b.classList.toggle('off', !SRV.up);
-  b.textContent = SRV.prog != null ? `☁ ${SRV.label} ${Math.round(SRV.prog * 100)}%` : SRV.q.length ? `☁ รอส่ง ${SRV.q.length} ไฟล์` : SRV.up ? '☁ เซิร์ฟเวอร์พร้อม' : '☁ ออฟไลน์';
+  b.textContent = SRV.dl ? `☁ ⬇ ${SRV.dl.total ? Math.round(Math.min(100, SRV.dl.got / SRV.dl.total * 100)) + '%' : '…'}` : SRV.prog != null ? `☁ ${SRV.label} ${Math.round(SRV.prog * 100)}%` : SRV.q.length ? `☁ รอส่ง ${SRV.q.length} ไฟล์` : SRV.up ? '☁ เซิร์ฟเวอร์พร้อม' : '☁ ออฟไลน์';
   b.title = SRV.up ? 'เชื่อมต่อเซิร์ฟเวอร์ที่ร้านอยู่' : ('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้' + (SRV.err ? ': ' + SRV.err : ''));
 }
 async function srvPing() {
@@ -86,24 +166,44 @@ async function srvSyncAll() {          // manual button on Home
   renderHome();
 }
 // ----- download media that this computer doesn't have yet -----
+let _fmBusy = false;
 async function srvFetchMissing(ids) {
-  if (!srvOn() || !ids.length) return 0;
-  if (!SRV.up && !(await srvPing())) return 0;
-  let n = 0, i = 0;
-  for (const id of ids) {
-    i++; try {
-      toast(`กำลังโหลดไฟล์จากเซิร์ฟเวอร์ (${i}/${ids.length}) ${mediaNameFromId(id)}`, 60000);
-      if (IS_PHONE() && /\.(mov|mp4|m4v|webm)$/i.test(id.split('|')[0])) {      // phones: take the light proxy copy (540p) instead of the 4K original
-        const pf = await srvGetProxy(id, true); if (pf) { await importFiles([pf], { id, name: mediaNameFromId(id), proxyOnly: true, quiet: true }); if (MEDIA.has(id)) { n++; continue; } }
-      }
-      const r = await srvFetch('/media/' + srvId(id)); if (!r.ok) continue;
-      const name = decodeURIComponent(r.headers.get('x-name') || '') || mediaNameFromId(id); const blob = await r.blob();
-      await importFiles([new File([blob], name, { type: blob.type })]); if (MEDIA.has(id)) n++;
-    } catch (e) { console.warn('srvFetchMissing', e); }
-  }
-  toast(n ? `โหลดไฟล์จากเซิร์ฟเวอร์แล้ว ${n} ไฟล์` : 'ไม่พบไฟล์บนเซิร์ฟเวอร์', 4000);
+  if (!srvOn() || !ids.length || _fmBusy) return 0;
+  if (!SRV.up && !(await srvPing())) { toast('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้: ' + SRV.err, 6000); return 0; }
+  _fmBusy = true; SRV.cancel = false; let n = 0, i = 0, cancelled = false, failed = 0;
+  try {
+    for (const id of ids) {
+      if (SRV.cancel) { cancelled = true; break; }
+      i++; const name = mediaNameFromId(id), isVid = /\.(mov|mp4|m4v|webm)$/i.test(id.split('|')[0]), light = isVid && srvLight();
+      try {
+        srvDlShow({ name, i, n: ids.length, got: 0, total: 0, light, note: 'กำลังเชื่อมต่อ…', force: true });
+        if (light) {                         // light 540p copy: phones, or any device that reaches the shop over the internet (v1.50)
+          const pf = await srvGetProxy(id, true, (g, t) => srvDlShow({ name, i, n: ids.length, got: g, total: t, light: true }));
+          if (pf) { await importFiles([pf], { id, name, proxyOnly: true, quiet: true }); if (MEDIA.has(id)) { n++; continue; } }
+        }
+        const { blob, headers } = await srvDownload('/media/' + srvId(id), (g, t) => srvDlShow({ name, i, n: ids.length, got: g, total: t, light: false }));
+        const fname = decodeURIComponent(headers.get('x-name') || '') || name;
+        await importFiles([new File([blob], fname, { type: blob.type })]); if (MEDIA.has(id)) n++; else failed++;
+      } catch (e) { if (e.message === 'cancelled') { cancelled = true; break; } failed++; console.warn('srvFetchMissing', e); }
+    }
+  } finally { _fmBusy = false; srvDlShow(null); SRV.cancel = false; }
+  toast(cancelled ? `ยกเลิกแล้ว — โหลดแล้ว ${n} ไฟล์ (กด “ดึงไฟล์จากเซิร์ฟเวอร์” เพื่อโหลดต่อ)` : n ? `โหลดไฟล์จากเซิร์ฟเวอร์แล้ว ${n} ไฟล์` + (failed ? ` · ไม่สำเร็จ ${failed} ไฟล์ (กด “ดึงไฟล์จากเซิร์ฟเวอร์” เพื่อลองใหม่)` : '') : 'ดึงไฟล์ไม่สำเร็จ — ตรวจว่าไฟล์อยู่บนเซิร์ฟเวอร์ และกด “ดึงไฟล์จากเซิร์ฟเวอร์” เพื่อลองใหม่', 6000);
+  srvPullUpdate();
   return n;
 }
+function srvMissingIds() { return [...new Set((D ? D.items : []).filter(i => i.mediaId && !String(i.mediaId).startsWith('__') && !MEDIA.has(i.mediaId)).map(i => i.mediaId))]; }
+async function srvPullMissing() {                  // the visible “pull files from server” button + used when a project is opened
+  const ids = srvMissingIds(); if (!ids.length) { srvPullUpdate(); return 0; }
+  const n = await srvFetchMissing(ids);
+  if (typeof renderMediaBin === 'function') { renderMediaBin(); renderTimeline(); window.onFrame && window.onFrame(); }
+  return n;
+}
+function srvPullUpdate() {
+  const b = $('#srvPull'); if (!b) return;
+  const k = srvOn() && !_fmBusy ? srvMissingIds().length : 0;
+  b.hidden = !k; if (k && b._k !== k) { b._k = k; b.textContent = `⬇ ดึงไฟล์จากเซิร์ฟเวอร์ (${k})`; }
+}
+setInterval(() => { try { srvPullUpdate(); } catch (e) { } }, 3000);
 // ----- inbox (v1.30): clips the shop server fetched for us (N8N -> yt-dlp). Pulled into the media list, then moved to inbox/done on the server -----
 SRV.inbox = [];
 // v1.36: the server keeps every reference clip (inbox + inbox/done), so a 2nd computer pulls the same library.
@@ -161,16 +261,18 @@ SRV.px = { ready: new Set(), pending: new Set(), ffmpeg: null, note: '' };
 async function srvLoadProxies() {
   try { const r = await srvFetch('/proxies'); if (!r.ok) return false; const j = await r.json(); SRV.px = { ready: new Set(j.ready), pending: new Set(j.pending), ffmpeg: j.ffmpeg, note: j.note || '' }; return true; } catch (e) { return false; }
 }
-async function srvGetProxy(id, wait) {            // -> File (mp4) or null. wait=true: wait (up to 4 min) while the server is still building it
+async function srvGetProxy(id, wait, onp) {            // -> File (mp4) or null. wait=true: wait (up to 4 min) while the server is still building it. onp(got,total) = download progress (v1.50)
   if (!srvOn()) return null; if (!SRV.up && !(await srvPing())) return null;
   const t0 = Date.now();
   for (;;) {
+    if (SRV.cancel) return null;
     if (!await srvLoadProxies()) return null;
     if (SRV.px.ready.has(id)) break;
     if (!wait || !SRV.px.ffmpeg || !SRV.px.pending.has(id) || Date.now() - t0 > 240000) return null;
-    toast('เซิร์ฟเวอร์กำลังสร้างสำเนาเบาของ ' + mediaNameFromId(id) + ' (ครั้งเดียว) …', 8000); await sleep(4000);
+    if (SRV.dl) srvDlShow(Object.assign({}, SRV.dl, { note: 'เซิร์ฟเวอร์กำลังสร้างสำเนาเบา (ครั้งเดียว) …', force: true })); else toast('เซิร์ฟเวอร์กำลังสร้างสำเนาเบาของ ' + mediaNameFromId(id) + ' (ครั้งเดียว) …', 8000);
+    await sleep(4000);
   }
-  try { const r = await srvFetch('/media/' + srvId(id) + '?proxy=1'); if (!r.ok) return null; const b = await r.blob(); return new File([b], mediaNameFromId(id).replace(/\.[^.]+$/, '') + '.proxy.mp4', { type: 'video/mp4' }); } catch (e) { return null; }
+  try { const { blob } = await srvDownload('/media/' + srvId(id) + '?proxy=1', onp); return new File([blob], mediaNameFromId(id).replace(/\.[^.]+$/, '') + '.proxy.mp4', { type: 'video/mp4' }); } catch (e) { if (e.message === 'cancelled') SRV.cancel = true; return null; }
 }
 let _adoptBusy = false, _adoptTimer = 0, _adoptTries = 0;
 function proxyTag() {
@@ -201,8 +303,9 @@ async function exportUseOriginals(msgEl) {         // export must use the full-q
     if (m.purl) { back.push(() => { m.purl = m._purl; }); m._purl = m.purl; m.purl = null; }
     else if (m.proxyOnly) {
       if (msgEl) msgEl.textContent = 'กำลังดึงไฟล์ต้นฉบับจากเซิร์ฟเวอร์: ' + m.name + ' …';
-      try { const r = await srvFetch('/media/' + srvId(id)); if (!r.ok) throw new Error('HTTP ' + r.status); const b = await r.blob(); const old = m.url, nu = URL.createObjectURL(b); m.url = nu; back.push(() => { m.url = old; URL.revokeObjectURL(nu); }); }
+      try { SRV.cancel = false; const { blob: b } = await srvDownload('/media/' + srvId(id), (g, t) => srvDlShow({ name: m.name, pre: 'ดึงไฟล์ต้นฉบับสำหรับส่งออก', i: 1, n: 1, got: g, total: t })); const old = m.url, nu = URL.createObjectURL(b); m.url = nu; back.push(() => { m.url = old; URL.revokeObjectURL(nu); }); }
       catch (e) { toast('ดึงไฟล์ต้นฉบับ ' + m.name + ' ไม่ได้ — ส่งออกจากสำเนาเบา (ความละเอียดต่ำกว่า)', 7000); }
+      finally { srvDlShow(null); SRV.cancel = false; }
     }
   }
   poolResetAll();
