@@ -1,0 +1,9 @@
+{
+  "version": "1.03",
+  "notes": "เพิ่มปุ่มอัปเดตในแอป",
+  "files": {
+    "app.py": "4218900414db76a2ae0bf1dcada2a6fc7a2556cc5cef20852accb304b93fd13a",
+    "ui.html": "735b0e2905642ef1da9b20c0bb608f86a3456778c47fdd2a986900e9b166ac78",
+    "icon.png": "85cd7e2cc1373371c9244a01f4451b6d93331855ecb2ce0b1b9ea5c09d38a977"
+  }
+}

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sykhai Downloader</title>
+<style>
+  :root {
+    --bg: #f4f5f7; --card: #ffffff; --line: #e2e5ea; --text: #1c2330; --muted: #6b7686;
+    --accent: #0a7d5a; --accent-ink: #ffffff; --bar: #e6e9ee; --err: #c0392b; --warn: #a86a00;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171c; --card: #1d2128; --line: #2c323c; --text: #e8ebf0; --muted: #94a0b2;
+      --accent: #2fb98a; --accent-ink: #08130f; --bar: #2a303a; --err: #ff7b6b; --warn: #f0b755;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.5 -apple-system, "Thonburi", "Sukhumvit Set", "Helvetica Neue", sans-serif; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 28px 20px 60px; }
+  header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 18px; }
+  h1 { font-size: 22px; margin: 0; letter-spacing: -0.01em; }
+  .ver { color: var(--muted); font-size: 13px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  textarea { width: 100%; min-height: 84px; resize: vertical; padding: 10px 12px; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--bg); color: var(--text); font: inherit; }
+  textarea:focus, select:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .row { display: flex; gap: 10px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+  select, button { font: inherit; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--card); color: var(--text); padding: 8px 12px; cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink);
+    font-weight: 600; padding: 8px 22px; }
+  button.small { padding: 4px 10px; font-size: 13px; }
+  .spacer { flex: 1; }
+  .folder { color: var(--muted); font-size: 13px; margin-top: 12px; display: flex; gap: 8px;
+    align-items: center; flex-wrap: wrap; }
+  .folder code { color: var(--text); word-break: break-all; }
+  .listhead { display: flex; align-items: center; margin: 26px 2px 10px; }
+  .listhead h2 { font-size: 15px; margin: 0; flex: 1; }
+  .job { background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 12px 14px; margin-bottom: 8px; }
+  .job .top { display: flex; gap: 10px; align-items: flex-start; }
+  .job .title { flex: 1; font-weight: 600; word-break: break-word; }
+  .bar { height: 6px; background: var(--bar); border-radius: 3px; overflow: hidden; margin: 9px 0 6px; }
+  .bar i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .4s; }
+  .meta { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .meta.err { color: var(--err); }
+  .empty { color: var(--muted); text-align: center; padding: 34px 0; }
+  header .spacer { flex: 1; }
+  .notice { color: var(--warn); font-size: 13px; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>Sykhai Downloader</h1><span class="ver" id="ver"></span><span class="spacer"></span><span class="ver" id="chkmsg"></span><button class="small" id="chk">ตรวจอัปเดต</button></header>
+  <div class="card" id="upd" hidden style="margin-bottom:14px"></div>
+
+  <div class="card">
+    <textarea id="urls" placeholder="วางลิงก์ที่นี่ (หลายลิงก์ได้ บรรทัดละ 1 ลิงก์)" autofocus></textarea>
+    <div class="row">
+      <select id="quality" aria-label="ความละเอียด">
+        <option value="best">ดีที่สุด</option>
+        <option value="2160">4K (2160p)</option>
+        <option value="1080" selected>1080p</option>
+        <option value="720">720p</option>
+        <option value="480">480p</option>
+        <option value="audio">เสียงอย่างเดียว (MP3)</option>
+      </select>
+      <select id="browser" aria-label="ใช้ล็อกอินจาก" title="ใช้ล็อกอินจาก (แก้ปัญหา YouTube ขอยืนยันตัวตน)">
+        <option value="none">ไม่ใช้ล็อกอิน</option>
+        <option value="chrome">ใช้ล็อกอินจาก Chrome</option>
+        <option value="safari">ใช้ล็อกอินจาก Safari</option>
+        <option value="firefox">ใช้ล็อกอินจาก Firefox</option>
+        <option value="edge">ใช้ล็อกอินจาก Edge</option>
+        <option value="brave">ใช้ล็อกอินจาก Brave</option>
+      </select>
+      <span class="spacer"></span>
+      <button class="primary" id="go">ดาวน์โหลด</button>
+    </div>
+    <div class="folder">เก็บไฟล์ที่: <code id="dir"></code>
+      <button class="small" id="pick">เปลี่ยนโฟลเดอร์</button>
+      <button class="small" id="openDir">เปิดโฟลเดอร์</button>
+    </div>
+    <div class="notice" id="notice" hidden>ยังไม่พบ yt-dlp ในโฟลเดอร์ bin — ปิดแล้วเปิดด้วย start.command อีกครั้ง</div>
+  </div>
+
+  <div class="listhead"><h2>รายการดาวน์โหลด</h2><button class="small" id="clear">ล้างรายการที่จบแล้ว</button></div>
+  <div id="list"><div class="empty">ยังไม่มีรายการ</div></div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const STATUS = { queued: 'รอคิว', running: 'กำลังโหลด', done: 'เสร็จแล้ว', error: 'ผิดพลาด', cancelled: 'ยกเลิกแล้ว' };
+
+async function post(path, body) {
+  const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
+  return r.json();
+}
+function size(n) {
+  if (!n) return '';
+  const u = ['B', 'KB', 'MB', 'GB']; let i = 0;
+  while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+  return n.toFixed(i ? 1 : 0) + ' ' + u[i];
+}
+function eta(s) {
+  if (s == null) return '';
+  const m = Math.floor(s / 60), x = s % 60;
+  return m >= 60 ? Math.floor(m / 60) + ' ชม. ' + (m % 60) + ' นาที' : m ? m + ' นาที ' + x + ' วิ' : x + ' วิ';
+}
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+function render(jobs) {
+  const list = $('list');
+  list.replaceChildren();
+  if (!jobs.length) { list.append(el('div', 'empty', 'ยังไม่มีรายการ')); return; }
+  for (const j of jobs.slice().reverse()) {
+    const box = el('div', 'job');
+    const top = el('div', 'top');
+    top.append(el('div', 'title', j.title));
+    if (j.status === 'queued' || j.status === 'running') {
+      const b = el('button', 'small', 'ยกเลิก');
+      b.onclick = () => post('/api/cancel', { id: j.id });
+      top.append(b);
+    } else if (j.status === 'done') {
+      const b = el('button', 'small', 'แสดงไฟล์');
+      b.onclick = () => post('/api/reveal', { id: j.id });
+      top.append(b);
+    }
+    box.append(top);
+    const bar = el('div', 'bar'); const fill = el('i');
+    fill.style.width = (j.status === 'done' ? 100 : j.percent || 0) + '%';
+    bar.append(fill); box.append(bar);
+    let parts = [STATUS[j.status] || j.status];
+    if (j.status === 'running') {
+      parts.push((j.percent || 0).toFixed(1) + '%');
+      if (j.size) parts.push(size(j.downloaded) + ' / ' + size(j.size));
+      if (j.speed) parts.push(size(j.speed) + '/วิ');
+      if (j.eta != null) parts.push('เหลือ ' + eta(j.eta));
+    } else if (j.status === 'done' && j.size) parts.push(size(j.size));
+    if (j.mode) parts.push(j.mode);
+    const meta = el('div', 'meta' + (j.status === 'error' ? ' err' : ''),
+      j.status === 'error' ? 'ผิดพลาด: ' + (j.error || 'ไม่ทราบสาเหตุ') : parts.join(' · '));
+    box.append(meta);
+    list.append(box);
+  }
+}
+async function refresh() {
+  try {
+    const d = await (await fetch('/api/jobs')).json();
+    $('dir').textContent = d.dir;
+    $('ver').textContent = 'v' + d.version;
+    $('notice').hidden = d.ready;
+    if (document.activeElement !== $('browser')) $('browser').value = d.browser;
+    render(d.jobs);
+  } catch (e) { /* โปรแกรมถูกปิด */ }
+}
+$('go').onclick = async () => {
+  const urls = $('urls').value.split(/\s+/).filter(u => /^https?:\/\//i.test(u));
+  if (!urls.length) { $('urls').focus(); return; }
+  await post('/api/add', { urls, quality: $('quality').value });
+  $('urls').value = '';
+  refresh();
+};
+$('urls').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) $('go').click(); });
+$('browser').onchange = async () => { await post('/api/browser', { browser: $('browser').value }); refresh(); };
+$('pick').onclick = async () => { await post('/api/folder'); refresh(); };
+$('openDir').onclick = () => post('/api/reveal', {});
+$('clear').onclick = async () => { await post('/api/clear'); refresh(); };
+async function checkUpdate(manual) {
+  $('chkmsg').textContent = manual ? 'กำลังตรวจ...' : '';
+  let d;
+  try { d = await (await fetch('/api/update-check')).json(); } catch (e) { return; }
+  const box = $('upd');
+  if (!d.ok) { $('chkmsg').textContent = manual ? d.error : ''; return; }
+  if (!d.available) { $('chkmsg').textContent = manual ? 'เป็นเวอร์ชันล่าสุดแล้ว' : ''; box.hidden = true; return; }
+  $('chkmsg').textContent = '';
+  box.replaceChildren();
+  const row = el('div', 'row'); row.style.marginTop = '0';
+  row.append(el('div', null, 'มีเวอร์ชันใหม่ v' + d.latest + (d.notes ? ' — ' + d.notes : '')));
+  row.append(el('span', 'spacer'));
+  const b = el('button', 'primary', 'อัปเดตเลย');
+  b.onclick = async () => {
+    b.disabled = true; b.textContent = 'กำลังอัปเดต...';
+    const r = await (await fetch('/api/update-apply', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })).json();
+    if (r.ok) { row.replaceChildren(el('div', null, 'อัปเดตเป็น v' + r.version + ' แล้ว กำลังเปิดโปรแกรมใหม่ รอสักครู่...')); const t = setInterval(async () => { try { await fetch('/api/jobs'); location.reload(); clearInterval(t); } catch (e) {} }, 1500); }
+    else { b.disabled = false; b.textContent = 'อัปเดตเลย'; $('chkmsg').textContent = r.error; }
+  };
+  row.append(b); box.append(row); box.hidden = false;
+}
+$('chk').onclick = () => checkUpdate(true);
+refresh();
+setInterval(refresh, 800);
+setTimeout(() => checkUpdate(false), 2000);
+setInterval(() => checkUpdate(false), 3600000);
+</script>
+</body>
+</html>
