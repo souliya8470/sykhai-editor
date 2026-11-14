@@ -7,6 +7,8 @@
 // ============================================================
 const _P0 = () => ({ a: 1, dx: 0, dy: 0, s: 1, sx: 1, sy: 1, r: 0, blur: 0 });
 const TAX = [
+  { id: 'soft', label: 'นุ่มนวล ทั้งแถว (แนะนำสำหรับซับ)', mode: 'line', d: .35, fn: (p, c) => ({ a: EASE.out(p), dy: (1 - EASE.out(p)) * .12 * c.size }) },
+  { id: 'softw', label: 'นุ่มนวล ทีละคำ', mode: 'word', d: .4, fn: (p, c) => ({ a: EASE.out(p), dy: (1 - EASE.out(p)) * .1 * c.size }) },
   { id: 'fade', label: 'เลือนเข้าทีละคำ', mode: 'word', d: 1.0, fn: p => ({ a: p }) },
   { id: 'rise', label: 'ลอยขึ้นทีละคำ', mode: 'word', d: 1.0, fn: (p, c) => ({ a: p, dy: (1 - EASE.out(p)) * .7 * c.size }) },
   { id: 'pop', label: 'ป๊อปทีละคำ', mode: 'word', d: .9, fn: p => ({ s: lerp(.3, 1, EASE.back(p)), a: Math.min(1, p * 3) }) },

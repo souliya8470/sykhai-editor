@@ -498,7 +498,7 @@ function drawText(ctx, it, t, W, H) {
       let rowAlpha = 1;
       if (row.li >= 1 && it.reveal > 0) { const q = clamp((lt - it.reveal * row.li) / .25, 0, 1); rowAlpha = q; if (q <= 0) return; }
       const y = (ri - (rows.length - 1) / 2) * lineH;
-      const base = row.li === 0 ? it.color : (it.color2 || it.color);
+      const base = (row.li === 0 || it.sub) ? it.color : (it.color2 || it.color);   // v1.55: the 2nd row of a caption keeps the normal colour (colour2 is the karaoke highlight there)
       let x0 = it.align === 'left' ? -blockW / 2 : it.align === 'right' ? blockW / 2 - row.w : -row.w / 2;
       if (it.box === 'line' || it.box === 'line2') {
         const bg = (it.box === 'line2' && row.li > 0) ? (it.bg2 || '#E02B3A') : it.bg; const pad = size * .36;

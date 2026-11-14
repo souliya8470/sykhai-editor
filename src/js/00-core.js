@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.54
-// APP_VERSION_PREV : 1.53
-// APP_VERSION_PREV_OLDER : 1.52
+// APP_VERSION  : 1.55
+// APP_VERSION_PREV : 1.54
+// APP_VERSION_PREV_OLDER : 1.53
+// 1.55 : auto-captions — new options: 2 stacked rows for fast speech (the second row keeps the normal colour, only the spoken word is highlighted), minimum display time (a short caption is glued to the next one or held on screen until the next caption starts), keyword-only mode (Gemini reads the saved transcript and returns the key phrases of each sentence; the answer is saved with the transcript so it is not asked twice), calm default animations (new “soft” text animations), and a font choice from the Lao font library inside the caption dialog.
 // 1.54 : server.js CORS — the shop server now lists / echoes the allowed request headers instead of '*' (iPhone Safari may refuse '*' and then every call from editor.touktashop.online to the shop server fails with “Load failed”); the editor page itself is unchanged except for the new number. The server only picks this up after start.bat is restarted
 // 1.53 : iPhone — fields inside dialogs are 16 px on touch screens, so Safari no longer zooms the whole page (and leaves it scrolled sideways with the Save button off-screen) when a field such as the server address / password is tapped
 // 1.52 : settings dialog on phones — the “copy staff link” row now wraps (the hint and the green/red pill no longer push the dialog wider than the screen); when the server address / password are empty the red pill says “enter the server address and password first” and the long explanation goes on its own line
@@ -60,7 +61,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.54';
+const APP_VERSION = '1.55';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
