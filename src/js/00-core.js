@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.52
-// APP_VERSION_PREV : 1.51
-// APP_VERSION_PREV_OLDER : 1.50
+// APP_VERSION  : 1.53
+// APP_VERSION_PREV : 1.52
+// APP_VERSION_PREV_OLDER : 1.51
+// 1.53 : iPhone — fields inside dialogs are 16 px on touch screens, so Safari no longer zooms the whole page (and leaves it scrolled sideways with the Save button off-screen) when a field such as the server address / password is tapped
 // 1.52 : settings dialog on phones — the “copy staff link” row now wraps (the hint and the green/red pill no longer push the dialog wider than the screen); when the server address / password are empty the red pill says “enter the server address and password first” and the long explanation goes on its own line
 // 1.51 : “copy staff link” now shows a green “✔ copied” pill right next to the button inside the settings dialog (the old toast was hidden behind the dialog, so it looked like nothing happened); falls back to a hidden-textarea copy when the clipboard API is blocked, and to a select-and-copy box if that fails too; red pill on failure
 // 1.50 : staff link — ⚙ settings has “copy staff link”: one link (editor.touktashop.online/#sk=…) that fills in the shop-server address + password on any device (the part after # never goes to a server; the user confirms before it is saved); away from the shop (internet address, phone) project videos are pulled as the light 540p copy with a real progress bar (MB / %), cancel, automatic resume if the connection drops; a visible “⬇ pull files from server” button appears whenever the open project has missing videos; ⚙ option to always use light copy / always originals; export still fetches the originals
@@ -58,7 +59,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.52';
+const APP_VERSION = '1.53';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];

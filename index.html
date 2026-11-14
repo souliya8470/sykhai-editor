@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.52</title>
+<title>Sykhai Editor v1.53</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -436,6 +436,9 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
 #dlgAi .lfgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-height:52vh;overflow:auto;margin:6px 0;padding:2px 8px 2px 2px}
 #dlgAi .lfcard{display:flex;flex-direction:column;gap:4px;text-align:left;padding:8px 10px;border-radius:10px;border:1px solid var(--ln);background:rgba(255,255,255,.03)}#dlgAi .lfcard[hidden]{display:none}#dlgAi .lfcard.on{outline:2px solid var(--ac,#2EE6C5)}
 #dlgAi .lfn{font-size:11px;color:var(--mut)}#dlgAi .lfs{font-size:26px;line-height:1.3;color:#fff;word-break:break-word}
+
+/* v1.53: iPhone Safari zooms the whole page when an input smaller than 16px gets the focus (and stays zoomed / scrolled sideways) — keep dialog fields at 16px on touch screens */
+@media (pointer:coarse){dialog input:not([type=range]):not([type=checkbox]):not([type=radio]):not([type=color]),dialog select,dialog textarea{font-size:16px!important}}
 
 </style></head>
 <body>
@@ -1922,9 +1925,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.52
-// APP_VERSION_PREV : 1.51
-// APP_VERSION_PREV_OLDER : 1.50
+// APP_VERSION  : 1.53
+// APP_VERSION_PREV : 1.52
+// APP_VERSION_PREV_OLDER : 1.51
+// 1.53 : iPhone — fields inside dialogs are 16 px on touch screens, so Safari no longer zooms the whole page (and leaves it scrolled sideways with the Save button off-screen) when a field such as the server address / password is tapped
 // 1.52 : settings dialog on phones — the “copy staff link” row now wraps (the hint and the green/red pill no longer push the dialog wider than the screen); when the server address / password are empty the red pill says “enter the server address and password first” and the long explanation goes on its own line
 // 1.51 : “copy staff link” now shows a green “✔ copied” pill right next to the button inside the settings dialog (the old toast was hidden behind the dialog, so it looked like nothing happened); falls back to a hidden-textarea copy when the clipboard API is blocked, and to a select-and-copy box if that fails too; red pill on failure
 // 1.50 : staff link — ⚙ settings has “copy staff link”: one link (editor.touktashop.online/#sk=…) that fills in the shop-server address + password on any device (the part after # never goes to a server; the user confirms before it is saved); away from the shop (internet address, phone) project videos are pulled as the light 540p copy with a real progress bar (MB / %), cancel, automatic resume if the connection drops; a visible “⬇ pull files from server” button appears whenever the open project has missing videos; ⚙ option to always use light copy / always originals; export still fetches the originals
@@ -1978,7 +1982,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.52';
+const APP_VERSION = '1.53';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
