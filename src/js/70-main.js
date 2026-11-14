@@ -109,7 +109,7 @@ async function init() {
     const ok = $('#srvCopyOk'), warn = $('#srvCopyWarn'), box = $('#srvLinkBox'); warn.hidden = true; box.hidden = true; ok.hidden = true; clearTimeout(ok._t);
     const r = await srvCopyStaffLink();
     ok.classList.toggle('bad', !r.ok); ok.textContent = T(r.ok ? '✔ คัดลอกสำเร็จ' : '✖ คัดลอกไม่สำเร็จ'); ok.hidden = false; ok._t = setTimeout(() => { ok.hidden = true; }, r.ok ? 3500 : 9000);
-    if (r.err) { ok.textContent = '✖ ' + T(r.err); }
+    if (r.err) { ok.textContent = '✖ ' + T('ใส่ที่อยู่และรหัสผ่านเซิร์ฟเวอร์ก่อน'); warn.textContent = T(r.err); warn.hidden = false; }
     else if (!r.ok) { box.value = r.link; box.hidden = false; box.focus(); box.select(); warn.textContent = T('คัดลอกอัตโนมัติไม่ได้ — เลือกลิงก์ในช่องด้านล่างแล้วกด Ctrl+C (Cmd+C)'); warn.hidden = false; }
     else if (r.lan) { warn.textContent = T('แต่ที่อยู่เซิร์ฟเวอร์เป็นแบบในร้าน ใช้ได้เฉพาะที่ร้านเท่านั้น (ใช้ที่อยู่ ts.net เพื่อให้ใช้นอกร้านได้)'); warn.hidden = false; }
   };

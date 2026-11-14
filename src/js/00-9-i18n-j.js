@@ -33,4 +33,5 @@ I18N_ROWS.push(
   ['✖ คัดลอกไม่สำเร็จ', '✖ Copy failed', '✖ ຄັດລອກບໍ່ສຳເລັດ'],
   ['คัดลอกอัตโนมัติไม่ได้ — เลือกลิงก์ในช่องด้านล่างแล้วกด Ctrl+C (Cmd+C)', 'Could not copy automatically — select the link in the box below and press Ctrl+C (Cmd+C)', 'ຄັດລອກອັດຕະໂນມັດບໍ່ໄດ້ — ເລືອກລິ້ງໃນຊ່ອງດ້ານລຸ່ມແລ້ວກົດ Ctrl+C (Cmd+C)'],
   ['แต่ที่อยู่เซิร์ฟเวอร์เป็นแบบในร้าน ใช้ได้เฉพาะที่ร้านเท่านั้น (ใช้ที่อยู่ ts.net เพื่อให้ใช้นอกร้านได้)', 'But the server address is a shop-network one and only works inside the shop (use the ts.net address to work outside)', 'ແຕ່ທີ່ຢູ່ເຊີເວີເປັນແບບໃນຮ້ານ ໃຊ້ໄດ້ສະເພາະທີ່ຮ້ານເທົ່ານັ້ນ (ໃຊ້ທີ່ຢູ່ ts.net ເພື່ອໃຫ້ໃຊ້ນອກຮ້ານໄດ້)'],
+  ['ใส่ที่อยู่และรหัสผ่านเซิร์ฟเวอร์ก่อน', 'Enter the server address and password first', 'ໃສ່ທີ່ຢູ່ ແລະ ລະຫັດຜ່ານເຊີເວີກ່ອນ'],
 );
