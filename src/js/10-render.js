@@ -505,6 +505,12 @@ function drawText(ctx, it, t, W, H) {
         if (bg && ei === 0) { ctx.save(); ctx.globalAlpha *= rowAlpha; ctx.fillStyle = bg; rrPath(ctx, x0 - pad, y - lineH / 2 + lineH * .06, row.w + pad * 2, lineH * .88, size * .22); ctx.fill(); ctx.restore(); }
       }
       let x = x0;
+      // v1.57: gradient fill — it.grad = { c:[colour,colour,(colour)], a:angle° (90 = top→bottom, 0 = left→right) }; built per row so every line of a caption gets the full gradient
+      const gradFill = () => {
+        const g = it.grad; if (!g || !g.c || g.c.length < 2) return null;
+        const an = (g.a == null ? 90 : g.a) * Math.PI / 180, ca = Math.cos(an), sa = Math.sin(an), L = (Math.abs(ca) * row.w / 2 + Math.abs(sa) * size * .62) || 1, mx = x0 + row.w / 2;
+        const gr = ctx.createLinearGradient(mx - ca * L, y - sa * L, mx + ca * L, y + sa * L); g.c.forEach((c2, i) => gr.addColorStop(i / (g.c.length - 1), c2)); return gr;
+      };
       // paint one string at px; P = optional per-unit animation params, gb = [left, width] of the animated group (for wipes)
       const paint = (s2, px, col, P, gb) => {
         ctx.textAlign = 'left'; ctx.save(); ctx.globalAlpha *= rowAlpha * (P ? clamp(P.a, 0, 1) : 1);
@@ -514,10 +520,16 @@ function drawText(ctx, it, t, W, H) {
         const gc = (P && P.glow) ? (it.glow || it.color2 || '#ffffff') : it.glow, gm = (P && P.glow) ? P.glow.m : 1;
         if (gc && ei === 0) { ctx.save(); ctx.shadowColor = gc; ctx.shadowBlur = size * .5 * gm; ctx.fillStyle = gc; ctx.fillText(s2, px, y); ctx.shadowBlur = size * .22 * gm; ctx.fillText(s2, px, y); ctx.restore(); }
         if (P && P.ghost) P.ghost.forEach(g => { ctx.save(); ctx.globalAlpha *= g.a; ctx.fillStyle = g.col; ctx.fillText(s2, px + g.dx, y + g.dy); ctx.restore(); });
+        if (it.ext && it.ext.c && ei === 0) {   // v1.57: 3D extrusion — solid copies stacked down/right (it.ext = { c:colour, d:depth as a fraction of the font size })
+          const n = Math.max(2, Math.round(size * (it.ext.d == null ? .06 : it.ext.d))), sw = (it.stroke && it.strokeW) ? it.strokeW * Math.min(W, H) / 1080 : 0;
+          ctx.save(); ctx.fillStyle = it.ext.c; ctx.strokeStyle = it.ext.c; ctx.lineWidth = sw; ctx.lineJoin = 'round';
+          for (let i = n; i >= 1; i--) { if (i < n) ctx.shadowColor = 'transparent'; const o = i * .8; if (sw) ctx.strokeText(s2, px + o * .35, y + o); ctx.fillText(s2, px + o * .35, y + o); }
+          ctx.restore(); ctx.shadowColor = 'transparent';
+        }
         if (it.stroke && it.strokeW) { ctx.lineWidth = it.strokeW * Math.min(W, H) / 1080; ctx.strokeStyle = it.stroke; ctx.strokeText(s2, px, y); ctx.shadowColor = 'transparent'; }
-        let fill = col;
+        let fill = col; const GR = (it.grad && col === base) ? gradFill() : null; if (GR) fill = GR;
         if (P && P.hue != null) fill = `hsl(${P.hue.toFixed(0)},95%,62%)`;
-        else if (P && P.shine != null) { const g = ctx.createLinearGradient(-blockW / 2, 0, blockW / 2, 0), q = P.shine, lo = clamp(q - .1, 0, 1), mid = clamp(q, 0, 1), hi = clamp(q + .1, 0, 1); g.addColorStop(0, col); g.addColorStop(lo, col); g.addColorStop(mid, '#ffffff'); g.addColorStop(hi, col); g.addColorStop(1, col); fill = g; }
+        else if (P && P.shine != null) { if (GR) { ctx.fillStyle = GR; ctx.fillText(s2, px, y); } const sc0 = GR ? 'rgba(255,255,255,0)' : col; const g = ctx.createLinearGradient(-blockW / 2, 0, blockW / 2, 0), q = P.shine, lo = clamp(q - .1, 0, 1), mid = clamp(q, 0, 1), hi = clamp(q + .1, 0, 1); g.addColorStop(0, sc0); g.addColorStop(lo, sc0); g.addColorStop(mid, '#ffffff'); g.addColorStop(hi, sc0); g.addColorStop(1, sc0); fill = g; }
         ctx.fillStyle = fill; ctx.fillText(s2, px, y); ctx.restore();
       };
       // run paint inside the unit's own transform (about its centre)

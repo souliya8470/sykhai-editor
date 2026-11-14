@@ -39,7 +39,7 @@ function initPreviewInteraction() {
 
 let _lastUiT = -1, _uiTick = 0;
 window.onFrame = () => {
-  drawOverlay(); updatePlayhead();
+  drawOverlay(); updatePlayhead(); tbUpdate();
   $('#tpTime').textContent = fmt(PB.t) + ' / ' + fmt(projectEnd());
   if (!PB.playing && PB.t !== _lastUiT) { _lastUiT = PB.t; refreshInspectorValues(); }
 };
@@ -147,7 +147,7 @@ async function init() {
     else if (e.key === 'ArrowRight') { pause(); seek(PB.t + (e.shiftKey ? 1 : 1 / 30)); }
     else if (e.key === 'Home') { pause(); seek(0); }
   });
-  initSplitters(); initToolbar(); if (typeof coverInit === 'function') coverInit(); scrInit(); taInit(); capInit();
+  initSplitters(); initToolbar(); if (typeof coverInit === 'function') coverInit(); scrInit(); taInit(); capInit(); tpkInit(); tbInit();
   initHome(); await showHome(); await srvApplyLink(); if (srvOn()) srvPing().then(ok => ok && srvLoadSizes()).then(() => trcSync(true)).then(() => srvAdoptProxies()).then(() => srvInboxAuto()).then(() => srvInboxWatch()).catch(() => { });
   tick();
   window.__ready = true;

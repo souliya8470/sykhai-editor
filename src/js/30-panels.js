@@ -219,7 +219,7 @@ function renderInspector() {
     h += `<div class="btnrow"><button data-act="translate">🌐 แปลไทย→ลาว</button></div>`;
     h += S('สไตล์สำเร็จรูป', 'style', TEXT_STYLES.map(s => [s.id, s.label]), it);
     h += `<div class="sec">ตำแหน่ง</div>` + R('แนวตั้ง (0=บน, 1=ล่าง)', 'ay', 0, 1, .005, it) + R('ซ้าย-ขวา', 'xf.x', -1, 1, .005, it, 1) + R('ขยับขึ้น-ลง', 'xf.y', -.5, .5, .005, it, 1) + R('ขนาดซูม', 'xf.s', .3, 3, .01, it, 1) + R('หมุน', 'xf.r', -45, 45, .5, it, 1) + R('ความกว้างสูงสุด', 'maxW', .3, 1, .01, it);
-    h += `<div class="sec">รูปแบบตัวอักษร</div><div class="btnrow"><button data-act="lfopen">🔤 ${lfIdOf(it.font) ? esc(LF_BY[lfIdOf(it.font)].name) : T('เลือกฟอนต์')}</button></div>` + R('ขนาด', 'size', 16, 200, 1, it) + R('น้ำหนัก', 'weight', 400, 900, 100, it) + C('สีบรรทัด 1', 'color', it) + C('สีบรรทัด 2 / เน้น', 'color2', it) + C('สีขอบตัวอักษร', 'stroke', it, '#000000') + R('ความหนาขอบ', 'strokeW', 0, 24, 1, it) + K('เงา', 'shadow', it, false);
+    h += `<div class="sec">รูปแบบตัวอักษร</div><div class="btnrow"><button data-act="lfopen">🔤 ${lfIdOf(it.font) ? esc(LF_BY[lfIdOf(it.font)].name) : T('เลือกฟอนต์')}</button><button data-act="tpkopen">🎨 ${T('เปลี่ยนลุค (แพ็ก)')}</button><button data-act="tbfill">🌈 ${T('ไล่สี / ขอบ / 3D')}</button></div>` + R('ขนาด', 'size', 16, 200, 1, it) + R('น้ำหนัก', 'weight', 400, 900, 100, it) + C('สีบรรทัด 1', 'color', it) + C('สีบรรทัด 2 / เน้น', 'color2', it) + C('สีขอบตัวอักษร', 'stroke', it, '#000000') + R('ความหนาขอบ', 'strokeW', 0, 24, 1, it) + K('เงา', 'shadow', it, false);
     h += S('กรอบพื้นหลัง', 'box', [['none', 'ไม่มี'], ['line', 'แถบต่อบรรทัด'], ['line2', 'แถบ: บรรทัดล่างสีต่าง'], ['block', 'ป้ายก้อนเดียว']], it);
     if (it.box && it.box !== 'none') h += C('สีพื้น', 'bg', it, '#000000') + (it.box === 'line2' ? C('สีแถบบรรทัด 2', 'bg2', it, '#E02B3A') : '');
     h += `<div class="sec">แอนิเมชัน</div>` + S('เข้า', 'anim.in', ANIM_IN, it) + S('ออก', 'anim.out', [['none', 'ไม่มี'], ['fade', 'เลือนหาย'], ['down', 'ตกลง']], it) + R('ความเร็ว (วิ)', 'anim.d', .1, 1, .05, it) + R('บรรทัด 2 ตามมาหลัง (วิ)', 'reveal', 0, 2, .05, it) + K('เอฟเฟกต์เงาตามหลัง', 'anim.echo', it, false);
@@ -278,7 +278,7 @@ function bindInspector(it) {
     if (act === 'del') cmdDelete(false); else if (act === 'dup') { const b = duplicateItem(it.id); commit('dup'); select(b.id); }
     else if (act === 'clearmutes') { it.mutes = []; commit('mutes'); renderInspector(); }
     else if (act === 'gaps') cmdCloseGaps('V1');
-    else if (act === 'lfopen') lfOpen(it); else if (act === 'taopen') taOpen(); else if (act === 'tanone') taSet(it, 'none');
+    else if (act === 'lfopen') lfOpen(it); else if (act === 'tpkopen') tpkOpen(it); else if (act === 'tbfill') tbOpen('fill'); else if (act === 'taopen') taOpen(); else if (act === 'tanone') taSet(it, 'none');
     else if (typeof AI !== 'undefined' && AI.inspectorAction) AI.inspectorAction(act, it);
   };
 }

@@ -199,12 +199,15 @@ function initTimelineEvents() {
   }, { passive: false });
   // drag & drop from media bin
   body.addEventListener('dragover', e => {
-    const ty = e.dataTransfer.types; if (ty.includes('text/mediaid')) { e.preventDefault(); const rw = e.target.closest && e.target.closest('.trow'); showDropMark(rw ? { row: rw, mode: 'at', t: dropStart(e, rw.dataset.track) } : null); return; }
+    const ty = e.dataTransfer.types;
+    if (ty.includes('text/tpk')) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; const rw = e.target.closest && e.target.closest('.trow'); showDropMark(rw ? { row: rw, mode: 'at', t: tpkDropStart(e) } : null); return; }
+    if (ty.includes('text/mediaid')) { e.preventDefault(); const rw = e.target.closest && e.target.closest('.trow'); showDropMark(rw ? { row: rw, mode: 'at', t: dropStart(e, rw.dataset.track) } : null); return; }
     if (ty.includes('text/trans') || ty.includes('text/fx')) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; showDropMark(dropTarget(e)); }
   });
   body.addEventListener('dragleave', e => { if (!body.contains(e.relatedTarget)) showDropMark(null); });
   body.addEventListener('drop', e => {
     showDropMark(null);
+    if (e.dataTransfer.types.includes('text/tpk')) { e.preventDefault(); const k = e.dataTransfer.getData('text/tpk'); DRAG = null; tpkDropOnTimeline(e, k); return; }
     if (DRAG && (e.dataTransfer.types.includes('text/trans') || e.dataTransfer.types.includes('text/fx'))) {
       e.preventDefault(); const tg = dropTarget(e); const d = DRAG; DRAG = null; if (!tg) { toast('ปล่อยตรงรอยต่อหรือบนคลิปวิดีโอ/ภาพ'); return; }
       select(tg.it.id); if (d.kind === 'tween') applyTween(tg.it, d.key); else if (d.kind === 'trans') applyTransition(tg.it, d.key); else if (d.kind === 'fx') applyFxPreset(tg.it, d.key); else applyMaskPreset(tg.it, d.key); return;

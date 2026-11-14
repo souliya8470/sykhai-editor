@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.56</title>
+<title>Sykhai Editor v1.57</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -53,6 +53,23 @@ main{display:grid;grid-template-columns:var(--lw,300px) minmax(0,1fr) var(--rw,3
 #stage{position:relative;flex:1;min-height:0;aspect-ratio:9/16;max-width:100%;background:#000;box-shadow:0 4px 30px rgba(0,0,0,.6)}
 #stage canvas{position:absolute;inset:0;width:100%;height:100%}
 #ov{cursor:default}
+/* v1.57 floating text toolbar + text look pack */
+#tbar{position:fixed;z-index:60;width:max-content;max-width:calc(100vw - 8px)}#tbar[hidden]{display:none}
+#tbar .tbrow{display:flex;gap:2px;justify-content:center;flex-wrap:wrap;padding:3px;background:rgba(24,25,29,.96);border:1px solid var(--ln);border-radius:11px;box-shadow:0 4px 18px rgba(0,0,0,.55)}
+#tbar button{width:30px;height:30px;padding:0;border-radius:8px;border:1px solid transparent;background:transparent;color:#fff;font-size:14px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+#tbar button:hover{background:rgba(255,255,255,.1)}#tbar button.on{background:rgba(255,255,255,.16);border-color:var(--ac)}
+#tbar .tbsw{display:block;width:18px;height:18px;border-radius:50%;border:2px solid #fff}#tbar .tbring{display:block;width:16px;height:16px;border-radius:50%;border:3px solid transparent;box-shadow:0 0 0 1px rgba(255,255,255,.45)}
+#tbpop{position:absolute;left:0;right:0;overflow:auto;padding:8px;background:rgba(24,25,29,.97);border:1px solid var(--ln);border-radius:11px;box-shadow:0 6px 22px rgba(0,0,0,.6)}#tbpop[hidden]{display:none}
+#tbar:not(.up) #tbpop{top:calc(100% + 6px)}#tbar.up #tbpop{bottom:calc(100% + 6px)}
+#tbpop .tbl{font-size:11px;color:var(--mu);margin:4px 0 2px}#tbpop .tbh{font-size:11px;color:var(--mu)}#tbpop .tbr{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin:3px 0}
+#tbpop .tbc{width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,.35);padding:0;cursor:pointer}#tbpop .tbc.on{border-color:var(--ac);box-shadow:0 0 0 2px var(--ac)}
+#tbpop .tbc.none{background:#222;color:#ccc;font-size:13px;line-height:18px}
+#tbpop .tbg{width:38px;height:22px;border-radius:6px;border:2px solid rgba(255,255,255,.3);padding:0;cursor:pointer}
+#tbpop .tbcol{width:28px;height:24px;padding:0;border:0;background:none;cursor:pointer}
+#tbpop textarea{width:100%;box-sizing:border-box;background:#111216;color:#fff;border:1px solid var(--ln);border-radius:8px;padding:6px 8px;font-size:14px;resize:none}
+#tbpop input[type=range]{width:96px;vertical-align:middle}#tbpop .tbx{padding:2px 8px;font-size:11px;border:1px solid var(--ln);border-radius:6px;background:#2a2b30;color:#fff}
+.tpkgrid{grid-template-columns:repeat(2,1fr)}#dlgAi .tpkgrid{max-height:58vh;overflow:auto;padding:2px 6px 2px 2px}
+button.vt.tpk canvas{background:#000}button.vt.tpk[draggable=true]{cursor:grab}
 #transport{display:flex;align-items:center;gap:6px;width:100%;max-width:560px}
 #tpTime{font-variant-numeric:tabular-nums;color:var(--mu);font-size:12px}
 #inspector{flex:1;overflow:auto;padding:10px}
@@ -1978,14 +1995,73 @@ I18N_ROWS.push(
   ['ซิงค์ไม่ได้ — ต่อเซิร์ฟเวอร์ร้านไม่ได้', 'Could not sync — the shop server is not reachable', 'ຊິງຄ໌ບໍ່ໄດ້ — ເຊື່ອມຕໍ່ເຊີເວີຮ້ານບໍ່ໄດ້'],
 );
 
+// ---- 00-9-i18n-m.js ----
+// i18n rows M — v1.57: text look pack + floating text toolbar + gradient / 3D   [thai, english, lao]
+I18N_ROWS.push(
+  ['ทองหรู', 'Luxury gold', 'ທອງຫຼູຫຼາ'],
+  ['ทองตัวเขียน', 'Gold script', 'ທອງຕົວຂຽນ'],
+  ['แชมเปญ เรียบหรู', 'Champagne, elegant', 'ແຊມເປນ ຫຼູຫຼາ'],
+  ['ทองเรืองแสงเขียว', 'Gold with green glow', 'ທອງເຮືອງແສງຂຽວ'],
+  ['ลดแรง แดงไฟ', 'Big sale, fire red', 'ຫຼຸດແຮງ ແດງໄຟ'],
+  ['ไฟลุก', 'On fire', 'ໄຟລຸກ'],
+  ['ราคาเด้ง เหลือง', 'Bouncing price, yellow', 'ລາຄາເດັ້ງ ເຫຼືອງ'],
+  ['ป้ายแดง ตัวขาว', 'Red tag, white text', 'ປ້າຍແດງ ຕົວຂາວ'],
+  ['นีออนชมพู', 'Pink neon', 'ນີອອນສີບົວ'],
+  ['นีออนฟ้า', 'Blue neon', 'ນີອອນຟ້າ'],
+  ['เขียวเรืองแสง', 'Glowing green', 'ຂຽວເຮືອງແສງ'],
+  ['พระอาทิตย์ตก', 'Sunset', 'ຕາເວັນຕົກ'],
+  ['ฟ้า-ม่วง ไล่สี', 'Blue-purple gradient', 'ຟ້າ-ມ່ວງ ໄລ່ສີ'],
+  ['ลูกกวาดชมพู', 'Pink candy', 'ລູກອົມສີບົວ'],
+  ['เขียวมิ้นต์ สุขภาพ', 'Mint green, health', 'ຂຽວມິ້ນ ສຸຂະພາບ'],
+  ['ขาวหนา ขอบดำ', 'Bold white, black outline', 'ຂາວໜາ ຂອບດຳ'],
+  ['เหลืองหนา ขอบดำ', 'Bold yellow, black outline', 'ເຫຼືອງໜາ ຂອບດຳ'],
+  ['การ์ตูนป๊อป', 'Cartoon pop', 'ກາຕູນ ປ໊ອບ'],
+  ['ย้อนยุค ส้ม-ครีม', 'Retro orange-cream', 'ຍ້ອນຍຸກ ສົ້ມ-ຄຣີມ'],
+  ['ตัวเส้นขอบ', 'Outline only', 'ຕົວເສັ້ນຂອບ'],
+  ['ขาวนุ่ม เบลอเข้า', 'Soft white, blur in', 'ຂາວນຸ່ມ ມົວເຂົ້າ'],
+  ['ชื่อเรื่องหนัง', 'Movie title', 'ຊື່ເລື່ອງໜັງ'],
+  ['ไซเบอร์ กลิตช์', 'Cyber glitch', 'ໄຊເບີ ກລິດ'],
+  ['รุ้งเปลี่ยนสี', 'Rainbow colours', 'ຮຸ້ງປ່ຽນສີ'],
+  ['ป้ายเขียว ตัวขาว', 'Green tag, white text', 'ປ້າຍຂຽວ ຕົວຂາວ'],
+  ['แถบชื่อ ล่างจอ', 'Lower third', 'ແຖບຊື່ ລຸ່ມຈໍ'],
+  ['ลดราคา', 'Sale', 'ຫຼຸດລາຄາ'],
+  ['ราคาพิเศษ', 'Special price', 'ລາຄາພິເສດ'],
+  ['แพ็กข้อความ — ลุคสำเร็จรูป', 'Text pack — ready-made looks', 'ແພັກຂໍ້ຄວາມ — ແບບສຳເລັດຮູບ'],
+  ['กดเพื่อเพิ่มที่หัวอ่าน · หรือลากการ์ดไปวางบนไทม์ไลน์/บนจอ (วางทับข้อความเดิม = เปลี่ยนลุค) · เอาเมาส์ชี้การ์ดเพื่อดูแอนิเมชัน', 'Click to add at the playhead · or drag a card onto the timeline / the preview (dropped on an existing text = change its look) · hover a card to see the animation', 'ກົດເພື່ອເພີ່ມທີ່ເສັ້ນຫຼິ້ນ · ຫຼືລາກກາດໄປວາງເທິງໄທມ໌ໄລນ໌/ເທິງຈໍ (ວາງທັບຂໍ້ຄວາມເດີມ = ປ່ຽນແບບ) · ເອົາເມົ້າຊີ້ກາດເພື່ອເບິ່ງແອນິເມຊັນ'],
+  ['เปลี่ยนลุคข้อความ (แพ็ก)', 'Change text look (pack)', 'ປ່ຽນແບບຂໍ້ຄວາມ (ແພັກ)'],
+  ['กดเพื่อใช้ลุคนี้กับข้อความที่เลือก — ข้อความ เวลา และตำแหน่งเดิมจะไม่เปลี่ยน · เอาเมาส์ชี้การ์ดเพื่อดูแอนิเมชัน', 'Click to use this look on the selected text — its words, time and position stay the same · hover a card to see the animation', 'ກົດເພື່ອໃຊ້ແບບນີ້ກັບຂໍ້ຄວາມທີ່ເລືອກ — ຂໍ້ຄວາມ ເວລາ ແລະຕຳແໜ່ງເດີມຈະບໍ່ປ່ຽນ · ເອົາເມົ້າຊີ້ກາດເພື່ອເບິ່ງແອນິເມຊັນ'],
+  ['แก้ข้อความ', 'Edit text', 'ແກ້ຂໍ້ຄວາມ'],
+  ['สีตัวอักษร / ไล่สี', 'Text colour / gradient', 'ສີຕົວອັກສອນ / ໄລ່ສີ'],
+  ['ขอบตัวอักษร', 'Outline', 'ຂອບຕົວອັກສອນ'],
+  ['แสงเรือง / 3D', 'Glow / 3D', 'ແສງເຮືອງ / 3D'],
+  ['ลดขนาด', 'Smaller', 'ຫຼຸດຂະໜາດ'],
+  ['เพิ่มขนาด', 'Larger', 'ເພີ່ມຂະໜາດ'],
+  ['เปลี่ยนลุค (แพ็กข้อความ)', 'Change look (text pack)', 'ປ່ຽນແບບ (ແພັກຂໍ້ຄວາມ)'],
+  ['แอนิเมชันข้อความ', 'Text animation', 'ແອນິເມຊັນຂໍ້ຄວາມ'],
+  ['สีอื่น', 'More colours', 'ສີອື່ນ'],
+  ['บรรทัดใหม่ = Enter · *คำ* = เน้นสีเหลือง', 'New line = Enter · *word* = highlight in yellow', 'ແຖວໃໝ່ = Enter · *ຄຳ* = ເນັ້ນສີເຫຼືອງ'],
+  ['สีตัวอักษร', 'Text colour', 'ສີຕົວອັກສອນ'],
+  ['สีไล่เฉด (ไล่สี)', 'Gradient', 'ສີໄລ່ເຈືອ'],
+  ['ปรับสี', 'Adjust', 'ປັບສີ'],
+  ['มุมไล่สี', 'Angle', 'ມຸມ'],
+  ['ปิดไล่สี', 'Gradient off', 'ປິດໄລ່ສີ'],
+  ['ความหนาขอบ', 'Thickness', 'ຄວາມໜາ'],
+  ['แสงเรือง', 'Glow', 'ແສງເຮືອງ'],
+  ['3D (ขอบหนาหลังตัวอักษร)', '3D (thick edge behind the letters)', '3D (ຂອບໜາຢູ່ຫຼັງຕົວອັກສອນ)'],
+  ['ความลึก', 'Depth', 'ຄວາມເລິກ'],
+  ['เปลี่ยนลุค (แพ็ก)', 'Change look (pack)', 'ປ່ຽນແບບ (ແພັກ)'],
+  ['ไล่สี / ขอบ / 3D', 'Gradient / outline / 3D', 'ໄລ່ສີ / ຂອບ / 3D']
+);
+
 // ---- 00-core.js ----
 'use strict';
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.56
-// APP_VERSION_PREV : 1.55
-// APP_VERSION_PREV_OLDER : 1.54
+// APP_VERSION  : 1.57
+// APP_VERSION_PREV : 1.56
+// APP_VERSION_PREV_OLDER : 1.55
+// 1.57 : 🎨 text look pack (Text tab, first section) — 26 ready-made looks = Lao font + gradient fill + outline / 3D / glow + text animation; click = add at the playhead, drag onto the timeline or the preview (onto an existing text = change its look), or change the selected text's look from the inspector; NEW text properties it.grad (gradient fill, angle) and it.ext (3D extrusion) drawn in drawText; floating text toolbar above the selected text on the preview (edit words, font, colour / gradient, outline, glow & 3D, size, look, animation)
 // 1.56 : 🚀 Auto Cut (AI tab, first card) — one button: transcribe once (Lao = Gemini, Thai = Whisper; cached) -> cut silences + exact-position filler words (+ retakes when a Claude key exists) -> animated captions (every word, or only the key words / prices chosen by AI; look + 1/2 rows chosen in the dialog, settings remembered) -> result dialog with “watch” and “undo everything” (one click back to before Auto Cut). Also: transcripts are now shared through the shop server (server.js /tr, folder <SykhaiEditor>/transcripts): saved there when transcribed, pulled by every other computer / phone that opens the same clip (name + size + length), checked right before any Gemini call and at start-up; ☁ sync button in “saved transcripts”. Needs the new server.js (restart start.bat once); without it everything still works from the browser cache.
 // 1.55 : auto-captions — new options: 2 stacked rows for fast speech (the second row keeps the normal colour, only the spoken word is highlighted), minimum display time (a short caption is glued to the next one or held on screen until the next caption starts), keyword-only mode (Gemini reads the saved transcript and returns the key phrases of each sentence; the answer is saved with the transcript so it is not asked twice), calm default animations (new “soft” text animations), and a font choice from the Lao font library inside the caption dialog.
 // 1.54 : server.js CORS — the shop server now lists / echoes the allowed request headers instead of '*' (iPhone Safari may refuse '*' and then every call from editor.touktashop.online to the shop server fails with “Load failed”); the editor page itself is unchanged except for the new number. The server only picks this up after start.bat is restarted
@@ -2043,7 +2119,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.56';
+const APP_VERSION = '1.57';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -2766,6 +2842,12 @@ function drawText(ctx, it, t, W, H) {
         if (bg && ei === 0) { ctx.save(); ctx.globalAlpha *= rowAlpha; ctx.fillStyle = bg; rrPath(ctx, x0 - pad, y - lineH / 2 + lineH * .06, row.w + pad * 2, lineH * .88, size * .22); ctx.fill(); ctx.restore(); }
       }
       let x = x0;
+      // v1.57: gradient fill — it.grad = { c:[colour,colour,(colour)], a:angle° (90 = top→bottom, 0 = left→right) }; built per row so every line of a caption gets the full gradient
+      const gradFill = () => {
+        const g = it.grad; if (!g || !g.c || g.c.length < 2) return null;
+        const an = (g.a == null ? 90 : g.a) * Math.PI / 180, ca = Math.cos(an), sa = Math.sin(an), L = (Math.abs(ca) * row.w / 2 + Math.abs(sa) * size * .62) || 1, mx = x0 + row.w / 2;
+        const gr = ctx.createLinearGradient(mx - ca * L, y - sa * L, mx + ca * L, y + sa * L); g.c.forEach((c2, i) => gr.addColorStop(i / (g.c.length - 1), c2)); return gr;
+      };
       // paint one string at px; P = optional per-unit animation params, gb = [left, width] of the animated group (for wipes)
       const paint = (s2, px, col, P, gb) => {
         ctx.textAlign = 'left'; ctx.save(); ctx.globalAlpha *= rowAlpha * (P ? clamp(P.a, 0, 1) : 1);
@@ -2775,10 +2857,16 @@ function drawText(ctx, it, t, W, H) {
         const gc = (P && P.glow) ? (it.glow || it.color2 || '#ffffff') : it.glow, gm = (P && P.glow) ? P.glow.m : 1;
         if (gc && ei === 0) { ctx.save(); ctx.shadowColor = gc; ctx.shadowBlur = size * .5 * gm; ctx.fillStyle = gc; ctx.fillText(s2, px, y); ctx.shadowBlur = size * .22 * gm; ctx.fillText(s2, px, y); ctx.restore(); }
         if (P && P.ghost) P.ghost.forEach(g => { ctx.save(); ctx.globalAlpha *= g.a; ctx.fillStyle = g.col; ctx.fillText(s2, px + g.dx, y + g.dy); ctx.restore(); });
+        if (it.ext && it.ext.c && ei === 0) {   // v1.57: 3D extrusion — solid copies stacked down/right (it.ext = { c:colour, d:depth as a fraction of the font size })
+          const n = Math.max(2, Math.round(size * (it.ext.d == null ? .06 : it.ext.d))), sw = (it.stroke && it.strokeW) ? it.strokeW * Math.min(W, H) / 1080 : 0;
+          ctx.save(); ctx.fillStyle = it.ext.c; ctx.strokeStyle = it.ext.c; ctx.lineWidth = sw; ctx.lineJoin = 'round';
+          for (let i = n; i >= 1; i--) { if (i < n) ctx.shadowColor = 'transparent'; const o = i * .8; if (sw) ctx.strokeText(s2, px + o * .35, y + o); ctx.fillText(s2, px + o * .35, y + o); }
+          ctx.restore(); ctx.shadowColor = 'transparent';
+        }
         if (it.stroke && it.strokeW) { ctx.lineWidth = it.strokeW * Math.min(W, H) / 1080; ctx.strokeStyle = it.stroke; ctx.strokeText(s2, px, y); ctx.shadowColor = 'transparent'; }
-        let fill = col;
+        let fill = col; const GR = (it.grad && col === base) ? gradFill() : null; if (GR) fill = GR;
         if (P && P.hue != null) fill = `hsl(${P.hue.toFixed(0)},95%,62%)`;
-        else if (P && P.shine != null) { const g = ctx.createLinearGradient(-blockW / 2, 0, blockW / 2, 0), q = P.shine, lo = clamp(q - .1, 0, 1), mid = clamp(q, 0, 1), hi = clamp(q + .1, 0, 1); g.addColorStop(0, col); g.addColorStop(lo, col); g.addColorStop(mid, '#ffffff'); g.addColorStop(hi, col); g.addColorStop(1, col); fill = g; }
+        else if (P && P.shine != null) { if (GR) { ctx.fillStyle = GR; ctx.fillText(s2, px, y); } const sc0 = GR ? 'rgba(255,255,255,0)' : col; const g = ctx.createLinearGradient(-blockW / 2, 0, blockW / 2, 0), q = P.shine, lo = clamp(q - .1, 0, 1), mid = clamp(q, 0, 1), hi = clamp(q + .1, 0, 1); g.addColorStop(0, sc0); g.addColorStop(lo, sc0); g.addColorStop(mid, '#ffffff'); g.addColorStop(hi, sc0); g.addColorStop(1, sc0); fill = g; }
         ctx.fillStyle = fill; ctx.fillText(s2, px, y); ctx.restore();
       };
       // run paint inside the unit's own transform (about its centre)
@@ -3225,12 +3313,15 @@ function initTimelineEvents() {
   }, { passive: false });
   // drag & drop from media bin
   body.addEventListener('dragover', e => {
-    const ty = e.dataTransfer.types; if (ty.includes('text/mediaid')) { e.preventDefault(); const rw = e.target.closest && e.target.closest('.trow'); showDropMark(rw ? { row: rw, mode: 'at', t: dropStart(e, rw.dataset.track) } : null); return; }
+    const ty = e.dataTransfer.types;
+    if (ty.includes('text/tpk')) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; const rw = e.target.closest && e.target.closest('.trow'); showDropMark(rw ? { row: rw, mode: 'at', t: tpkDropStart(e) } : null); return; }
+    if (ty.includes('text/mediaid')) { e.preventDefault(); const rw = e.target.closest && e.target.closest('.trow'); showDropMark(rw ? { row: rw, mode: 'at', t: dropStart(e, rw.dataset.track) } : null); return; }
     if (ty.includes('text/trans') || ty.includes('text/fx')) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; showDropMark(dropTarget(e)); }
   });
   body.addEventListener('dragleave', e => { if (!body.contains(e.relatedTarget)) showDropMark(null); });
   body.addEventListener('drop', e => {
     showDropMark(null);
+    if (e.dataTransfer.types.includes('text/tpk')) { e.preventDefault(); const k = e.dataTransfer.getData('text/tpk'); DRAG = null; tpkDropOnTimeline(e, k); return; }
     if (DRAG && (e.dataTransfer.types.includes('text/trans') || e.dataTransfer.types.includes('text/fx'))) {
       e.preventDefault(); const tg = dropTarget(e); const d = DRAG; DRAG = null; if (!tg) { toast('ปล่อยตรงรอยต่อหรือบนคลิปวิดีโอ/ภาพ'); return; }
       select(tg.it.id); if (d.kind === 'tween') applyTween(tg.it, d.key); else if (d.kind === 'trans') applyTransition(tg.it, d.key); else if (d.kind === 'fx') applyFxPreset(tg.it, d.key); else applyMaskPreset(tg.it, d.key); return;
@@ -4265,7 +4356,7 @@ function renderInspector() {
     h += `<div class="btnrow"><button data-act="translate">🌐 แปลไทย→ลาว</button></div>`;
     h += S('สไตล์สำเร็จรูป', 'style', TEXT_STYLES.map(s => [s.id, s.label]), it);
     h += `<div class="sec">ตำแหน่ง</div>` + R('แนวตั้ง (0=บน, 1=ล่าง)', 'ay', 0, 1, .005, it) + R('ซ้าย-ขวา', 'xf.x', -1, 1, .005, it, 1) + R('ขยับขึ้น-ลง', 'xf.y', -.5, .5, .005, it, 1) + R('ขนาดซูม', 'xf.s', .3, 3, .01, it, 1) + R('หมุน', 'xf.r', -45, 45, .5, it, 1) + R('ความกว้างสูงสุด', 'maxW', .3, 1, .01, it);
-    h += `<div class="sec">รูปแบบตัวอักษร</div><div class="btnrow"><button data-act="lfopen">🔤 ${lfIdOf(it.font) ? esc(LF_BY[lfIdOf(it.font)].name) : T('เลือกฟอนต์')}</button></div>` + R('ขนาด', 'size', 16, 200, 1, it) + R('น้ำหนัก', 'weight', 400, 900, 100, it) + C('สีบรรทัด 1', 'color', it) + C('สีบรรทัด 2 / เน้น', 'color2', it) + C('สีขอบตัวอักษร', 'stroke', it, '#000000') + R('ความหนาขอบ', 'strokeW', 0, 24, 1, it) + K('เงา', 'shadow', it, false);
+    h += `<div class="sec">รูปแบบตัวอักษร</div><div class="btnrow"><button data-act="lfopen">🔤 ${lfIdOf(it.font) ? esc(LF_BY[lfIdOf(it.font)].name) : T('เลือกฟอนต์')}</button><button data-act="tpkopen">🎨 ${T('เปลี่ยนลุค (แพ็ก)')}</button><button data-act="tbfill">🌈 ${T('ไล่สี / ขอบ / 3D')}</button></div>` + R('ขนาด', 'size', 16, 200, 1, it) + R('น้ำหนัก', 'weight', 400, 900, 100, it) + C('สีบรรทัด 1', 'color', it) + C('สีบรรทัด 2 / เน้น', 'color2', it) + C('สีขอบตัวอักษร', 'stroke', it, '#000000') + R('ความหนาขอบ', 'strokeW', 0, 24, 1, it) + K('เงา', 'shadow', it, false);
     h += S('กรอบพื้นหลัง', 'box', [['none', 'ไม่มี'], ['line', 'แถบต่อบรรทัด'], ['line2', 'แถบ: บรรทัดล่างสีต่าง'], ['block', 'ป้ายก้อนเดียว']], it);
     if (it.box && it.box !== 'none') h += C('สีพื้น', 'bg', it, '#000000') + (it.box === 'line2' ? C('สีแถบบรรทัด 2', 'bg2', it, '#E02B3A') : '');
     h += `<div class="sec">แอนิเมชัน</div>` + S('เข้า', 'anim.in', ANIM_IN, it) + S('ออก', 'anim.out', [['none', 'ไม่มี'], ['fade', 'เลือนหาย'], ['down', 'ตกลง']], it) + R('ความเร็ว (วิ)', 'anim.d', .1, 1, .05, it) + R('บรรทัด 2 ตามมาหลัง (วิ)', 'reveal', 0, 2, .05, it) + K('เอฟเฟกต์เงาตามหลัง', 'anim.echo', it, false);
@@ -4324,7 +4415,7 @@ function bindInspector(it) {
     if (act === 'del') cmdDelete(false); else if (act === 'dup') { const b = duplicateItem(it.id); commit('dup'); select(b.id); }
     else if (act === 'clearmutes') { it.mutes = []; commit('mutes'); renderInspector(); }
     else if (act === 'gaps') cmdCloseGaps('V1');
-    else if (act === 'lfopen') lfOpen(it); else if (act === 'taopen') taOpen(); else if (act === 'tanone') taSet(it, 'none');
+    else if (act === 'lfopen') lfOpen(it); else if (act === 'tpkopen') tpkOpen(it); else if (act === 'tbfill') tbOpen('fill'); else if (act === 'taopen') taOpen(); else if (act === 'tanone') taSet(it, 'none');
     else if (typeof AI !== 'undefined' && AI.inspectorAction) AI.inspectorAction(act, it);
   };
 }
@@ -4692,10 +4783,11 @@ function tpDraw(cv, st) {
   const x = cv.getContext('2d'); x.clearRect(0, 0, cv.width, cv.height); x.drawImage(VP.tpc, 135, 399, 270, 162, 0, 0, cv.width, cv.height);
 }
 function buildTextPane() {
-  $('#pane-text').innerHTML = `<button id="btnTA" class="wide primary" style="margin-bottom:8px">✨ ${T('ห้องแอนิเมชันข้อความ (22 แบบ)')}</button><div class="hint">กดเพื่อเพิ่มข้อความที่ตำแหน่งหัวอ่าน (เส้นแดง) — ใช้ *คำ* เพื่อทำตัวเหลือง/เน้น</div><div class="vgrid tt-grid">` +
+  $('#pane-text').innerHTML = `<div class="sec" style="margin-top:0">🎨 ${T('แพ็กข้อความ — ลุคสำเร็จรูป')}</div><div class="hint">กดเพื่อเพิ่มที่หัวอ่าน · หรือลากการ์ดไปวางบนไทม์ไลน์/บนจอ (วางทับข้อความเดิม = เปลี่ยนลุค) · เอาเมาส์ชี้การ์ดเพื่อดูแอนิเมชัน</div><div class="vgrid tpkgrid" id="tpkPane">${tpkTiles()}</div><hr><button id="btnTA" class="wide primary" style="margin-bottom:8px">✨ ${T('ห้องแอนิเมชันข้อความ (22 แบบ)')}</button><div class="hint">กดเพื่อเพิ่มข้อความที่ตำแหน่งหัวอ่าน (เส้นแดง) — ใช้ *คำ* เพื่อทำตัวเหลือง/เน้น</div><div class="vgrid tt-grid">` +
     TEXT_STYLES.map(s => `<button class="vt tstyle" data-style="${s.id}"><canvas width="270" height="162"></canvas><span>${esc(s.label)}</span></button>`).join('') +
     `</div><hr><button id="btnFooter" class="wide">+ ใส่ข้อความท้ายจอตลอดคลิป</button>`;
-  $('#pane-text').onclick = e => { const b = e.target.closest('.tstyle'); if (b) addText(b.dataset.style); if (e.target.id === 'btnFooter') addFooter(); if (e.target.id === 'btnTA') taOpen(); };
+  tpkWire($('#tpkPane'));
+  $('#pane-text').onclick = e => { const k = e.target.closest('.tpk'); if (k) return tpkAdd(TPK_BY[k.dataset.pk]); const b = e.target.closest('.tstyle'); if (b) addText(b.dataset.style); if (e.target.id === 'btnFooter') addFooter(); if (e.target.id === 'btnTA') taOpen(); };
   drawTextTiles();
 }
 async function drawTextTiles() { await pvSamples(); $$('#pane-text .tstyle').forEach(b => { const st = TEXT_STYLES.find(s => s.id === b.dataset.style); if (st) tpDraw($('canvas', b), st); }); }
@@ -6481,6 +6573,254 @@ function presetDialog(id) {
   });
 }
 
+// ---- 65-tbar.js ----
+// ============================================================
+//  v1.57 — floating text toolbar: select a text on the preview and a small bar appears right above it
+//  ✎ edit the words · Aa font · ● colour / gradient · ◯ outline · ✦ glow & 3D · A− A+ size · 🎨 change look (pack) · ✨ animation
+//  Move / resize / rotate is still done by dragging the text itself on the preview (handles from the overlay).
+// ============================================================
+const TB = { pop: null, last: '' };
+const TB_CH = ['#ffffff', '#000000', '#FFE14D', '#FFB300', '#FF5252', '#E0143C', '#FF4FD8', '#8F6BFF', '#2B6BFF', '#00C8FF', '#37D883', '#0E7A5F'];
+const TB_GR = [['#FFF4B8', '#F5C242', '#B87A10'], ['#FFF59D', '#FF9100', '#E53935'], ['#FFE259', '#FF7A59', '#C33764'], ['#00E5FF', '#7C4DFF'], ['#FF9DE6', '#8F6BFF'], ['#F1FFF7', '#37D883'], ['#FFFFFF', '#FF8FE9'], ['#FFFFFF', '#8FDCFF'], ['#FFFDE7', '#FFD600'], ['#FFFFFF', '#9aa0a6']];
+const tbItem = () => { const it = SEL ? getItem(SEL) : null; return it && it.type === 'text' ? it : null; };
+function tbBuild() {
+  const st = $('#stage'); if (!st || $('#tbar')) return;
+  const bar = document.createElement('div'); bar.id = 'tbar'; bar.hidden = true;
+  bar.innerHTML = `<div class="tbrow">
+    <button data-tb="text" title="แก้ข้อความ">✎</button><button data-tb="font" title="เลือกฟอนต์">Aa</button>
+    <button data-tb="fill" title="สีตัวอักษร / ไล่สี"><i class="tbsw"></i></button><button data-tb="stroke" title="ขอบตัวอักษร"><i class="tbring"></i></button>
+    <button data-tb="glow" title="แสงเรือง / 3D">✦</button><button data-tb="sm" title="ลดขนาด">A−</button><button data-tb="sp" title="เพิ่มขนาด">A+</button>
+    <button data-tb="pack" title="เปลี่ยนลุค (แพ็กข้อความ)">🎨</button><button data-tb="anim" title="แอนิเมชันข้อความ">✨</button></div><div id="tbpop" hidden></div>`;
+  st.appendChild(bar);
+  bar.addEventListener('pointerdown', e => e.stopPropagation());
+  bar.addEventListener('click', tbClick);
+  bar.addEventListener('input', tbInput);
+  bar.addEventListener('change', tbChange);
+}
+function tbSet(it, k, v) {   // one property of the text, from a chip / colour input
+  if (k === 'color') { it.color = v; it.grad = null; }
+  else if (k === 'stroke') { if (!v) { it.stroke = ''; it.strokeW = 0; } else { it.stroke = v; if (!it.strokeW) it.strokeW = 8; } }
+  else if (k === 'glow') it.glow = v || null;
+  else if (k === 'ext') it.ext = v ? { c: v, d: it.ext && it.ext.d != null ? it.ext.d : .06 } : null;
+  else if (k === 'grad') it.grad = null;
+}
+const tbChips = (k, cur, none) => (none ? `<button class="tbc none" data-tbv="${k}:" title="ไม่มี">⌀</button>` : '') + TB_CH.map(c => `<button class="tbc${cur && String(cur).toLowerCase() === c.toLowerCase() ? ' on' : ''}" data-tbv="${k}:${c}" style="background:${c}"></button>`).join('') + `<input type="color" class="tbcol" data-tbi="${k}" value="${toHex(cur || '#ffffff')}" title="สีอื่น">`;
+function tbPopHtml(name, it) {
+  if (name === 'text') return `<textarea id="tbTxt" rows="3" data-tbtxt>${esc(it.text)}</textarea><div class="tbh">บรรทัดใหม่ = Enter · *คำ* = เน้นสีเหลือง</div>`;
+  if (name === 'fill') {
+    let h = `<div class="tbl">สีตัวอักษร</div><div class="tbr">${tbChips('color', it.grad ? '' : it.color)}</div>
+      <div class="tbl">สีไล่เฉด (ไล่สี)</div><div class="tbr">${TB_GR.map(g => `<button class="tbg" data-tbg="${g.join(',')}" style="background:linear-gradient(90deg,${g.join(',')})"></button>`).join('')}</div>`;
+    if (it.grad) h += `<div class="tbr"><span class="tbh">ปรับสี</span>${it.grad.c.map((c, i) => `<input type="color" class="tbcol" data-tbgi="${i}" value="${toHex(c)}">`).join('')}<label class="tbh">มุมไล่สี <input type="range" min="0" max="180" step="1" value="${it.grad.a == null ? 90 : it.grad.a}" data-tbga></label><button class="tbx" data-tbv="grad:">ปิดไล่สี</button></div>`;
+    return h;
+  }
+  if (name === 'stroke') return `<div class="tbl">สีขอบ</div><div class="tbr">${tbChips('stroke', it.stroke, true)}</div><div class="tbr"><label class="tbh">ความหนาขอบ <input type="range" min="0" max="30" step="1" value="${it.strokeW || 0}" data-tbsw></label></div>`;
+  if (name === 'glow') return `<div class="tbl">แสงเรือง</div><div class="tbr">${tbChips('glow', it.glow, true)}</div><div class="tbl">3D (ขอบหนาหลังตัวอักษร)</div><div class="tbr">${tbChips('ext', it.ext && it.ext.c, true)}</div><div class="tbr"><label class="tbh">ความลึก <input type="range" min="1" max="15" step="1" value="${Math.round((it.ext && it.ext.d != null ? it.ext.d : .06) * 100)}" data-tbed></label></div>`;
+  return '';
+}
+function tbPop(name) {
+  const it = tbItem(), pop = $('#tbpop'); if (!it || !pop) return;
+  TB.pop = name; pop.innerHTML = tbPopHtml(name, it); pop.hidden = !name;
+  $$('#tbar [data-tb]').forEach(b => b.classList.toggle('on', b.dataset.tb === name));
+  if (name === 'text') { const ta = $('#tbTxt'); if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); } }
+  TB.last = ''; tbUpdate();
+}
+function tbOpen(name) {   // also callable from the inspector: bring the playhead onto the clip so the bar can show
+  const it = tbItem(); if (!it) return; if (PB.t < it.start - 1e-3 || PB.t >= it.start + it.dur) seek(it.start + .01); pause(); tbPop(name);
+}
+function tbSwatch() {
+  const it = tbItem(), sw = $('#tbar .tbsw'), rg = $('#tbar .tbring'); if (!it) return;
+  if (sw) sw.style.background = (it.grad && it.grad.c && it.grad.c.length > 1) ? `linear-gradient(135deg,${it.grad.c.join(',')})` : toHex(it.color || '#ffffff');
+  if (rg) rg.style.borderColor = it.stroke ? toHex(it.stroke) : 'transparent';
+}
+function tbClick(e) {
+  const it = tbItem(); if (!it) return;
+  const chip = e.target.closest('[data-tbv]');
+  if (chip) { const [k, ...r] = chip.dataset.tbv.split(':'); tbSet(it, k, r.join(':')); commit('tb-' + k); renderInspector(); tbPop(TB.pop); return; }
+  const g = e.target.closest('[data-tbg]');
+  if (g) { it.grad = { c: g.dataset.tbg.split(','), a: it.grad && it.grad.a != null ? it.grad.a : 90 }; commit('tb-grad'); renderInspector(); tbPop('fill'); return; }
+  const b = e.target.closest('[data-tb]'); if (!b) return; const k = b.dataset.tb;
+  if (k === 'sm' || k === 'sp') { it.size = clamp(Math.round((it.size || 60) * (k === 'sp' ? 1.08 : .92)), 12, 300); commit('tb-size'); renderInspector(); return; }
+  if (k === 'font') { lfOpen(it); return; }
+  if (k === 'pack') { tpkOpen(it); return; }
+  if (k === 'anim') { taOpen(); return; }
+  tbPop(TB.pop === k ? null : k);
+}
+function tbInput(e) {
+  const it = tbItem(), el = e.target; if (!it) return;
+  if (el.hasAttribute('data-tbtxt')) { it.text = el.value; dirty(); renderTimeline(); return; }
+  if (el.dataset.tbi) { tbSet(it, el.dataset.tbi, el.value); dirty(); tbSwatch(); return; }
+  if (el.dataset.tbgi != null && it.grad) { it.grad.c[+el.dataset.tbgi] = el.value; dirty(); tbSwatch(); return; }
+  if (el.hasAttribute('data-tbga') && it.grad) { it.grad.a = +el.value; dirty(); return; }
+  if (el.hasAttribute('data-tbsw')) { it.strokeW = +el.value; if (it.strokeW && !it.stroke) it.stroke = '#000000'; dirty(); tbSwatch(); return; }
+  if (el.hasAttribute('data-tbed') && it.ext) { it.ext.d = (+el.value) / 100; dirty(); return; }
+  if (el.hasAttribute('data-tbed') && !it.ext) { it.ext = { c: '#000000', d: (+el.value) / 100 }; dirty(); }
+}
+function tbChange(e) {
+  const it = tbItem(); if (!it) return; const el = e.target;
+  if (el.hasAttribute('data-tbtxt')) { commit('text'); renderInspector(); return; }
+  if (el.matches('[data-tbi],[data-tbgi],[data-tbga],[data-tbsw],[data-tbed]')) { commit('tb'); renderInspector(); tbPop(TB.pop); }
+}
+// place the bar above the selected text (below it when there is no room); called on every frame, touches the DOM only when something changed
+function tbUpdate() {
+  const bar = $('#tbar'); if (!bar) return;
+  const it = tbItem(), b = it ? BOUNDS[it.id] : null;
+  const show = !!(b && !PB.playing && !PB.starting && !PB.exporting && PB.t >= it.start - 1e-3 && PB.t < it.start + it.dur - 1e-3 && !document.querySelector('dialog[open]'));
+  if (!show) { if (!bar.hidden) { bar.hidden = true; } return; }
+  const st = $('#stage'), sr = st.getBoundingClientRect(), kx = sr.width / PW, ky = sr.height / PH, vw = window.innerWidth, vh = window.innerHeight;   // the bar is position:fixed, so it may be wider than a small phone stage
+  const key = [it.id, b.cx | 0, b.cy | 0, b.w | 0, b.h | 0, b.rot | 0, sr.left | 0, sr.top | 0, sr.width | 0, vw, vh, TB.pop, it.grad ? 1 : 0].join('|');
+  if (!bar.hidden && key === TB.last) return; TB.last = key; bar.hidden = false;
+  const rad = b.rot * Math.PI / 180, ext = Math.abs(b.h / 2 * Math.cos(rad)) + Math.abs(b.w / 2 * Math.sin(rad));
+  const bh = bar.querySelector('.tbrow').offsetHeight, ty = sr.top + (b.cy - ext) * ky, by = sr.top + (b.cy + ext) * ky;
+  const spaceAbove = ty - 44, spaceBelow = vh - by - 16;
+  const up = spaceAbove >= spaceBelow, top = up ? spaceAbove - bh : by + 16;   // the side with more room (stays put while editing); the popover opens away from the text
+  bar.classList.toggle('up', up); bar.style.top = clamp(top, 4, Math.max(4, vh - bh - 4)) + 'px';
+  const pop = $('#tbpop'); if (pop) pop.style.maxHeight = Math.max(110, (up ? top : vh - top - bh) - 14) + 'px';
+  bar.style.left = clamp(sr.left + b.cx * kx - bar.offsetWidth / 2, 4, Math.max(4, vw - bar.offsetWidth - 4)) + 'px';
+}
+function tbInit() {
+  tbBuild();
+  on('sel', () => { TB.pop = null; const p = $('#tbpop'); if (p) p.hidden = true; $$('#tbar [data-tb]').forEach(b => b.classList.remove('on')); TB.last = ''; tbSwatch(); });
+  on('doc', () => { TB.last = ''; tbSwatch(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && TB.pop) { tbPop(null); } });
+}
+
+// ---- 65-tpack.js ----
+// ============================================================
+//  v1.57 — text look pack ("แพ็กข้อความ"): ready-made looks = Lao font + gradient fill + outline / 3D / glow + text animation.
+//  · click a tile  → a new text at the playhead      · drag a tile onto the timeline or onto the preview (onto an existing text = change its look)
+//  · tpkOpen(it)   → the same pack as a dialog that CHANGES the look of the selected text (text, time and position stay)
+//  Every look is just plain text-item properties (it.grad / it.ext / it.glow / it.stroke / it.font / it.tanim …), so everything stays editable.
+// ============================================================
+const TPG = (c, a) => ({ c, a });
+const TPACK = [
+  { id: 'gold', label: 'ทองหรู', f: 'Banteay', ta: 'shine', d: { size: 120, grad: TPG(['#FFF4B8', '#F5C242', '#B87A10'], 90), color: '#F5C242', stroke: '#4a2a00', strokeW: 5, ext: { c: '#5b3300', d: .05 }, shadow: true } },
+  { id: 'goldscript', label: 'ทองตัวเขียน', f: 'Krathong', ta: 'rise', d: { size: 112, grad: TPG(['#FFF6C9', '#F0B93A', '#C98512'], 90), color: '#F0B93A', glow: '#ff9f1a' } },
+  { id: 'champagne', label: 'แชมเปญ เรียบหรู', f: 'Apsara', ta: 'cine', d: { size: 120, grad: TPG(['#FFFFFF', '#F2D9A0'], 90), color: '#F7EACB', shadow: true } },
+  { id: 'emerald', label: 'ทองเรืองแสงเขียว', f: 'Banteay', ta: 'cine', d: { size: 118, grad: TPG(['#FFF3B0', '#D4A72C'], 90), color: '#E6C35C', glow: '#1bb36b' } },
+  { id: 'sale', label: 'ลดแรง แดงไฟ', f: 'PreahNeak', ta: 'impact', text: 'ลดราคา', d: { size: 124, grad: TPG(['#FFF59D', '#FF5252'], 90), color: '#FF9E80', stroke: '#6b0000', strokeW: 9, ext: { c: '#a30000', d: .07 } } },
+  { id: 'fire', label: 'ไฟลุก', f: 'TimberBrush', ta: 'pulse', d: { size: 126, grad: TPG(['#FFF59D', '#FF9100', '#E53935'], 90), color: '#FF9100', glow: '#ff6d00' } },
+  { id: 'price', label: 'ราคาเด้ง เหลือง', f: 'Banteay', ta: 'drop', text: 'ราคาพิเศษ', d: { size: 116, grad: TPG(['#FFFDE7', '#FFD600'], 90), color: '#FFE74C', stroke: '#000000', strokeW: 11, ext: { c: '#000000', d: .05 } } },
+  { id: 'tagred', label: 'ป้ายแดง ตัวขาว', f: 'WatPhou', ta: 'elastic', d: { size: 80, color: '#ffffff', box: 'block', bg: '#E0143C', ay: .25, shadow: true } },
+  { id: 'neonpink', label: 'นีออนชมพู', f: 'NamOu', ta: 'neon', d: { size: 112, grad: TPG(['#FFFFFF', '#FF8FE9'], 90), color: '#ffc4f3', glow: '#ff2bd6' } },
+  { id: 'neonblue', label: 'นีออนฟ้า', f: 'Suksa', ta: 'glow', d: { size: 112, grad: TPG(['#FFFFFF', '#8FDCFF'], 90), color: '#bfeaff', glow: '#00b7ff' } },
+  { id: 'neongreen', label: 'เขียวเรืองแสง', f: 'WoodlandHook', ta: 'glow', d: { size: 116, grad: TPG(['#F2FFF8', '#5CFFA8'], 90), color: '#a6ffd2', glow: '#18ff8a' } },
+  { id: 'sunset', label: 'พระอาทิตย์ตก', f: 'PreahNeak', ta: 'rise', d: { size: 120, grad: TPG(['#FFE259', '#FF7A59', '#C33764'], 90), color: '#FF7A59', shadow: true } },
+  { id: 'ocean', label: 'ฟ้า-ม่วง ไล่สี', f: 'Hankha', ta: 'blur', d: { size: 120, grad: TPG(['#00E5FF', '#7C4DFF'], 0), color: '#5aa0ff', glow: '#7c4dff' } },
+  { id: 'candy', label: 'ลูกกวาดชมพู', f: 'TadFane', ta: 'pop', d: { size: 118, grad: TPG(['#FF9DE6', '#8F6BFF'], 90), color: '#c58bff', stroke: '#ffffff', strokeW: 9, shadow: true } },
+  { id: 'mint', label: 'เขียวมิ้นต์ สุขภาพ', f: 'WatPhou', ta: 'softw', d: { size: 116, grad: TPG(['#F1FFF7', '#37D883'], 90), color: '#9af0c4', stroke: '#05482a', strokeW: 7, shadow: true } },
+  { id: 'impactw', label: 'ขาวหนา ขอบดำ', f: 'TadFane', ta: 'impact', d: { size: 124, color: '#ffffff', stroke: '#000000', strokeW: 14, shadow: true } },
+  { id: 'impacty', label: 'เหลืองหนา ขอบดำ', f: 'PreahNeak', ta: 'zoom', d: { size: 124, grad: TPG(['#FFFBB0', '#FFD400'], 90), color: '#FFE74C', stroke: '#000000', strokeW: 14 } },
+  { id: 'comic', label: 'การ์ตูนป๊อป', f: 'BanGuesthouse', ta: 'elastic', d: { size: 112, color: '#ffffff', stroke: '#2b2be0', strokeW: 11, ext: { c: '#2b2be0', d: .06 } } },
+  { id: 'retro', label: 'ย้อนยุค ส้ม-ครีม', f: 'Krathong', ta: 'drop', d: { size: 112, grad: TPG(['#FFF1CC', '#FF9A3C'], 90), color: '#FFC27A', stroke: '#5a1f00', strokeW: 8, ext: { c: '#5a1f00', d: .08 } } },
+  { id: 'outline', label: 'ตัวเส้นขอบ', f: 'PreahNeak', ta: 'write', d: { size: 120, color: 'rgba(255,255,255,0)', stroke: '#ffffff', strokeW: 5 } },
+  { id: 'soft', label: 'ขาวนุ่ม เบลอเข้า', f: 'NotoSansLao', w: 700, ta: 'blur', d: { size: 100, color: '#ffffff', shadow: true } },
+  { id: 'cinema', label: 'ชื่อเรื่องหนัง', f: 'Sila', ta: 'cine', d: { size: 112, color: '#ffffff', glow: '#ffd9a0' } },
+  { id: 'cyber', label: 'ไซเบอร์ กลิตช์', f: 'Kamphaeng', ta: 'glitch', d: { size: 112, color: '#ffffff', glow: '#00e5ff' } },
+  { id: 'rainbow', label: 'รุ้งเปลี่ยนสี', f: 'Hankha', ta: 'rainbow', d: { size: 120, color: '#ffffff', stroke: '#000000', strokeW: 8, shadow: true } },
+  { id: 'taggreen', label: 'ป้ายเขียว ตัวขาว', f: 'Suksa', ta: 'lineup', d: { size: 76, color: '#ffffff', box: 'block', bg: '#0E7A5F', ay: .25 } },
+  { id: 'lower', label: 'แถบชื่อ ล่างจอ', f: 'WatPhou', ta: 'write', d: { size: 64, color: '#ffffff', box: 'line', bg: '#000000d9', ay: .82 } },
+];
+const TPK_BY = {}; TPACK.forEach(p => TPK_BY[p.id] = p);
+const tpkText = pk => T(pk.text || 'ข้อความ');
+
+// text-item properties of a look (everything a look may set is reset first, so a look never inherits the old one)
+function tpkProps(pk) {
+  const d = JSON.parse(JSON.stringify(pk.d));
+  const o = Object.assign({ stroke: '', strokeW: 0, box: 'none', bg: '', shadow: false, glow: null, grad: null, ext: null, ay: .42, weight: pk.w || 400 }, d);
+  o.color2 = o.color; o.font = pk.f ? lfStack(pk.f) : FONT_STACK; o.pack = pk.id;
+  return o;
+}
+function tpkSetAnim(it, pk) {
+  if (pk.ta && TAX_BY[pk.ta]) { const fx = TAX_BY[pk.ta]; it.tanim = { id: fx.id, d: fx.d, mode: fx.mode }; it.anim = { in: 'none', out: 'fade', d: .25 }; }
+  else { delete it.tanim; it.anim = { in: 'pop', out: 'fade', d: .25 }; }
+}
+function tpkMake(pk, text, start, dur) {
+  const it = mkText('clean', text == null ? tpkText(pk) : text, start, dur, tpkProps(pk)); tpkSetAnim(it, pk); return it;
+}
+function tpkAdd(pk, o) {
+  o = o || {}; const start = o.start == null ? PB.t : o.start, dur = o.dur || 3;
+  if (pk.f) lfEnsure(pk.f);
+  const it = tpkMake(pk, null, start, dur);
+  const free = tr => !D.items.some(i => i.track === tr && i.start < start + dur - 1e-3 && i.start + i.dur > start + 1e-3);
+  it.track = (o.track && TRACK_KIND[o.track] === 'text' && free(o.track)) ? o.track : freeTrack('text', start, dur, 'T1');
+  if (o.ay != null) it.ay = o.ay; if (o.x) setXf(it, 'x', o.x);
+  addItem(it); commit('text'); select(it.id);
+  seek(it.start); if (it.tanim) { play(); setTimeout(() => { if (PB.playing && PB.t > it.start + (it.tanim ? it.tanim.d : 1) + 1.2) pause(); }, 3500); }
+  return it;
+}
+// change the look of an existing text: text, time, track, position and size multiplier stay
+function tpkApply(it, pk) {
+  if (!it || it.type !== 'text') return false;
+  if (pk.f) lfEnsure(pk.f);
+  const p = tpkProps(pk); delete p.ay; if (!pk.d.box && it.box && it.box !== 'none') p.box = 'none';
+  Object.assign(it, p); tpkSetAnim(it, pk);
+  commit('pack'); renderInspector();
+  if (it.tanim) { seek(it.start); play(); setTimeout(() => { if (PB.playing && PB.t > it.start + (it.tanim ? it.tanim.d : 1) + 1.2) pause(); }, 3500); }
+  return true;
+}
+
+// ---------- tiles ----------
+const tpkRest = pk => (pk.ta && TAX_BY[pk.ta]) ? TAX_BY[pk.ta].d + .35 : 1;
+function tpkDrawTile(cv, pk, t) {
+  const W = 540, H = 960; if (!VP.tpc) { VP.tpc = document.createElement('canvas'); VP.tpc.width = W; VP.tpc.height = H; }
+  const c = VP.tpc.getContext('2d'); c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; vpBg(c, W, H);
+  const it = tpkMake(pk, tpkText(pk), 0, 6); it.ay = .5; it.maxW = .98; it.anim = { in: 'none', out: 'none' };
+  const k = Math.min(1, 96 / it.size); it.size = Math.round(it.size * k); if (it.strokeW) it.strokeW *= k;
+  try { drawText(c, it, t, W, H); } catch (e) { console.warn(e); } delete BOUNDS[it.id];
+  const x = cv.getContext('2d'); x.clearRect(0, 0, cv.width, cv.height); x.drawImage(VP.tpc, 120, 399, 300, 162, 0, 0, cv.width, cv.height);
+}
+const tpkTiles = () => TPACK.map(p => `<button class="vt tpk" data-pk="${p.id}" draggable="true"><canvas width="300" height="162"></canvas><span>${esc(T(p.label))}</span></button>`).join('');
+// draw tiles lazily (fonts are fetched only when a tile scrolls into view), animate the tile under the pointer
+async function tpkWire(root) {
+  await pvSamples();
+  const io = typeof IntersectionObserver !== 'undefined' ? new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return; io.unobserve(e.target); const b = e.target, pk = TPK_BY[b.dataset.pk], cv = b.querySelector('canvas');
+    (pk.f ? lfEnsure(pk.f) : Promise.resolve(true)).then(() => { if (b.isConnected) tpkDrawTile(cv, pk, tpkRest(pk)); });
+  })) : null;
+  root.querySelectorAll('.tpk').forEach(b => {
+    const pk = TPK_BY[b.dataset.pk], cv = b.querySelector('canvas'); let raf = 0, t0 = 0;
+    if (io) io.observe(b); else (pk.f ? lfEnsure(pk.f) : Promise.resolve()).then(() => tpkDrawTile(cv, pk, tpkRest(pk)));
+    const loop = now => { if (!b.isConnected) { raf = 0; return; } tpkDrawTile(cv, pk, ((now - t0) / 1000) % (tpkRest(pk) + .9)); raf = requestAnimationFrame(loop); };
+    b.addEventListener('pointerenter', () => { if (raf || !LF_OK.has(pk.f) && pk.f) return; t0 = performance.now(); raf = requestAnimationFrame(loop); });
+    b.addEventListener('pointerleave', () => { if (!raf) return; cancelAnimationFrame(raf); raf = 0; tpkDrawTile(cv, pk, tpkRest(pk)); });
+  });
+}
+function tpkOpen(it) {
+  if (!it || it.type !== 'text') return;
+  aiDlg('เปลี่ยนลุคข้อความ (แพ็ก)', `<div class="hint">กดเพื่อใช้ลุคนี้กับข้อความที่เลือก — ข้อความ เวลา และตำแหน่งเดิมจะไม่เปลี่ยน · เอาเมาส์ชี้การ์ดเพื่อดูแอนิเมชัน</div><div class="vgrid tpkgrid" id="tpkDlg">${tpkTiles()}</div>`, root => {
+    tpkWire(root);
+    root.onclick = e => { const b = e.target.closest('.tpk'); if (!b) return; $('#dlgAi').close(); tpkApply(it, TPK_BY[b.dataset.pk]); };
+  });
+}
+
+// ---------- drop onto the timeline / the preview ----------
+function tpkDropStart(e) { return Math.max(0, snapVal(dropTimeFromEvent(e), snapPoints(null), 12 / TL.pps)); }
+function tpkDropOnTimeline(e, key) {
+  const pk = TPK_BY[key]; if (!pk) return; const row = e.target.closest ? e.target.closest('.trow') : null;
+  tpkAdd(pk, { start: tpkDropStart(e), track: row ? row.dataset.track : null });
+}
+function tpkHitText(p) {   // p in preview pixels → an active text clip under the point, or null
+  for (const o of D.items) {
+    if (o.type !== 'text' || o.hidden || PB.t < o.start || PB.t >= o.start + o.dur) continue; const b = BOUNDS[o.id]; if (!b) continue;
+    const a = -b.rot * Math.PI / 180, dx = p.x - b.cx, dy = p.y - b.cy, lx = dx * Math.cos(a) - dy * Math.sin(a), ly = dx * Math.sin(a) + dy * Math.cos(a);
+    if (Math.abs(lx) <= b.w / 2 && Math.abs(ly) <= b.h / 2) return o;
+  }
+  return null;
+}
+function tpkInit() {
+  const pane = $('#pane-text'); if (!pane) return;
+  pane.addEventListener('dragstart', e => { const b = e.target.closest && e.target.closest('.tpk'); if (!b) return; DRAG = { kind: 'tpk', key: b.dataset.pk }; e.dataTransfer.setData('text/tpk', b.dataset.pk); e.dataTransfer.effectAllowed = 'copy'; });
+  pane.addEventListener('dragend', () => { DRAG = null; });
+  const st = $('#stage'), ov = $('#ov');
+  st.addEventListener('dragover', e => { if (e.dataTransfer.types.includes('text/tpk')) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; } });
+  st.addEventListener('drop', e => {
+    if (!e.dataTransfer.types.includes('text/tpk')) return; e.preventDefault(); e.stopPropagation(); DRAG = null;
+    const pk = TPK_BY[e.dataTransfer.getData('text/tpk')]; if (!pk) return; const r = ov.getBoundingClientRect();
+    const fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height, hit = tpkHitText({ x: fx * PW, y: fy * PH });
+    if (hit) { select(hit.id); tpkApply(hit, pk); } else tpkAdd(pk, { ay: clamp(fy, .06, .94), x: clamp(fx - .5, -.45, .45) });
+  });
+}
+
 // ---- 66-analyzer.js ----
 // ============================================================
 //  Reference-video analyzer (v1.29)
@@ -7069,7 +7409,7 @@ function initPreviewInteraction() {
 
 let _lastUiT = -1, _uiTick = 0;
 window.onFrame = () => {
-  drawOverlay(); updatePlayhead();
+  drawOverlay(); updatePlayhead(); tbUpdate();
   $('#tpTime').textContent = fmt(PB.t) + ' / ' + fmt(projectEnd());
   if (!PB.playing && PB.t !== _lastUiT) { _lastUiT = PB.t; refreshInspectorValues(); }
 };
@@ -7177,7 +7517,7 @@ async function init() {
     else if (e.key === 'ArrowRight') { pause(); seek(PB.t + (e.shiftKey ? 1 : 1 / 30)); }
     else if (e.key === 'Home') { pause(); seek(0); }
   });
-  initSplitters(); initToolbar(); if (typeof coverInit === 'function') coverInit(); scrInit(); taInit(); capInit();
+  initSplitters(); initToolbar(); if (typeof coverInit === 'function') coverInit(); scrInit(); taInit(); capInit(); tpkInit(); tbInit();
   initHome(); await showHome(); await srvApplyLink(); if (srvOn()) srvPing().then(ok => ok && srvLoadSizes()).then(() => trcSync(true)).then(() => srvAdoptProxies()).then(() => srvInboxAuto()).then(() => srvInboxWatch()).catch(() => { });
   tick();
   window.__ready = true;
