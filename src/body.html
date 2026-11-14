@@ -107,7 +107,8 @@
   <div class="fld col"><label>รหัสผ่านเซิร์ฟเวอร์</label><input id="srvToken" type="password" autocomplete="off"></div>
   <div class="row"><button id="srvTest">ทดสอบเชื่อมต่อ</button><span id="srvTestMsg" class="hint small"></span></div>
   <div class="fld col"><label>ดึงวิดีโอของโปรเจกต์จากเซิร์ฟเวอร์</label><select id="srvPullMode"><option value="auto">อัตโนมัติ — อยู่นอกร้าน/มือถือ = สำเนาเบา, ที่ร้าน = ต้นฉบับ</option><option value="light">สำเนาเบา (540p) เสมอ — ประหยัดเน็ต</option><option value="full">ไฟล์ต้นฉบับเสมอ — ใหญ่ ช้านอกร้าน</option></select></div>
-  <div class="row"><button id="srvCopyLink">📋 คัดลอกลิงก์พนักงาน</button><span class="hint small">ลิงก์เดียวใส่ที่อยู่ + รหัสผ่านให้เอง — ส่งให้เฉพาะคนที่ไว้ใจ</span></div>
+  <div class="row"><button id="srvCopyLink">📋 คัดลอกลิงก์พนักงาน</button><span class="hint small">ลิงก์เดียวใส่ที่อยู่ + รหัสผ่านให้เอง — ส่งให้เฉพาะคนที่ไว้ใจ</span><span id="srvCopyOk" hidden>✔ คัดลอกสำเร็จ</span></div>
+  <div id="srvCopyWarn" class="hint small" hidden></div><input id="srvLinkBox" readonly hidden>
   <div class="hint small">คีย์เก็บในเครื่องนี้เท่านั้น (localStorage ของเบราว์เซอร์) ไม่ถูกส่งไปที่อื่นนอกจากเรียกใช้ API ของ Anthropic/Google โดยตรง</div>
   <div class="row"><span class="sp"></span><button id="setCancel">ปิด</button><button id="setSave" class="primary">บันทึก</button></div>
 </dialog>

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.50</title>
+<title>Sykhai Editor v1.51</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -148,6 +148,7 @@ dialog h3{margin:0 0 10px}
 .pact button{padding:2px 7px;background:rgba(18,19,22,.85)}
 #homeFoot{margin-top:18px}
 #srvBadge{background:var(--p2);border:1px solid var(--ln);border-radius:20px;padding:3px 10px;color:var(--ac);font-size:12px}#srvBadge.off{color:var(--mu)}
+#srvCopyOk{background:#17a34a;color:#fff;border-radius:20px;padding:5px 14px;font-size:13px;font-weight:700;box-shadow:0 4px 14px #17a34a66;animation:cpIn .18s ease-out;white-space:nowrap}#srvCopyOk.bad{background:#d93a3a;box-shadow:0 4px 14px #d93a3a66}#srvCopyOk[hidden],#srvCopyWarn[hidden],#srvLinkBox[hidden]{display:none}#srvCopyWarn{color:#f2b13a;margin-top:4px}#srvLinkBox{width:100%;margin-top:6px;font-size:12px}@keyframes cpIn{from{transform:translateX(-8px) scale(.9);opacity:0}to{transform:none;opacity:1}}
 #srvPull{background:var(--ac);color:#111;border:0;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}#srvPull[hidden]{display:none}
 #srvDl{position:fixed;left:50%;bottom:70px;transform:translateX(-50%);z-index:99999;background:var(--p2);border:1px solid var(--ln);border-radius:12px;padding:10px 14px;min-width:290px;max-width:92vw;box-shadow:0 8px 30px #000a;font-size:13px;display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center}#srvDl[hidden]{display:none}
 #srvDl .dlt{grid-column:1/3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#srvDl progress{grid-column:1/3;width:100%;height:10px;accent-color:var(--ac)}#srvDl .dlm{color:var(--mu);font-size:12px}#srvDl .dlx{padding:2px 10px;font-size:12px}
@@ -547,7 +548,8 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
   <div class="fld col"><label>รหัสผ่านเซิร์ฟเวอร์</label><input id="srvToken" type="password" autocomplete="off"></div>
   <div class="row"><button id="srvTest">ทดสอบเชื่อมต่อ</button><span id="srvTestMsg" class="hint small"></span></div>
   <div class="fld col"><label>ดึงวิดีโอของโปรเจกต์จากเซิร์ฟเวอร์</label><select id="srvPullMode"><option value="auto">อัตโนมัติ — อยู่นอกร้าน/มือถือ = สำเนาเบา, ที่ร้าน = ต้นฉบับ</option><option value="light">สำเนาเบา (540p) เสมอ — ประหยัดเน็ต</option><option value="full">ไฟล์ต้นฉบับเสมอ — ใหญ่ ช้านอกร้าน</option></select></div>
-  <div class="row"><button id="srvCopyLink">📋 คัดลอกลิงก์พนักงาน</button><span class="hint small">ลิงก์เดียวใส่ที่อยู่ + รหัสผ่านให้เอง — ส่งให้เฉพาะคนที่ไว้ใจ</span></div>
+  <div class="row"><button id="srvCopyLink">📋 คัดลอกลิงก์พนักงาน</button><span class="hint small">ลิงก์เดียวใส่ที่อยู่ + รหัสผ่านให้เอง — ส่งให้เฉพาะคนที่ไว้ใจ</span><span id="srvCopyOk" hidden>✔ คัดลอกสำเร็จ</span></div>
+  <div id="srvCopyWarn" class="hint small" hidden></div><input id="srvLinkBox" readonly hidden>
   <div class="hint small">คีย์เก็บในเครื่องนี้เท่านั้น (localStorage ของเบราว์เซอร์) ไม่ถูกส่งไปที่อื่นนอกจากเรียกใช้ API ของ Anthropic/Google โดยตรง</div>
   <div class="row"><span class="sp"></span><button id="setCancel">ปิด</button><button id="setSave" class="primary">บันทึก</button></div>
 </dialog>
@@ -1908,6 +1910,10 @@ I18N_ROWS.push(
   ['ไฟล์ต้นฉบับเสมอ — ใหญ่ ช้านอกร้าน', 'Always the original file — big, slow outside the shop', 'ໄຟລ໌ຕົ້ນສະບັບສະເໝີ — ໃຫຍ່ ຊ້ານອກຮ້ານ'],
   ['📋 คัดลอกลิงก์พนักงาน', '📋 Copy staff link', '📋 ຄັດລອກລິ້ງພະນັກງານ'],
   ['ลิงก์เดียวใส่ที่อยู่ + รหัสผ่านให้เอง — ส่งให้เฉพาะคนที่ไว้ใจ', 'One link fills in the address + password for you — send it only to people you trust', 'ລິ້ງດຽວໃສ່ທີ່ຢູ່ + ລະຫັດຜ່ານໃຫ້ເອງ — ສົ່ງໃຫ້ສະເພາະຄົນທີ່ໄວ້ໃຈ'],
+  ['✔ คัดลอกสำเร็จ', '✔ Copied', '✔ ຄັດລອກສຳເລັດ'],
+  ['✖ คัดลอกไม่สำเร็จ', '✖ Copy failed', '✖ ຄັດລອກບໍ່ສຳເລັດ'],
+  ['คัดลอกอัตโนมัติไม่ได้ — เลือกลิงก์ในช่องด้านล่างแล้วกด Ctrl+C (Cmd+C)', 'Could not copy automatically — select the link in the box below and press Ctrl+C (Cmd+C)', 'ຄັດລອກອັດຕະໂນມັດບໍ່ໄດ້ — ເລືອກລິ້ງໃນຊ່ອງດ້ານລຸ່ມແລ້ວກົດ Ctrl+C (Cmd+C)'],
+  ['แต่ที่อยู่เซิร์ฟเวอร์เป็นแบบในร้าน ใช้ได้เฉพาะที่ร้านเท่านั้น (ใช้ที่อยู่ ts.net เพื่อให้ใช้นอกร้านได้)', 'But the server address is a shop-network one and only works inside the shop (use the ts.net address to work outside)', 'ແຕ່ທີ່ຢູ່ເຊີເວີເປັນແບບໃນຮ້ານ ໃຊ້ໄດ້ສະເພາະທີ່ຮ້ານເທົ່ານັ້ນ (ໃຊ້ທີ່ຢູ່ ts.net ເພື່ອໃຫ້ໃຊ້ນອກຮ້ານໄດ້)'],
 );
 
 // ---- 00-core.js ----
@@ -1915,9 +1921,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.50
-// APP_VERSION_PREV : 1.49
-// APP_VERSION_PREV_OLDER : 1.48
+// APP_VERSION  : 1.51
+// APP_VERSION_PREV : 1.50
+// APP_VERSION_PREV_OLDER : 1.49
+// 1.51 : “copy staff link” now shows a green “✔ copied” pill right next to the button inside the settings dialog (the old toast was hidden behind the dialog, so it looked like nothing happened); falls back to a hidden-textarea copy when the clipboard API is blocked, and to a select-and-copy box if that fails too; red pill on failure
 // 1.50 : staff link — ⚙ settings has “copy staff link”: one link (editor.touktashop.online/#sk=…) that fills in the shop-server address + password on any device (the part after # never goes to a server; the user confirms before it is saved); away from the shop (internet address, phone) project videos are pulled as the light 540p copy with a real progress bar (MB / %), cancel, automatic resume if the connection drops; a visible “⬇ pull files from server” button appears whenever the open project has missing videos; ⚙ option to always use light copy / always originals; export still fetches the originals
 // 1.49 : Lao font library — 🔤 font picker in the text inspector: 4 formal fonts (Noto Sans / Serif / Looped, Phetsarath) + 44 free decorative Lao fonts (handwritten, script, brush, painted, traditional, fancy, stencil; SIL OFL, commercial use OK). Gallery with live samples of your own text and category filter; fonts are lazy-loaded from fonts/ (not embedded in index.html), preloaded before preview/export; falls back to editor.touktashop.online/fonts/
 // 1.48 : permanent transcript cache — every transcript is stored in the browser (own IndexedDB 'sykhai-tr') under the clip's file name + size + length, so the same video is never sent to Gemini twice (any project, after reload); the AI tab shows it instantly and says it was free; 'transcribe again' needs a confirm; new 📁 manager to download each transcript as <video name>.transcript.json, import it back on another computer, or delete it
@@ -1969,7 +1976,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.50';
+const APP_VERSION = '1.51';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -3681,10 +3688,14 @@ function srvStaffLink() {
   const base = /(^|\.)(touktashop\.online|pages\.dev)$/i.test(location.hostname) ? location.origin + '/' : 'https://editor.touktashop.online/';
   return { link: base + '#sk=' + b, lan: SRV_PRIV.test(host) };
 }
-async function srvCopyStaffLink() {
-  const r = srvStaffLink(); if (r.err) { toast(r.err, 6000); return; }
-  try { await navigator.clipboard.writeText(r.link); toast(r.lan ? 'คัดลอกลิงก์แล้ว — แต่ที่อยู่เซิร์ฟเวอร์เป็นแบบในร้าน ใช้ได้เฉพาะที่ร้านเท่านั้น (ใช้ที่อยู่ ts.net เพื่อให้ใช้นอกร้านได้)' : 'คัดลอกลิงก์พนักงานแล้ว — ส่งให้เฉพาะคนที่ไว้ใจ (มีรหัสผ่านอยู่ในลิงก์)', 8000); }
-  catch (e) { prompt(T('คัดลอกลิงก์นี้ (Ctrl+C) แล้วส่งให้พนักงาน:'), r.link); }
+async function srvCopyStaffLink() {              // -> { ok, lan, err, link }   (the caller shows the result INSIDE the settings dialog: a toast would sit behind the modal)
+  const r = srvStaffLink(); if (r.err) return { ok: false, err: r.err };
+  let ok = false;
+  try { await navigator.clipboard.writeText(r.link); ok = true; } catch (e) { }
+  if (!ok) {                                       // older browser / plain http page: copy through a temporary textarea placed inside the open dialog
+    try { const host = document.getElementById('dlgSettings') || document.body, ta = document.createElement('textarea'); ta.value = r.link; ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0'; host.appendChild(ta); ta.focus(); ta.select(); ok = document.execCommand('copy'); ta.remove(); } catch (e) { }
+  }
+  return { ok, lan: r.lan, link: r.link };
 }
 async function srvApplyLink() {
   const L = SRV.link; if (!L) return; SRV.link = null;
@@ -6869,7 +6880,15 @@ async function init() {
   $('#projName').oninput = e => { D.name = e.target.value; }; $('#projName').onchange = () => commit('rename');
   // settings
   $('#btnSettings').onclick = () => { const k = loadKeys(); $('#keyClaude').value = k.claude || ''; $('#keyGemini').value = k.gemini || ''; $('#capUsd').value = loadCap(); $('#styleGuide').value = localStorage.getItem('sk_style') || ''; const sc = srvCfg(); $('#srvUrl').value = sc.url || ''; $('#srvUrl').disabled = SRV_SELF; $('#srvToken').value = sc.token || ''; $('#srvTestMsg').textContent = ''; $('#srvPullMode').value = srvPullMode(); $('#dlgSettings').showModal(); };
-  $('#srvCopyLink').onclick = () => { try { localStorage.setItem('sk_srv', JSON.stringify({ url: $('#srvUrl').value.trim(), token: $('#srvToken').value.trim() })); } catch (e) { } srvCopyStaffLink(); };
+  $('#srvCopyLink').onclick = async () => {
+    try { localStorage.setItem('sk_srv', JSON.stringify({ url: $('#srvUrl').value.trim(), token: $('#srvToken').value.trim() })); } catch (e) { }
+    const ok = $('#srvCopyOk'), warn = $('#srvCopyWarn'), box = $('#srvLinkBox'); warn.hidden = true; box.hidden = true; ok.hidden = true; clearTimeout(ok._t);
+    const r = await srvCopyStaffLink();
+    ok.classList.toggle('bad', !r.ok); ok.textContent = T(r.ok ? '✔ คัดลอกสำเร็จ' : '✖ คัดลอกไม่สำเร็จ'); ok.hidden = false; ok._t = setTimeout(() => { ok.hidden = true; }, r.ok ? 3500 : 9000);
+    if (r.err) { ok.textContent = '✖ ' + T(r.err); }
+    else if (!r.ok) { box.value = r.link; box.hidden = false; box.focus(); box.select(); warn.textContent = T('คัดลอกอัตโนมัติไม่ได้ — เลือกลิงก์ในช่องด้านล่างแล้วกด Ctrl+C (Cmd+C)'); warn.hidden = false; }
+    else if (r.lan) { warn.textContent = T('แต่ที่อยู่เซิร์ฟเวอร์เป็นแบบในร้าน ใช้ได้เฉพาะที่ร้านเท่านั้น (ใช้ที่อยู่ ts.net เพื่อให้ใช้นอกร้านได้)'); warn.hidden = false; }
+  };
   $('#srvPull').onclick = srvPullMissing;
   $('#srvTest').onclick = async () => { localStorage.setItem('sk_srv', JSON.stringify({ url: $('#srvUrl').value.trim(), token: $('#srvToken').value.trim() })); $('#srvTestMsg').textContent = 'กำลังทดสอบ…'; const ok = await srvPing(); $('#srvTestMsg').textContent = ok ? `✔ เชื่อมต่อได้ · พื้นที่ว่าง ${SRV.info.free != null ? (SRV.info.free / 1e9).toFixed(0) + ' GB' : '-'}` : '✖ ' + SRV.err; };
   $('#setCancel').onclick = () => $('#dlgSettings').close();

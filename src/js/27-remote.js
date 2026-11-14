@@ -36,10 +36,14 @@ function srvStaffLink() {
   const base = /(^|\.)(touktashop\.online|pages\.dev)$/i.test(location.hostname) ? location.origin + '/' : 'https://editor.touktashop.online/';
   return { link: base + '#sk=' + b, lan: SRV_PRIV.test(host) };
 }
-async function srvCopyStaffLink() {
-  const r = srvStaffLink(); if (r.err) { toast(r.err, 6000); return; }
-  try { await navigator.clipboard.writeText(r.link); toast(r.lan ? 'คัดลอกลิงก์แล้ว — แต่ที่อยู่เซิร์ฟเวอร์เป็นแบบในร้าน ใช้ได้เฉพาะที่ร้านเท่านั้น (ใช้ที่อยู่ ts.net เพื่อให้ใช้นอกร้านได้)' : 'คัดลอกลิงก์พนักงานแล้ว — ส่งให้เฉพาะคนที่ไว้ใจ (มีรหัสผ่านอยู่ในลิงก์)', 8000); }
-  catch (e) { prompt(T('คัดลอกลิงก์นี้ (Ctrl+C) แล้วส่งให้พนักงาน:'), r.link); }
+async function srvCopyStaffLink() {              // -> { ok, lan, err, link }   (the caller shows the result INSIDE the settings dialog: a toast would sit behind the modal)
+  const r = srvStaffLink(); if (r.err) return { ok: false, err: r.err };
+  let ok = false;
+  try { await navigator.clipboard.writeText(r.link); ok = true; } catch (e) { }
+  if (!ok) {                                       // older browser / plain http page: copy through a temporary textarea placed inside the open dialog
+    try { const host = document.getElementById('dlgSettings') || document.body, ta = document.createElement('textarea'); ta.value = r.link; ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0'; host.appendChild(ta); ta.focus(); ta.select(); ok = document.execCommand('copy'); ta.remove(); } catch (e) { }
+  }
+  return { ok, lan: r.lan, link: r.link };
 }
 async function srvApplyLink() {
   const L = SRV.link; if (!L) return; SRV.link = null;

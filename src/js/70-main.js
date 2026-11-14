@@ -104,7 +104,15 @@ async function init() {
   $('#projName').oninput = e => { D.name = e.target.value; }; $('#projName').onchange = () => commit('rename');
   // settings
   $('#btnSettings').onclick = () => { const k = loadKeys(); $('#keyClaude').value = k.claude || ''; $('#keyGemini').value = k.gemini || ''; $('#capUsd').value = loadCap(); $('#styleGuide').value = localStorage.getItem('sk_style') || ''; const sc = srvCfg(); $('#srvUrl').value = sc.url || ''; $('#srvUrl').disabled = SRV_SELF; $('#srvToken').value = sc.token || ''; $('#srvTestMsg').textContent = ''; $('#srvPullMode').value = srvPullMode(); $('#dlgSettings').showModal(); };
-  $('#srvCopyLink').onclick = () => { try { localStorage.setItem('sk_srv', JSON.stringify({ url: $('#srvUrl').value.trim(), token: $('#srvToken').value.trim() })); } catch (e) { } srvCopyStaffLink(); };
+  $('#srvCopyLink').onclick = async () => {
+    try { localStorage.setItem('sk_srv', JSON.stringify({ url: $('#srvUrl').value.trim(), token: $('#srvToken').value.trim() })); } catch (e) { }
+    const ok = $('#srvCopyOk'), warn = $('#srvCopyWarn'), box = $('#srvLinkBox'); warn.hidden = true; box.hidden = true; ok.hidden = true; clearTimeout(ok._t);
+    const r = await srvCopyStaffLink();
+    ok.classList.toggle('bad', !r.ok); ok.textContent = T(r.ok ? '✔ คัดลอกสำเร็จ' : '✖ คัดลอกไม่สำเร็จ'); ok.hidden = false; ok._t = setTimeout(() => { ok.hidden = true; }, r.ok ? 3500 : 9000);
+    if (r.err) { ok.textContent = '✖ ' + T(r.err); }
+    else if (!r.ok) { box.value = r.link; box.hidden = false; box.focus(); box.select(); warn.textContent = T('คัดลอกอัตโนมัติไม่ได้ — เลือกลิงก์ในช่องด้านล่างแล้วกด Ctrl+C (Cmd+C)'); warn.hidden = false; }
+    else if (r.lan) { warn.textContent = T('แต่ที่อยู่เซิร์ฟเวอร์เป็นแบบในร้าน ใช้ได้เฉพาะที่ร้านเท่านั้น (ใช้ที่อยู่ ts.net เพื่อให้ใช้นอกร้านได้)'); warn.hidden = false; }
+  };
   $('#srvPull').onclick = srvPullMissing;
   $('#srvTest').onclick = async () => { localStorage.setItem('sk_srv', JSON.stringify({ url: $('#srvUrl').value.trim(), token: $('#srvToken').value.trim() })); $('#srvTestMsg').textContent = 'กำลังทดสอบ…'; const ok = await srvPing(); $('#srvTestMsg').textContent = ok ? `✔ เชื่อมต่อได้ · พื้นที่ว่าง ${SRV.info.free != null ? (SRV.info.free / 1e9).toFixed(0) + ' GB' : '-'}` : '✖ ' + SRV.err; };
   $('#setCancel').onclick = () => $('#dlgSettings').close();

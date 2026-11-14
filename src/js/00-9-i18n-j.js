@@ -29,4 +29,8 @@ I18N_ROWS.push(
   ['ไฟล์ต้นฉบับเสมอ — ใหญ่ ช้านอกร้าน', 'Always the original file — big, slow outside the shop', 'ໄຟລ໌ຕົ້ນສະບັບສະເໝີ — ໃຫຍ່ ຊ້ານອກຮ້ານ'],
   ['📋 คัดลอกลิงก์พนักงาน', '📋 Copy staff link', '📋 ຄັດລອກລິ້ງພະນັກງານ'],
   ['ลิงก์เดียวใส่ที่อยู่ + รหัสผ่านให้เอง — ส่งให้เฉพาะคนที่ไว้ใจ', 'One link fills in the address + password for you — send it only to people you trust', 'ລິ້ງດຽວໃສ່ທີ່ຢູ່ + ລະຫັດຜ່ານໃຫ້ເອງ — ສົ່ງໃຫ້ສະເພາະຄົນທີ່ໄວ້ໃຈ'],
+  ['✔ คัดลอกสำเร็จ', '✔ Copied', '✔ ຄັດລອກສຳເລັດ'],
+  ['✖ คัดลอกไม่สำเร็จ', '✖ Copy failed', '✖ ຄັດລອກບໍ່ສຳເລັດ'],
+  ['คัดลอกอัตโนมัติไม่ได้ — เลือกลิงก์ในช่องด้านล่างแล้วกด Ctrl+C (Cmd+C)', 'Could not copy automatically — select the link in the box below and press Ctrl+C (Cmd+C)', 'ຄັດລອກອັດຕະໂນມັດບໍ່ໄດ້ — ເລືອກລິ້ງໃນຊ່ອງດ້ານລຸ່ມແລ້ວກົດ Ctrl+C (Cmd+C)'],
+  ['แต่ที่อยู่เซิร์ฟเวอร์เป็นแบบในร้าน ใช้ได้เฉพาะที่ร้านเท่านั้น (ใช้ที่อยู่ ts.net เพื่อให้ใช้นอกร้านได้)', 'But the server address is a shop-network one and only works inside the shop (use the ts.net address to work outside)', 'ແຕ່ທີ່ຢູ່ເຊີເວີເປັນແບບໃນຮ້ານ ໃຊ້ໄດ້ສະເພາະທີ່ຮ້ານເທົ່ານັ້ນ (ໃຊ້ທີ່ຢູ່ ts.net ເພື່ອໃຫ້ໃຊ້ນອກຮ້ານໄດ້)'],
 );
