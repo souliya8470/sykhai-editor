@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.59</title>
+<title>Sykhai Editor v1.60</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -470,6 +470,16 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
 #dlgAi .te-mode{display:flex;flex-direction:column;gap:4px;font-size:13px;margin-bottom:4px}
 #dlgAi .te-foot button:disabled{opacity:.4}
 @media (max-width:520px){#dlgAi .te-box{max-height:36vh}}
+
+/* v1.60 magnet drag */
+.mgdrag .clip{transition:left .16s cubic-bezier(.2,.9,.25,1)}
+.mgdrag .clip.dragging{transition:none;opacity:.88;z-index:6;transform:translateY(-3px) scale(1.01);box-shadow:0 8px 18px rgba(0,0,0,.55),0 0 0 2px rgba(255,255,255,.55);cursor:grabbing}
+.mgdrag .clip.dragging.mgsnap{box-shadow:0 6px 14px rgba(0,0,0,.5),0 0 0 2px #2ee6c5,0 0 16px 3px rgba(46,230,197,.65)}
+.mgdrag .junc{display:none}
+.magslot{position:absolute;top:3px;bottom:3px;border-radius:5px;border:2px dashed rgba(255,255,255,.5);background:rgba(255,255,255,.07);pointer-events:none;transition:left .16s cubic-bezier(.2,.9,.25,1),width .16s}
+.magslot.snap{border:2px solid #2ee6c5;background:rgba(46,230,197,.18);animation:mgpulse .7s ease-in-out infinite}
+@keyframes mgpulse{50%{box-shadow:0 0 14px 2px rgba(46,230,197,.75)}}
+.mirrow button{font-size:12px}.mirrow button.on{background:var(--acc,#2ee6c5);color:#000}
 
 </style></head>
 <body>
@@ -2104,14 +2114,24 @@ I18N_ROWS.push(
   ['ลบแล้ว', 'Deleted', 'ລຶບແລ້ວ'],
 );
 
+// ---- 00-9-i18n-o.js ----
+// i18n rows O — v1.60: Mirror
+I18N_ROWS.push(
+  ['⇋ กลับซ้าย-ขวา', '⇋ Flip horizontal', '⇋ ກັບຊ້າຍ-ຂວາ'],
+  ['⇅ กลับบน-ล่าง', '⇅ Flip vertical', '⇅ ກັບເທິງ-ລຸ່ມ'],
+  ['กลับด้านซ้าย-ขวา (Mirror)', 'Flip horizontally (Mirror)', 'ກັບດ້ານຊ້າຍ-ຂວາ (Mirror)'],
+  ['กลับด้านบน-ล่าง', 'Flip vertically', 'ກັບດ້ານເທິງ-ລຸ່ມ'],
+);
+
 // ---- 00-core.js ----
 'use strict';
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.59
-// APP_VERSION_PREV : 1.58
-// APP_VERSION_PREV_OLDER : 1.57
+// APP_VERSION  : 1.60
+// APP_VERSION_PREV : 1.59
+// APP_VERSION_PREV_OLDER : 1.58
+// 1.60 : Magnet drag like CapCut but stickier — dragging a Video-1 clip opens a slot (others slide away smoothly), the slot glows when the clip is pulled in (dead-zone, then rubber band, then free flight; insert point has hysteresis; phones buzz); Mirror (flip left-right / top-bottom) for video and image clips, in preview and export.
 // 1.59 : ✂ Edit by text (AI tab, like Premiere's Transcript panel) — the transcript of a clip as clickable text with 3 tabs: text (click a word / sentence, Shift+click for a range, search box that highlights every match and can select them all), silences (length slider) and filler words; Delete cuts the picked parts from the timeline as Extract (close the gap) or Lift (leave the gap); ↶ undoes each delete, ▶ plays from the first cut. Lao transcripts made by Gemini have sentence times only, so Lao text is picked sentence by sentence (Thai Whisper transcripts have word times -> word by word). Reuses getTr / findSilences / findFillers / rippleCut; new liftCut. New file src/js/69-ztxtedit.js
 // 1.58 : the shop's own Lao fonts — 219 more Lao families in the 🔤 font gallery (all weights of each family: Thin / Light / Regular / Medium / SemiBold / Bold / Black, 293 files in total; Noto Sans / Serif / Looped now have 9 weights). They are served by the shop server (/fonts/, licence not checked -> not in the public repo); the weight slider now goes 100-900 and works with every multi-weight family
 // 1.57 : 🎨 text look pack (Text tab, first section) — 26 ready-made looks = Lao font + gradient fill + outline / 3D / glow + text animation; click = add at the playhead, drag onto the timeline or the preview (onto an existing text = change its look), or change the selected text's look from the inspector; NEW text properties it.grad (gradient fill, angle) and it.ext (3D extrusion) drawn in drawText; floating text toolbar above the selected text on the preview (edit words, font, colour / gradient, outline, glow & 3D, size, look, animation)
@@ -2172,7 +2192,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.59';
+const APP_VERSION = '1.60';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -2521,6 +2541,7 @@ function drawMediaContent(ctx, it, t, W, H, extra) {
     ctx.restore();
   }
   ctx.translate(cx, cy); ctx.rotate(r * Math.PI / 180);
+  if (it.flipX || it.flipY) ctx.scale(it.flipX ? -1 : 1, it.flipY ? -1 : 1);   // v1.60 mirror
   const mk = it.mask || { type: 'none' };
   // frame / clip shapes
   if (mk.type === 'circle') {
@@ -3338,8 +3359,15 @@ function initTimelineEvents() {
       const dt = (ev.clientX - x0) / TL.pps; if (Math.abs(ev.clientX - x0) > 2) moved = true; if (!moved && mode === 'move' && Math.abs(ev.clientY - e.clientY) < 3) return;
       if (mode === 'move') {
         let s = Math.max(0, o.start + dt); const s1 = snapVal(s, pts, tol), s2 = snapVal(s + o.dur, pts, tol) - o.dur; s = Math.abs(s1 - s) <= Math.abs(s2 - s) ? s1 : s2; it.start = Math.max(0, s);
+        const rawS = Math.max(0, o.start + dt);
         const rowEl = document.elementFromPoint(ev.clientX, ev.clientY); const row = rowEl && rowEl.closest ? rowEl.closest('.trow') : null;
         if (row && LANE(row.dataset.track) === LANE(o.track)) it.track = row.dataset.track;
+        if (TLS.magnet && it.track === 'V1') {
+          magnetDrag(it, rawS);
+          if (!mgPaint(it)) { renderTimeline(); mgPaint(it); }
+          dirty(); emit('inspect-refresh'); seek(PB.t); return;
+        }
+        if (MG.on) mgReset();
       } else if (mode === 'tl') {
         let s = snapVal(o.start + dt, pts, tol); let d = s - o.start;
         if (it.type === 'video' || it.type === 'audio') d = Math.max(d, -(o.in / sp));
@@ -3352,12 +3380,12 @@ function initTimelineEvents() {
         if (it.type === 'audio' && m && !it.loop) d = Math.min(d, m.duration - o.in);
         it.dur = d;
       }
-      if (TLS.magnet && it.track === 'V1') magnetLayout(mode === 'move' ? it.id : null);
+      if (TLS.magnet && (it.track === 'V1' || o.track === 'V1')) magnetLayout(null);
       renderTimeline(); dirty(); emit('inspect-refresh');
       // like CapCut: the player follows the edge you are dragging (trim) or keeps showing the frame under the playhead while the clip moves
       if (mode === 'tl') seek(it.start + .02); else if (mode === 'tr') seek(Math.max(it.start, it.start + it.dur - .04)); else seek(PB.t);
     };
-    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); if (moved) { commit('edit'); } };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); if (MG.on) { if (it.track === 'V1') it.start = MG.slot; mgReset(); } if (moved) { commit('edit'); } };
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
     e.preventDefault();
   });
@@ -3571,6 +3599,55 @@ function magnetLayout(skipId) {
     if (it.id !== skipId) it.start = st;
     t = st + it.dur; prev = it;
   }
+}
+// ---- v1.60 magnet DRAG feel (CapCut style, but stickier): while a V1 clip is dragged the others open a slot for it, the slot glows when the clip is pulled in,
+// there is a dead-zone (the clip "sticks" to the slot), then a rubber band, then free flight; the insert point has hysteresis so it never flickers.
+const MG = { on: false, k: null, slot: 0, snapped: false };
+const MG_SN = 30, MG_RL = 70, MG_H = 16; // px: stick radius, release radius, hysteresis
+function mgBuzz(n) { try { if (navigator.vibrate) navigator.vibrate(n); } catch (e) { } }
+function magnetDrag(it, raw) {
+  const others = D.items.filter(i => i.track === 'V1' && i.id !== it.id).sort((a, b) => a.start - b.start);
+  const ps = [], pe = []; let t = 0, prev = null;
+  for (const o of others) {
+    const ov = prev && o.transIn && o.transIn.ext && o.transIn.prevId === prev.id ? Math.min(o.transIn.ext, prev.dur * .9) : 0;
+    const st = Math.max(0, t - ov); ps.push(st); pe.push(st + o.dur); t = st + o.dur; prev = o;
+  }
+  const n = others.length, c = raw + it.dur / 2, H = MG_H / TL.pps, mid = i => (ps[i] + pe[i]) / 2;
+  let k = MG.k;
+  if (k == null || k > n) { k = 0; while (k < n && c > mid(k)) k++; }
+  else { // swap with a neighbour once the clip has travelled more than half of that neighbour's length past its slot (independent of the dragged clip's own length)
+    const sl = j => j === 0 ? 0 : pe[j - 1];
+    while (k > 0 && sl(k) - raw > (pe[k - 1] - ps[k - 1]) / 2 + H) k--;
+    while (k < n && raw - sl(k) > (pe[k] - ps[k]) / 2 + H) k++;
+  }
+  if (MG.on && k !== MG.k) mgBuzz(10);
+  MG.k = k; MG.on = true;
+  const slot = k === 0 ? 0 : pe[k - 1]; MG.slot = slot;
+  others.forEach((o, i) => { o.start = i < k ? ps[i] : ps[i] + it.dur; });
+  const d = (raw - slot) * TL.pps, ad = Math.abs(d); let off = 0;
+  if (ad >= MG_SN) off = (ad - MG_SN) * MG_RL / (MG_RL - MG_SN); if (ad >= MG_RL) off = ad;
+  const sn = ad < MG_SN; if (sn && !MG.snapped) mgBuzz(8); MG.snapped = sn;
+  it.start = Math.max(0, slot + Math.sign(d) * off / TL.pps);
+  return others;
+}
+function mgPaint(it) {
+  const row = document.querySelector('.trow[data-track="V1"] .tlane'); if (!row) return false;
+  const body = $('#tlbody'); if (body) body.classList.add('mgdrag');
+  let ok = true;
+  for (const i of D.items) {
+    if (i.track !== 'V1') continue;
+    const el = row.querySelector('.clip[data-id="' + i.id + '"]'); if (!el) { ok = false; continue; }
+    el.style.left = (i.start * TL.pps) + 'px';
+    el.classList.toggle('dragging', i.id === it.id); el.classList.toggle('mgsnap', i.id === it.id && MG.snapped);
+  }
+  let g = row.querySelector('.magslot'); if (!g) { g = document.createElement('div'); g.className = 'magslot'; row.insertBefore(g, row.firstChild); }
+  g.style.left = (MG.slot * TL.pps) + 'px'; g.style.width = Math.max(6, it.dur * TL.pps) + 'px'; g.classList.toggle('snap', MG.snapped);
+  return ok;
+}
+function mgReset() {
+  MG.on = false; MG.k = null; MG.snapped = false; 
+  const body = $('#tlbody'); if (body) body.classList.remove('mgdrag');
+  $$('.magslot').forEach(e => e.remove());
 }
 function magnetFix(label) {
   if (!TLS.magnet || label === 'init' || label === 'open') return;
@@ -4535,6 +4612,7 @@ function ccVideo(it) {
     if (it.uni === false) h += RR('ขนาดแนวนอน (%)', 'sx', .1, 4, .01, it, { m: 100, def: 1 }) + RR('ขนาดแนวตั้ง (%)', 'sy', .1, 4, .01, it, { m: 100, def: 1 });
     h += RR('ซ้าย-ขวา', 'xf.x', -1, 1, .005, it, { kf: 1, def: 0 }) + RR('บน-ล่าง', 'xf.y', -1, 1, .005, it, { kf: 1, def: 0 }) + RR('หมุน (°)', 'xf.r', -180, 180, 1, it, { kf: 1, def: 0 });
     h += `<div class="alignrow"><button data-act="align" data-v="l" title="ชิดซ้าย">⇤</button><button data-act="align" data-v="c" title="กึ่งกลางแนวนอน">⇔</button><button data-act="align" data-v="r" title="ชิดขวา">⇥</button><button data-act="align" data-v="t" title="ชิดบน">⤒</button><button data-act="align" data-v="m" title="กึ่งกลางแนวตั้ง">⇕</button><button data-act="align" data-v="b" title="ชิดล่าง">⤓</button></div>`;
+    if (it.type === 'video' || it.type === 'image') h += `<div class="alignrow mirrow"><button data-act="flip" data-v="x" class="${it.flipX ? 'on' : ''}" title="กลับด้านซ้าย-ขวา (Mirror)">⇋ กลับซ้าย-ขวา</button><button data-act="flip" data-v="y" class="${it.flipY ? 'on' : ''}" title="กลับด้านบน-ล่าง">⇅ กลับบน-ล่าง</button></div>`;
     h += S('การแสดงผล', 'fit', [['cover', 'เต็มจอ 9:16 (ครอป)'], ['contain', 'ทั้งภาพ (มีขอบ)']], it);
     h += sec('การผสมภาพ (Blend)') + S('โหมด', 'blend', BLENDS, it) + RR('ความโปร่งใส (%)', 'xf.o', 0, 1, .01, it, { kf: 1, m: 100, def: 1 });
     h += sec('คุณภาพภาพ') + S('เพิ่มความคมชัด', 'fx.sharpen', [[0, 'ปิด'], [1, 'ปานกลาง'], [2, 'มาก']], it) + K('ลดนอยส์ภาพ', 'fx.denoise', it, false) + RR('เบลอ', 'fx.blur', 0, 20, .5, it, { def: 0 });
@@ -4662,6 +4740,7 @@ function ccAction(act, a, it) {
       if (v === 't') set('y', (bh - PH) / 2 / PH); if (v === 'b') set('y', (PH - bh) / 2 / PH); if (v === 'm') set('y', 0);
       commit('align'); renderInspector(); return true;
     }
+    case 'flip': if (v === 'x') it.flipX = !it.flipX; else it.flipY = !it.flipY; commit('flip'); renderInspector(); return true;
     case 'mask': setMaskType(it, v); commit('mask'); renderInspector(); return true;
     case 'voice': it.vfx = v; commit('voice'); renderInspector(); return true;
     case 'anim': { it.anim = Object.assign({ in: 'none', out: 'none', combo: 'none' }, it.anim || {}); it.anim[a.dataset.g] = v; commit('anim'); renderInspector(); if (v !== 'none') ccPreview(it, a.dataset.g); return true; }

@@ -131,6 +131,7 @@ function drawMediaContent(ctx, it, t, W, H, extra) {
     ctx.restore();
   }
   ctx.translate(cx, cy); ctx.rotate(r * Math.PI / 180);
+  if (it.flipX || it.flipY) ctx.scale(it.flipX ? -1 : 1, it.flipY ? -1 : 1);   // v1.60 mirror
   const mk = it.mask || { type: 'none' };
   // frame / clip shapes
   if (mk.type === 'circle') {

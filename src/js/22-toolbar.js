@@ -15,6 +15,55 @@ function magnetLayout(skipId) {
     t = st + it.dur; prev = it;
   }
 }
+// ---- v1.60 magnet DRAG feel (CapCut style, but stickier): while a V1 clip is dragged the others open a slot for it, the slot glows when the clip is pulled in,
+// there is a dead-zone (the clip "sticks" to the slot), then a rubber band, then free flight; the insert point has hysteresis so it never flickers.
+const MG = { on: false, k: null, slot: 0, snapped: false };
+const MG_SN = 30, MG_RL = 70, MG_H = 16; // px: stick radius, release radius, hysteresis
+function mgBuzz(n) { try { if (navigator.vibrate) navigator.vibrate(n); } catch (e) { } }
+function magnetDrag(it, raw) {
+  const others = D.items.filter(i => i.track === 'V1' && i.id !== it.id).sort((a, b) => a.start - b.start);
+  const ps = [], pe = []; let t = 0, prev = null;
+  for (const o of others) {
+    const ov = prev && o.transIn && o.transIn.ext && o.transIn.prevId === prev.id ? Math.min(o.transIn.ext, prev.dur * .9) : 0;
+    const st = Math.max(0, t - ov); ps.push(st); pe.push(st + o.dur); t = st + o.dur; prev = o;
+  }
+  const n = others.length, c = raw + it.dur / 2, H = MG_H / TL.pps, mid = i => (ps[i] + pe[i]) / 2;
+  let k = MG.k;
+  if (k == null || k > n) { k = 0; while (k < n && c > mid(k)) k++; }
+  else { // swap with a neighbour once the clip has travelled more than half of that neighbour's length past its slot (independent of the dragged clip's own length)
+    const sl = j => j === 0 ? 0 : pe[j - 1];
+    while (k > 0 && sl(k) - raw > (pe[k - 1] - ps[k - 1]) / 2 + H) k--;
+    while (k < n && raw - sl(k) > (pe[k] - ps[k]) / 2 + H) k++;
+  }
+  if (MG.on && k !== MG.k) mgBuzz(10);
+  MG.k = k; MG.on = true;
+  const slot = k === 0 ? 0 : pe[k - 1]; MG.slot = slot;
+  others.forEach((o, i) => { o.start = i < k ? ps[i] : ps[i] + it.dur; });
+  const d = (raw - slot) * TL.pps, ad = Math.abs(d); let off = 0;
+  if (ad >= MG_SN) off = (ad - MG_SN) * MG_RL / (MG_RL - MG_SN); if (ad >= MG_RL) off = ad;
+  const sn = ad < MG_SN; if (sn && !MG.snapped) mgBuzz(8); MG.snapped = sn;
+  it.start = Math.max(0, slot + Math.sign(d) * off / TL.pps);
+  return others;
+}
+function mgPaint(it) {
+  const row = document.querySelector('.trow[data-track="V1"] .tlane'); if (!row) return false;
+  const body = $('#tlbody'); if (body) body.classList.add('mgdrag');
+  let ok = true;
+  for (const i of D.items) {
+    if (i.track !== 'V1') continue;
+    const el = row.querySelector('.clip[data-id="' + i.id + '"]'); if (!el) { ok = false; continue; }
+    el.style.left = (i.start * TL.pps) + 'px';
+    el.classList.toggle('dragging', i.id === it.id); el.classList.toggle('mgsnap', i.id === it.id && MG.snapped);
+  }
+  let g = row.querySelector('.magslot'); if (!g) { g = document.createElement('div'); g.className = 'magslot'; row.insertBefore(g, row.firstChild); }
+  g.style.left = (MG.slot * TL.pps) + 'px'; g.style.width = Math.max(6, it.dur * TL.pps) + 'px'; g.classList.toggle('snap', MG.snapped);
+  return ok;
+}
+function mgReset() {
+  MG.on = false; MG.k = null; MG.snapped = false; 
+  const body = $('#tlbody'); if (body) body.classList.remove('mgdrag');
+  $$('.magslot').forEach(e => e.remove());
+}
 function magnetFix(label) {
   if (!TLS.magnet || label === 'init' || label === 'open') return;
   magnetLayout(null);

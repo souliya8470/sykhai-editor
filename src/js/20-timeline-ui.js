@@ -171,8 +171,15 @@ function initTimelineEvents() {
       const dt = (ev.clientX - x0) / TL.pps; if (Math.abs(ev.clientX - x0) > 2) moved = true; if (!moved && mode === 'move' && Math.abs(ev.clientY - e.clientY) < 3) return;
       if (mode === 'move') {
         let s = Math.max(0, o.start + dt); const s1 = snapVal(s, pts, tol), s2 = snapVal(s + o.dur, pts, tol) - o.dur; s = Math.abs(s1 - s) <= Math.abs(s2 - s) ? s1 : s2; it.start = Math.max(0, s);
+        const rawS = Math.max(0, o.start + dt);
         const rowEl = document.elementFromPoint(ev.clientX, ev.clientY); const row = rowEl && rowEl.closest ? rowEl.closest('.trow') : null;
         if (row && LANE(row.dataset.track) === LANE(o.track)) it.track = row.dataset.track;
+        if (TLS.magnet && it.track === 'V1') {
+          magnetDrag(it, rawS);
+          if (!mgPaint(it)) { renderTimeline(); mgPaint(it); }
+          dirty(); emit('inspect-refresh'); seek(PB.t); return;
+        }
+        if (MG.on) mgReset();
       } else if (mode === 'tl') {
         let s = snapVal(o.start + dt, pts, tol); let d = s - o.start;
         if (it.type === 'video' || it.type === 'audio') d = Math.max(d, -(o.in / sp));
@@ -185,12 +192,12 @@ function initTimelineEvents() {
         if (it.type === 'audio' && m && !it.loop) d = Math.min(d, m.duration - o.in);
         it.dur = d;
       }
-      if (TLS.magnet && it.track === 'V1') magnetLayout(mode === 'move' ? it.id : null);
+      if (TLS.magnet && (it.track === 'V1' || o.track === 'V1')) magnetLayout(null);
       renderTimeline(); dirty(); emit('inspect-refresh');
       // like CapCut: the player follows the edge you are dragging (trim) or keeps showing the frame under the playhead while the clip moves
       if (mode === 'tl') seek(it.start + .02); else if (mode === 'tr') seek(Math.max(it.start, it.start + it.dur - .04)); else seek(PB.t);
     };
-    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); if (moved) { commit('edit'); } };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); if (MG.on) { if (it.track === 'V1') it.start = MG.slot; mgReset(); } if (moved) { commit('edit'); } };
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
     e.preventDefault();
   });
