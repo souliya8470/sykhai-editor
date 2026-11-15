@@ -449,3 +449,17 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
 
 /* v1.53: iPhone Safari zooms the whole page when an input smaller than 16px gets the focus (and stays zoomed / scrolled sideways) — keep dialog fields at 16px on touch screens */
 @media (pointer:coarse){dialog input:not([type=range]):not([type=checkbox]):not([type=radio]):not([type=color]),dialog select,dialog textarea{font-size:16px!important}}
+/* v1.59 text-based editing */
+#dlgAi .te-box{max-height:46vh;overflow:auto;margin:6px 0;padding:8px;border:1px solid var(--ln);border-radius:8px;line-height:2}
+#dlgAi .te-box.w{font-size:15px}
+#dlgAi .te-u{cursor:pointer;border-radius:4px;padding:1px 2px}
+#dlgAi .te-u:hover{background:rgba(255,255,255,.1)}
+#dlgAi .te-u.hit{background:rgba(255,210,70,.28)}
+#dlgAi .te-u.on{background:rgba(255,90,110,.45);color:#fff}
+#dlgAi .te-u.dead,#dlgAi .te-s.dead{opacity:.35;text-decoration:line-through;cursor:default}
+#dlgAi .te-s{display:flex;gap:8px;align-items:baseline;line-height:1.7}
+#dlgAi .te-t{color:var(--mut);font-variant-numeric:tabular-nums;font-size:11px;cursor:pointer;min-width:46px;text-decoration:underline dotted}
+#dlgAi .te-foot{margin-top:8px;border-top:1px solid var(--ln);padding-top:8px}
+#dlgAi .te-mode{display:flex;flex-direction:column;gap:4px;font-size:13px;margin-bottom:4px}
+#dlgAi .te-foot button:disabled{opacity:.4}
+@media (max-width:520px){#dlgAi .te-box{max-height:36vh}}

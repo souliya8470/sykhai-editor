@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.58
-// APP_VERSION_PREV : 1.57
-// APP_VERSION_PREV_OLDER : 1.56
+// APP_VERSION  : 1.59
+// APP_VERSION_PREV : 1.58
+// APP_VERSION_PREV_OLDER : 1.57
+// 1.59 : ✂ Edit by text (AI tab, like Premiere's Transcript panel) — the transcript of a clip as clickable text with 3 tabs: text (click a word / sentence, Shift+click for a range, search box that highlights every match and can select them all), silences (length slider) and filler words; Delete cuts the picked parts from the timeline as Extract (close the gap) or Lift (leave the gap); ↶ undoes each delete, ▶ plays from the first cut. Lao transcripts made by Gemini have sentence times only, so Lao text is picked sentence by sentence (Thai Whisper transcripts have word times -> word by word). Reuses getTr / findSilences / findFillers / rippleCut; new liftCut. New file src/js/69-ztxtedit.js
 // 1.58 : the shop's own Lao fonts — 219 more Lao families in the 🔤 font gallery (all weights of each family: Thin / Light / Regular / Medium / SemiBold / Bold / Black, 293 files in total; Noto Sans / Serif / Looped now have 9 weights). They are served by the shop server (/fonts/, licence not checked -> not in the public repo); the weight slider now goes 100-900 and works with every multi-weight family
 // 1.57 : 🎨 text look pack (Text tab, first section) — 26 ready-made looks = Lao font + gradient fill + outline / 3D / glow + text animation; click = add at the playhead, drag onto the timeline or the preview (onto an existing text = change its look), or change the selected text's look from the inspector; NEW text properties it.grad (gradient fill, angle) and it.ext (3D extrusion) drawn in drawText; floating text toolbar above the selected text on the preview (edit words, font, colour / gradient, outline, glow & 3D, size, look, animation)
 // 1.56 : 🚀 Auto Cut (AI tab, first card) — one button: transcribe once (Lao = Gemini, Thai = Whisper; cached) -> cut silences + exact-position filler words (+ retakes when a Claude key exists) -> animated captions (every word, or only the key words / prices chosen by AI; look + 1/2 rows chosen in the dialog, settings remembered) -> result dialog with “watch” and “undo everything” (one click back to before Auto Cut). Also: transcripts are now shared through the shop server (server.js /tr, folder <SykhaiEditor>/transcripts): saved there when transcribed, pulled by every other computer / phone that opens the same clip (name + size + length), checked right before any Gemini call and at start-up; ☁ sync button in “saved transcripts”. Needs the new server.js (restart start.bat once); without it everything still works from the browser cache.
@@ -64,7 +65,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.58';
+const APP_VERSION = '1.59';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];

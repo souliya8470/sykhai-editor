@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.58</title>
+<title>Sykhai Editor v1.59</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -456,6 +456,20 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
 
 /* v1.53: iPhone Safari zooms the whole page when an input smaller than 16px gets the focus (and stays zoomed / scrolled sideways) — keep dialog fields at 16px on touch screens */
 @media (pointer:coarse){dialog input:not([type=range]):not([type=checkbox]):not([type=radio]):not([type=color]),dialog select,dialog textarea{font-size:16px!important}}
+/* v1.59 text-based editing */
+#dlgAi .te-box{max-height:46vh;overflow:auto;margin:6px 0;padding:8px;border:1px solid var(--ln);border-radius:8px;line-height:2}
+#dlgAi .te-box.w{font-size:15px}
+#dlgAi .te-u{cursor:pointer;border-radius:4px;padding:1px 2px}
+#dlgAi .te-u:hover{background:rgba(255,255,255,.1)}
+#dlgAi .te-u.hit{background:rgba(255,210,70,.28)}
+#dlgAi .te-u.on{background:rgba(255,90,110,.45);color:#fff}
+#dlgAi .te-u.dead,#dlgAi .te-s.dead{opacity:.35;text-decoration:line-through;cursor:default}
+#dlgAi .te-s{display:flex;gap:8px;align-items:baseline;line-height:1.7}
+#dlgAi .te-t{color:var(--mut);font-variant-numeric:tabular-nums;font-size:11px;cursor:pointer;min-width:46px;text-decoration:underline dotted}
+#dlgAi .te-foot{margin-top:8px;border-top:1px solid var(--ln);padding-top:8px}
+#dlgAi .te-mode{display:flex;flex-direction:column;gap:4px;font-size:13px;margin-bottom:4px}
+#dlgAi .te-foot button:disabled{opacity:.4}
+@media (max-width:520px){#dlgAi .te-box{max-height:36vh}}
 
 </style></head>
 <body>
@@ -2056,14 +2070,49 @@ I18N_ROWS.push(
   ['ฟอนต์นี้อยู่บนเซิร์ฟเวอร์ร้าน — ต้องเชื่อมต่อเซิร์ฟเวอร์ก่อน (⚙ ตั้งค่า)', 'This font lives on the shop server — connect the server first (⚙ Settings)', 'ຟອນນີ້ຢູ່ເທິງເຊີບເວີຮ້ານ — ຕ້ອງເຊື່ອມຕໍ່ເຊີບເວີກ່ອນ (⚙ ຕັ້ງຄ່າ)']
 );
 
+// ---- 00-9-i18n-n.js ----
+// i18n rows N — v1.59: text-based editing ("แก้ไขตามข้อความ")   [thai, english, lao]
+I18N_ROWS.push(
+  ['แก้ไขตามข้อความ', 'Edit by text', 'ແກ້ໄຂຕາມຂໍ້ຄວາມ'],
+  ['✂ แก้ไขตามข้อความ', '✂ Edit by text', '✂ ແກ້ໄຂຕາມຂໍ້ຄວາມ'],
+  ['ดูข้อความที่ถอดเสียง คลิกเลือกคำ/ประโยคแล้วลบ หรือลบช่วงเงียบและคำอ้ำอึ้งทั้งหมดในครั้งเดียว (เหมือน Premiere)', 'See the transcript, click words or sentences and delete them, or delete all silences and filler words at once (like Premiere)', 'ເບິ່ງຂໍ້ຄວາມທີ່ຖອດສຽງ ກົດເລືອກຄຳ/ປະໂຫຍກແລ້ວລຶບ ຫຼືລຶບຊ່ວງງຽບ ແລະຄຳລັງເລທັງໝົດໃນເທື່ອດຽວ (ຄືກັບ Premiere)'],
+  ['เปิดแก้ไขตามข้อความ', 'Open text editing', 'ເປີດແກ້ໄຂຕາມຂໍ້ຄວາມ'],
+  ['คลิปนี้ยังไม่มีข้อความที่ถอดเสียง — ถอดเสียงก่อน (ทำครั้งเดียว เก็บไว้ใช้ต่อ)', 'This clip has no transcript yet — transcribe it first (done once, kept for later)', 'ຄລິບນີ້ຍັງບໍ່ມີຂໍ້ຄວາມທີ່ຖອດສຽງ — ຖອດສຽງກ່ອນ (ເຮັດເທື່ອດຽວ ເກັບໄວ້ໃຊ້ຕໍ່)'],
+  ['ถอดเสียงตอนนี้', 'Transcribe now', 'ຖອດສຽງດຽວນີ້'],
+  ['กำลังถอดเสียง…', 'Transcribing…', 'ກຳລັງຖອດສຽງ…'],
+  ['ค้นหาคำหรือประโยค', 'Search a word or sentence', 'ຄົ້ນຫາຄຳ ຫຼືປະໂຫຍກ'],
+  ['พบ', 'Found', 'ພົບ'],
+  ['แห่ง', 'places', 'ບ່ອນ'],
+  ['เลือกผลที่พบทั้งหมด', 'Select all results', 'ເລືອກຜົນທີ່ພົບທັງໝົດ'],
+  ['ล้างที่เลือก', 'Clear selection', 'ລ້າງທີ່ເລືອກ'],
+  ['กดคำเพื่อเลือก · กด Shift ค้างแล้วกดอีกคำเพื่อเลือกเป็นช่วง', 'Click a word to select it · hold Shift and click another word to select a range', 'ກົດຄຳເພື່ອເລືອກ · ກົດ Shift ຄ້າງໄວ້ແລ້ວກົດອີກຄຳ ເພື່ອເລືອກເປັນຊ່ວງ'],
+  ['ข้อความลาวที่ถอดด้วย Gemini แบ่งเป็นประโยค จึงเลือกทีละประโยค · กดเวลาด้านหน้าเพื่อไปดูที่ตำแหน่งนั้น', 'Lao text transcribed by Gemini is split into sentences, so you select one sentence at a time · click the time in front to jump there', 'ຂໍ້ຄວາມລາວທີ່ຖອດດ້ວຍ Gemini ແບ່ງເປັນປະໂຫຍກ ຈຶ່ງເລືອກເທື່ອລະປະໂຫຍກ · ກົດເວລາດ້ານໜ້າເພື່ອໄປເບິ່ງຕຳແໜ່ງນັ້ນ'],
+  ['ไปที่ตำแหน่งนี้', 'Go to this position', 'ໄປທີ່ຕຳແໜ່ງນີ້'],
+  ['ไม่พบช่วงเงียบ', 'No silences found', 'ບໍ່ພົບຊ່ວງງຽບ'],
+  ['ไม่พบคำอ้ำอึ้ง', 'No filler words found', 'ບໍ່ພົບຄຳລັງເລ'],
+  ['ตัดแล้วดึงเข้าหากัน (Extract)', 'Cut and close the gap (Extract)', 'ຕັດແລ້ວດຶງເຂົ້າຫາກັນ (Extract)'],
+  ['ตัดแล้วเว้นช่องว่างไว้ (Lift)', 'Cut and leave the gap (Lift)', 'ຕັດແລ້ວປະຊ່ອງວ່າງໄວ້ (Lift)'],
+  ['เลือกไว้', 'Selected', 'ເລືອກໄວ້'],
+  ['จะลดไป', 'will save', 'ຈະຫຼຸດໄປ'],
+  ['ยังไม่ได้เลือกอะไร', 'Nothing selected yet', 'ຍັງບໍ່ໄດ້ເລືອກຫຍັງ'],
+  ['ย้อนกลับ', 'Undo', 'ຍ້ອນກັບ'],
+  ['เลือก/ไม่เลือกทั้งหมด', 'Select / unselect all', 'ເລືອກ/ບໍ່ເລືອກທັງໝົດ'],
+  ['มีการแก้ไขต่อจากนี้แล้ว — ใช้ปุ่ม ↶ ย้อนกลับทีละขั้นแทน', 'There are later edits — use the ↶ undo button step by step instead', 'ມີການແກ້ໄຂຕໍ່ຈາກນີ້ແລ້ວ — ໃຊ້ປຸ່ມ ↶ ຍ້ອນກັບເທື່ອລະຂັ້ນແທນ'],
+  ['ย้อนกลับแล้ว', 'Undone', 'ຍ້ອນກັບແລ້ວ'],
+  ['ช่วงที่เลือกถูกลบไปแล้ว', 'The selected parts were already deleted', 'ສ່ວນທີ່ເລືອກຖືກລຶບໄປແລ້ວ'],
+  ['ปิดแม่เหล็กวิดีโอ 1 ให้แล้ว เพื่อเว้นช่องว่างไว้', 'Turned off the Video 1 magnet so the gap stays', 'ປິດແມ່ເຫຼັກວິດີໂອ 1 ໃຫ້ແລ້ວ ເພື່ອປະຊ່ອງວ່າງໄວ້'],
+  ['ลบแล้ว', 'Deleted', 'ລຶບແລ້ວ'],
+);
+
 // ---- 00-core.js ----
 'use strict';
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.58
-// APP_VERSION_PREV : 1.57
-// APP_VERSION_PREV_OLDER : 1.56
+// APP_VERSION  : 1.59
+// APP_VERSION_PREV : 1.58
+// APP_VERSION_PREV_OLDER : 1.57
+// 1.59 : ✂ Edit by text (AI tab, like Premiere's Transcript panel) — the transcript of a clip as clickable text with 3 tabs: text (click a word / sentence, Shift+click for a range, search box that highlights every match and can select them all), silences (length slider) and filler words; Delete cuts the picked parts from the timeline as Extract (close the gap) or Lift (leave the gap); ↶ undoes each delete, ▶ plays from the first cut. Lao transcripts made by Gemini have sentence times only, so Lao text is picked sentence by sentence (Thai Whisper transcripts have word times -> word by word). Reuses getTr / findSilences / findFillers / rippleCut; new liftCut. New file src/js/69-ztxtedit.js
 // 1.58 : the shop's own Lao fonts — 219 more Lao families in the 🔤 font gallery (all weights of each family: Thin / Light / Regular / Medium / SemiBold / Bold / Black, 293 files in total; Noto Sans / Serif / Looped now have 9 weights). They are served by the shop server (/fonts/, licence not checked -> not in the public repo); the weight slider now goes 100-900 and works with every multi-weight family
 // 1.57 : 🎨 text look pack (Text tab, first section) — 26 ready-made looks = Lao font + gradient fill + outline / 3D / glow + text animation; click = add at the playhead, drag onto the timeline or the preview (onto an existing text = change its look), or change the selected text's look from the inspector; NEW text properties it.grad (gradient fill, angle) and it.ext (3D extrusion) drawn in drawText; floating text toolbar above the selected text on the preview (edit words, font, colour / gradient, outline, glow & 3D, size, look, animation)
 // 1.56 : 🚀 Auto Cut (AI tab, first card) — one button: transcribe once (Lao = Gemini, Thai = Whisper; cached) -> cut silences + exact-position filler words (+ retakes when a Claude key exists) -> animated captions (every word, or only the key words / prices chosen by AI; look + 1/2 rows chosen in the dialog, settings remembered) -> result dialog with “watch” and “undo everything” (one click back to before Auto Cut). Also: transcripts are now shared through the shop server (server.js /tr, folder <SykhaiEditor>/transcripts): saved there when transcribed, pulled by every other computer / phone that opens the same clip (name + size + length), checked right before any Gemini call and at start-up; ☁ sync button in “saved transcripts”. Needs the new server.js (restart start.bat once); without it everything still works from the browser cache.
@@ -2123,7 +2172,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.58';
+const APP_VERSION = '1.59';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -5903,6 +5952,7 @@ function renderAiPane() {
   <div class="fld"><label>ภาษาในคลิป</label><select id="aiLang"><option value="lo">ลาว (Gemini)</option><option value="th">ไทย</option></select></div>
   <div class="fld"><label>ตัวถอดเสียงไทย</label><select id="aiEng"><option value="whisper">Whisper ในเครื่อง (ฟรี แม่น)</option><option value="gemini">Gemini</option></select></div>
   <div class="aicard"><h4>🚀 Auto Cut — ปุ่มเดียว</h4><div class="mini">ตัดช่วงเงียบ คำอ้ำอึ้ง ใส่ซับแอนิเมชันให้อัตโนมัติ แล้วเปิดให้ตรวจก่อนโพสต์ (ยกเลิกได้)</div><button class="wide primary" id="acBtn">เริ่ม Auto Cut</button></div>
+  <div class="aicard"><h4>✂ แก้ไขตามข้อความ</h4><div class="mini">ดูข้อความที่ถอดเสียง คลิกเลือกคำ/ประโยคแล้วลบ หรือลบช่วงเงียบและคำอ้ำอึ้งทั้งหมดในครั้งเดียว (เหมือน Premiere)</div><button class="wide" id="teBtn">เปิดแก้ไขตามข้อความ</button></div>
   <div class="aicard"><h4>🍜 โยนฟุตอาหาร → ปุ่มเดียว</h4><div class="mini">เลือกช่วงที่สวยที่สุดของแต่ละคลิป ตัดสั้น เรียงลำดับ ใส่สี/ทรานสิชัน/ซูม ตัดตามจังหวะเพลง</div><button class="wide primary" id="fdA">เริ่ม</button></div>
   <div class="aicard"><h4>🎵 ตัดตามบีตเพลง</h4><div class="mini">จัดจุดตัดคลิปที่มีอยู่ในไทม์ไลน์ให้ตรงจังหวะเพลงที่ใส่ไว้</div><button class="wide" id="bsA">จัดจังหวะ</button></div>
   <div class="aicard"><h4>🔬 วิเคราะห์เทคนิคตัดต่อ</h4><div class="mini">วัดจังหวะตัด ฮุก ทรานสิชัน สี เสียง จากคลิปตัวอย่าง เพื่อนำไปสร้างพรีเซ็ต</div><button class="wide" id="anA">เปิดตัววิเคราะห์</button></div>
@@ -5918,7 +5968,7 @@ function renderAiPane() {
   <div class="aicard"><h4>⑥ ให้ AI ตัดต่อ 4 แบบ</h4><div class="mini">ใช้ทุกคลิปในรายการสื่อ แล้วให้พนักงานเลือกแบบที่ชอบ</div><button class="wide primary" id="ai6">สร้าง 4 แบบ</button></div>
   <div class="hint small">ใช้ AI เดือนนี้ $${s.usd.toFixed(2)} จากเพดาน $${loadCap()}</div>`;
   const lg = localStorage.getItem('sk_lang'); if (lg) $('#aiLang').value = lg; $('#aiLang').onchange = e => localStorage.setItem('sk_lang', e.target.value);
-  $('#acBtn').onclick = acUI; $('#aiCap').onclick = capOpen; $('#aiGT').onclick = aiGemTest; $('#ai1').onclick = () => aiTranscribeUI(); $('#aiTC').onclick = trcUI; $('#ai2').onclick = aiPriceUI; $('#ai3').onclick = aiKeyPointsUI; $('#ai4a').onclick = aiSilenceUI; $('#ai4b').onclick = aiRetakeUI; $('#ai5').onclick = () => aiEnhanceUI(null); $('#ai6').onclick = aiVariantsUI; $('#aiK').onclick = aiKittiUI; $('#fdA').onclick = foodUI; $('#bsA').onclick = beatSnapTimeline; $('#anA').onclick = anUI; $('#aiA').onclick = aiCleanUI; $('#aiB').onclick = aiSubsUI;
+  $('#acBtn').onclick = acUI; $('#teBtn').onclick = teUI; $('#aiCap').onclick = capOpen; $('#aiGT').onclick = aiGemTest; $('#ai1').onclick = () => aiTranscribeUI(); $('#aiTC').onclick = trcUI; $('#ai2').onclick = aiPriceUI; $('#ai3').onclick = aiKeyPointsUI; $('#ai4a').onclick = aiSilenceUI; $('#ai4b').onclick = aiRetakeUI; $('#ai5').onclick = () => aiEnhanceUI(null); $('#ai6').onclick = aiVariantsUI; $('#aiK').onclick = aiKittiUI; $('#fdA').onclick = foodUI; $('#bsA').onclick = beatSnapTimeline; $('#anA').onclick = anUI; $('#aiA').onclick = aiCleanUI; $('#aiB').onclick = aiSubsUI;
 }
 AI.inspectorAction = (act, it) => {
   if (act === 'enhance') aiEnhanceUI(it);
@@ -7375,6 +7425,153 @@ function acDone(m, st, h0, hEnd) {
       for (let i = hEnd - h0; i > 0; i--) undo(); $('#dlgAi').close(); toast('ยกเลิก Auto Cut แล้ว');
     };
   });
+}
+
+// ---- 69-ztxtedit.js ----
+// ============================================================
+//  v1.59 — Text-based editing (like Premiere's Transcript panel)
+//   AI tab -> "แก้ไขตามข้อความ": the transcript of a clip as clickable text. Tabs: text / pauses / filler words.
+//   Pick text (click, shift+click for a range) or use the search box, then delete -> the matching video is cut from the timeline.
+//   Extract = cut and close the gap (ripple).  Lift = cut but leave the gap.  Everything can be undone (↶).
+//   Lao transcripts made with Gemini only have sentences (no word times), so Lao text is selected sentence by sentence;
+//   Thai (Whisper) transcripts have word times, so Thai text is selected word by word.
+//   It only reuses what exists: getTr, findSilences, findFillers, snapValley, srcPieces, rippleCut.
+// ============================================================
+const TE = { m: null, tr: null, tab: 'txt', mode: 'ext', min: .5, q: '', S: new Set(), U: null, P: null, F: null, hist: [], last: null, anchor: null };
+try { const s = JSON.parse(localStorage.getItem('sk_te') || '{}'); if (s.mode === 'lift') TE.mode = 'lift'; if (s.min >= .25 && s.min <= 1.5) TE.min = +s.min; } catch (e) { }
+const teSave = () => { try { localStorage.setItem('sk_te', JSON.stringify({ mode: TE.mode, min: TE.min })); } catch (e) { } };
+
+function liftCut(t0, t1) {   // like rippleCut, but the gap stays (later clips are not moved)
+  if (t1 - t0 < .02) return;
+  for (const edge of [t0, t1]) for (const it of [...D.items]) { if (it.track !== 'A1' && isMediaLike(it)) splitItem(it.id, edge); }
+  D.items = D.items.filter(it => !(it.track !== 'A1' && isMediaLike(it) && it.start >= t0 - 1e-3 && it.start + it.dur <= t1 + 1e-3));
+}
+function teCut(mediaId, ranges, lift) {   // ranges in source seconds -> cut; returns { n, t0 }
+  let tl = []; for (const [a, b] of ranges) srcPieces(mediaId, a, b).forEach(p => tl.push([p[0], p[1]]));
+  tl = mergeRanges(tl, 0); if (!tl.length) return { n: 0, t0: 0 };
+  const t0 = tl[0][0]; tl.sort((x, y) => y[0] - x[0]); tl.forEach(([x, y]) => lift ? liftCut(x, y) : rippleCut(x, y)); return { n: tl.length, t0 };
+}
+const teAlive = (m, u) => tlTimes(m.id, (u.a + u.b) / 2).length > 0;   // still on the timeline?
+
+function teUnits(tr) {
+  if (tr.words && tr.words.length) return { word: true, u: tr.words.filter(w => String(w.text || '').trim()).map(w => ({ a: w.a, b: w.b, t: String(w.text).trim() })) };
+  return { word: false, u: tr.segs.map(s => ({ a: s.a, b: s.b, t: String(s.text || '').trim() })).filter(s => s.t) };
+}
+function teHits(U, q) {   // search: spaces ignored (Lao/Thai have none); a match may run across several words
+  const nq = String(q || '').replace(/\s+/g, '').toLowerCase(); const hit = new Set(); let count = 0; if (!nq) return { hit, count };
+  let C = '', map = []; U.forEach((u, i) => { const s = u.t.replace(/\s+/g, '').toLowerCase(); for (let k = 0; k < s.length; k++) map.push(i); C += s; });
+  for (let p = C.indexOf(nq); p >= 0; p = C.indexOf(nq, p + nq.length)) { count++; for (let k = p; k < p + nq.length; k++) hit.add(map[k]); }
+  return { hit, count };
+}
+
+// ---------- entry ----------
+function teUI() {
+  const m = selMedia(); if (!m) return toast('เลือกคลิปก่อน'); if (!m.pcm16) return toast('คลิปนี้ไม่มีเสียง หรือยังวิเคราะห์เสียงไม่เสร็จ');
+  ensureOnTimeline(m); const tr = getTr(m.id);
+  Object.assign(TE, { m, tr: tr && tr.segs && tr.segs.length ? tr : null, tab: 'txt', q: '', S: new Set(), U: null, P: null, F: null, hist: [], last: null, anchor: null });
+  teShow();
+}
+function teProbe() {   // lists that depend on the timeline as it is now
+  const m = TE.m, tr = TE.tr;
+  TE.U = tr ? teUnits(tr) : null;
+  TE.P = []; D.items.filter(it => it.type === 'video' && it.mediaId === m.id).forEach(it => findSilences(m, it.in, it.in + it.dur * (it.speed || 1), TE.min, .12).forEach(r => TE.P.push({ a: r[0], b: r[1], on: true })));
+  TE.P = mergeRanges(TE.P.map(r => [r.a, r.b]), .02).map(r => ({ a: r[0], b: r[1], on: true }));
+  TE.F = tr ? findFillers(tr).map(f => ({ a: snapValley(m, f.a - .02, .1), b: snapValley(m, f.b + .03, .1), text: f.text, approx: f.approx, on: !f.approx })).filter(r => tlTimes(m.id, (r.a + r.b) / 2).length) : [];
+}
+function teRanges() {   // what the current tab would delete (source seconds)
+  const m = TE.m; let rs = [];
+  if (TE.tab === 'txt') { if (!TE.U) return []; [...TE.S].sort((x, y) => x - y).forEach(i => { const u = TE.U.u[i]; if (u && teAlive(m, u)) rs.push([snapValley(m, u.a - .03, .1), snapValley(m, u.b + .04, .1)]); }); }
+  else (TE.tab === 'pau' ? TE.P : TE.F).forEach(r => { if (r.on) rs.push([r.a, r.b]); });
+  return mergeRanges(rs, .03);
+}
+function teSummary(root) {
+  const rs = teRanges(), n = rs.length, sec = rs.reduce((a, r) => a + r[1] - r[0], 0);
+  const el = $('#teSum', root); if (el) el.innerHTML = n ? `${T('เลือกไว้')} <b>${n}</b> ${T('จุด')} · ${T('จะลดไป')} <b>${sec.toFixed(1)}</b> ${T('วินาที')}` : T('ยังไม่ได้เลือกอะไร');
+  const b = $('#teDel', root); if (b) b.disabled = !n;
+  const u = $('#teUndo', root); if (u) u.disabled = !TE.hist.length;
+}
+
+// ---------- dialog ----------
+function teShow() {
+  teProbe(); const m = TE.m, tr = TE.tr, tab = TE.tab;
+  const tabs = [['txt', 'ข้อความ'], ['pau', 'ช่วงเงียบ'], ['fil', 'คำอ้ำอึ้ง']].map(([k, l]) => `<button data-tab="${k}" class="${k === tab ? 'on' : ''}">${T(l)}</button>`).join('');
+  let body = '';
+  const needTr = `<div class="hint">${T('คลิปนี้ยังไม่มีข้อความที่ถอดเสียง — ถอดเสียงก่อน (ทำครั้งเดียว เก็บไว้ใช้ต่อ)')}</div><div class="row"><button class="primary" id="teTr">${T('ถอดเสียงตอนนี้')}</button></div>`;
+  if (tab === 'txt') {
+    if (!tr) body = needTr;
+    else {
+      const { word, u } = TE.U, H = teHits(u, TE.q);
+      TE._hit = H.hit;
+      const units = u.map((x, i) => {
+        const dead = !teAlive(m, x), cls = 'te-u' + (dead ? ' dead' : '') + (TE.S.has(i) ? ' on' : '') + (H.hit.has(i) ? ' hit' : '');
+        return word ? `<span class="${cls}" data-i="${i}" title="${fmt(x.a)}" translate="no">${esc(x.t)}</span> `
+          : `<div class="te-s${dead ? ' dead' : ''}"><span class="te-t" data-seek="${i}" title="${T('ไปที่ตำแหน่งนี้')}">${fmt(x.a)}</span><span class="${cls}" data-i="${i}" translate="no">${esc(x.t)}</span></div>`;
+      }).join('');
+      body = `<div class="fld col"><input id="teQ" type="text" placeholder="${T('ค้นหาคำหรือประโยค')}" value="${esc(TE.q)}"></div>
+        <div class="row" style="margin:4px 0"><span class="mini" id="teHitN">${TE.q ? `${T('พบ')} <b>${H.count}</b> ${T('แห่ง')}` : ''}</span><span class="sp"></span><button id="teSelHits" ${H.count ? '' : 'disabled'}>${T('เลือกผลที่พบทั้งหมด')}</button><button id="teClr">${T('ล้างที่เลือก')}</button></div>
+        <div class="te-box${word ? ' w' : ''}" id="teBox">${units}</div>
+        <div class="mini">${word ? T('กดคำเพื่อเลือก · กด Shift ค้างแล้วกดอีกคำเพื่อเลือกเป็นช่วง') : T('ข้อความลาวที่ถอดด้วย Gemini แบ่งเป็นประโยค จึงเลือกทีละประโยค · กดเวลาด้านหน้าเพื่อไปดูที่ตำแหน่งนั้น')}</div>`;
+    }
+  } else if (tab === 'pau') {
+    body = `<div class="fld"><label>${T('เงียบนานกว่า (วิ)')}</label><input id="teMin" type="range" min=".25" max="1.5" step=".05" value="${TE.min}"><output>${TE.min}</output></div>`
+      + (TE.P.length ? `<div class="sillist">${TE.P.map((r, i) => `<div class="silrow"><input type="checkbox" data-li="${i}" ${r.on ? 'checked' : ''}><span class="te-t" data-seekt="${r.a}">${fmt(r.a)}</span><span class="d">${(r.b - r.a).toFixed(2)} ${T('วินาที')}</span></div>`).join('')}</div>` : `<div class="hint">${T('ไม่พบช่วงเงียบ')}</div>`);
+  } else {
+    body = !tr ? needTr : (TE.F.length ? `<div class="sillist">${TE.F.map((r, i) => `<div class="silrow"><input type="checkbox" data-li="${i}" ${r.on ? 'checked' : ''}><span class="te-t" data-seekt="${r.a}">${fmt(r.a)}</span><span class="d" translate="no">${esc(r.text || '')}</span>${r.approx ? `<span class="mini">${T('ตำแหน่งโดยประมาณ')}</span>` : ''}</div>`).join('')}</div>` : `<div class="hint">${T('ไม่พบคำอ้ำอึ้ง')}</div>`);
+  }
+  const listTab = tab !== 'txt', listArr = tab === 'pau' ? TE.P : TE.F;
+  aiDlg(T('แก้ไขตามข้อความ'), `<div class="lfcats">${tabs}</div><div class="mini" translate="no" style="margin-bottom:4px">${esc(m.name)}</div>${body}
+    <div class="te-foot">
+      <div class="te-mode"><label><input type="radio" name="teMode" value="ext" ${TE.mode === 'ext' ? 'checked' : ''}> ${T('ตัดแล้วดึงเข้าหากัน (Extract)')}</label><label><input type="radio" name="teMode" value="lift" ${TE.mode === 'lift' ? 'checked' : ''}> ${T('ตัดแล้วเว้นช่องว่างไว้ (Lift)')}</label></div>
+      <div class="hint" id="teSum"></div>
+      <div class="row"><button id="teUndo">↶ ${T('ย้อนกลับ')}</button><button id="tePlay">▶ ${T('ดูผลลัพธ์')}</button>${listTab && listArr.length ? `<button id="teAll">${T('เลือก/ไม่เลือกทั้งหมด')}</button>` : ''}<span class="sp"></span><button class="primary danger" id="teDel">${T('ลบที่เลือก')}</button></div>
+    </div>`, root => teWire(root));
+}
+
+function teWire(root) {
+  teSummary(root);
+  const goto = t => { if (t != null) seek(t); };
+  const tlOf = srcT => tlTimes(TE.m.id, srcT)[0];
+  root.onclick = e => {
+    const el = e.target.closest('[data-tab],[data-seek],[data-seekt],.te-u,#teTr,#teDel,#teUndo,#tePlay,#teAll,#teSelHits,#teClr'); if (!el) return;
+    if (el.dataset.tab) { TE.tab = el.dataset.tab; return teShow(); }
+    if (el.dataset.seek != null) { const u = TE.U.u[+el.dataset.seek]; return goto(tlOf(u.a)); }
+    if (el.dataset.seekt != null) return goto(tlOf(+el.dataset.seekt));
+    if (el.id === 'teTr') { if (AI.busy) return; AI.busy = true; aiProg('กำลังถอดเสียง…', 20); ensureTranscript(TE.m).then(t => { AI.busy = false; TE.tr = t && t.segs && t.segs.length ? t : null; teShow(); }).catch(aiErr); return; }
+    if (el.classList.contains('te-u')) {
+      const i = +el.dataset.i, u = TE.U.u[i]; if (!teAlive(TE.m, u)) return;
+      if (e.shiftKey && TE.anchor != null) { const [x, y] = [Math.min(TE.anchor, i), Math.max(TE.anchor, i)]; for (let k = x; k <= y; k++) if (teAlive(TE.m, TE.U.u[k])) TE.S.add(k); }
+      else { if (TE.S.has(i)) TE.S.delete(i); else TE.S.add(i); TE.anchor = i; }
+      $$('.te-u', root).forEach(s => s.classList.toggle('on', TE.S.has(+s.dataset.i))); return teSummary(root);
+    }
+    if (el.id === 'teSelHits') { (TE._hit || new Set()).forEach(i => { if (teAlive(TE.m, TE.U.u[i])) TE.S.add(i); }); $$('.te-u', root).forEach(s => s.classList.toggle('on', TE.S.has(+s.dataset.i))); return teSummary(root); }
+    if (el.id === 'teClr') { TE.S.clear(); $$('.te-u', root).forEach(s => s.classList.remove('on')); return teSummary(root); }
+    if (el.id === 'teAll') { const arr = TE.tab === 'pau' ? TE.P : TE.F, v = !arr.every(r => r.on); arr.forEach(r => r.on = v); $$('[data-li]', root).forEach(c => c.checked = v); return teSummary(root); }
+    if (el.id === 'tePlay') { $('#dlgAi').close(); seek(Math.max(0, (TE.last == null ? 0 : TE.last) - 1.5)); play(); return; }
+    if (el.id === 'teUndo') {
+      if (!TE.hist.length) return; if (HPOS !== TE.hist[TE.hist.length - 1]) return toast('มีการแก้ไขต่อจากนี้แล้ว — ใช้ปุ่ม ↶ ย้อนกลับทีละขั้นแทน');
+      undo(); TE.hist.pop(); toast('ย้อนกลับแล้ว'); return teShow();
+    }
+    if (el.id === 'teDel') {
+      const rs = teRanges(); if (!rs.length) return toast('ยังไม่ได้เลือกอะไร');
+      const lift = TE.mode === 'lift'; if (lift && TLS.magnet) { $('#tbMagnet').click(); toast('ปิดแม่เหล็กวิดีโอ 1 ให้แล้ว เพื่อเว้นช่องว่างไว้'); }   // the magnetic main track would close the gap again
+      const r = teCut(TE.m.id, rs, lift); if (!r.n) return toast('ช่วงที่เลือกถูกลบไปแล้ว');
+      commit('textedit'); TE.hist.push(HPOS); TE.last = r.t0; TE.S.clear(); toast(`${T('ลบแล้ว')} ${r.n} ${T('จุด')}`); return teShow();
+    }
+  };
+  root.onchange = e => {
+    const t = e.target;
+    if (t.name === 'teMode') { TE.mode = t.value === 'lift' ? 'lift' : 'ext'; teSave(); }
+    else if (t.dataset && t.dataset.li != null) { (TE.tab === 'pau' ? TE.P : TE.F)[+t.dataset.li].on = t.checked; teSummary(root); }
+    else if (t.id === 'teMin') { TE.min = +t.value; teSave(); teShow(); }
+  };
+  root.oninput = e => {
+    if (e.target.id === 'teMin') e.target.nextElementSibling.textContent = e.target.value;
+    else if (e.target.id === 'teQ') {   // only the highlights change, so typing never loses focus or scroll
+      TE.q = e.target.value; const H = teHits(TE.U.u, TE.q); TE._hit = H.hit;
+      $$('.te-u', root).forEach(s => s.classList.toggle('hit', H.hit.has(+s.dataset.i)));
+      $('#teHitN', root).innerHTML = TE.q ? `${T('พบ')} <b>${H.count}</b> ${T('แห่ง')}` : ''; $('#teSelHits', root).disabled = !H.count;
+    }
+  };
 }
 
 // ---- 70-main.js ----
