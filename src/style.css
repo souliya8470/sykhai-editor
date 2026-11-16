@@ -473,3 +473,11 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
 .magslot.snap{border:2px solid #2ee6c5;background:rgba(46,230,197,.18);animation:mgpulse .7s ease-in-out infinite}
 @keyframes mgpulse{50%{box-shadow:0 0 14px 2px rgba(46,230,197,.75)}}
 .mirrow button{font-size:12px}.mirrow button.on{background:var(--acc,#2ee6c5);color:#000}
+/* v1.62 right-click menu + magnet badge */
+#ctxm{position:fixed;z-index:99999;min-width:230px;background:#2a2b30;border:1px solid #44464d;border-radius:10px;padding:5px;box-shadow:0 10px 30px rgba(0,0,0,.55);font-size:13px}
+#ctxm button{display:flex;justify-content:space-between;align-items:center;gap:22px;width:100%;background:none;border:0;color:#eee;text-align:left;padding:6px 10px;border-radius:6px;cursor:pointer}
+#ctxm button:hover:not(:disabled){background:#3b3d45}
+#ctxm button:disabled{color:#777;cursor:default}
+#ctxm kbd{font-family:inherit;color:#9aa0aa;font-size:12px}
+#ctxm hr{border:0;border-top:1px solid #3d3f46;margin:4px 2px}
+.magb{margin-left:4px;font-size:11px;filter:drop-shadow(0 0 4px #2ee6c5)}

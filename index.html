@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.61</title>
+<title>Sykhai Editor v1.62</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -480,6 +480,14 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
 .magslot.snap{border:2px solid #2ee6c5;background:rgba(46,230,197,.18);animation:mgpulse .7s ease-in-out infinite}
 @keyframes mgpulse{50%{box-shadow:0 0 14px 2px rgba(46,230,197,.75)}}
 .mirrow button{font-size:12px}.mirrow button.on{background:var(--acc,#2ee6c5);color:#000}
+/* v1.62 right-click menu + magnet badge */
+#ctxm{position:fixed;z-index:99999;min-width:230px;background:#2a2b30;border:1px solid #44464d;border-radius:10px;padding:5px;box-shadow:0 10px 30px rgba(0,0,0,.55);font-size:13px}
+#ctxm button{display:flex;justify-content:space-between;align-items:center;gap:22px;width:100%;background:none;border:0;color:#eee;text-align:left;padding:6px 10px;border-radius:6px;cursor:pointer}
+#ctxm button:hover:not(:disabled){background:#3b3d45}
+#ctxm button:disabled{color:#777;cursor:default}
+#ctxm kbd{font-family:inherit;color:#9aa0aa;font-size:12px}
+#ctxm hr{border:0;border-top:1px solid #3d3f46;margin:4px 2px}
+.magb{margin-left:4px;font-size:11px;filter:drop-shadow(0 0 4px #2ee6c5)}
 
 </style></head>
 <body>
@@ -2123,14 +2131,55 @@ I18N_ROWS.push(
   ['กลับด้านบน-ล่าง', 'Flip vertically', 'ກັບດ້ານເທິງ-ລຸ່ມ'],
 );
 
+// ---- 00-9-i18n-p.js ----
+// i18n rows P — v1.62: Auto Cut for all clips   [thai, english, lao]
+I18N_ROWS.push(
+  ['⚡ Auto Cut ทุกคลิปในโปรเจกต์', '⚡ Auto Cut all clips in the project', '⚡ Auto Cut ທຸກຄລິບໃນໂປຣເຈັກ'],
+  ['Auto Cut ทุกคลิป', 'Auto Cut all clips', 'Auto Cut ທຸກຄລິບ'],
+  ['เริ่มทุกคลิป', 'Start all clips', 'ເລີ່ມທຸກຄລິບ'],
+  ['ยังไม่มีคลิปวิดีโอในโปรเจกต์', 'There are no video clips in the project yet', 'ຍັງບໍ່ມີຄລິບວິດີໂອໃນໂປຣເຈັກ'],
+  ['มีข้อความถอดไว้แล้ว', 'transcript already saved', 'ມີຂໍ້ຄວາມຖອດໄວ້ແລ້ວ'],
+  ['ต้องถอดเสียงใหม่', 'needs a new transcription', 'ຕ້ອງຖອດສຽງໃໝ່'],
+  ['ไม่มีเสียง / ยังวิเคราะห์ไม่เสร็จ (จะข้าม)', 'no audio / analysis not finished (will be skipped)', 'ບໍ່ມີສຽງ / ຍັງວິເຄາະບໍ່ແລ້ວ (ຈະຂ້າມ)'],
+  ['คลิปต้องถอดเสียงใหม่ — ภาษาลาวใช้ Gemini ซึ่งมีค่าใช้จ่ายต่อคลิป', 'clips need a new transcription — Lao uses Gemini, which costs money per clip', 'ຄລິບຕ້ອງຖອດສຽງໃໝ່ — ພາສາລາວໃຊ້ Gemini ຊຶ່ງມີຄ່າໃຊ້ຈ່າຍຕໍ່ຄລິບ'],
+  ['ทำกับทุกคลิปวิดีโอในโปรเจกต์ด้วยตัวเลือกด้านล่าง · ทำเสร็จแล้วกดยกเลิกทั้งหมดได้ · ใช้ครั้งเดียวต่อโปรเจกต์ (ถ้าเคยใส่ซับแล้ว ให้ยกเลิกก่อน)', 'Applies to every video clip in the project with the options below · you can undo everything afterwards · use it once per project (if captions were already added, undo first)', 'ເຮັດກັບທຸກຄລິບວິດີໂອໃນໂປຣເຈັກດ້ວຍຕົວເລືອກຂ້າງລຸ່ມ · ເຮັດແລ້ວກົດຍົກເລີກທັງໝົດໄດ້ · ໃຊ້ຄັ້ງດຽວຕໍ່ໂປຣເຈັກ (ຖ້າເຄີຍໃສ່ຊັບແລ້ວ ໃຫ້ຍົກເລີກກ່ອນ)'],
+  ['ข้าม (ไม่มีเสียง)', 'skipped (no audio)', 'ຂ້າມ (ບໍ່ມີສຽງ)'],
+  ['ทำไม่สำเร็จ', 'failed', 'ເຮັດບໍ່ສຳເລັດ'],
+  ['ทำสำเร็จ', 'done', 'ສຳເລັດ'],
+);
+I18N_ROWS.push(
+  ['คัดลอกคลิป', 'Copy clip', 'ຄັດລອກຄລິບ'],
+  ['ตัดคลิป (Cut)', 'Cut clip', 'ຕັດຄລິບ (Cut)'],
+  ['วางคลิปที่หัวอ่าน', 'Paste clip at playhead', 'ວາງຄລິບທີ່ເສັ້ນຫຼິ້ນ'],
+  ['ทำซ้ำคลิป', 'Duplicate clip', 'ເຮັດຊ້ຳຄລິບ'],
+  ['ลบคลิป', 'Delete clip', 'ລົບຄລິບ'],
+  ['ลบคลิปและปิดช่องว่าง', 'Delete clip and close the gap', 'ລົບຄລິບ ແລະປິດຊ່ອງຫວ່າງ'],
+  ['แยกคลิปที่หัวอ่าน', 'Split clip at playhead', 'ແຍກຄລິບທີ່ເສັ້ນຫຼິ້ນ'],
+  ['ตัดซ้ายถึงหัวอ่าน', 'Trim left to playhead', 'ຕັດຊ້າຍເຖິງເສັ້ນຫຼິ້ນ'],
+  ['ตัดขวาจากหัวอ่าน', 'Trim right from playhead', 'ຕັດຂວາຈາກເສັ້ນຫຼິ້ນ'],
+  ['หมุน 90°', 'Rotate 90°', 'ໝຸນ 90°'],
+  ['แยกเสียงออกจากวิดีโอ', 'Separate audio from video', 'ແຍກສຽງອອກຈາກວິດີໂອ'],
+  ['Auto Cut คลิปนี้', 'Auto Cut this clip', 'Auto Cut ຄລິບນີ້'],
+  ['ซ่อนคลิป', 'Hide clip', 'ເຊື່ອງຄລິບ'],
+  ['แสดงคลิป', 'Show clip', 'ສະແດງຄລິບ'],
+  ['คัดลอกคลิปแล้ว', 'Clip copied', 'ຄັດລອກຄລິບແລ້ວ'],
+  ['ตัดคลิปแล้ว — กดวางได้ที่หัวอ่าน', 'Clip cut — paste it at the playhead', 'ຕັດຄລິບແລ້ວ — ກົດວາງໄດ້ທີ່ເສັ້ນຫຼິ້ນ'],
+  ['ยังไม่ได้คัดลอกคลิป', 'No clip copied yet', 'ຍັງບໍ່ໄດ້ຄັດລອກຄລິບ'],
+  ['แม่เหล็กเปิดอยู่: คลิปในแถวนี้ชิดกันอัตโนมัติ', 'Magnet is on: clips in this row stay glued together', 'ແມ່ເຫຼັກເປີດຢູ່: ຄລິບໃນແຖວນີ້ຊິດກັນອັດຕະໂນມັດ'],
+  ['เปิดแม่เหล็ก: คลิปในแถวที่มีป้าย 🧲 จะชิดกันอัตโนมัติ', 'Magnet on: clips in the row marked 🧲 glue together automatically', 'ເປີດແມ່ເຫຼັກ: ຄລິບໃນແຖວທີ່ມີປ້າຍ 🧲 ຈະຊິດກັນອັດຕະໂນມັດ'],
+  ['ปิดแม่เหล็ก: วางคลิปได้อิสระ เว้นช่องว่างได้', 'Magnet off: place clips freely, gaps are allowed', 'ປິດແມ່ເຫຼັກ: ວາງຄລິບໄດ້ອິດສະຫຼະ ເວັ້ນຊ່ອງຫວ່າງໄດ້'],
+  ['แม่เหล็กใช้กับแถวที่มีป้าย 🧲 เท่านั้น — ลากคลิปลงไปวางที่แถวนั้นจึงจะดูดชิดกัน', 'The magnet only works on the row marked 🧲 — drag the clip down into that row to glue it', 'ແມ່ເຫຼັກໃຊ້ກັບແຖວທີ່ມີປ້າຍ 🧲 ເທົ່ານັ້ນ — ລາກຄລິບລົງໄປວາງແຖວນັ້ນຈຶ່ງຈະດູດຕິດກັນ'],
+);
+
 // ---- 00-core.js ----
 'use strict';
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.61
-// APP_VERSION_PREV : 1.60
-// APP_VERSION_PREV_OLDER : 1.59
+// APP_VERSION  : 1.62
+// APP_VERSION_PREV : 1.61
+// APP_VERSION_PREV_OLDER : 1.60
+// 1.62 : Right-click menu on timeline clips (CapCut style: copy / cut / paste, duplicate, delete, split, trim, Mirror, rotate 90°, separate audio, Auto Cut, edit by text, hide clip; Ctrl/⌘ C X V keys) — Mirror moved out of the crowded inspector into it; the row where the magnet works is marked with 🧲 and dragging a clip on another layer explains it; ⚡ Auto Cut for ALL clips of the project in one go (AI tab, under Auto Cut) — same options as Auto Cut (silences, filler words, animated captions), no dialog per clip, one summary, one "undo everything"; shows which clips still need a (paid, for Lao) transcription before it starts. Made for VELARIS jobs with several raw clips.
 // 1.61 : VELARIS link — clips that the VELARIS site PUTs into the server inbox as vl-<jobId>__<file>.mp4/.mov become the project "VELARIS | <jobId>" automatically (clips on Video 1; more clips for the same job are added to the same project, also when it is open or only exists on the server); exports of such a project are named vl-<jobId>_v001.mp4, v002 ... (one number per export) and go to /out on the shop server.
 // 1.60 : Magnet drag like CapCut but stickier — dragging a Video-1 clip opens a slot (others slide away smoothly), the slot glows when the clip is pulled in (dead-zone, then rubber band, then free flight; insert point has hysteresis; phones buzz); Mirror (flip left-right / top-bottom) for video and image clips, in preview and export.
 // 1.59 : ✂ Edit by text (AI tab, like Premiere's Transcript panel) — the transcript of a clip as clickable text with 3 tabs: text (click a word / sentence, Shift+click for a range, search box that highlights every match and can select them all), silences (length slider) and filler words; Delete cuts the picked parts from the timeline as Extract (close the gap) or Lift (leave the gap); ↶ undoes each delete, ▶ plays from the first cut. Lao transcripts made by Gemini have sentence times only, so Lao text is picked sentence by sentence (Thai Whisper transcripts have word times -> word by word). Reuses getTr / findSilences / findFillers / rippleCut; new liftCut. New file src/js/69-ztxtedit.js
@@ -2193,7 +2242,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.61';
+const APP_VERSION = '1.62';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -3241,7 +3290,7 @@ function renderTimeline() {
   const sx = body.scrollLeft, sy = body.scrollTop; const W = tlWidth();
   let h = `<div id="tlinner" style="width:${TL.labelW + W}px"><div id="ruler"><div class="corner"><i class="lwh" title="${T('ลากเพื่อปรับความกว้างของช่องชื่อแถว')}"></i></div><div class="rt" style="width:${W}px">${rulerTicks()}${(D.markers || []).map(m => `<i class="mk" data-id="${m.id}" style="left:${m.t * TL.pps}px" title="${T('มาร์กเกอร์ — ดับเบิลคลิกเพื่อลบ')}">⚑</i>`).join('')}</div></div>`;
   const ROWS = [...layerOrder().slice().reverse().map(id => TRACKS.find(t => t.id === id)).filter(Boolean), ...TRACKS.filter(t => t.kind === 'audio')];   // top lane = top layer
-  for (const tr of ROWS) h += `<div class="trow ${tr.kind}${trackH(tr) <= 24 ? ' slim' : ''}${trSt(tr.id).lock ? ' locked' : ''}${trSt(tr.id).hide ? ' hidt' : ''}${trSt(tr.id).mute ? ' mutet' : ''}" data-track="${tr.id}" style="height:${trackH(tr)}px"><div class="tlabel"><div class="tn">${tr.kind === 'audio' ? tr.label : T('เลเยอร์') + ' ' + (layerOrder().indexOf(tr.id) + 1)}</div>${trIcons(tr)}</div><div class="tlane" style="width:${W}px"></div><div class="trh" title="ลากเพื่อปรับความสูงของแถว"></div></div>`;
+  for (const tr of ROWS) h += `<div class="trow ${tr.kind}${trackH(tr) <= 24 ? ' slim' : ''}${trSt(tr.id).lock ? ' locked' : ''}${trSt(tr.id).hide ? ' hidt' : ''}${trSt(tr.id).mute ? ' mutet' : ''}" data-track="${tr.id}" style="height:${trackH(tr)}px"><div class="tlabel"><div class="tn">${tr.kind === 'audio' ? tr.label : T('เลเยอร์') + ' ' + (layerOrder().indexOf(tr.id) + 1)}${TLS.magnet && tr.id === 'V1' ? `<b class="magb" title="${T('แม่เหล็กเปิดอยู่: คลิปในแถวนี้ชิดกันอัตโนมัติ')}">🧲</b>` : ''}</div>${trIcons(tr)}</div><div class="tlane" style="width:${W}px"></div><div class="trh" title="ลากเพื่อปรับความสูงของแถว"></div></div>`;
   h += `<div id="playhead"><i></i></div></div>`;
   body.innerHTML = h;
   for (const it of D.items) {
@@ -3363,6 +3412,7 @@ function initTimelineEvents() {
         const rawS = Math.max(0, o.start + dt);
         const rowEl = document.elementFromPoint(ev.clientX, ev.clientY); const row = rowEl && rowEl.closest ? rowEl.closest('.trow') : null;
         if (row && LANE(row.dataset.track) === LANE(o.track)) it.track = row.dataset.track;
+        if (TLS.magnet && o.track !== 'V1' && it.track !== 'V1' && (it.type === 'video' || it.type === 'image') && Math.abs(ev.clientX - x0) > 8 && Date.now() - _mgHintT > 30000) { _mgHintT = Date.now(); toast('แม่เหล็กใช้กับแถวที่มีป้าย 🧲 เท่านั้น — ลากคลิปลงไปวางที่แถวนั้นจึงจะดูดชิดกัน', 6000); }
         if (TLS.magnet && it.track === 'V1') {
           magnetDrag(it, rawS);
           if (!mgPaint(it)) { renderTimeline(); mgPaint(it); }
@@ -3603,6 +3653,7 @@ function magnetLayout(skipId) {
 }
 // ---- v1.60 magnet DRAG feel (CapCut style, but stickier): while a V1 clip is dragged the others open a slot for it, the slot glows when the clip is pulled in,
 // there is a dead-zone (the clip "sticks" to the slot), then a rubber band, then free flight; the insert point has hysteresis so it never flickers.
+let _mgHintT = 0;   // last time we explained that the magnet only works on the main row
 const MG = { on: false, k: null, slot: 0, snapped: false };
 const MG_SN = 30, MG_RL = 70, MG_H = 16; // px: stick radius, release radius, hysteresis
 function mgBuzz(n) { try { if (navigator.vibrate) navigator.vibrate(n); } catch (e) { } }
@@ -3687,7 +3738,7 @@ function initToolbar() {
   $('#tbSplit').onclick = cmdSplit; $('#tbTrimL').onclick = cmdTrimLeft; $('#tbTrimR').onclick = cmdTrimRight;
   $('#tbDel').onclick = () => cmdDelete(false); $('#tbRipple').onclick = () => cmdDelete(true); $('#tbMark').onclick = cmdMarker;
   const save = () => { try { localStorage.setItem('sk_tls', JSON.stringify(TLS)); } catch (e) { } };
-  $('#tbMagnet').onclick = () => { TLS.magnet = !TLS.magnet; setTog('#tbMagnet', 'magnet'); save(); if (TLS.magnet) { commit('gaps'); toast('เปิดแม่เหล็ก: คลิปบนวิดีโอ 1 จะชิดกันอัตโนมัติ'); } };
+  $('#tbMagnet').onclick = () => { TLS.magnet = !TLS.magnet; setTog('#tbMagnet', 'magnet'); save(); if (TLS.magnet) { commit('gaps'); toast('เปิดแม่เหล็ก: คลิปในแถวที่มีป้าย 🧲 จะชิดกันอัตโนมัติ'); } else { renderTimeline(); toast('ปิดแม่เหล็ก: วางคลิปได้อิสระ เว้นช่องว่างได้'); } };
   $('#tbCover').onclick = () => { if (typeof coverOpen === 'function') coverOpen(); };
   $('#tbSnap').onclick = () => { TLS.snap = !TLS.snap; setTog('#tbSnap', 'snap'); save(); };
   setTog('#tbMagnet', 'magnet'); setTog('#tbSnap', 'snap');
@@ -3695,6 +3746,63 @@ function initToolbar() {
   $('#tbFit').onclick = () => { const w = $('#tlbody').clientWidth - TL.labelW - 30; setZoom(w / Math.max(projectEnd(), 2)); };
   $('#tlbody').addEventListener('dblclick', e => { const mk = e.target.closest('.mk'); if (!mk) return; D.markers = (D.markers || []).filter(m => m.id !== mk.dataset.id); commit('marker'); });
 }
+
+// ---- 23-ctxmenu.js ----
+// ============================================================
+//  v1.62 — right-click menu on a timeline clip (CapCut style, only the commands that matter) + copy / cut / paste of clips.
+//  Mirror / rotate live here now (not in the crowded inspector on the right).
+// ============================================================
+const CB = { it: null };   // internal clip clipboard
+const MODK = /Mac|iPhone|iPad/.test(navigator.platform || '') ? '⌘' : 'Ctrl+';
+function cbCopy(id, quiet) { const it = getItem(id); if (!it) return; CB.it = JSON.parse(JSON.stringify(it)); if (!quiet) toast('คัดลอกคลิปแล้ว'); }
+function cbCut(id) { const it = getItem(id); if (!it) return; cbCopy(id, true); select(id); cmdDelete(false); toast('ตัดคลิปแล้ว — กดวางได้ที่หัวอ่าน'); }
+function cbPaste() {
+  if (!CB.it) return toast('ยังไม่ได้คัดลอกคลิป');
+  const b = JSON.parse(JSON.stringify(CB.it)); b.id = uid(); b.start = Math.max(0, PB.t); b.transIn = null; b.transOut = null; b.tween = null;
+  try { const kind = (TRACKS.find(t => t.id === b.track) || {}).kind; if (kind) { const tr = freeTrack(kind, b.start, b.dur, b.track); if (tr) b.track = tr; } } catch (e) { }
+  addItem(b); commit('paste'); select(b.id);
+}
+function ctxFlip(it, axis) { if (axis === 'x') it.flipX = !it.flipX; else it.flipY = !it.flipY; commit('flip'); renderInspector(); }
+function ctxRotate(it) { let n = Math.round(prop(it, 'r', PB.t) || 0) + 90; if (n > 180) n -= 360; setXf(it, 'r', n); commit('rotate'); renderInspector(); }
+function ctxItems(it) {
+  const t = PB.t, inside = t > it.start + .05 && t < it.start + it.dur - .05, vis = it.type === 'video' || it.type === 'image', vid = it.type === 'video';
+  const L = [
+    ['คัดลอกคลิป', MODK + 'C', () => cbCopy(it.id)],
+    ['ตัดคลิป (Cut)', MODK + 'X', () => cbCut(it.id)],
+    ['วางคลิปที่หัวอ่าน', MODK + 'V', () => cbPaste(), !CB.it],
+    ['ทำซ้ำคลิป', MODK + 'D', () => { const b = duplicateItem(it.id); commit('dup'); if (b) select(b.id); }],
+    ['ลบคลิป', '⌫', () => { select(it.id); cmdDelete(false); }],
+    ['ลบคลิปและปิดช่องว่าง', '⇧⌫', () => { select(it.id); cmdDelete(true); }],
+    '-',
+    ['แยกคลิปที่หัวอ่าน', 'S', () => { select(it.id); cmdSplit(); }, !inside],
+    ['ตัดซ้ายถึงหัวอ่าน', 'Q', () => { select(it.id); cmdTrimLeft(); }, !inside],
+    ['ตัดขวาจากหัวอ่าน', 'W', () => { select(it.id); cmdTrimRight(); }, !inside],
+  ];
+  if (vis) L.push('-', ['กลับด้านซ้าย-ขวา (Mirror)', it.flipX ? '✓' : '', () => ctxFlip(it, 'x')], ['กลับด้านบน-ล่าง', it.flipY ? '✓' : '', () => ctxFlip(it, 'y')], ['หมุน 90°', '', () => ctxRotate(it)]);
+  if (vid) L.push('-', ['แยกเสียงออกจากวิดีโอ', '', () => sepAudio(it)], ['Auto Cut คลิปนี้', '', () => { select(it.id); acUI(); }], ['แก้ไขตามข้อความ', '', () => { select(it.id); teUI(); }]);
+  L.push('-', [it.hidden ? 'แสดงคลิป' : 'ซ่อนคลิป', '', () => { it.hidden = !it.hidden; commit('hide'); }]);
+  return L;
+}
+function ctxHide() {
+  const m = $('#ctxm'); if (m) m.remove();
+  window.removeEventListener('pointerdown', ctxAway, true); window.removeEventListener('keydown', ctxKey, true); window.removeEventListener('blur', ctxHide); window.removeEventListener('wheel', ctxHide);
+}
+function ctxAway(e) { if (!e.target.closest || !e.target.closest('#ctxm')) ctxHide(); }
+function ctxKey(e) { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); ctxHide(); } }
+function ctxShow(x, y, items) {
+  ctxHide(); const m = document.createElement('div'); m.id = 'ctxm';
+  m.innerHTML = items.map((r, i) => r === '-' ? '<hr>' : `<button data-i="${i}" ${r[3] ? 'disabled' : ''}><span translate="no">${esc(T(r[0]))}</span><kbd>${esc(r[1] || '')}</kbd></button>`).join('');
+  document.body.appendChild(m);
+  const w = m.offsetWidth, h = m.offsetHeight; m.style.left = Math.max(4, Math.min(x, innerWidth - w - 6)) + 'px'; m.style.top = Math.max(4, Math.min(y, innerHeight - h - 6)) + 'px';
+  m.onclick = e => { const b = e.target.closest('button'); if (!b || b.disabled) return; const r = items[+b.dataset.i]; ctxHide(); r[2](); };
+  m.oncontextmenu = e => e.preventDefault();
+  setTimeout(() => { window.addEventListener('pointerdown', ctxAway, true); window.addEventListener('keydown', ctxKey, true); window.addEventListener('blur', ctxHide); window.addEventListener('wheel', ctxHide, { passive: true }); }, 0);
+}
+document.addEventListener('contextmenu', e => {
+  const c = e.target.closest && e.target.closest('#tlbody .clip'); if (!c || HOME.open) return;
+  const it = getItem(c.dataset.id); if (!it) return;
+  e.preventDefault(); select(it.id); ctxShow(e.clientX, e.clientY, ctxItems(it));
+});
 
 // ---- 25-store.js ----
 // ============================================================
@@ -4660,9 +4768,7 @@ function ccVideo(it) {
     h += sec('ตำแหน่งและขนาด') + RR('ขนาด (%)', 'xf.s', .1, 4, .01, it, { kf: 1, m: 100, def: 1 }) + K('ปรับขนาดสัดส่วนเดิม (Uniform)', 'uni', it, true);
     if (it.uni === false) h += RR('ขนาดแนวนอน (%)', 'sx', .1, 4, .01, it, { m: 100, def: 1 }) + RR('ขนาดแนวตั้ง (%)', 'sy', .1, 4, .01, it, { m: 100, def: 1 });
     h += RR('ซ้าย-ขวา', 'xf.x', -1, 1, .005, it, { kf: 1, def: 0 }) + RR('บน-ล่าง', 'xf.y', -1, 1, .005, it, { kf: 1, def: 0 }) + RR('หมุน (°)', 'xf.r', -180, 180, 1, it, { kf: 1, def: 0 });
-    h += `<div class="alignrow"><button data-act="align" data-v="l" title="ชิดซ้าย">⇤</button><button data-act="align" data-v="c" title="กึ่งกลางแนวนอน">⇔</button><button data-act="align" data-v="r" title="ชิดขวา">⇥</button><button data-act="align" data-v="t" title="ชิดบน">⤒</button><button data-act="align" data-v="m" title="กึ่งกลางแนวตั้ง">⇕</button><button data-act="align" data-v="b" title="ชิดล่าง">⤓</button></div>`;
-    if (it.type === 'video' || it.type === 'image') h += `<div class="alignrow mirrow"><button data-act="flip" data-v="x" class="${it.flipX ? 'on' : ''}" title="กลับด้านซ้าย-ขวา (Mirror)">⇋ กลับซ้าย-ขวา</button><button data-act="flip" data-v="y" class="${it.flipY ? 'on' : ''}" title="กลับด้านบน-ล่าง">⇅ กลับบน-ล่าง</button></div>`;
-    h += S('การแสดงผล', 'fit', [['cover', 'เต็มจอ 9:16 (ครอป)'], ['contain', 'ทั้งภาพ (มีขอบ)']], it);
+    h += `<div class="alignrow"><button data-act="align" data-v="l" title="ชิดซ้าย">⇤</button><button data-act="align" data-v="c" title="กึ่งกลางแนวนอน">⇔</button><button data-act="align" data-v="r" title="ชิดขวา">⇥</button><button data-act="align" data-v="t" title="ชิดบน">⤒</button><button data-act="align" data-v="m" title="กึ่งกลางแนวตั้ง">⇕</button><button data-act="align" data-v="b" title="ชิดล่าง">⤓</button></div>`;    h += S('การแสดงผล', 'fit', [['cover', 'เต็มจอ 9:16 (ครอป)'], ['contain', 'ทั้งภาพ (มีขอบ)']], it);
     h += sec('การผสมภาพ (Blend)') + S('โหมด', 'blend', BLENDS, it) + RR('ความโปร่งใส (%)', 'xf.o', 0, 1, .01, it, { kf: 1, m: 100, def: 1 });
     h += sec('คุณภาพภาพ') + S('เพิ่มความคมชัด', 'fx.sharpen', [[0, 'ปิด'], [1, 'ปานกลาง'], [2, 'มาก']], it) + K('ลดนอยส์ภาพ', 'fx.denoise', it, false) + RR('เบลอ', 'fx.blur', 0, 20, .5, it, { def: 0 });
     h += `<div class="btnrow"><button data-act="enhance">✨ ปรับภาพให้สวย/ชัดอัตโนมัติ</button></div>`;
@@ -4789,7 +4895,6 @@ function ccAction(act, a, it) {
       if (v === 't') set('y', (bh - PH) / 2 / PH); if (v === 'b') set('y', (PH - bh) / 2 / PH); if (v === 'm') set('y', 0);
       commit('align'); renderInspector(); return true;
     }
-    case 'flip': if (v === 'x') it.flipX = !it.flipX; else it.flipY = !it.flipY; commit('flip'); renderInspector(); return true;
     case 'mask': setMaskType(it, v); commit('mask'); renderInspector(); return true;
     case 'voice': it.vfx = v; commit('voice'); renderInspector(); return true;
     case 'anim': { it.anim = Object.assign({ in: 'none', out: 'none', combo: 'none' }, it.anim || {}); it.anim[a.dataset.g] = v; commit('anim'); renderInspector(); if (v !== 'none') ccPreview(it, a.dataset.g); return true; }
@@ -4806,14 +4911,15 @@ function ccAction(act, a, it) {
     case 'spdset': { const span = it.dur * (it.speed || 1); it.speed = +v; it.dur = Math.max(.1, span / it.speed); commit('speed'); renderInspector(); return true; }
     case 'spdreset': { const span = it.dur * (it.speed || 1); it.speed = 1; it.dur = span; commit('speed'); renderInspector(); return true; }
     case 'eyedrop': new EyeDropper().open().then(r => { setPath(it, 'chroma.color', r.sRGBHex); setPath(it, 'chroma.on', true); commit('chroma'); renderInspector(); }).catch(() => { }); return true;
-    case 'sepaudio': {
-      const m = MEDIA.get(it.mediaId); if (!m || m.hasAudio === false) { toast('คลิปนี้ไม่มีเสียง'); return true; }
-      if ((it.speed || 1) !== 1) { toast('แยกเสียงได้เฉพาะคลิปที่ความเร็ว 1 เท่า'); return true; }
-      const au = mkAudio('A2', it.mediaId, it.start, it.dur); au.in = it.in || 0; au.vol = it.vol ?? 1; au.fadeIn = it.fadeIn || 0; au.fadeOut = it.fadeOut || 0; au.duck = false; au.loop = false;
-      au.track = freeTrack('audio', it.start, it.dur, 'A2'); if (au.track === 'A1') au.track = 'A2'; addItem(au); it.muted = true; commit('sepaudio'); toast('แยกเสียงไปไว้แถวเสียงแล้ว'); renderInspector(); return true;
-    }
+    case 'sepaudio': sepAudio(it); return true;
   }
   return false;
+}
+function sepAudio(it) {   // also used by the right-click menu
+  const m = MEDIA.get(it.mediaId); if (!m || m.hasAudio === false) { toast('คลิปนี้ไม่มีเสียง'); return; }
+  if ((it.speed || 1) !== 1) { toast('แยกเสียงได้เฉพาะคลิปที่ความเร็ว 1 เท่า'); return; }
+  const au = mkAudio('A2', it.mediaId, it.start, it.dur); au.in = it.in || 0; au.vol = it.vol ?? 1; au.fadeIn = it.fadeIn || 0; au.fadeOut = it.fadeOut || 0; au.duck = false; au.loop = false;
+  au.track = freeTrack('audio', it.start, it.dur, 'A2'); if (au.track === 'A1') au.track = 'A2'; addItem(au); it.muted = true; commit('sepaudio'); toast('แยกเสียงไปไว้แถวเสียงแล้ว'); renderInspector();
 }
 
 // ---------- canvas widgets (curves, colour wheels) ----------
@@ -6081,7 +6187,7 @@ function renderAiPane() {
   <div class="fld col"><label>คลิปที่ใช้</label><select id="aiClip">${vids.map(m => `<option translate="no" value="${m.id}" ${m.id === keep ? 'selected' : ''}>${esc(m.name)}${getTr(m.id) ? ' ✔' : ''}</option>`).join('') || '<option value="">(ยังไม่มีคลิป)</option>'}</select></div>
   <div class="fld"><label>ภาษาในคลิป</label><select id="aiLang"><option value="lo">ลาว (Gemini)</option><option value="th">ไทย</option></select></div>
   <div class="fld"><label>ตัวถอดเสียงไทย</label><select id="aiEng"><option value="whisper">Whisper ในเครื่อง (ฟรี แม่น)</option><option value="gemini">Gemini</option></select></div>
-  <div class="aicard"><h4>🚀 Auto Cut — ปุ่มเดียว</h4><div class="mini">ตัดช่วงเงียบ คำอ้ำอึ้ง ใส่ซับแอนิเมชันให้อัตโนมัติ แล้วเปิดให้ตรวจก่อนโพสต์ (ยกเลิกได้)</div><button class="wide primary" id="acBtn">เริ่ม Auto Cut</button></div>
+  <div class="aicard"><h4>🚀 Auto Cut — ปุ่มเดียว</h4><div class="mini">ตัดช่วงเงียบ คำอ้ำอึ้ง ใส่ซับแอนิเมชันให้อัตโนมัติ แล้วเปิดให้ตรวจก่อนโพสต์ (ยกเลิกได้)</div><button class="wide primary" id="acBtn">เริ่ม Auto Cut</button><button class="wide" id="abBtn" style="margin-top:6px">⚡ Auto Cut ทุกคลิปในโปรเจกต์</button></div>
   <div class="aicard"><h4>✂ แก้ไขตามข้อความ</h4><div class="mini">ดูข้อความที่ถอดเสียง คลิกเลือกคำ/ประโยคแล้วลบ หรือลบช่วงเงียบและคำอ้ำอึ้งทั้งหมดในครั้งเดียว (เหมือน Premiere)</div><button class="wide" id="teBtn">เปิดแก้ไขตามข้อความ</button></div>
   <div class="aicard"><h4>🍜 โยนฟุตอาหาร → ปุ่มเดียว</h4><div class="mini">เลือกช่วงที่สวยที่สุดของแต่ละคลิป ตัดสั้น เรียงลำดับ ใส่สี/ทรานสิชัน/ซูม ตัดตามจังหวะเพลง</div><button class="wide primary" id="fdA">เริ่ม</button></div>
   <div class="aicard"><h4>🎵 ตัดตามบีตเพลง</h4><div class="mini">จัดจุดตัดคลิปที่มีอยู่ในไทม์ไลน์ให้ตรงจังหวะเพลงที่ใส่ไว้</div><button class="wide" id="bsA">จัดจังหวะ</button></div>
@@ -6098,7 +6204,7 @@ function renderAiPane() {
   <div class="aicard"><h4>⑥ ให้ AI ตัดต่อ 4 แบบ</h4><div class="mini">ใช้ทุกคลิปในรายการสื่อ แล้วให้พนักงานเลือกแบบที่ชอบ</div><button class="wide primary" id="ai6">สร้าง 4 แบบ</button></div>
   <div class="hint small">ใช้ AI เดือนนี้ $${s.usd.toFixed(2)} จากเพดาน $${loadCap()}</div>`;
   const lg = localStorage.getItem('sk_lang'); if (lg) $('#aiLang').value = lg; $('#aiLang').onchange = e => localStorage.setItem('sk_lang', e.target.value);
-  $('#acBtn').onclick = acUI; $('#teBtn').onclick = teUI; $('#aiCap').onclick = capOpen; $('#aiGT').onclick = aiGemTest; $('#ai1').onclick = () => aiTranscribeUI(); $('#aiTC').onclick = trcUI; $('#ai2').onclick = aiPriceUI; $('#ai3').onclick = aiKeyPointsUI; $('#ai4a').onclick = aiSilenceUI; $('#ai4b').onclick = aiRetakeUI; $('#ai5').onclick = () => aiEnhanceUI(null); $('#ai6').onclick = aiVariantsUI; $('#aiK').onclick = aiKittiUI; $('#fdA').onclick = foodUI; $('#bsA').onclick = beatSnapTimeline; $('#anA').onclick = anUI; $('#aiA').onclick = aiCleanUI; $('#aiB').onclick = aiSubsUI;
+  $('#acBtn').onclick = acUI; $('#abBtn').onclick = acbUI; $('#teBtn').onclick = teUI; $('#aiCap').onclick = capOpen; $('#aiGT').onclick = aiGemTest; $('#ai1').onclick = () => aiTranscribeUI(); $('#aiTC').onclick = trcUI; $('#ai2').onclick = aiPriceUI; $('#ai3').onclick = aiKeyPointsUI; $('#ai4a').onclick = aiSilenceUI; $('#ai4b').onclick = aiRetakeUI; $('#ai5').onclick = () => aiEnhanceUI(null); $('#ai6').onclick = aiVariantsUI; $('#aiK').onclick = aiKittiUI; $('#fdA').onclick = foodUI; $('#bsA').onclick = beatSnapTimeline; $('#anA').onclick = anUI; $('#aiA').onclick = aiCleanUI; $('#aiB').onclick = aiSubsUI;
 }
 AI.inspectorAction = (act, it) => {
   if (act === 'enhance') aiEnhanceUI(it);
@@ -7510,33 +7616,34 @@ function acUI() {
   });
 }
 
-async function acRun(m, o) {
-  if (AI.busy) return; AI.busy = true;
-  const h0 = HPOS, st = { cuts: 0, saved: 0, caps: 0, tr: 0, notes: [] };
+async function acRun(m, o, batch) {   // batch = { i, n, st } when called by "Auto Cut all clips" (no dialog, stats are added to batch.st)
+  if (!batch) { if (AI.busy) return; AI.busy = true; }
+  const h0 = HPOS, st = batch ? batch.st : { cuts: 0, saved: 0, caps: 0, tr: 0, notes: [] };
+  const P = (t, p) => aiProg((batch ? `(${batch.i}/${batch.n}) ` : '') + t, p);
   try {
-    aiProg('กำลังเตรียมคลิป…', 3); ensureOnTimeline(m);
+    P('กำลังเตรียมคลิป…', 3); ensureOnTimeline(m);
     let tr = null;
     if (o.fil || o.ret || o.cap) { tr = getTr(m.id) || await ensureTranscript(m); st.tr = tr.segs.length; }
     // ---- 1) cut ----
     const rs = [];
-    if (o.sil) { aiProg('กำลังหาช่วงเงียบ…', 55); D.items.filter(it => it.type === 'video' && it.mediaId === m.id).forEach(it => findSilences(m, it.in, it.in + it.dur * (it.speed || 1), o.min, .12).forEach(r => rs.push([r[0], r[1]]))); }
+    if (o.sil) { P('กำลังหาช่วงเงียบ…', 55); D.items.filter(it => it.type === 'video' && it.mediaId === m.id).forEach(it => findSilences(m, it.in, it.in + it.dur * (it.speed || 1), o.min, .12).forEach(r => rs.push([r[0], r[1]]))); }
     if (o.fil && tr) findFillers(tr).filter(f => !f.approx).forEach(f => rs.push([snapValley(m, f.a - .02, .1), snapValley(m, f.b + .03, .1)]));   // only fillers whose position is exact (never a guessed spot)
-    if (o.ret && tr) { aiProg('AI กำลังหาเทคที่พูดซ้ำ/พูดผิด…', 62); try { (await findRetakes(m, tr)).forEach(r => rs.push([r.a, r.b])); } catch (e) { console.warn('retakes', e); st.notes.push('retake'); } }
+    if (o.ret && tr) { P('AI กำลังหาเทคที่พูดซ้ำ/พูดผิด…', 62); try { (await findRetakes(m, tr)).forEach(r => rs.push([r.a, r.b])); } catch (e) { console.warn('retakes', e); st.notes.push('retake'); } }
     const merged = mergeRanges(rs);
-    if (merged.length) { st.saved = merged.reduce((a, r) => a + r[1] - r[0], 0); st.cuts = cutSourceRanges(m.id, merged); commit('autocut'); }
+    if (merged.length) { st.saved += merged.reduce((a, r) => a + r[1] - r[0], 0); st.cuts += cutSourceRanges(m.id, merged); commit('autocut'); }
     // ---- 2) captions ----
     if (o.cap) {
       if (!tr || !tr.segs.length) st.notes.push('nospeech');
       else {
         CAPS.look = o.look || CAPS.look; CAPS.rows = o.rows; CAPS.kw = o.kw; let kw = null;
-        if (CAPS.kw === 'key') { aiProg('กำลังให้ AI เลือกคำสำคัญจากข้อความที่ถอดไว้…', 75); try { kw = await capKeywords(tr); } catch (e) { console.warn('capKeywords', e); st.notes.push('kwfail'); CAPS.kw = 'all'; } }
+        if (CAPS.kw === 'key') { P('กำลังให้ AI เลือกคำสำคัญจากข้อความที่ถอดไว้…', 75); try { kw = await capKeywords(tr); } catch (e) { console.warn('capKeywords', e); st.notes.push('kwfail'); CAPS.kw = 'all'; } }
         if (CAPS.font) { try { await lfEnsure(CAPS.font); } catch (e) { } }
-        aiProg('กำลังใส่ซับ…', 90); st.caps = capApply(m, tr, kw);
-        if (!st.caps) st.notes.push(kw ? 'nokey' : 'nospeech');
+        P('กำลังใส่ซับ…', 90); const nc = capApply(m, tr, kw); st.caps += nc;
+        if (!nc) st.notes.push(kw ? 'nokey' : 'nospeech');
       }
     }
-    AI.busy = false; acDone(m, st, h0, HPOS);
-  } catch (e) { aiErr(e); }
+    if (!batch) { AI.busy = false; acDone(m, st, h0, HPOS); }
+  } catch (e) { if (batch) throw e; aiErr(e); }
 }
 
 function acDone(m, st, h0, hEnd) {
@@ -7545,6 +7652,7 @@ function acDone(m, st, h0, hEnd) {
   if (st.caps) L.push(`<li>💬 ${T('ใส่ซับ')} <b>${st.caps}</b> ${T('ช่วง')}</li>`);
   const N = { nospeech: 'ไม่พบข้อความพูดในคลิปนี้ จึงยังไม่ได้ใส่ซับ', nokey: 'AI ไม่พบคำสำคัญในคลิปนี้ จึงยังไม่ได้ใส่ซับ', kwfail: 'AI เลือกคำสำคัญไม่ได้ จึงใส่ซับทุกคำที่พูดแทน', retake: 'หาเทคที่พูดซ้ำไม่ได้ (ข้ามขั้นนี้)' };
   st.notes.forEach(k => N[k] && L.push(`<li style="color:#ffb86b">⚠ ${T(N[k])}</li>`));
+  (st.extra || []).forEach(x => L.push(`<li translate="no">${esc(x)}</li>`));
   aiDlg('Auto Cut เสร็จแล้ว', `<ul style="margin:0 0 8px 18px;padding:0">${L.join('')}</ul>
     <div class="hint">ตรวจดูทั้งคลิปก่อนโพสต์ทุกครั้ง — AI อาจตัดหรือเลือกคำพลาดได้ แก้ต่อที่ไทม์ไลน์ได้เลย</div>
     <div class="row"><button class="primary" id="acPlay">▶ ดูผลลัพธ์</button><button id="acUndo">↶ ยกเลิกทั้งหมด</button><span class="sp"></span><button id="acClose">ปิด</button></div>`, root => {
@@ -7555,6 +7663,51 @@ function acDone(m, st, h0, hEnd) {
       for (let i = hEnd - h0; i > 0; i--) undo(); $('#dlgAi').close(); toast('ยกเลิก Auto Cut แล้ว');
     };
   });
+}
+
+// ============================================================
+//  v1.62 — Auto Cut for ALL clips of the project in one go (the "recipe" button): same options as Auto Cut, no dialog per clip,
+//  one summary at the end, one "undo everything". Made for VELARIS jobs (several raw clips) but works in any project.
+// ============================================================
+function acbClips() {
+  const ids = []; D.items.filter(i => i.type === 'video' && i.mediaId).sort((a, b) => a.start - b.start).forEach(i => { if (!ids.includes(i.mediaId)) ids.push(i.mediaId); });
+  return ids.map(id => MEDIA.get(id)).filter(Boolean);
+}
+function acbUI() {
+  const list = acbClips(); if (!list.length) return toast('ยังไม่มีคลิปวิดีโอในโปรเจกต์');
+  const o = ACUT.o, look = o.look || CAPS.look; let need = 0;
+  const rows = list.map(m => { const st = !m.pcm16 ? 'no' : getTr(m.id) ? 'ok' : 'new'; if (st === 'new') need++; return `<div class="fld col" style="margin:2px 0"><span translate="no">${esc(m.name)}</span> — ${st === 'ok' ? T('มีข้อความถอดไว้แล้ว') : st === 'new' ? T('ต้องถอดเสียงใหม่') : '<span style="color:#ffb86b">' + T('ไม่มีเสียง / ยังวิเคราะห์ไม่เสร็จ (จะข้าม)') + '</span>'}</div>`; }).join('');
+  aiDlg('Auto Cut ทุกคลิป', `<div class="hint">ทำกับทุกคลิปวิดีโอในโปรเจกต์ด้วยตัวเลือกด้านล่าง · ทำเสร็จแล้วกดยกเลิกทั้งหมดได้ · ใช้ครั้งเดียวต่อโปรเจกต์ (ถ้าเคยใส่ซับแล้ว ให้ยกเลิกก่อน)</div>
+    ${rows}
+    ${need ? `<div class="hint" style="color:#ffb86b">⚠ ${need} ${T('คลิปต้องถอดเสียงใหม่ — ภาษาลาวใช้ Gemini ซึ่งมีค่าใช้จ่ายต่อคลิป')}</div>` : ''}
+    <div class="fld chk"><label><input type="checkbox" id="abSil" ${o.sil ? 'checked' : ''}> ✂ ตัดช่วงเงียบ</label></div>
+    <div class="fld"><label>เงียบนานกว่า (วิ)</label><input id="abMin" type="range" min=".25" max="1.5" step=".05" value="${o.min}"><output>${o.min}</output></div>
+    <div class="fld chk"><label><input type="checkbox" id="abFil" ${o.fil ? 'checked' : ''}> ✂ ตัดคำอ้ำอึ้ง (เอ่อ อืม)</label></div>
+    <div class="fld chk"><label><input type="checkbox" id="abCap" ${o.cap ? 'checked' : ''}> 💬 ใส่ซับแอนิเมชัน</label></div>
+    <div class="fld"><label>หน้าตาซับ</label><select id="abLook">${CAP_LOOKS.map(l => `<option value="${l[0]}" ${l[0] === look ? 'selected' : ''}>${esc(T(l[1]))}</option>`).join('')}</select></div>
+    <div class="fld"><label>จำนวนแถว</label><select id="abRows"><option value="1" ${o.rows !== 2 ? 'selected' : ''}>1 แถว</option><option value="2" ${o.rows === 2 ? 'selected' : ''}>ซ้อน 2 แถว (คนพูดเร็ว)</option></select></div>
+    <div class="row"><span class="sp"></span><button class="primary" id="abGo">เริ่มทุกคลิป</button></div>`, root => {
+    $('#abMin', root).oninput = e => { e.target.nextElementSibling.textContent = e.target.value; };
+    $('#abGo', root).onclick = () => {
+      const v = { sil: $('#abSil', root).checked, min: +$('#abMin', root).value, fil: $('#abFil', root).checked, ret: false, cap: $('#abCap', root).checked, look: $('#abLook', root).value, rows: +$('#abRows', root).value === 2 ? 2 : 1, kw: ACUT.o.kw === 'key' ? 'key' : 'all' };
+      if (!v.sil && !v.fil && !v.cap) return toast('เลือกอย่างน้อย 1 อย่าง');
+      ACUT.o = Object.assign({}, ACUT.o, v); try { localStorage.setItem('sk_ac', JSON.stringify(ACUT.o)); } catch (e) { }
+      acbRun(list, v);
+    };
+  });
+}
+async function acbRun(list, o) {
+  if (AI.busy) return; AI.busy = true;
+  const h0 = HPOS, st = { cuts: 0, saved: 0, caps: 0, tr: 0, notes: [], extra: [] }; let done = 0;
+  try {
+    for (let i = 0; i < list.length; i++) {
+      const m = list[i];
+      if (!m.pcm16) { st.extra.push(`${m.name}: ${T('ข้าม (ไม่มีเสียง)')}`); continue; }
+      try { await acRun(m, o, { i: i + 1, n: list.length, st }); done++; }
+      catch (e) { console.warn('acbRun', m.name, e); st.extra.push(`${m.name}: ${T('ทำไม่สำเร็จ')} (${String(e && e.message || e).slice(0, 80)})`); }
+    }
+    AI.busy = false; st.extra.unshift(`${done}/${list.length} · ${T('ทำสำเร็จ')}`); acDone(list[0], st, h0, HPOS);
+  } catch (e) { aiErr(e); }
 }
 
 // ---- 69-ztxtedit.js ----
@@ -7843,6 +7996,9 @@ async function init() {
     else if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
     else if (mod && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
     else if (mod && e.key.toLowerCase() === 'd') { e.preventDefault(); if (SEL) { const b = duplicateItem(SEL); commit('dup'); select(b.id); } }
+    else if (mod && e.key.toLowerCase() === 'c' && SEL && !String(getSelection())) { e.preventDefault(); cbCopy(SEL); }
+    else if (mod && e.key.toLowerCase() === 'x' && SEL) { e.preventDefault(); cbCut(SEL); }
+    else if (mod && e.key.toLowerCase() === 'v' && CB.it) { e.preventDefault(); cbPaste(); }
     else if (!mod && e.key.toLowerCase() === 's') { cmdSplit(); }
     else if (!mod && e.key.toLowerCase() === 'q') { cmdTrimLeft(); }
     else if (!mod && e.key.toLowerCase() === 'w') { cmdTrimRight(); }

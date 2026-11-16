@@ -33,33 +33,34 @@ function acUI() {
   });
 }
 
-async function acRun(m, o) {
-  if (AI.busy) return; AI.busy = true;
-  const h0 = HPOS, st = { cuts: 0, saved: 0, caps: 0, tr: 0, notes: [] };
+async function acRun(m, o, batch) {   // batch = { i, n, st } when called by "Auto Cut all clips" (no dialog, stats are added to batch.st)
+  if (!batch) { if (AI.busy) return; AI.busy = true; }
+  const h0 = HPOS, st = batch ? batch.st : { cuts: 0, saved: 0, caps: 0, tr: 0, notes: [] };
+  const P = (t, p) => aiProg((batch ? `(${batch.i}/${batch.n}) ` : '') + t, p);
   try {
-    aiProg('กำลังเตรียมคลิป…', 3); ensureOnTimeline(m);
+    P('กำลังเตรียมคลิป…', 3); ensureOnTimeline(m);
     let tr = null;
     if (o.fil || o.ret || o.cap) { tr = getTr(m.id) || await ensureTranscript(m); st.tr = tr.segs.length; }
     // ---- 1) cut ----
     const rs = [];
-    if (o.sil) { aiProg('กำลังหาช่วงเงียบ…', 55); D.items.filter(it => it.type === 'video' && it.mediaId === m.id).forEach(it => findSilences(m, it.in, it.in + it.dur * (it.speed || 1), o.min, .12).forEach(r => rs.push([r[0], r[1]]))); }
+    if (o.sil) { P('กำลังหาช่วงเงียบ…', 55); D.items.filter(it => it.type === 'video' && it.mediaId === m.id).forEach(it => findSilences(m, it.in, it.in + it.dur * (it.speed || 1), o.min, .12).forEach(r => rs.push([r[0], r[1]]))); }
     if (o.fil && tr) findFillers(tr).filter(f => !f.approx).forEach(f => rs.push([snapValley(m, f.a - .02, .1), snapValley(m, f.b + .03, .1)]));   // only fillers whose position is exact (never a guessed spot)
-    if (o.ret && tr) { aiProg('AI กำลังหาเทคที่พูดซ้ำ/พูดผิด…', 62); try { (await findRetakes(m, tr)).forEach(r => rs.push([r.a, r.b])); } catch (e) { console.warn('retakes', e); st.notes.push('retake'); } }
+    if (o.ret && tr) { P('AI กำลังหาเทคที่พูดซ้ำ/พูดผิด…', 62); try { (await findRetakes(m, tr)).forEach(r => rs.push([r.a, r.b])); } catch (e) { console.warn('retakes', e); st.notes.push('retake'); } }
     const merged = mergeRanges(rs);
-    if (merged.length) { st.saved = merged.reduce((a, r) => a + r[1] - r[0], 0); st.cuts = cutSourceRanges(m.id, merged); commit('autocut'); }
+    if (merged.length) { st.saved += merged.reduce((a, r) => a + r[1] - r[0], 0); st.cuts += cutSourceRanges(m.id, merged); commit('autocut'); }
     // ---- 2) captions ----
     if (o.cap) {
       if (!tr || !tr.segs.length) st.notes.push('nospeech');
       else {
         CAPS.look = o.look || CAPS.look; CAPS.rows = o.rows; CAPS.kw = o.kw; let kw = null;
-        if (CAPS.kw === 'key') { aiProg('กำลังให้ AI เลือกคำสำคัญจากข้อความที่ถอดไว้…', 75); try { kw = await capKeywords(tr); } catch (e) { console.warn('capKeywords', e); st.notes.push('kwfail'); CAPS.kw = 'all'; } }
+        if (CAPS.kw === 'key') { P('กำลังให้ AI เลือกคำสำคัญจากข้อความที่ถอดไว้…', 75); try { kw = await capKeywords(tr); } catch (e) { console.warn('capKeywords', e); st.notes.push('kwfail'); CAPS.kw = 'all'; } }
         if (CAPS.font) { try { await lfEnsure(CAPS.font); } catch (e) { } }
-        aiProg('กำลังใส่ซับ…', 90); st.caps = capApply(m, tr, kw);
-        if (!st.caps) st.notes.push(kw ? 'nokey' : 'nospeech');
+        P('กำลังใส่ซับ…', 90); const nc = capApply(m, tr, kw); st.caps += nc;
+        if (!nc) st.notes.push(kw ? 'nokey' : 'nospeech');
       }
     }
-    AI.busy = false; acDone(m, st, h0, HPOS);
-  } catch (e) { aiErr(e); }
+    if (!batch) { AI.busy = false; acDone(m, st, h0, HPOS); }
+  } catch (e) { if (batch) throw e; aiErr(e); }
 }
 
 function acDone(m, st, h0, hEnd) {
@@ -68,6 +69,7 @@ function acDone(m, st, h0, hEnd) {
   if (st.caps) L.push(`<li>💬 ${T('ใส่ซับ')} <b>${st.caps}</b> ${T('ช่วง')}</li>`);
   const N = { nospeech: 'ไม่พบข้อความพูดในคลิปนี้ จึงยังไม่ได้ใส่ซับ', nokey: 'AI ไม่พบคำสำคัญในคลิปนี้ จึงยังไม่ได้ใส่ซับ', kwfail: 'AI เลือกคำสำคัญไม่ได้ จึงใส่ซับทุกคำที่พูดแทน', retake: 'หาเทคที่พูดซ้ำไม่ได้ (ข้ามขั้นนี้)' };
   st.notes.forEach(k => N[k] && L.push(`<li style="color:#ffb86b">⚠ ${T(N[k])}</li>`));
+  (st.extra || []).forEach(x => L.push(`<li translate="no">${esc(x)}</li>`));
   aiDlg('Auto Cut เสร็จแล้ว', `<ul style="margin:0 0 8px 18px;padding:0">${L.join('')}</ul>
     <div class="hint">ตรวจดูทั้งคลิปก่อนโพสต์ทุกครั้ง — AI อาจตัดหรือเลือกคำพลาดได้ แก้ต่อที่ไทม์ไลน์ได้เลย</div>
     <div class="row"><button class="primary" id="acPlay">▶ ดูผลลัพธ์</button><button id="acUndo">↶ ยกเลิกทั้งหมด</button><span class="sp"></span><button id="acClose">ปิด</button></div>`, root => {
@@ -78,4 +80,49 @@ function acDone(m, st, h0, hEnd) {
       for (let i = hEnd - h0; i > 0; i--) undo(); $('#dlgAi').close(); toast('ยกเลิก Auto Cut แล้ว');
     };
   });
+}
+
+// ============================================================
+//  v1.62 — Auto Cut for ALL clips of the project in one go (the "recipe" button): same options as Auto Cut, no dialog per clip,
+//  one summary at the end, one "undo everything". Made for VELARIS jobs (several raw clips) but works in any project.
+// ============================================================
+function acbClips() {
+  const ids = []; D.items.filter(i => i.type === 'video' && i.mediaId).sort((a, b) => a.start - b.start).forEach(i => { if (!ids.includes(i.mediaId)) ids.push(i.mediaId); });
+  return ids.map(id => MEDIA.get(id)).filter(Boolean);
+}
+function acbUI() {
+  const list = acbClips(); if (!list.length) return toast('ยังไม่มีคลิปวิดีโอในโปรเจกต์');
+  const o = ACUT.o, look = o.look || CAPS.look; let need = 0;
+  const rows = list.map(m => { const st = !m.pcm16 ? 'no' : getTr(m.id) ? 'ok' : 'new'; if (st === 'new') need++; return `<div class="fld col" style="margin:2px 0"><span translate="no">${esc(m.name)}</span> — ${st === 'ok' ? T('มีข้อความถอดไว้แล้ว') : st === 'new' ? T('ต้องถอดเสียงใหม่') : '<span style="color:#ffb86b">' + T('ไม่มีเสียง / ยังวิเคราะห์ไม่เสร็จ (จะข้าม)') + '</span>'}</div>`; }).join('');
+  aiDlg('Auto Cut ทุกคลิป', `<div class="hint">ทำกับทุกคลิปวิดีโอในโปรเจกต์ด้วยตัวเลือกด้านล่าง · ทำเสร็จแล้วกดยกเลิกทั้งหมดได้ · ใช้ครั้งเดียวต่อโปรเจกต์ (ถ้าเคยใส่ซับแล้ว ให้ยกเลิกก่อน)</div>
+    ${rows}
+    ${need ? `<div class="hint" style="color:#ffb86b">⚠ ${need} ${T('คลิปต้องถอดเสียงใหม่ — ภาษาลาวใช้ Gemini ซึ่งมีค่าใช้จ่ายต่อคลิป')}</div>` : ''}
+    <div class="fld chk"><label><input type="checkbox" id="abSil" ${o.sil ? 'checked' : ''}> ✂ ตัดช่วงเงียบ</label></div>
+    <div class="fld"><label>เงียบนานกว่า (วิ)</label><input id="abMin" type="range" min=".25" max="1.5" step=".05" value="${o.min}"><output>${o.min}</output></div>
+    <div class="fld chk"><label><input type="checkbox" id="abFil" ${o.fil ? 'checked' : ''}> ✂ ตัดคำอ้ำอึ้ง (เอ่อ อืม)</label></div>
+    <div class="fld chk"><label><input type="checkbox" id="abCap" ${o.cap ? 'checked' : ''}> 💬 ใส่ซับแอนิเมชัน</label></div>
+    <div class="fld"><label>หน้าตาซับ</label><select id="abLook">${CAP_LOOKS.map(l => `<option value="${l[0]}" ${l[0] === look ? 'selected' : ''}>${esc(T(l[1]))}</option>`).join('')}</select></div>
+    <div class="fld"><label>จำนวนแถว</label><select id="abRows"><option value="1" ${o.rows !== 2 ? 'selected' : ''}>1 แถว</option><option value="2" ${o.rows === 2 ? 'selected' : ''}>ซ้อน 2 แถว (คนพูดเร็ว)</option></select></div>
+    <div class="row"><span class="sp"></span><button class="primary" id="abGo">เริ่มทุกคลิป</button></div>`, root => {
+    $('#abMin', root).oninput = e => { e.target.nextElementSibling.textContent = e.target.value; };
+    $('#abGo', root).onclick = () => {
+      const v = { sil: $('#abSil', root).checked, min: +$('#abMin', root).value, fil: $('#abFil', root).checked, ret: false, cap: $('#abCap', root).checked, look: $('#abLook', root).value, rows: +$('#abRows', root).value === 2 ? 2 : 1, kw: ACUT.o.kw === 'key' ? 'key' : 'all' };
+      if (!v.sil && !v.fil && !v.cap) return toast('เลือกอย่างน้อย 1 อย่าง');
+      ACUT.o = Object.assign({}, ACUT.o, v); try { localStorage.setItem('sk_ac', JSON.stringify(ACUT.o)); } catch (e) { }
+      acbRun(list, v);
+    };
+  });
+}
+async function acbRun(list, o) {
+  if (AI.busy) return; AI.busy = true;
+  const h0 = HPOS, st = { cuts: 0, saved: 0, caps: 0, tr: 0, notes: [], extra: [] }; let done = 0;
+  try {
+    for (let i = 0; i < list.length; i++) {
+      const m = list[i];
+      if (!m.pcm16) { st.extra.push(`${m.name}: ${T('ข้าม (ไม่มีเสียง)')}`); continue; }
+      try { await acRun(m, o, { i: i + 1, n: list.length, st }); done++; }
+      catch (e) { console.warn('acbRun', m.name, e); st.extra.push(`${m.name}: ${T('ทำไม่สำเร็จ')} (${String(e && e.message || e).slice(0, 80)})`); }
+    }
+    AI.busy = false; st.extra.unshift(`${done}/${list.length} · ${T('ทำสำเร็จ')}`); acDone(list[0], st, h0, HPOS);
+  } catch (e) { aiErr(e); }
 }

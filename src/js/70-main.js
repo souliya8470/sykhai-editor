@@ -136,6 +136,9 @@ async function init() {
     else if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
     else if (mod && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
     else if (mod && e.key.toLowerCase() === 'd') { e.preventDefault(); if (SEL) { const b = duplicateItem(SEL); commit('dup'); select(b.id); } }
+    else if (mod && e.key.toLowerCase() === 'c' && SEL && !String(getSelection())) { e.preventDefault(); cbCopy(SEL); }
+    else if (mod && e.key.toLowerCase() === 'x' && SEL) { e.preventDefault(); cbCut(SEL); }
+    else if (mod && e.key.toLowerCase() === 'v' && CB.it) { e.preventDefault(); cbPaste(); }
     else if (!mod && e.key.toLowerCase() === 's') { cmdSplit(); }
     else if (!mod && e.key.toLowerCase() === 'q') { cmdTrimLeft(); }
     else if (!mod && e.key.toLowerCase() === 'w') { cmdTrimRight(); }

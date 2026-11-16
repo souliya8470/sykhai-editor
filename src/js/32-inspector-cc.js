@@ -51,9 +51,7 @@ function ccVideo(it) {
     h += sec('ตำแหน่งและขนาด') + RR('ขนาด (%)', 'xf.s', .1, 4, .01, it, { kf: 1, m: 100, def: 1 }) + K('ปรับขนาดสัดส่วนเดิม (Uniform)', 'uni', it, true);
     if (it.uni === false) h += RR('ขนาดแนวนอน (%)', 'sx', .1, 4, .01, it, { m: 100, def: 1 }) + RR('ขนาดแนวตั้ง (%)', 'sy', .1, 4, .01, it, { m: 100, def: 1 });
     h += RR('ซ้าย-ขวา', 'xf.x', -1, 1, .005, it, { kf: 1, def: 0 }) + RR('บน-ล่าง', 'xf.y', -1, 1, .005, it, { kf: 1, def: 0 }) + RR('หมุน (°)', 'xf.r', -180, 180, 1, it, { kf: 1, def: 0 });
-    h += `<div class="alignrow"><button data-act="align" data-v="l" title="ชิดซ้าย">⇤</button><button data-act="align" data-v="c" title="กึ่งกลางแนวนอน">⇔</button><button data-act="align" data-v="r" title="ชิดขวา">⇥</button><button data-act="align" data-v="t" title="ชิดบน">⤒</button><button data-act="align" data-v="m" title="กึ่งกลางแนวตั้ง">⇕</button><button data-act="align" data-v="b" title="ชิดล่าง">⤓</button></div>`;
-    if (it.type === 'video' || it.type === 'image') h += `<div class="alignrow mirrow"><button data-act="flip" data-v="x" class="${it.flipX ? 'on' : ''}" title="กลับด้านซ้าย-ขวา (Mirror)">⇋ กลับซ้าย-ขวา</button><button data-act="flip" data-v="y" class="${it.flipY ? 'on' : ''}" title="กลับด้านบน-ล่าง">⇅ กลับบน-ล่าง</button></div>`;
-    h += S('การแสดงผล', 'fit', [['cover', 'เต็มจอ 9:16 (ครอป)'], ['contain', 'ทั้งภาพ (มีขอบ)']], it);
+    h += `<div class="alignrow"><button data-act="align" data-v="l" title="ชิดซ้าย">⇤</button><button data-act="align" data-v="c" title="กึ่งกลางแนวนอน">⇔</button><button data-act="align" data-v="r" title="ชิดขวา">⇥</button><button data-act="align" data-v="t" title="ชิดบน">⤒</button><button data-act="align" data-v="m" title="กึ่งกลางแนวตั้ง">⇕</button><button data-act="align" data-v="b" title="ชิดล่าง">⤓</button></div>`;    h += S('การแสดงผล', 'fit', [['cover', 'เต็มจอ 9:16 (ครอป)'], ['contain', 'ทั้งภาพ (มีขอบ)']], it);
     h += sec('การผสมภาพ (Blend)') + S('โหมด', 'blend', BLENDS, it) + RR('ความโปร่งใส (%)', 'xf.o', 0, 1, .01, it, { kf: 1, m: 100, def: 1 });
     h += sec('คุณภาพภาพ') + S('เพิ่มความคมชัด', 'fx.sharpen', [[0, 'ปิด'], [1, 'ปานกลาง'], [2, 'มาก']], it) + K('ลดนอยส์ภาพ', 'fx.denoise', it, false) + RR('เบลอ', 'fx.blur', 0, 20, .5, it, { def: 0 });
     h += `<div class="btnrow"><button data-act="enhance">✨ ปรับภาพให้สวย/ชัดอัตโนมัติ</button></div>`;
@@ -180,7 +178,6 @@ function ccAction(act, a, it) {
       if (v === 't') set('y', (bh - PH) / 2 / PH); if (v === 'b') set('y', (PH - bh) / 2 / PH); if (v === 'm') set('y', 0);
       commit('align'); renderInspector(); return true;
     }
-    case 'flip': if (v === 'x') it.flipX = !it.flipX; else it.flipY = !it.flipY; commit('flip'); renderInspector(); return true;
     case 'mask': setMaskType(it, v); commit('mask'); renderInspector(); return true;
     case 'voice': it.vfx = v; commit('voice'); renderInspector(); return true;
     case 'anim': { it.anim = Object.assign({ in: 'none', out: 'none', combo: 'none' }, it.anim || {}); it.anim[a.dataset.g] = v; commit('anim'); renderInspector(); if (v !== 'none') ccPreview(it, a.dataset.g); return true; }
@@ -197,14 +194,15 @@ function ccAction(act, a, it) {
     case 'spdset': { const span = it.dur * (it.speed || 1); it.speed = +v; it.dur = Math.max(.1, span / it.speed); commit('speed'); renderInspector(); return true; }
     case 'spdreset': { const span = it.dur * (it.speed || 1); it.speed = 1; it.dur = span; commit('speed'); renderInspector(); return true; }
     case 'eyedrop': new EyeDropper().open().then(r => { setPath(it, 'chroma.color', r.sRGBHex); setPath(it, 'chroma.on', true); commit('chroma'); renderInspector(); }).catch(() => { }); return true;
-    case 'sepaudio': {
-      const m = MEDIA.get(it.mediaId); if (!m || m.hasAudio === false) { toast('คลิปนี้ไม่มีเสียง'); return true; }
-      if ((it.speed || 1) !== 1) { toast('แยกเสียงได้เฉพาะคลิปที่ความเร็ว 1 เท่า'); return true; }
-      const au = mkAudio('A2', it.mediaId, it.start, it.dur); au.in = it.in || 0; au.vol = it.vol ?? 1; au.fadeIn = it.fadeIn || 0; au.fadeOut = it.fadeOut || 0; au.duck = false; au.loop = false;
-      au.track = freeTrack('audio', it.start, it.dur, 'A2'); if (au.track === 'A1') au.track = 'A2'; addItem(au); it.muted = true; commit('sepaudio'); toast('แยกเสียงไปไว้แถวเสียงแล้ว'); renderInspector(); return true;
-    }
+    case 'sepaudio': sepAudio(it); return true;
   }
   return false;
+}
+function sepAudio(it) {   // also used by the right-click menu
+  const m = MEDIA.get(it.mediaId); if (!m || m.hasAudio === false) { toast('คลิปนี้ไม่มีเสียง'); return; }
+  if ((it.speed || 1) !== 1) { toast('แยกเสียงได้เฉพาะคลิปที่ความเร็ว 1 เท่า'); return; }
+  const au = mkAudio('A2', it.mediaId, it.start, it.dur); au.in = it.in || 0; au.vol = it.vol ?? 1; au.fadeIn = it.fadeIn || 0; au.fadeOut = it.fadeOut || 0; au.duck = false; au.loop = false;
+  au.track = freeTrack('audio', it.start, it.dur, 'A2'); if (au.track === 'A1') au.track = 'A2'; addItem(au); it.muted = true; commit('sepaudio'); toast('แยกเสียงไปไว้แถวเสียงแล้ว'); renderInspector();
 }
 
 // ---------- canvas widgets (curves, colour wheels) ----------
