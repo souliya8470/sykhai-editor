@@ -222,6 +222,79 @@ function saveStream(req, res, dst, metaPath, meta, onDone) {
   });
 }
 
+// ------------------------------------------------------------
+//  VELARIS link (v1.63)
+//  Method 2 — restricted key: <ROOT>/velaris-token.txt holds a SECOND password for the VELARIS website. It can ONLY
+//    PUT/GET /inbox/vl-<job>__<clip>.mp4|mov|m4v|webm   and   GET /out (vl-* only) , GET /out/vl-*   — nothing else.
+//    Create / change it with velaris-token.bat (you read it in Notepad yourself). Delete the file = key revoked at once.
+//  Method 3 — pull worker: <ROOT>/velaris-pull.json {"url":"https://…","token":"…"} makes THIS server call VELARIS every
+//    minute: download new clips into the inbox, upload finished vl-*_v###.mp4 back. No file = worker stays off.
+// ------------------------------------------------------------
+const VL_TOKEN_FILE = path.join(ROOT, 'velaris-token.txt'), VL_PULL_FILE = path.join(ROOT, 'velaris-pull.json'), VL_STATE_FILE = path.join(ROOT, 'velaris-pull-state.json');
+const VL_NAME = /^vl-[A-Za-z0-9-]{1,60}__.+\.(?:mp4|mov|m4v|webm)$/i, VL_OUT = /^vl-[A-Za-z0-9-]{1,60}_v\d{3,}\.(?:mp4|webm)$/i, VL_JOB = /^[A-Za-z0-9-]{1,60}$/;
+let _vlTok = { m: -1, v: '' };
+function vlToken() {   // re-read when the file changes; missing / shorter than 24 chars = key disabled
+  try { const st = fs.statSync(VL_TOKEN_FILE); if (st.mtimeMs !== _vlTok.m) { const v = fs.readFileSync(VL_TOKEN_FILE, 'utf8').trim(); _vlTok = { m: st.mtimeMs, v: v.length >= 24 && v !== TOKEN ? v : '' }; } return _vlTok.v; }
+  catch (e) { _vlTok = { m: -1, v: '' }; return process.env.SK_VELARIS_TOKEN && process.env.SK_VELARIS_TOKEN.trim().length >= 24 ? process.env.SK_VELARIS_TOKEN.trim() : ''; }
+}
+function vlTokenOk(t) {
+  const k = vlToken(); if (!k || !t) return false;
+  const a = Buffer.from(String(t)), b = Buffer.from(k); return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+function vlAllowed(method, parts) {
+  const [kind, id] = parts, rd = method === 'GET' || method === 'HEAD';
+  if (kind === 'ping') return rd && parts.length === 1;
+  if (kind === 'inbox') return parts.length === 2 && (method === 'PUT' || rd) && VL_NAME.test(fileName(id));
+  if (kind === 'out') return rd && (parts.length === 1 || (parts.length === 2 && /^vl-/i.test(fileName(id))));
+  return false;
+}
+const VP = {   // pull worker
+  cfg: null, st: { pulled: {}, pushed: {} }, busy: false, lastPull: 0, lastPush: 0, err: '', nPulled: 0, nPushed: 0, timer: null,
+  load() { try { const c = JSON.parse(fs.readFileSync(VL_PULL_FILE, 'utf8')); c.url = String(c.url || '').replace(/\/+$/, ''); this.cfg = /^https?:\/\//i.test(c.url) && c.token ? c : null; } catch (e) { this.cfg = null; } },
+  save() { try { fs.writeFileSync(VL_STATE_FILE + '.tmp', JSON.stringify(this.st)); fs.renameSync(VL_STATE_FILE + '.tmp', VL_STATE_FILE); } catch (e) { } },
+  status() { return { enabled: !!this.cfg, url: this.cfg ? this.cfg.url : null, restrictedKey: !!vlToken(), lastPull: this.lastPull, lastPush: this.lastPush, pulled: this.nPulled, pushed: this.nPushed, error: this.err }; },
+  api(p) { return this.cfg.url + (this.cfg.base || '/api/sykhai') + p; },
+  hdr(extra) { return Object.assign({ Authorization: 'Bearer ' + this.cfg.token }, extra || {}); },
+  async tick() {
+    this.load(); if (!this.cfg || this.busy) return; this.busy = true;
+    try { await this.pull(); this.lastPull = Date.now(); await this.push(); this.lastPush = Date.now(); this.err = ''; }
+    catch (e) { this.err = String(e && e.message || e).slice(0, 200); console.log('[velaris] ' + this.err); }
+    finally { this.busy = false; }
+  },
+  // GET /jobs -> { jobs:[ { jobId, files:[ { name, size, url } ] } ] } ; clip -> inbox/vl-<jobId>__<name> ; POST /jobs/<jobId>/ack {files:[name]}
+  async pull() {
+    const r = await fetch(this.api('/jobs'), { headers: this.hdr(), signal: AbortSignal.timeout(30000) }); if (!r.ok) throw new Error('jobs HTTP ' + r.status);
+    const j = await r.json(); const jobs = Array.isArray(j) ? j : (j && j.jobs) || [];
+    for (const job of jobs) {
+      const jobId = String(job && job.jobId || ''); if (!VL_JOB.test(jobId) || /^vl-/i.test(jobId)) continue;
+      const got = [];
+      for (const fl of (job.files || [])) {
+        const nm = fileName(fl && fl.name || ''), key = jobId + '/' + nm, dst = path.join(INBOX, 'vl-' + jobId + '__' + nm);
+        if (!VL_NAME.test('vl-' + jobId + '__' + nm)) continue;
+        if (this.st.pulled[key] || fs.existsSync(dst) || fs.existsSync(path.join(INBOX_DONE, path.basename(dst)))) { this.st.pulled[key] = this.st.pulled[key] || Date.now(); got.push(nm); continue; }
+        const src = /^https?:\/\//i.test(fl.url || '') ? fl.url : this.api('/jobs/' + encodeURIComponent(jobId) + '/files/' + encodeURIComponent(nm));
+        const same = new URL(src).origin === new URL(this.cfg.url).origin;   // the password only goes to VELARIS's own address, never to a signed third-party link
+        const d = await fetch(src, { headers: same ? this.hdr() : {}, signal: AbortSignal.timeout(30 * 60000) }); if (!d.ok || !d.body) throw new Error('clip HTTP ' + d.status);
+        const tmp = dst + '.part'; await pipeline(Readable.fromWeb(d.body), fs.createWriteStream(tmp));
+        const sz = fs.statSync(tmp).size; if (!sz || (fl.size && +fl.size !== sz)) { fs.unlinkSync(tmp); throw new Error('clip size mismatch ' + nm); }
+        fs.renameSync(tmp, dst); this.st.pulled[key] = Date.now(); this.nPulled++; got.push(nm); this.save(); console.log('[velaris] pulled ' + path.basename(dst) + ' (' + sz + ')');
+      }
+      if (got.length) { try { await fetch(this.api('/jobs/' + encodeURIComponent(jobId) + '/ack'), { method: 'POST', headers: this.hdr({ 'Content-Type': 'application/json' }), body: JSON.stringify({ files: got }), signal: AbortSignal.timeout(20000) }); } catch (e) { } }
+    }
+    this.save();
+  },
+  // finished vl-<jobId>_v###.mp4 in out/ -> PUT /results/<name>
+  async push() {
+    for (const f of fs.readdirSync(DIRS.out)) {
+      if (!VL_OUT.test(f)) continue; const fp = path.join(DIRS.out, f), sz = fs.statSync(fp).size; if (!sz || this.st.pushed[f] === sz) continue;
+      const r = await fetch(this.api('/results/' + encodeURIComponent(f)), { method: 'PUT', headers: this.hdr({ 'Content-Type': /\.webm$/i.test(f) ? 'video/webm' : 'video/mp4', 'x-job-id': f.replace(/^vl-/i, '').replace(/_v\d+\.\w+$/i, '') }), body: fs.createReadStream(fp), duplex: 'half', signal: AbortSignal.timeout(60 * 60000) });
+      if (!r.ok) throw new Error('result HTTP ' + r.status + ' ' + f);
+      this.st.pushed[f] = sz; this.nPushed++; this.save(); console.log('[velaris] sent result ' + f);
+    }
+  },
+  start() { try { this.st = JSON.parse(fs.readFileSync(VL_STATE_FILE, 'utf8')); this.st.pulled = this.st.pulled || {}; this.st.pushed = this.st.pushed || {}; } catch (e) { } this.load(); setInterval(() => this.tick(), 60000); setTimeout(() => this.tick(), 8000); }
+};
+
 const server = http.createServer(async (req, res) => {
   try {
     if (req.method === 'OPTIONS') { const rh = req.headers['access-control-request-headers']; return send(res, 204, '', rh ? { 'Access-Control-Allow-Headers': rh } : {}); }   // v1.54: list/echo the headers instead of '*' — iPhone Safari does not honour '*' ("Load failed")
@@ -243,8 +316,13 @@ const server = http.createServer(async (req, res) => {
       }
       return send(res, 200, fs.readFileSync(fp), { 'Content-Type': 'font/woff2', 'Cache-Control': 'public, max-age=31536000, immutable' });
     }
-    if ((req.headers['x-token'] || u.searchParams.get('t')) !== TOKEN) return send(res, 401, 'unauthorized');
+    const tok = req.headers['x-token'] || u.searchParams.get('t') || '';
+    let vl = false;   // v1.63 — restricted VELARIS key (see VELARIS section): only the vl-* clip lanes, nothing else
+    if (tok !== TOKEN) { if (vlTokenOk(tok)) vl = true; else return send(res, 401, 'unauthorized'); }
+    if (vl && !vlAllowed(req.method, parts)) return send(res, 403, 'this key may only send vl-* clips and fetch vl-* results');
     const [kind, id] = parts;
+    if (kind === 'velaris' && !vl) return send(res, 200, VP.status());
+    if (kind === 'ping' && vl) return send(res, 200, { ok: true, v: 2, restricted: true });
     if (kind === 'ping') { let free = null, total = null; try { const s = fs.statfsSync(ROOT); free = s.bavail * s.bsize; total = s.blocks * s.bsize; } catch (e) { } return send(res, 200, { ok: true, v: 2, root: ROOT, free, total, proxy: !!PX.ff }); }
     if (kind === 'proxies') return send(res, 200, pxStatus());
     if (kind === 'media') {
@@ -299,7 +377,7 @@ const server = http.createServer(async (req, res) => {
       return serveFile(req, res, fd, fn, /\.mp4$/i.test(fn) ? 'video/mp4' : /\.webm$/i.test(fn) ? 'video/webm' : 'application/octet-stream');
     }
     if (kind === 'out') {   // finished videos — stored under their real file name so you can open them in Explorer
-      if (!id) { const out = fs.readdirSync(DIRS.out).filter(f => !f.includes('.part')).map(f => { const st = fs.statSync(path.join(DIRS.out, f)); return { name: f, size: st.size, savedAt: st.mtimeMs }; }); return send(res, 200, out); }
+      if (!id) { const out = fs.readdirSync(DIRS.out).filter(f => !f.includes('.part') && (!vl || /^vl-/i.test(f))).map(f => { const st = fs.statSync(path.join(DIRS.out, f)); return { name: f, size: st.size, savedAt: st.mtimeMs }; }); return send(res, 200, out); }
       const fn = fileName(id), f = path.join(DIRS.out, fn);
       if (req.method === 'PUT') return saveStream(req, res, f, null, {});
       return serveFile(req, res, f, fn, /\.mp4$/i.test(fn) ? 'video/mp4' : 'video/webm');
@@ -311,7 +389,7 @@ const server = http.createServer(async (req, res) => {
 try { fs.watchFile(__filename, { interval: 5000 }, (cur, prev) => { if (cur.mtimeMs !== prev.mtimeMs) { console.log('server.js เปลี่ยนแล้ว — รีสตาร์ทตัวเอง'); setTimeout(() => process.exit(0), 1500); } }); } catch (e) { }
 server.requestTimeout = 0; server.headersTimeout = 60000;
 server.listen(PORT, HOST, () => {
-  refreshApp(true); initProxy();
+  refreshApp(true); initProxy(); VP.start();
   console.log(`Sykhai file server READY (port ${PORT}), files in ${ROOT}`);
   const ips = Object.values(require('os').networkInterfaces()).flat().filter(i => i && i.family === 'IPv4' && !i.internal).map(i => i.address);
   console.log('OPEN THE EDITOR AT (on any computer in the shop):'); ips.forEach(ip => console.log('   http://' + ip + ':' + PORT));

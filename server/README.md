@@ -32,3 +32,7 @@
 
 ## Fonts (v1.49+)
 The server also answers `GET /fonts/<name>.woff2` (public Lao fonts, no token). It serves `app/fonts/` first; a missing file is pulled once from GitHub (`SK_FONT_URL` to change the source) and cached there. You can also just copy the repo's `fonts` folder into `app/fonts/`.
+
+## VELARIS link (v1.63)
+- **Restricted key (method 2):** run `velaris-token.bat` → makes `D:\SykhaiEditor\velaris-token.txt` and opens it in Notepad. Copy it into the VELARIS site as `SYKHAI_TOKEN`. That key can only `PUT/GET /inbox/vl-<job>__<clip>.mp4|mov|m4v|webm` and `GET /out`, `GET /out/vl-*` — everything else returns 403. Delete the file = key revoked. Run the bat again = new key.
+- **Pull worker (method 3):** copy `velaris-pull.example.json` to `D:\SykhaiEditor\velaris-pull.json` and fill `url` + `token` (the key VELARIS gives Sykhai). Every 60 s the server calls `GET {url}/api/sykhai/jobs` → `{jobs:[{jobId, files:[{name,size,url?}]}]}`, downloads clips into the inbox as `vl-<jobId>__<name>`, `POST /jobs/<jobId>/ack {files:[…]}`, and uploads finished `out/vl-<jobId>_v###.mp4` with `PUT {url}/api/sykhai/results/<name>` (header `x-job-id`). Status: `GET /velaris` (master token). No file = worker off.
