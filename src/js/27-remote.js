@@ -219,14 +219,62 @@ async function srvInboxList() {
   try {
     const r = await srvFetch('/inbox?all=1'); if (!r.ok) return null;
     const have = new Set([...MEDIA.values()].map(m => m.name)), seen = refSeenGet();
-    SRV.inbox = (await r.json()).filter(x => /\.(mp4|mov|m4v|webm)$/i.test(x.name) && (!x.done || (!have.has(x.name) && !seen.has(x.name))));
+    SRV.inbox = (await r.json()).filter(x => /\.(mp4|mov|m4v|webm)$/i.test(x.name) && (VL_RE.test(x.name) ? !x.done : (!x.done || (!have.has(x.name) && !seen.has(x.name)))));
     return SRV.inbox;
   } catch (e) { return null; }
 }
+const VL_RE = /^vl-([A-Za-z0-9-]{1,60})__(.+\.(?:mp4|mov|m4v|webm))$/i;
 let _inboxBusy = false; const _inboxFail = new Set();
+// ----- v1.61: VELARIS jobs. The marketing site PUTs clips as  vl-<jobId>__<file>.mp4|mov  into the inbox; we build the project "VELARIS | <jobId>" (pid = vl-<jobId>) and put the clips on Video 1.
+// Exports of that project are named vl-<jobId>_v001.mp4, v002 ... (see 50-export.js) and go to /out where VELARIS picks them up.
+async function srvJobImport(list) {
+  const groups = {}; for (const f of list) { const m = VL_RE.exec(f.name); if (m) (groups[m[1]] = groups[m[1]] || []).push({ f, orig: m[2] }); }
+  let total = 0;
+  for (const jobId of Object.keys(groups)) {
+    const pid = 'vl-' + jobId, ready = [];
+    const arr = groups[jobId].sort((a, b) => a.f.name.localeCompare(b.f.name, undefined, { numeric: true }));
+    for (const { f, orig } of arr) {
+      if (_inboxFail.has(f.name)) continue;
+      try {
+        const r = await srvFetch('/inbox/' + srvId(f.name)); if (!r.ok) continue;
+        const blob = await r.blob(); const id = f.name + '|' + blob.size;
+        if (!MEDIA.has(id)) await importFiles([new File([blob], orig, { type: /\.webm$/i.test(orig) ? 'video/webm' : 'video/mp4' })], { quiet: true, noBin: true, id });
+        if (MEDIA.has(id)) ready.push({ f, id }); else _inboxFail.add(f.name);
+      } catch (e) { console.warn('srvJobImport', e); _inboxFail.add(f.name); }
+    }
+    if (!ready.length) continue;
+    let n = 0;
+    if (D && D.pid === pid) {            // that project is the one open right now: add to it directly
+      for (const { id } of ready) if (!D.items.some(i => i.mediaId === id)) { binAdd(id); addMediaToTimeline(id, 'V1'); n++; }
+      await projPut(projRec(D));
+    } else {
+      let rec0 = await projGet(pid);
+      try { const rr = await srvFetch('/projects/' + srvId(pid)); if (rr.ok) { const sv = await rr.json(); if (sv && sv.doc && (!rec0 || (sv.updated || 0) > (rec0.updated || 0))) rec0 = sv; } } catch (e) { }   // another computer may already have this job: never start over and overwrite it
+      let d = null;
+      if (rec0) { try { d = Object.assign(newDoc(), JSON.parse(rec0.doc)); } catch (e) { d = null; } }
+      if (!d) { d = newDoc(); d.pid = pid; d.name = 'VELARIS | ' + jobId; }
+      d.vl = jobId; d.bin = d.bin || [];
+      for (const { id } of ready) {
+        if (d.items.some(i => i.mediaId === id)) continue;
+        const m = MEDIA.get(id); if (!d.bin.includes(id)) d.bin.push(id);
+        const st = d.items.filter(i => i.track === 'V1').reduce((a, i) => Math.max(a, i.start + i.dur), 0);
+        const it = mkMedia('V1', id, st, 0, m.duration); if (m.type === 'video') { it.vol = 1; if (m.hasAudio) it.normalize = true; }
+        d.items.push(it); n++;
+      }
+      const rec = projRec(d); await projPut(rec); if (typeof srvSync === 'function') srvSync(rec);
+    }
+    if (D && D.pid === pid && !D.vl) D.vl = jobId;
+    srvQueueMedia(ready.map(x => x.id));
+    for (const { f } of ready) { try { await srvFetch('/inbox/' + srvId(f.name), { method: 'DELETE' }); } catch (e) { } }
+    total += n; toast(`ได้งานใหม่จาก VELARIS: ${jobId} (${n} คลิป) — เปิดได้ที่หน้าโปรเจกต์`, 9000);
+  }
+  if (total && HOME.open && typeof renderHome === 'function') renderHome();
+  return total;
+}
 async function srvInboxImport(opts) {
   opts = opts || {}; if (_inboxBusy) return 0;
-  const list = await srvInboxList(); if (!list) { if (!opts.quiet) toast('เซิร์ฟเวอร์ไม่พร้อม — ตรวจ ⚙ ตั้งค่า', 5000); return 0; }
+  let list = await srvInboxList(); if (!list) { if (!opts.quiet) toast('เซิร์ฟเวอร์ไม่พร้อม — ตรวจ ⚙ ตั้งค่า', 5000); return 0; }
+  if (list.some(x => VL_RE.test(x.name))) { _inboxBusy = true; let nj = 0; try { nj = await srvJobImport(list.filter(x => VL_RE.test(x.name))); } finally { _inboxBusy = false; } list = list.filter(x => !VL_RE.test(x.name)); if (!list.length) return nj; }
   if (!list.length) { if (!opts.quiet) toast('กล่องรับว่าง — ยังไม่มีคลิปใหม่', 4000); return 0; }
   _inboxBusy = true; let n = 0, i = 0;
   try {

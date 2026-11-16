@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.60</title>
+<title>Sykhai Editor v1.61</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -2128,9 +2128,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.60
-// APP_VERSION_PREV : 1.59
-// APP_VERSION_PREV_OLDER : 1.58
+// APP_VERSION  : 1.61
+// APP_VERSION_PREV : 1.60
+// APP_VERSION_PREV_OLDER : 1.59
+// 1.61 : VELARIS link — clips that the VELARIS site PUTs into the server inbox as vl-<jobId>__<file>.mp4/.mov become the project "VELARIS | <jobId>" automatically (clips on Video 1; more clips for the same job are added to the same project, also when it is open or only exists on the server); exports of such a project are named vl-<jobId>_v001.mp4, v002 ... (one number per export) and go to /out on the shop server.
 // 1.60 : Magnet drag like CapCut but stickier — dragging a Video-1 clip opens a slot (others slide away smoothly), the slot glows when the clip is pulled in (dead-zone, then rubber band, then free flight; insert point has hysteresis; phones buzz); Mirror (flip left-right / top-bottom) for video and image clips, in preview and export.
 // 1.59 : ✂ Edit by text (AI tab, like Premiere's Transcript panel) — the transcript of a clip as clickable text with 3 tabs: text (click a word / sentence, Shift+click for a range, search box that highlights every match and can select them all), silences (length slider) and filler words; Delete cuts the picked parts from the timeline as Extract (close the gap) or Lift (leave the gap); ↶ undoes each delete, ▶ plays from the first cut. Lao transcripts made by Gemini have sentence times only, so Lao text is picked sentence by sentence (Thai Whisper transcripts have word times -> word by word). Reuses getTr / findSilences / findFillers / rippleCut; new liftCut. New file src/js/69-ztxtedit.js
 // 1.58 : the shop's own Lao fonts — 219 more Lao families in the 🔤 font gallery (all weights of each family: Thin / Light / Regular / Medium / SemiBold / Bold / Black, 293 files in total; Noto Sans / Serif / Looped now have 9 weights). They are served by the shop server (/fonts/, licence not checked -> not in the public repo); the weight slider now goes 100-900 and works with every multi-weight family
@@ -2192,7 +2193,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.60';
+const APP_VERSION = '1.61';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -3519,7 +3520,7 @@ async function importFiles(files, opts) {
         el.removeAttribute('src'); el.load();
       }
     } catch (e) { console.warn(e); toast('เปิดไฟล์ไม่ได้: ' + f.name + ' (ลองไฟล์ H.264 / mp4)'); URL.revokeObjectURL(m.url); continue; }
-    MEDIA.set(m.id, m); if (!m.ref) binAdd(m.id); renderMediaBin(); emit('media-added', m); renderTimeline();
+    MEDIA.set(m.id, m); if (!m.ref && !opts.noBin) binAdd(m.id); renderMediaBin(); emit('media-added', m); renderTimeline();
     if (type !== 'image') analyzeAudio(m).then(() => { renderMediaBin(); renderTimeline(); dbPut(m); }); else dbPut(m);
   }
   if (!opts.quiet) toast('นำเข้าแล้ว ' + list.length + ' ไฟล์');
@@ -4161,14 +4162,62 @@ async function srvInboxList() {
   try {
     const r = await srvFetch('/inbox?all=1'); if (!r.ok) return null;
     const have = new Set([...MEDIA.values()].map(m => m.name)), seen = refSeenGet();
-    SRV.inbox = (await r.json()).filter(x => /\.(mp4|mov|m4v|webm)$/i.test(x.name) && (!x.done || (!have.has(x.name) && !seen.has(x.name))));
+    SRV.inbox = (await r.json()).filter(x => /\.(mp4|mov|m4v|webm)$/i.test(x.name) && (VL_RE.test(x.name) ? !x.done : (!x.done || (!have.has(x.name) && !seen.has(x.name)))));
     return SRV.inbox;
   } catch (e) { return null; }
 }
+const VL_RE = /^vl-([A-Za-z0-9-]{1,60})__(.+\.(?:mp4|mov|m4v|webm))$/i;
 let _inboxBusy = false; const _inboxFail = new Set();
+// ----- v1.61: VELARIS jobs. The marketing site PUTs clips as  vl-<jobId>__<file>.mp4|mov  into the inbox; we build the project "VELARIS | <jobId>" (pid = vl-<jobId>) and put the clips on Video 1.
+// Exports of that project are named vl-<jobId>_v001.mp4, v002 ... (see 50-export.js) and go to /out where VELARIS picks them up.
+async function srvJobImport(list) {
+  const groups = {}; for (const f of list) { const m = VL_RE.exec(f.name); if (m) (groups[m[1]] = groups[m[1]] || []).push({ f, orig: m[2] }); }
+  let total = 0;
+  for (const jobId of Object.keys(groups)) {
+    const pid = 'vl-' + jobId, ready = [];
+    const arr = groups[jobId].sort((a, b) => a.f.name.localeCompare(b.f.name, undefined, { numeric: true }));
+    for (const { f, orig } of arr) {
+      if (_inboxFail.has(f.name)) continue;
+      try {
+        const r = await srvFetch('/inbox/' + srvId(f.name)); if (!r.ok) continue;
+        const blob = await r.blob(); const id = f.name + '|' + blob.size;
+        if (!MEDIA.has(id)) await importFiles([new File([blob], orig, { type: /\.webm$/i.test(orig) ? 'video/webm' : 'video/mp4' })], { quiet: true, noBin: true, id });
+        if (MEDIA.has(id)) ready.push({ f, id }); else _inboxFail.add(f.name);
+      } catch (e) { console.warn('srvJobImport', e); _inboxFail.add(f.name); }
+    }
+    if (!ready.length) continue;
+    let n = 0;
+    if (D && D.pid === pid) {            // that project is the one open right now: add to it directly
+      for (const { id } of ready) if (!D.items.some(i => i.mediaId === id)) { binAdd(id); addMediaToTimeline(id, 'V1'); n++; }
+      await projPut(projRec(D));
+    } else {
+      let rec0 = await projGet(pid);
+      try { const rr = await srvFetch('/projects/' + srvId(pid)); if (rr.ok) { const sv = await rr.json(); if (sv && sv.doc && (!rec0 || (sv.updated || 0) > (rec0.updated || 0))) rec0 = sv; } } catch (e) { }   // another computer may already have this job: never start over and overwrite it
+      let d = null;
+      if (rec0) { try { d = Object.assign(newDoc(), JSON.parse(rec0.doc)); } catch (e) { d = null; } }
+      if (!d) { d = newDoc(); d.pid = pid; d.name = 'VELARIS | ' + jobId; }
+      d.vl = jobId; d.bin = d.bin || [];
+      for (const { id } of ready) {
+        if (d.items.some(i => i.mediaId === id)) continue;
+        const m = MEDIA.get(id); if (!d.bin.includes(id)) d.bin.push(id);
+        const st = d.items.filter(i => i.track === 'V1').reduce((a, i) => Math.max(a, i.start + i.dur), 0);
+        const it = mkMedia('V1', id, st, 0, m.duration); if (m.type === 'video') { it.vol = 1; if (m.hasAudio) it.normalize = true; }
+        d.items.push(it); n++;
+      }
+      const rec = projRec(d); await projPut(rec); if (typeof srvSync === 'function') srvSync(rec);
+    }
+    if (D && D.pid === pid && !D.vl) D.vl = jobId;
+    srvQueueMedia(ready.map(x => x.id));
+    for (const { f } of ready) { try { await srvFetch('/inbox/' + srvId(f.name), { method: 'DELETE' }); } catch (e) { } }
+    total += n; toast(`ได้งานใหม่จาก VELARIS: ${jobId} (${n} คลิป) — เปิดได้ที่หน้าโปรเจกต์`, 9000);
+  }
+  if (total && HOME.open && typeof renderHome === 'function') renderHome();
+  return total;
+}
 async function srvInboxImport(opts) {
   opts = opts || {}; if (_inboxBusy) return 0;
-  const list = await srvInboxList(); if (!list) { if (!opts.quiet) toast('เซิร์ฟเวอร์ไม่พร้อม — ตรวจ ⚙ ตั้งค่า', 5000); return 0; }
+  let list = await srvInboxList(); if (!list) { if (!opts.quiet) toast('เซิร์ฟเวอร์ไม่พร้อม — ตรวจ ⚙ ตั้งค่า', 5000); return 0; }
+  if (list.some(x => VL_RE.test(x.name))) { _inboxBusy = true; let nj = 0; try { nj = await srvJobImport(list.filter(x => VL_RE.test(x.name))); } finally { _inboxBusy = false; } list = list.filter(x => !VL_RE.test(x.name)); if (!list.length) return nj; }
   if (!list.length) { if (!opts.quiet) toast('กล่องรับว่าง — ยังไม่มีคลิปใหม่', 4000); return 0; }
   _inboxBusy = true; let n = 0, i = 0;
   try {
@@ -5412,12 +5461,14 @@ async function runExport(opts) {
   if (EXP.cancel) { msg.textContent = 'ยกเลิกแล้ว'; return null; }
   const blob = new Blob(chunks, { type: ext === 'mp4' ? 'video/mp4' : 'video/webm' });
   EXP.last = { size: blob.size, mime, ext, w: W, h: H, dur: total };
+  // v1.61: VELARIS jobs are exported as vl-<jobId>_v001, v002 ... (one number per export, never overwrites an older round); other projects keep their own name
+  let outBase = (D.name || 'video'); if (!opts.noDownload && D.vl) { D.vlRound = (D.vlRound || 0) + 1; outBase = 'vl-' + D.vl + '_v' + String(D.vlRound).padStart(3, '0'); emit('doc', 'vlround'); }
   if (!opts.noDownload) {
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = (D.name || 'video') + '.' + ext; document.body.appendChild(a); a.click(); setTimeout(() => { a.remove(); }, 2000);
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = outBase + '.' + ext; document.body.appendChild(a); a.click(); setTimeout(() => { a.remove(); }, 2000);
   }
   if (bar) bar.style.width = '100%'; if (msg) msg.textContent = `เสร็จแล้ว ✔ (${(blob.size / 1048576).toFixed(1)} MB, .${ext})` + (ext === 'webm' ? ' — เบราว์เซอร์ไม่รองรับ mp4 จึงได้ .webm' : '');
   if (!opts.noDownload && D.cover && typeof coverDownload === 'function') setTimeout(() => { coverDownload(true).catch(() => { }); }, 1800);
-  EXP.blob = blob; if (!opts.noDownload && typeof srvPushOut === 'function') srvPushOut(blob, (D.name || 'video').replace(/[\\/:*?"<>|]/g, '_') + '.' + ext);
+  EXP.blob = blob; if (!opts.noDownload && typeof srvPushOut === 'function') srvPushOut(blob, outBase.replace(/[\\/:*?"<>|]/g, '_') + '.' + ext);
   return blob;
 }
 

@@ -57,11 +57,13 @@ async function runExport(opts) {
   if (EXP.cancel) { msg.textContent = 'ยกเลิกแล้ว'; return null; }
   const blob = new Blob(chunks, { type: ext === 'mp4' ? 'video/mp4' : 'video/webm' });
   EXP.last = { size: blob.size, mime, ext, w: W, h: H, dur: total };
+  // v1.61: VELARIS jobs are exported as vl-<jobId>_v001, v002 ... (one number per export, never overwrites an older round); other projects keep their own name
+  let outBase = (D.name || 'video'); if (!opts.noDownload && D.vl) { D.vlRound = (D.vlRound || 0) + 1; outBase = 'vl-' + D.vl + '_v' + String(D.vlRound).padStart(3, '0'); emit('doc', 'vlround'); }
   if (!opts.noDownload) {
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = (D.name || 'video') + '.' + ext; document.body.appendChild(a); a.click(); setTimeout(() => { a.remove(); }, 2000);
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = outBase + '.' + ext; document.body.appendChild(a); a.click(); setTimeout(() => { a.remove(); }, 2000);
   }
   if (bar) bar.style.width = '100%'; if (msg) msg.textContent = `เสร็จแล้ว ✔ (${(blob.size / 1048576).toFixed(1)} MB, .${ext})` + (ext === 'webm' ? ' — เบราว์เซอร์ไม่รองรับ mp4 จึงได้ .webm' : '');
   if (!opts.noDownload && D.cover && typeof coverDownload === 'function') setTimeout(() => { coverDownload(true).catch(() => { }); }, 1800);
-  EXP.blob = blob; if (!opts.noDownload && typeof srvPushOut === 'function') srvPushOut(blob, (D.name || 'video').replace(/[\\/:*?"<>|]/g, '_') + '.' + ext);
+  EXP.blob = blob; if (!opts.noDownload && typeof srvPushOut === 'function') srvPushOut(blob, outBase.replace(/[\\/:*?"<>|]/g, '_') + '.' + ext);
   return blob;
 }

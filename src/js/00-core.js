@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.60
-// APP_VERSION_PREV : 1.59
-// APP_VERSION_PREV_OLDER : 1.58
+// APP_VERSION  : 1.61
+// APP_VERSION_PREV : 1.60
+// APP_VERSION_PREV_OLDER : 1.59
+// 1.61 : VELARIS link — clips that the VELARIS site PUTs into the server inbox as vl-<jobId>__<file>.mp4/.mov become the project "VELARIS | <jobId>" automatically (clips on Video 1; more clips for the same job are added to the same project, also when it is open or only exists on the server); exports of such a project are named vl-<jobId>_v001.mp4, v002 ... (one number per export) and go to /out on the shop server.
 // 1.60 : Magnet drag like CapCut but stickier — dragging a Video-1 clip opens a slot (others slide away smoothly), the slot glows when the clip is pulled in (dead-zone, then rubber band, then free flight; insert point has hysteresis; phones buzz); Mirror (flip left-right / top-bottom) for video and image clips, in preview and export.
 // 1.59 : ✂ Edit by text (AI tab, like Premiere's Transcript panel) — the transcript of a clip as clickable text with 3 tabs: text (click a word / sentence, Shift+click for a range, search box that highlights every match and can select them all), silences (length slider) and filler words; Delete cuts the picked parts from the timeline as Extract (close the gap) or Lift (leave the gap); ↶ undoes each delete, ▶ plays from the first cut. Lao transcripts made by Gemini have sentence times only, so Lao text is picked sentence by sentence (Thai Whisper transcripts have word times -> word by word). Reuses getTr / findSilences / findFillers / rippleCut; new liftCut. New file src/js/69-ztxtedit.js
 // 1.58 : the shop's own Lao fonts — 219 more Lao families in the 🔤 font gallery (all weights of each family: Thin / Light / Regular / Medium / SemiBold / Bold / Black, 293 files in total; Noto Sans / Serif / Looped now have 9 weights). They are served by the shop server (/fonts/, licence not checked -> not in the public repo); the weight slider now goes 100-900 and works with every multi-weight family
@@ -66,7 +67,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.60';
+const APP_VERSION = '1.61';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];

@@ -331,7 +331,7 @@ async function importFiles(files, opts) {
         el.removeAttribute('src'); el.load();
       }
     } catch (e) { console.warn(e); toast('เปิดไฟล์ไม่ได้: ' + f.name + ' (ลองไฟล์ H.264 / mp4)'); URL.revokeObjectURL(m.url); continue; }
-    MEDIA.set(m.id, m); if (!m.ref) binAdd(m.id); renderMediaBin(); emit('media-added', m); renderTimeline();
+    MEDIA.set(m.id, m); if (!m.ref && !opts.noBin) binAdd(m.id); renderMediaBin(); emit('media-added', m); renderTimeline();
     if (type !== 'image') analyzeAudio(m).then(() => { renderMediaBin(); renderTimeline(); dbPut(m); }); else dbPut(m);
   }
   if (!opts.quiet) toast('นำเข้าแล้ว ' + list.length + ' ไฟล์');
