@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.63</title>
+<title>Sykhai Editor v1.64</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -2174,9 +2174,9 @@ I18N_ROWS.push(
 // ---- 00-9-i18n-q.js ----
 // i18n rows Q — v1.63: auto-transcribe the clips that arrive from the team   [thai, english, lao]
 I18N_ROWS.push(
-  ['ถอดเสียงคลิปจากทีมงานอัตโนมัติ', 'Auto-transcribe clips from the team', 'ຖອດສຽງຄລິບຈາກທີມງານອັດຕະໂນມັດ'],
+  ['ถอดเสียงคลิปที่นำเข้าอัตโนมัติ', 'Auto-transcribe imported clips', 'ຖອດສຽງຄລິບທີ່ນຳເຂົ້າອັດຕະໂນມັດ'],
   ['(ข้ามคลิปที่เคยถอดแล้ว)', '(clips already transcribed are skipped)', '(ຂ້າມຄລິບທີ່ເຄີຍຖອດແລ້ວ)'],
-  ['กำลังถอดเสียงคลิปจากทีมงานอัตโนมัติ…', 'Auto-transcribing the team\'s clips…', 'ກຳລັງຖອດສຽງຄລິບຈາກທີມງານອັດຕະໂນມັດ…'],
+  ['กำลังถอดเสียงคลิปที่นำเข้าอัตโนมัติ…', 'Auto-transcribing the imported clips…', 'ກຳລັງຖອດສຽງຄລິບທີ່ນຳເຂົ້າອັດຕະໂນມັດ…'],
   ['(คลิปที่เคยถอดแล้วจะข้าม ไม่เสียเงินซ้ำ)', '(clips already transcribed are skipped — no double charge)', '(ຄລິບທີ່ເຄີຍຖອດແລ້ວຈະຂ້າມ ບໍ່ເສຍເງິນຊ້ຳ)'],
   ['ถอดเสียงอัตโนมัติ: ยังไม่ได้ใส่ Gemini API key (กด ⚙ ตั้งค่า) — ข้ามไปก่อน', 'Auto-transcribe: no Gemini API key yet (press ⚙ Settings) — skipped for now', 'ຖອດສຽງອັດຕະໂນມັດ: ຍັງບໍ່ໄດ້ໃສ່ Gemini API key (ກົດ ⚙ ຕັ້ງຄ່າ) — ຂ້າມໄປກ່ອນ'],
   ['ถอดเสียงอัตโนมัติหยุดแล้ว:', 'Auto-transcribe stopped:', 'ຖອດສຽງອັດຕະໂນມັດຢຸດແລ້ວ:'],
@@ -2191,9 +2191,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.63
-// APP_VERSION_PREV : 1.62
-// APP_VERSION_PREV_OLDER : 1.61
+// APP_VERSION  : 1.64
+// APP_VERSION_PREV : 1.63
+// APP_VERSION_PREV_OLDER : 1.62
+// 1.64 : Auto-transcribe now covers EVERY video that comes into the editor (drag-and-drop, the file button, and the team/VELARIS inbox) — not only the team's clips. Same safety: a clip that already has a transcript (any project, this browser or the shop server; same name + size + length) is never sent again; one clip at a time; stops on the first error; phones skip it; switch in the AI tab. Clips restored from an old project are not transcribed by themselves.
 // 1.63 : Auto-transcribe the team's clips — clips that arrive from VELARIS are transcribed by themselves (Lao = Gemini, Thai = chosen engine) and the text goes into the permanent transcript cache; a clip that already has a transcript (this browser or the shop server; same name + size + length, also when VELARIS put a random 8-hex prefix before the file name) is skipped so nothing is paid twice; one clip at a time, stops on the first error; switch in the AI tab; phones skip it
 // 1.62 : Right-click menu on timeline clips (CapCut style: copy / cut / paste, duplicate, delete, split, trim, Mirror, rotate 90°, separate audio, Auto Cut, edit by text, hide clip; Ctrl/⌘ C X V keys) — Mirror moved out of the crowded inspector into it; the row where the magnet works is marked with 🧲 and dragging a clip on another layer explains it; ⚡ Auto Cut for ALL clips of the project in one go (AI tab, under Auto Cut) — same options as Auto Cut (silences, filler words, animated captions), no dialog per clip, one summary, one "undo everything"; shows which clips still need a (paid, for Lao) transcription before it starts. Made for VELARIS jobs with several raw clips.
 // 1.61 : VELARIS link — clips that the VELARIS site PUTs into the server inbox as vl-<jobId>__<file>.mp4/.mov become the project "VELARIS | <jobId>" automatically (clips on Video 1; more clips for the same job are added to the same project, also when it is open or only exists on the server); exports of such a project are named vl-<jobId>_v001.mp4, v002 ... (one number per export) and go to /out on the shop server.
@@ -2258,7 +2259,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.63';
+const APP_VERSION = '1.64';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -3571,7 +3572,7 @@ function renderMediaBin() {
 
 async function importFiles(files, opts) {
   opts = opts || {};
-  const list = [...files]; if (!list.length) return;
+  const list = [...files]; if (!list.length) return; const _trIds = [];
   for (const f of list) {
     const type = f.type.startsWith('video') || /\.(mov|mp4|m4v|webm)$/i.test(f.name) ? 'video' : f.type.startsWith('image') ? 'image' : f.type.startsWith('audio') || /\.(mp3|wav|m4a|aac|ogg)$/i.test(f.name) ? 'audio' : null;
     if (!type) { toast('ไม่รองรับไฟล์: ' + f.name); continue; }
@@ -3587,9 +3588,11 @@ async function importFiles(files, opts) {
       }
     } catch (e) { console.warn(e); toast('เปิดไฟล์ไม่ได้: ' + f.name + ' (ลองไฟล์ H.264 / mp4)'); URL.revokeObjectURL(m.url); continue; }
     MEDIA.set(m.id, m); if (!m.ref && !opts.noBin) binAdd(m.id); renderMediaBin(); emit('media-added', m); renderTimeline();
+    if (opts.autoTr && type === 'video' && !m.ref && !m.proxyOnly) _trIds.push(m.id);
     if (type !== 'image') analyzeAudio(m).then(() => { renderMediaBin(); renderTimeline(); dbPut(m); }); else dbPut(m);
   }
   if (!opts.quiet) toast('นำเข้าแล้ว ' + list.length + ' ไฟล์');
+  if (_trIds.length && typeof trAutoRun === 'function') trAutoRun(_trIds);   // v1.64: transcribe by itself (skips clips that already have a transcript)
 }
 function seekTo(el, t) { return new Promise(res => { const done = () => { el.removeEventListener('seeked', done); res(); }; el.addEventListener('seeked', done); try { el.currentTime = t; } catch (e) { res(); } setTimeout(res, 3000); }); }
 function thumbFrom(src, w, h) {
@@ -4500,7 +4503,7 @@ function buildLeft() {
     const a = e.target.closest('[data-aadd]'); if (a) addMediaToTimeline(a.dataset.id, a.dataset.aadd, PB.t);
   };
   $('#btnImport').onclick = () => $('#fileIn').click();
-  $('#fileIn').onchange = e => { importFiles(e.target.files); e.target.value = ''; };
+  $('#fileIn').onchange = e => { importFiles(e.target.files, { autoTr: true }); e.target.value = ''; };
 }
 function showTab(id) {
   $$('#leftTabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === id));
@@ -5657,11 +5660,11 @@ async function lfApply(it, id) {
 
 // ---- 59-9-trauto.js ----
 // ============================================================
-//  v1.63 — auto-transcribe the clips that arrive from VELARIS (the marketing team), so nobody has to press anything.
+//  v1.63/1.64 — auto-transcribe every video that comes into the editor (dragged in, file picker, or from the team/VELARIS inbox); not clips restored from an old project. Nobody has to press anything.
 //  It NEVER pays twice: a clip that already has a transcript in the permanent cache (this browser or the shop server; same file name + size + length,
 //  also when VELARIS put a random prefix in front of the name) is skipped. One clip at a time; on the first error everything stops (no retry loop that burns API money).
 //  Lao = Gemini (needs the Gemini key from ⚙), Thai = the chosen engine. The text goes only into the permanent cache, never into the open project.
-//  Off switch: AI tab -> "auto-transcribe clips from the team" (localStorage sk_autotr = 0). Phones skip it (mobile data).
+//  Off switch: AI tab -> "auto-transcribe clips from the team" (localStorage sk_autotr = 0). Phones skip it (mobile data). Switch AI tab -> auto-transcribe imported clips.
 // ============================================================
 let _trQuiet = 0, _trBusy = false, _trNoKeyToast = false; const _trQ = [];
 const trAutoOn = () => localStorage.getItem('sk_autotr') !== '0';
@@ -5685,7 +5688,7 @@ async function trAutoRun(ids) {
       if (trHas(m, lang)) { st.reused++; continue; }              // already transcribed -> no API call at all
       if (!(await trWaitPcm(m))) continue;                          // no audio track
       if (lang === 'lo' && !(loadKeys().gemini)) { if (!_trNoKeyToast) { _trNoKeyToast = true; toast('ถอดเสียงอัตโนมัติ: ยังไม่ได้ใส่ Gemini API key (กด ⚙ ตั้งค่า) — ข้ามไปก่อน', 9000); } _trQ.length = 0; break; }
-      if (!told) { told = true; toast('กำลังถอดเสียงคลิปจากทีมงานอัตโนมัติ… (คลิปที่เคยถอดแล้วจะข้าม ไม่เสียเงินซ้ำ)', 6000); }
+      if (!told) { told = true; toast('กำลังถอดเสียงคลิปที่นำเข้าอัตโนมัติ… (คลิปที่เคยถอดแล้วจะข้าม ไม่เสียเงินซ้ำ)', 6000); }
       _trQuiet++; try { const tr = await transcribeCore(m, lang, eng); trcSave(m, tr); st.fresh++; } finally { _trQuiet--; }
     }
   } catch (e) { console.warn('trAutoRun', e); _trQ.length = 0; toast('ถอดเสียงอัตโนมัติหยุดแล้ว: ' + String(e && e.message || e).slice(0, 140) + ' — กดถอดเสียงเองได้ที่แท็บ AI', 12000); }
@@ -6249,7 +6252,7 @@ function renderAiPane() {
   <div class="fld col"><label>คลิปที่ใช้</label><select id="aiClip">${vids.map(m => `<option translate="no" value="${m.id}" ${m.id === keep ? 'selected' : ''}>${esc(m.name)}${getTr(m.id) ? ' ✔' : ''}</option>`).join('') || '<option value="">(ยังไม่มีคลิป)</option>'}</select></div>
   <div class="fld"><label>ภาษาในคลิป</label><select id="aiLang"><option value="lo">ลาว (Gemini)</option><option value="th">ไทย</option></select></div>
   <div class="fld"><label>ตัวถอดเสียงไทย</label><select id="aiEng"><option value="whisper">Whisper ในเครื่อง (ฟรี แม่น)</option><option value="gemini">Gemini</option></select></div>
-  <div class="fld"><label><input type="checkbox" id="aiAutoTr"> ถอดเสียงคลิปจากทีมงานอัตโนมัติ (ข้ามคลิปที่เคยถอดแล้ว)</label></div>
+  <div class="fld"><label><input type="checkbox" id="aiAutoTr"> ถอดเสียงคลิปที่นำเข้าอัตโนมัติ (ข้ามคลิปที่เคยถอดแล้ว)</label></div>
   <div class="aicard"><h4>🚀 Auto Cut — ปุ่มเดียว</h4><div class="mini">ตัดช่วงเงียบ คำอ้ำอึ้ง ใส่ซับแอนิเมชันให้อัตโนมัติ แล้วเปิดให้ตรวจก่อนโพสต์ (ยกเลิกได้)</div><button class="wide primary" id="acBtn">เริ่ม Auto Cut</button><button class="wide" id="abBtn" style="margin-top:6px">⚡ Auto Cut ทุกคลิปในโปรเจกต์</button></div>
   <div class="aicard"><h4>✂ แก้ไขตามข้อความ</h4><div class="mini">ดูข้อความที่ถอดเสียง คลิกเลือกคำ/ประโยคแล้วลบ หรือลบช่วงเงียบและคำอ้ำอึ้งทั้งหมดในครั้งเดียว (เหมือน Premiere)</div><button class="wide" id="teBtn">เปิดแก้ไขตามข้อความ</button></div>
   <div class="aicard"><h4>🍜 โยนฟุตอาหาร → ปุ่มเดียว</h4><div class="mini">เลือกช่วงที่สวยที่สุดของแต่ละคลิป ตัดสั้น เรียงลำดับ ใส่สี/ทรานสิชัน/ซูม ตัดตามจังหวะเพลง</div><button class="wide primary" id="fdA">เริ่ม</button></div>
@@ -8050,7 +8053,7 @@ async function init() {
   window.addEventListener('dragenter', e => { if (e.dataTransfer.types.includes('Files')) { dc++; dz.classList.add('drop'); } });
   window.addEventListener('dragleave', () => { dc = Math.max(0, dc - 1); if (!dc) dz.classList.remove('drop'); });
   window.addEventListener('dragover', e => { if (e.dataTransfer.types.includes('Files')) e.preventDefault(); });
-  window.addEventListener('drop', e => { dc = 0; dz.classList.remove('drop'); if (e.dataTransfer.files && e.dataTransfer.files.length) { e.preventDefault(); importFiles(e.dataTransfer.files); } });
+  window.addEventListener('drop', e => { dc = 0; dz.classList.remove('drop'); if (e.dataTransfer.files && e.dataTransfer.files.length) { e.preventDefault(); importFiles(e.dataTransfer.files, { autoTr: true }); } });
   // keys
   window.addEventListener('keydown', e => {
     const tg = e.target; if (tg && /^(INPUT|TEXTAREA|SELECT)$/.test(tg.tagName) && !(tg.type === 'range')) return; if (document.querySelector('dialog[open]') || HOME.open) return;

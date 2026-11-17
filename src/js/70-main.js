@@ -127,7 +127,7 @@ async function init() {
   window.addEventListener('dragenter', e => { if (e.dataTransfer.types.includes('Files')) { dc++; dz.classList.add('drop'); } });
   window.addEventListener('dragleave', () => { dc = Math.max(0, dc - 1); if (!dc) dz.classList.remove('drop'); });
   window.addEventListener('dragover', e => { if (e.dataTransfer.types.includes('Files')) e.preventDefault(); });
-  window.addEventListener('drop', e => { dc = 0; dz.classList.remove('drop'); if (e.dataTransfer.files && e.dataTransfer.files.length) { e.preventDefault(); importFiles(e.dataTransfer.files); } });
+  window.addEventListener('drop', e => { dc = 0; dz.classList.remove('drop'); if (e.dataTransfer.files && e.dataTransfer.files.length) { e.preventDefault(); importFiles(e.dataTransfer.files, { autoTr: true }); } });
   // keys
   window.addEventListener('keydown', e => {
     const tg = e.target; if (tg && /^(INPUT|TEXTAREA|SELECT)$/.test(tg.tagName) && !(tg.type === 'range')) return; if (document.querySelector('dialog[open]') || HOME.open) return;

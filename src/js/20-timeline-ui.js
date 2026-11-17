@@ -317,7 +317,7 @@ function renderMediaBin() {
 
 async function importFiles(files, opts) {
   opts = opts || {};
-  const list = [...files]; if (!list.length) return;
+  const list = [...files]; if (!list.length) return; const _trIds = [];
   for (const f of list) {
     const type = f.type.startsWith('video') || /\.(mov|mp4|m4v|webm)$/i.test(f.name) ? 'video' : f.type.startsWith('image') ? 'image' : f.type.startsWith('audio') || /\.(mp3|wav|m4a|aac|ogg)$/i.test(f.name) ? 'audio' : null;
     if (!type) { toast('ไม่รองรับไฟล์: ' + f.name); continue; }
@@ -333,9 +333,11 @@ async function importFiles(files, opts) {
       }
     } catch (e) { console.warn(e); toast('เปิดไฟล์ไม่ได้: ' + f.name + ' (ลองไฟล์ H.264 / mp4)'); URL.revokeObjectURL(m.url); continue; }
     MEDIA.set(m.id, m); if (!m.ref && !opts.noBin) binAdd(m.id); renderMediaBin(); emit('media-added', m); renderTimeline();
+    if (opts.autoTr && type === 'video' && !m.ref && !m.proxyOnly) _trIds.push(m.id);
     if (type !== 'image') analyzeAudio(m).then(() => { renderMediaBin(); renderTimeline(); dbPut(m); }); else dbPut(m);
   }
   if (!opts.quiet) toast('นำเข้าแล้ว ' + list.length + ' ไฟล์');
+  if (_trIds.length && typeof trAutoRun === 'function') trAutoRun(_trIds);   // v1.64: transcribe by itself (skips clips that already have a transcript)
 }
 function seekTo(el, t) { return new Promise(res => { const done = () => { el.removeEventListener('seeked', done); res(); }; el.addEventListener('seeked', done); try { el.currentTime = t; } catch (e) { res(); } setTimeout(res, 3000); }); }
 function thumbFrom(src, w, h) {

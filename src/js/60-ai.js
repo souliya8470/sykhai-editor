@@ -443,7 +443,7 @@ function renderAiPane() {
   <div class="fld col"><label>คลิปที่ใช้</label><select id="aiClip">${vids.map(m => `<option translate="no" value="${m.id}" ${m.id === keep ? 'selected' : ''}>${esc(m.name)}${getTr(m.id) ? ' ✔' : ''}</option>`).join('') || '<option value="">(ยังไม่มีคลิป)</option>'}</select></div>
   <div class="fld"><label>ภาษาในคลิป</label><select id="aiLang"><option value="lo">ลาว (Gemini)</option><option value="th">ไทย</option></select></div>
   <div class="fld"><label>ตัวถอดเสียงไทย</label><select id="aiEng"><option value="whisper">Whisper ในเครื่อง (ฟรี แม่น)</option><option value="gemini">Gemini</option></select></div>
-  <div class="fld"><label><input type="checkbox" id="aiAutoTr"> ถอดเสียงคลิปจากทีมงานอัตโนมัติ (ข้ามคลิปที่เคยถอดแล้ว)</label></div>
+  <div class="fld"><label><input type="checkbox" id="aiAutoTr"> ถอดเสียงคลิปที่นำเข้าอัตโนมัติ (ข้ามคลิปที่เคยถอดแล้ว)</label></div>
   <div class="aicard"><h4>🚀 Auto Cut — ปุ่มเดียว</h4><div class="mini">ตัดช่วงเงียบ คำอ้ำอึ้ง ใส่ซับแอนิเมชันให้อัตโนมัติ แล้วเปิดให้ตรวจก่อนโพสต์ (ยกเลิกได้)</div><button class="wide primary" id="acBtn">เริ่ม Auto Cut</button><button class="wide" id="abBtn" style="margin-top:6px">⚡ Auto Cut ทุกคลิปในโปรเจกต์</button></div>
   <div class="aicard"><h4>✂ แก้ไขตามข้อความ</h4><div class="mini">ดูข้อความที่ถอดเสียง คลิกเลือกคำ/ประโยคแล้วลบ หรือลบช่วงเงียบและคำอ้ำอึ้งทั้งหมดในครั้งเดียว (เหมือน Premiere)</div><button class="wide" id="teBtn">เปิดแก้ไขตามข้อความ</button></div>
   <div class="aicard"><h4>🍜 โยนฟุตอาหาร → ปุ่มเดียว</h4><div class="mini">เลือกช่วงที่สวยที่สุดของแต่ละคลิป ตัดสั้น เรียงลำดับ ใส่สี/ทรานสิชัน/ซูม ตัดตามจังหวะเพลง</div><button class="wide primary" id="fdA">เริ่ม</button></div>

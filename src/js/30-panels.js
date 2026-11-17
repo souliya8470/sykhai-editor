@@ -59,7 +59,7 @@ function buildLeft() {
     const a = e.target.closest('[data-aadd]'); if (a) addMediaToTimeline(a.dataset.id, a.dataset.aadd, PB.t);
   };
   $('#btnImport').onclick = () => $('#fileIn').click();
-  $('#fileIn').onchange = e => { importFiles(e.target.files); e.target.value = ''; };
+  $('#fileIn').onchange = e => { importFiles(e.target.files, { autoTr: true }); e.target.value = ''; };
 }
 function showTab(id) {
   $$('#leftTabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === id));
