@@ -110,6 +110,9 @@ async function homeAction(id, a) {
   renderHome();
 }
 function initHome() {
+  { const sz = $('#hmSize'); let v = 150; try { v = +localStorage.getItem('sk_homesz') || 150; } catch (e) { }   // v1.66: card size slider on the project page
+    const ap = x => document.documentElement.style.setProperty('--pc', x + 'px'); ap(v); sz.value = v;
+    sz.oninput = () => { ap(sz.value); try { localStorage.setItem('sk_homesz', sz.value); } catch (e) { } }; }
   $('#hmNew').onclick = newProject;
   $('#hmBack').onclick = hideHome; $('#hmSync').onclick = srvSyncAll;
   $('#btnHome').onclick = showHome;

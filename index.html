@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.65</title>
+<title>Sykhai Editor v1.66</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -152,6 +152,10 @@ dialog h3{margin:0 0 10px}
 .hhead{display:flex;align-items:center;gap:10px;margin-bottom:18px}.brand.big{font-size:22px}
 .htitle{font-size:15px;color:var(--mu);margin:6px 0 12px}
 #homeList,#refList{display:grid;grid-template-columns:repeat(auto-fill,92px);gap:12px}
+#homeList{grid-template-columns:repeat(auto-fill,var(--pc,150px));gap:14px}
+#homeList .pthumb{aspect-ratio:1/1;background-position:center 22%}
+#homeList .pname{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.28;min-height:2.56em;word-break:break-word}
+.hmsz{display:inline-flex;align-items:center;gap:6px;color:var(--mu);font-size:12px;padding:0 6px}.hmsz input{width:110px;accent-color:var(--ac)}
 .refhead{margin-top:30px}.refhead .mini{color:var(--mu);font-size:11px;margin-left:6px}.refbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 .rcard .pname{font-size:11px;font-weight:500}.rdone{position:absolute;left:5px;top:5px;background:var(--ac);color:#000;border-radius:50%;width:16px;height:16px;font-size:10px;display:flex;align-items:center;justify-content:center}
 .hempty{grid-column:1/-1;color:var(--mu);padding:40px 0;text-align:center}
@@ -571,7 +575,7 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
 
 <div id="home">
   <div class="hwrap">
-    <div class="hhead"><div class="brand big">Sykhai <b>Editor</b> <span class="ver" id="verHome"></span></div><span class="sp"></span><button id="hmSync" hidden title="ส่งโปรเจกต์/ไฟล์ขึ้นเซิร์ฟเวอร์ และดึงโปรเจกต์ใหม่ลงเครื่องนี้">☁ ซิงค์เซิร์ฟเวอร์</button><button id="hmBack" hidden>← กลับไปแก้ไขต่อ</button><button id="hmImport">📂 นำเข้าไฟล์โปรเจกต์</button><button id="hmSettings" title="ตั้งค่า (ใส่รหัสผ่านเซิร์ฟเวอร์ที่นี่)">⚙ ตั้งค่า</button><button id="hmNew" class="primary">+ โปรเจกต์ใหม่</button></div>
+    <div class="hhead"><div class="brand big">Sykhai <b>Editor</b> <span class="ver" id="verHome"></span></div><span class="sp"></span><button id="hmSync" hidden title="ส่งโปรเจกต์/ไฟล์ขึ้นเซิร์ฟเวอร์ และดึงโปรเจกต์ใหม่ลงเครื่องนี้">☁ ซิงค์เซิร์ฟเวอร์</button><button id="hmBack" hidden>← กลับไปแก้ไขต่อ</button><button id="hmImport">📂 นำเข้าไฟล์โปรเจกต์</button><button id="hmSettings" title="ตั้งค่า (ใส่รหัสผ่านเซิร์ฟเวอร์ที่นี่)">⚙ ตั้งค่า</button><label class="hmsz" title="ขนาดการ์ดโปรเจกต์ (เล็ก ↔ ใหญ่)"><span>▫</span><input type="range" id="hmSize" min="110" max="320" step="10" value="150"><span>▣</span></label><button id="hmNew" class="primary">+ โปรเจกต์ใหม่</button></div>
     <div id="homeMain">
     <div class="htitle">โปรเจกต์ของฉัน</div>
     <div id="homeList"></div>
@@ -2184,6 +2188,7 @@ I18N_ROWS.push(
   ['ถอดเสียงอัตโนมัติ: ถอดใหม่', 'Auto-transcribe: new', 'ຖອດສຽງອັດຕະໂນມັດ: ຖອດໃໝ່'],
   ['· ใช้ข้อความเดิม', '· reused saved text', '· ໃຊ້ຂໍ້ຄວາມເດີມ'],
   ['(ไม่เสียเงิน)', '(free)', '(ບໍ່ເສຍເງິນ)'],
+  ['ขนาดการ์ดโปรเจกต์ (เล็ก ↔ ใหญ่)', 'Project card size (small ↔ large)', 'ຂະໜາດບັດໂປຣເຈັກ (ນ້ອຍ ↔ ໃຫຍ່)'],
   ['เซิร์ฟเวอร์มีเวอร์ชันใหม่กว่าของโปรเจกต์นี้', 'The server has a newer version of this project', 'ເຊີເວີມີເວີຊັນໃໝ່ກວ່າຂອງໂປຣເຈັກນີ້'],
   ['โหลดเวอร์ชันใหม่', 'Load the newer version', 'ໂຫຼດເວີຊັນໃໝ່'],
   ['ใช้ของเครื่องนี้ต่อ', "Keep this computer's version", 'ໃຊ້ອັນໃນເຄື່ອງນີ້ຕໍ່'],
@@ -2195,9 +2200,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.65
-// APP_VERSION_PREV : 1.64
-// APP_VERSION_PREV_OLDER : 1.63
+// APP_VERSION  : 1.66
+// APP_VERSION_PREV : 1.65
+// APP_VERSION_PREV_OLDER : 1.64
+// 1.66 : Project page — square (1:1) thumbnails, project names may use 2 lines (the full name is also the tooltip), and a size slider (small ↔ large, remembered in this browser) like a file manager; project thumbnails made by the editor are sharper (270x480).
 // 1.65 : Safer project sync — (1) opening a project no longer re-stamps it: it is saved/pushed only when its content really changed, so just having an old copy open can no longer overwrite a newer copy made elsewhere (by Claude, or on another computer); (2) while a project is open the editor checks the server every 30 s; if the server copy is newer a green bar asks "load the newer version" or "keep this computer's version", and saving of that project is paused until the person chooses.
 // 1.64 : Auto-transcribe now covers EVERY video that comes into the editor (drag-and-drop, the file button, and the team/VELARIS inbox) — not only the team's clips. Same safety: a clip that already has a transcript (any project, this browser or the shop server; same name + size + length) is never sent again; one clip at a time; stops on the first error; phones skip it; switch in the AI tab. Clips restored from an old project are not transcribed by themselves.
 // 1.63 : Auto-transcribe the team's clips — clips that arrive from VELARIS are transcribed by themselves (Lao = Gemini, Thai = chosen engine) and the text goes into the permanent transcript cache; a clip that already has a transcript (this browser or the shop server; same name + size + length, also when VELARIS put a random 8-hex prefix before the file name) is skipped so nothing is paid twice; one clip at a time, stops on the first error; switch in the AI tab; phones skip it
@@ -2264,7 +2270,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.65';
+const APP_VERSION = '1.66';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -3913,7 +3919,7 @@ function projThumb(doc) {
   if (doc.cover && doc.cover.thumb) return doc.cover.thumb;
   const vis = (doc.items || []).filter(i => i.mediaId && (i.type === 'video' || i.type === 'image')).sort((a, b) => a.start - b.start);
   for (const it of vis) { const m = MEDIA.get(it.mediaId); if (m && m.thumb) return m.thumb; }
-  if (doc === D && !HOME.open && PCANVAS) { try { const c = document.createElement('canvas'); c.width = 90; c.height = 160; c.getContext('2d').drawImage(PCANVAS, 0, 0, 90, 160); return c.toDataURL('image/jpeg', .6); } catch (e) { } }
+  if (doc === D && !HOME.open && PCANVAS) { try { const c = document.createElement('canvas'); c.width = 270; c.height = 480; c.getContext('2d').drawImage(PCANVAS, 0, 0, 270, 480); return c.toDataURL('image/jpeg', .6); } catch (e) { } }
   return '';
 }
 function projRec(doc) {
@@ -4050,6 +4056,9 @@ async function homeAction(id, a) {
   renderHome();
 }
 function initHome() {
+  { const sz = $('#hmSize'); let v = 150; try { v = +localStorage.getItem('sk_homesz') || 150; } catch (e) { }   // v1.66: card size slider on the project page
+    const ap = x => document.documentElement.style.setProperty('--pc', x + 'px'); ap(v); sz.value = v;
+    sz.oninput = () => { ap(sz.value); try { localStorage.setItem('sk_homesz', sz.value); } catch (e) { } }; }
   $('#hmNew').onclick = newProject;
   $('#hmBack').onclick = hideHome; $('#hmSync').onclick = srvSyncAll;
   $('#btnHome').onclick = showHome;
