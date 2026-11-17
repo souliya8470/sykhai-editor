@@ -3,7 +3,7 @@
 //  shop server's disk. Talks to server/server.js. No polling: syncs only when saving,
 //  opening a project, exporting, or when you press the Home "sync" button.
 // ============================================================
-const SRV = { up: false, sizes: new Map(), q: [], busy: false, prog: null, label: '', err: '', info: null };
+const SRV = { up: false, sizes: new Map(), q: [], busy: false, prog: null, label: '', err: '', info: null, upd: new Map(), stale: new Set(), chk: false };   // upd: project id -> server time stamp we last saw; stale: projects whose server copy is newer than ours (v1.65)
 const SRV_SELF = !!document.querySelector('meta[name="sk-server"]');      // page is served by the shop server itself -> same-origin, no CORS/https problems
 const srvCfg = () => { let c = {}; try { c = JSON.parse(localStorage.getItem('sk_srv') || '{}'); } catch (e) { } if (SRV_SELF) c.url = location.origin; return c; };
 const srvOn = () => { const c = srvCfg(); return !!(c.url && c.token); };
@@ -144,8 +144,10 @@ async function srvRun() {
 // ----- projects -----
 async function srvPushProject(rec) {
   if (!srvOn()) return false;
+  if (SRV.stale.has(rec.id)) return false;          // v1.65: the server has a newer copy and the person has not chosen yet -> never overwrite it
   try {
     const r = await srvFetch('/projects/' + srvId(rec.id), { method: 'PUT', body: JSON.stringify(rec) });
+    if (r.ok) SRV.upd.set(rec.id, rec.updated);
     if (r.status === 409) { toast('โปรเจกต์ “' + rec.name + '” บนเซิร์ฟเวอร์ใหม่กว่า — ไม่เขียนทับ (กดซิงค์ในหน้าโปรเจกต์เพื่อดึง)', 6000); return false; }
     SRV.up = r.ok; updateSrvBadge(); return r.ok;
   } catch (e) { SRV.up = false; SRV.err = 'ติดต่อไม่ได้'; updateSrvBadge(); return false; }
@@ -164,7 +166,7 @@ async function srvSyncAll() {          // manual button on Home
   let remote = []; try { remote = await (await srvFetch('/projects')).json(); } catch (e) { toast('อ่านรายการจากเซิร์ฟเวอร์ไม่ได้'); return; }
   const local = await projAll(); const lm = new Map(local.map(r => [r.id, r])), rm = new Map(remote.map(r => [r.id, r]));
   let down = 0, up = 0;
-  for (const r of remote) { const l = lm.get(r.id); if (!l || l.updated < r.updated) { try { const full = await (await srvFetch('/projects/' + srvId(r.id))).json(); if (await projPut(full)) down++; } catch (e) { } } }
+  for (const r of remote) { const l = lm.get(r.id); if (!l || l.updated < r.updated) { try { const full = await (await srvFetch('/projects/' + srvId(r.id))).json(); if (await projPut(full)) { down++; SRV.upd.set(full.id, full.updated); } } catch (e) { } } }
   for (const l of local) { const r = rm.get(l.id); if (!r || r.updated > 0 && r.updated < l.updated) { if (await srvPushProject(l)) up++; } srvQueueMedia(l.mids || []); }
   toast(`ซิงค์แล้ว — ดึงลงเครื่อง ${down} โปรเจกต์ · ส่งขึ้นเซิร์ฟเวอร์ ${up} โปรเจกต์` + (SRV.q.length ? ` · กำลังส่งไฟล์วิดีโอ ${SRV.q.length} ไฟล์` : ''), 6000);
   renderHome();
@@ -370,3 +372,42 @@ async function srvPushOut(blob, name) {
   catch (e) { toast('ส่งวิดีโอขึ้นเซิร์ฟเวอร์ไม่สำเร็จ (ไฟล์ยังโหลดลงเครื่องแล้ว)', 5000); }
   SRV.prog = null; updateSrvBadge();
 }
+
+// ----- v1.65: "the server has a newer version of this project" notice -----
+// A project can be changed on the server by someone else (or by Claude). While it is open here we look every 30 s; if the server copy is newer
+// than the one we loaded/pushed, saving is paused and a bar asks: load the newer one, or keep this computer's version.
+function srvNewerBar(show, name) {
+  let el = document.getElementById('srvNewer');
+  if (!show) { if (el) el.hidden = true; return; }
+  if (!el) {
+    el = document.createElement('div'); el.id = 'srvNewer';
+    el.style.cssText = 'position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:99999;background:#1f9d4a;color:#fff;padding:10px 14px;border-radius:12px;box-shadow:0 6px 24px #0008;display:flex;gap:10px;align-items:center;font-weight:700;max-width:92vw;flex-wrap:wrap;justify-content:center';
+    el.innerHTML = '<span class="m"></span><button class="ld" style="background:#fff;color:#0d4a22;border:0;border-radius:8px;padding:6px 12px;font-weight:800;cursor:pointer"></button><button class="kp" style="background:#0d4a22;color:#fff;border:1px solid #fff6;border-radius:8px;padding:6px 12px;cursor:pointer"></button>';
+    el.querySelector('.ld').onclick = srvLoadNewer; el.querySelector('.kp').onclick = srvKeepMine; document.body.appendChild(el);
+  }
+  el.querySelector('.m').textContent = T('เซิร์ฟเวอร์มีเวอร์ชันใหม่กว่าของโปรเจกต์นี้') + (name ? ' — ' + name : '');
+  el.querySelector('.ld').textContent = T('โหลดเวอร์ชันใหม่'); el.querySelector('.kp').textContent = T('ใช้ของเครื่องนี้ต่อ'); el.hidden = false;
+}
+async function srvCheckNewer() {
+  if (!srvOn() || SRV.chk || HOME.open || !D || !D.pid) return; SRV.chk = true;
+  try {
+    const r = await srvFetch('/projects/' + srvId(D.pid)); if (!r.ok) return; const s = await r.json();
+    if (s && s.updated > (SRV.upd.get(D.pid) || 0)) { SRV.stale.add(D.pid); srvNewerBar(true, s.name); }
+  } catch (e) { } finally { SRV.chk = false; }
+}
+async function srvLoadNewer() {
+  const pid = D && D.pid; if (!pid) return;
+  try {
+    const full = await (await srvFetch('/projects/' + srvId(pid))).json();
+    PS.sig.set(pid, JSON.stringify(D));             // drop this computer's unsaved edits (the person chose the server copy)
+    await projPut(full); SRV.upd.set(pid, full.updated); SRV.stale.delete(pid); srvNewerBar(false);
+    await openById(pid); toast(T('โหลดเวอร์ชันใหม่จากเซิร์ฟเวอร์แล้ว') + (full.name ? ' — ' + full.name : ''), 4500);
+  } catch (e) { toast('โหลดไม่สำเร็จ: ' + e.message, 5000); }
+}
+async function srvKeepMine() {
+  const pid = D && D.pid; if (!pid) return;
+  try { const s = await (await srvFetch('/projects/' + srvId(pid))).json(); SRV.upd.set(pid, s.updated || 0); PS.min.set(pid, s.updated || 0); } catch (e) { }
+  SRV.stale.delete(pid); srvNewerBar(false); projSaveSoon();
+}
+setInterval(() => { if (document.visibilityState === 'visible') srvCheckNewer(); }, 30000);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') setTimeout(srvCheckNewer, 800); });

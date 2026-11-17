@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.55</title>
+<title>Sykhai Editor v1.64</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -53,6 +53,23 @@ main{display:grid;grid-template-columns:var(--lw,300px) minmax(0,1fr) var(--rw,3
 #stage{position:relative;flex:1;min-height:0;aspect-ratio:9/16;max-width:100%;background:#000;box-shadow:0 4px 30px rgba(0,0,0,.6)}
 #stage canvas{position:absolute;inset:0;width:100%;height:100%}
 #ov{cursor:default}
+/* v1.57 floating text toolbar + text look pack */
+#tbar{position:fixed;z-index:60;width:max-content;max-width:calc(100vw - 8px)}#tbar[hidden]{display:none}
+#tbar .tbrow{display:flex;gap:2px;justify-content:center;flex-wrap:wrap;padding:3px;background:rgba(24,25,29,.96);border:1px solid var(--ln);border-radius:11px;box-shadow:0 4px 18px rgba(0,0,0,.55)}
+#tbar button{width:30px;height:30px;padding:0;border-radius:8px;border:1px solid transparent;background:transparent;color:#fff;font-size:14px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+#tbar button:hover{background:rgba(255,255,255,.1)}#tbar button.on{background:rgba(255,255,255,.16);border-color:var(--ac)}
+#tbar .tbsw{display:block;width:18px;height:18px;border-radius:50%;border:2px solid #fff}#tbar .tbring{display:block;width:16px;height:16px;border-radius:50%;border:3px solid transparent;box-shadow:0 0 0 1px rgba(255,255,255,.45)}
+#tbpop{position:absolute;left:0;right:0;overflow:auto;padding:8px;background:rgba(24,25,29,.97);border:1px solid var(--ln);border-radius:11px;box-shadow:0 6px 22px rgba(0,0,0,.6)}#tbpop[hidden]{display:none}
+#tbar:not(.up) #tbpop{top:calc(100% + 6px)}#tbar.up #tbpop{bottom:calc(100% + 6px)}
+#tbpop .tbl{font-size:11px;color:var(--mu);margin:4px 0 2px}#tbpop .tbh{font-size:11px;color:var(--mu)}#tbpop .tbr{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin:3px 0}
+#tbpop .tbc{width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,.35);padding:0;cursor:pointer}#tbpop .tbc.on{border-color:var(--ac);box-shadow:0 0 0 2px var(--ac)}
+#tbpop .tbc.none{background:#222;color:#ccc;font-size:13px;line-height:18px}
+#tbpop .tbg{width:38px;height:22px;border-radius:6px;border:2px solid rgba(255,255,255,.3);padding:0;cursor:pointer}
+#tbpop .tbcol{width:28px;height:24px;padding:0;border:0;background:none;cursor:pointer}
+#tbpop textarea{width:100%;box-sizing:border-box;background:#111216;color:#fff;border:1px solid var(--ln);border-radius:8px;padding:6px 8px;font-size:14px;resize:none}
+#tbpop input[type=range]{width:96px;vertical-align:middle}#tbpop .tbx{padding:2px 8px;font-size:11px;border:1px solid var(--ln);border-radius:6px;background:#2a2b30;color:#fff}
+.tpkgrid{grid-template-columns:repeat(2,1fr)}#dlgAi .tpkgrid{max-height:58vh;overflow:auto;padding:2px 6px 2px 2px}
+button.vt.tpk canvas{background:#000}button.vt.tpk[draggable=true]{cursor:grab}
 #transport{display:flex;align-items:center;gap:6px;width:100%;max-width:560px}
 #tpTime{font-variant-numeric:tabular-nums;color:var(--mu);font-size:12px}
 #inspector{flex:1;overflow:auto;padding:10px}
@@ -439,6 +456,38 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
 
 /* v1.53: iPhone Safari zooms the whole page when an input smaller than 16px gets the focus (and stays zoomed / scrolled sideways) — keep dialog fields at 16px on touch screens */
 @media (pointer:coarse){dialog input:not([type=range]):not([type=checkbox]):not([type=radio]):not([type=color]),dialog select,dialog textarea{font-size:16px!important}}
+/* v1.59 text-based editing */
+#dlgAi .te-box{max-height:46vh;overflow:auto;margin:6px 0;padding:8px;border:1px solid var(--ln);border-radius:8px;line-height:2}
+#dlgAi .te-box.w{font-size:15px}
+#dlgAi .te-u{cursor:pointer;border-radius:4px;padding:1px 2px}
+#dlgAi .te-u:hover{background:rgba(255,255,255,.1)}
+#dlgAi .te-u.hit{background:rgba(255,210,70,.28)}
+#dlgAi .te-u.on{background:rgba(255,90,110,.45);color:#fff}
+#dlgAi .te-u.dead,#dlgAi .te-s.dead{opacity:.35;text-decoration:line-through;cursor:default}
+#dlgAi .te-s{display:flex;gap:8px;align-items:baseline;line-height:1.7}
+#dlgAi .te-t{color:var(--mut);font-variant-numeric:tabular-nums;font-size:11px;cursor:pointer;min-width:46px;text-decoration:underline dotted}
+#dlgAi .te-foot{margin-top:8px;border-top:1px solid var(--ln);padding-top:8px}
+#dlgAi .te-mode{display:flex;flex-direction:column;gap:4px;font-size:13px;margin-bottom:4px}
+#dlgAi .te-foot button:disabled{opacity:.4}
+@media (max-width:520px){#dlgAi .te-box{max-height:36vh}}
+
+/* v1.60 magnet drag */
+.mgdrag .clip{transition:left .16s cubic-bezier(.2,.9,.25,1)}
+.mgdrag .clip.dragging{transition:none;opacity:.88;z-index:6;transform:translateY(-3px) scale(1.01);box-shadow:0 8px 18px rgba(0,0,0,.55),0 0 0 2px rgba(255,255,255,.55);cursor:grabbing}
+.mgdrag .clip.dragging.mgsnap{box-shadow:0 6px 14px rgba(0,0,0,.5),0 0 0 2px #2ee6c5,0 0 16px 3px rgba(46,230,197,.65)}
+.mgdrag .junc{display:none}
+.magslot{position:absolute;top:3px;bottom:3px;border-radius:5px;border:2px dashed rgba(255,255,255,.5);background:rgba(255,255,255,.07);pointer-events:none;transition:left .16s cubic-bezier(.2,.9,.25,1),width .16s}
+.magslot.snap{border:2px solid #2ee6c5;background:rgba(46,230,197,.18);animation:mgpulse .7s ease-in-out infinite}
+@keyframes mgpulse{50%{box-shadow:0 0 14px 2px rgba(46,230,197,.75)}}
+.mirrow button{font-size:12px}.mirrow button.on{background:var(--acc,#2ee6c5);color:#000}
+/* v1.62 right-click menu + magnet badge */
+#ctxm{position:fixed;z-index:99999;min-width:230px;background:#2a2b30;border:1px solid #44464d;border-radius:10px;padding:5px;box-shadow:0 10px 30px rgba(0,0,0,.55);font-size:13px}
+#ctxm button{display:flex;justify-content:space-between;align-items:center;gap:22px;width:100%;background:none;border:0;color:#eee;text-align:left;padding:6px 10px;border-radius:6px;cursor:pointer}
+#ctxm button:hover:not(:disabled){background:#3b3d45}
+#ctxm button:disabled{color:#777;cursor:default}
+#ctxm kbd{font-family:inherit;color:#9aa0aa;font-size:12px}
+#ctxm hr{border:0;border-top:1px solid #3d3f46;margin:4px 2px}
+.magb{margin-left:4px;font-size:11px;filter:drop-shadow(0 0 4px #2ee6c5)}
 
 </style></head>
 <body>
@@ -1945,14 +1994,215 @@ I18N_ROWS.push(
   ['วันนี้มีโปรพิเศษมาก ซื้อเลย รับฟรีของแถมทันที ส่งฟรีทั่วเวียงจันทน์', 'Special deal today, buy now, free gift right away, free delivery all over Vientiane', 'ມື້ນີ້ມີໂປຮພິເສດຫຼາຍ ຊື້ເລີຍ ຮັບຟຣີຂອງແຖມທັນທີ ສົ່ງຟຣີທົ່ວວຽງຈັນ'],
 );
 
+// ---- 00-9-i18n-l.js ----
+// i18n rows L — v1.56: Auto Cut one-button + transcripts shared with the shop server   [thai, english, lao]
+I18N_ROWS.push(
+  ['Auto Cut — ปุ่มเดียว', 'Auto Cut — one button', 'Auto Cut — ປຸ່ມດຽວ'],
+  ['ตัดช่วงเงียบ คำอ้ำอึ้ง ใส่ซับแอนิเมชันให้อัตโนมัติ แล้วเปิดให้ตรวจก่อนโพสต์ (ยกเลิกได้)', 'Cuts silences and filler words and adds animated captions automatically, then leaves it open for you to check before posting (can be undone)', 'ຕັດຊ່ວງງຽບ ຄຳລັງເລ ແລະໃສ່ຄຳບັນຍາຍແອນິເມຊັນໃຫ້ອັດຕະໂນມັດ ແລ້ວເປີດໄວ້ໃຫ້ກວດກ່ອນໂພສ (ຍົກເລີກໄດ້)'],
+  ['เริ่ม Auto Cut', 'Start Auto Cut', 'ເລີ່ມ Auto Cut'],
+  ['เลือกสิ่งที่ให้ทำ แล้วกดเริ่ม · ถอดเสียงแค่ 1 ครั้ง (เก็บไว้ ไม่ถอดซ้ำ) · ทำเสร็จแล้วกดยกเลิกทั้งหมดได้', 'Choose what to do, then press Start · the speech is transcribed only once (kept, never transcribed again) · you can undo everything afterwards', 'ເລືອກສິ່ງທີ່ຕ້ອງການໃຫ້ເຮັດ ແລ້ວກົດເລີ່ມ · ຖອດສຽງພຽງເທື່ອດຽວ (ເກັບໄວ້ ບໍ່ຖອດຊ້ຳ) · ເຮັດແລ້ວຍົກເລີກທັງໝົດໄດ້'],
+  ['ตัดคำอ้ำอึ้ง (เอ่อ อืม)', 'Cut filler words (uh, um)', 'ຕັດຄຳລັງເລ (ເອີ ອືມ)'],
+  ['ตัดเทคพูดผิด/พูดซ้ำ (ต้องใช้ Claude API key)', 'Cut false starts / repeated takes (needs a Claude API key)', 'ຕັດຕອນເວົ້າຜິດ/ເວົ້າຊ້ຳ (ຕ້ອງມີ Claude API key)'],
+  ['ใส่ซับแอนิเมชัน', 'Add animated captions', 'ໃສ່ຄຳບັນຍາຍແອນິເມຊັນ'],
+  ['หน้าตาซับ', 'Caption look', 'ໜ້າຕາຄຳບັນຍາຍ'],
+  ['ไม่ได้ตัดอะไร (ไม่พบช่วงเงียบ/คำอ้ำอึ้ง)', 'Nothing was cut (no silences / filler words found)', 'ບໍ່ໄດ້ຕັດຫຍັງ (ບໍ່ພົບຊ່ວງງຽບ/ຄຳລັງເລ)'],
+  ['ลดไป', 'shortened by', 'ສັ້ນລົງ'],
+  ['ไม่พบข้อความพูดในคลิปนี้ จึงยังไม่ได้ใส่ซับ', 'No speech was found in this clip, so no captions were added', 'ບໍ່ພົບຂໍ້ຄວາມເວົ້າໃນຄລິບນີ້ ຈຶ່ງຍັງບໍ່ໄດ້ໃສ່ຄຳບັນຍາຍ'],
+  ['AI ไม่พบคำสำคัญในคลิปนี้ จึงยังไม่ได้ใส่ซับ', 'The AI found no key words in this clip, so no captions were added', 'AI ບໍ່ພົບຄຳສຳຄັນໃນຄລິບນີ້ ຈຶ່ງຍັງບໍ່ໄດ້ໃສ່ຄຳບັນຍາຍ'],
+  ['AI เลือกคำสำคัญไม่ได้ จึงใส่ซับทุกคำที่พูดแทน', 'The AI could not pick key words, so every spoken word was captioned instead', 'AI ເລືອກຄຳສຳຄັນບໍ່ໄດ້ ຈຶ່ງໃສ່ຄຳບັນຍາຍທຸກຄຳທີ່ເວົ້າແທນ'],
+  ['หาเทคที่พูดซ้ำไม่ได้ (ข้ามขั้นนี้)', 'Could not look for repeated takes (this step was skipped)', 'ຫາຕອນທີ່ເວົ້າຊ້ຳບໍ່ໄດ້ (ຂ້າມຂັ້ນຕອນນີ້)'],
+  ['ตรวจดูทั้งคลิปก่อนโพสต์ทุกครั้ง — AI อาจตัดหรือเลือกคำพลาดได้ แก้ต่อที่ไทม์ไลน์ได้เลย', 'Always watch the whole clip before posting — the AI can cut or pick the wrong word. You can keep editing on the timeline.', 'ກວດເບິ່ງທັງຄລິບກ່ອນໂພສທຸກເທື່ອ — AI ອາດຕັດ ຫຼືເລືອກຄຳຜິດໄດ້ ແກ້ໄຂຕໍ່ໃນໄທມ໌ໄລນ໌ໄດ້ເລີຍ'],
+  ['ดูผลลัพธ์', 'Watch result', 'ເບິ່ງຜົນລັບ'],
+  ['ยกเลิกทั้งหมด', 'Undo everything', 'ຍົກເລີກທັງໝົດ'],
+  ['มีการแก้ไขต่อจาก Auto Cut แล้ว — ใช้ปุ่ม ↶ ย้อนกลับทีละขั้นแทน', 'There are edits after Auto Cut — use the ↶ undo button step by step instead', 'ມີການແກ້ໄຂຕໍ່ຈາກ Auto Cut ແລ້ວ — ໃຫ້ໃຊ້ປຸ່ມ ↶ ຍ້ອນກັບເທື່ອລະຂັ້ນແທນ'],
+  ['ยกเลิก Auto Cut แล้ว', 'Auto Cut undone', 'ຍົກເລີກ Auto Cut ແລ້ວ'],
+  ['กำลังเตรียมคลิป…', 'Preparing the clip…', 'ກຳລັງກຽມຄລິບ…'],
+  ['กำลังหาช่วงเงียบ…', 'Looking for silences…', 'ກຳລັງຊອກຫາຊ່ວງງຽບ…'],
+  ['กำลังใส่ซับ…', 'Adding captions…', 'ກຳລັງໃສ່ຄຳບັນຍາຍ…'],
+  ['Auto Cut เสร็จแล้ว', 'Auto Cut finished', 'Auto Cut ສຳເລັດແລ້ວ'],
+  ['แชร์กับเซิร์ฟเวอร์ร้านด้วย — ทุกเครื่องใช้ข้อความเดียวกัน ไม่ต้องถอดซ้ำ', 'Also shared with the shop server — every computer uses the same text, no re-transcribing', 'ແບ່ງປັນກັບເຊີເວີຮ້ານນຳ — ທຸກເຄື່ອງໃຊ້ຂໍ້ຄວາມດຽວກັນ ບໍ່ຕ້ອງຖອດຊ້ຳ'],
+  ['ติดต่อเซิร์ฟเวอร์ร้านไม่ได้ตอนนี้ — เก็บในเครื่องนี้ก่อน แล้วจะซิงค์ให้เมื่อต่อได้', 'The shop server is not reachable right now — kept on this device for now, it will sync when connected', 'ຕິດຕໍ່ເຊີເວີຮ້ານບໍ່ໄດ້ດຽວນີ້ — ເກັບໃນເຄື່ອງນີ້ກ່ອນ ແລ້ວຈະຊິງຄ໌ໃຫ້ເມື່ອເຊື່ອມຕໍ່ໄດ້'],
+  ['ยังไม่ได้ต่อเซิร์ฟเวอร์ร้าน — ข้อความเก็บเฉพาะในเครื่องนี้', 'Not connected to the shop server — the text is kept on this device only', 'ຍັງບໍ່ໄດ້ເຊື່ອມຕໍ່ເຊີເວີຮ້ານ — ຂໍ້ຄວາມເກັບສະເພາະໃນເຄື່ອງນີ້'],
+  ['ซิงค์แล้ว', 'Synced', 'ຊິງຄ໌ແລ້ວ'],
+  ['ซิงค์ไม่ได้ — ต่อเซิร์ฟเวอร์ร้านไม่ได้', 'Could not sync — the shop server is not reachable', 'ຊິງຄ໌ບໍ່ໄດ້ — ເຊື່ອມຕໍ່ເຊີເວີຮ້ານບໍ່ໄດ້'],
+);
+
+// ---- 00-9-i18n-m.js ----
+// i18n rows M — v1.57: text look pack + floating text toolbar + gradient / 3D   [thai, english, lao]
+I18N_ROWS.push(
+  ['ทองหรู', 'Luxury gold', 'ທອງຫຼູຫຼາ'],
+  ['ทองตัวเขียน', 'Gold script', 'ທອງຕົວຂຽນ'],
+  ['แชมเปญ เรียบหรู', 'Champagne, elegant', 'ແຊມເປນ ຫຼູຫຼາ'],
+  ['ทองเรืองแสงเขียว', 'Gold with green glow', 'ທອງເຮືອງແສງຂຽວ'],
+  ['ลดแรง แดงไฟ', 'Big sale, fire red', 'ຫຼຸດແຮງ ແດງໄຟ'],
+  ['ไฟลุก', 'On fire', 'ໄຟລຸກ'],
+  ['ราคาเด้ง เหลือง', 'Bouncing price, yellow', 'ລາຄາເດັ້ງ ເຫຼືອງ'],
+  ['ป้ายแดง ตัวขาว', 'Red tag, white text', 'ປ້າຍແດງ ຕົວຂາວ'],
+  ['นีออนชมพู', 'Pink neon', 'ນີອອນສີບົວ'],
+  ['นีออนฟ้า', 'Blue neon', 'ນີອອນຟ້າ'],
+  ['เขียวเรืองแสง', 'Glowing green', 'ຂຽວເຮືອງແສງ'],
+  ['พระอาทิตย์ตก', 'Sunset', 'ຕາເວັນຕົກ'],
+  ['ฟ้า-ม่วง ไล่สี', 'Blue-purple gradient', 'ຟ້າ-ມ່ວງ ໄລ່ສີ'],
+  ['ลูกกวาดชมพู', 'Pink candy', 'ລູກອົມສີບົວ'],
+  ['เขียวมิ้นต์ สุขภาพ', 'Mint green, health', 'ຂຽວມິ້ນ ສຸຂະພາບ'],
+  ['ขาวหนา ขอบดำ', 'Bold white, black outline', 'ຂາວໜາ ຂອບດຳ'],
+  ['เหลืองหนา ขอบดำ', 'Bold yellow, black outline', 'ເຫຼືອງໜາ ຂອບດຳ'],
+  ['การ์ตูนป๊อป', 'Cartoon pop', 'ກາຕູນ ປ໊ອບ'],
+  ['ย้อนยุค ส้ม-ครีม', 'Retro orange-cream', 'ຍ້ອນຍຸກ ສົ້ມ-ຄຣີມ'],
+  ['ตัวเส้นขอบ', 'Outline only', 'ຕົວເສັ້ນຂອບ'],
+  ['ขาวนุ่ม เบลอเข้า', 'Soft white, blur in', 'ຂາວນຸ່ມ ມົວເຂົ້າ'],
+  ['ชื่อเรื่องหนัง', 'Movie title', 'ຊື່ເລື່ອງໜັງ'],
+  ['ไซเบอร์ กลิตช์', 'Cyber glitch', 'ໄຊເບີ ກລິດ'],
+  ['รุ้งเปลี่ยนสี', 'Rainbow colours', 'ຮຸ້ງປ່ຽນສີ'],
+  ['ป้ายเขียว ตัวขาว', 'Green tag, white text', 'ປ້າຍຂຽວ ຕົວຂາວ'],
+  ['แถบชื่อ ล่างจอ', 'Lower third', 'ແຖບຊື່ ລຸ່ມຈໍ'],
+  ['ลดราคา', 'Sale', 'ຫຼຸດລາຄາ'],
+  ['ราคาพิเศษ', 'Special price', 'ລາຄາພິເສດ'],
+  ['แพ็กข้อความ — ลุคสำเร็จรูป', 'Text pack — ready-made looks', 'ແພັກຂໍ້ຄວາມ — ແບບສຳເລັດຮູບ'],
+  ['กดเพื่อเพิ่มที่หัวอ่าน · หรือลากการ์ดไปวางบนไทม์ไลน์/บนจอ (วางทับข้อความเดิม = เปลี่ยนลุค) · เอาเมาส์ชี้การ์ดเพื่อดูแอนิเมชัน', 'Click to add at the playhead · or drag a card onto the timeline / the preview (dropped on an existing text = change its look) · hover a card to see the animation', 'ກົດເພື່ອເພີ່ມທີ່ເສັ້ນຫຼິ້ນ · ຫຼືລາກກາດໄປວາງເທິງໄທມ໌ໄລນ໌/ເທິງຈໍ (ວາງທັບຂໍ້ຄວາມເດີມ = ປ່ຽນແບບ) · ເອົາເມົ້າຊີ້ກາດເພື່ອເບິ່ງແອນິເມຊັນ'],
+  ['เปลี่ยนลุคข้อความ (แพ็ก)', 'Change text look (pack)', 'ປ່ຽນແບບຂໍ້ຄວາມ (ແພັກ)'],
+  ['กดเพื่อใช้ลุคนี้กับข้อความที่เลือก — ข้อความ เวลา และตำแหน่งเดิมจะไม่เปลี่ยน · เอาเมาส์ชี้การ์ดเพื่อดูแอนิเมชัน', 'Click to use this look on the selected text — its words, time and position stay the same · hover a card to see the animation', 'ກົດເພື່ອໃຊ້ແບບນີ້ກັບຂໍ້ຄວາມທີ່ເລືອກ — ຂໍ້ຄວາມ ເວລາ ແລະຕຳແໜ່ງເດີມຈະບໍ່ປ່ຽນ · ເອົາເມົ້າຊີ້ກາດເພື່ອເບິ່ງແອນິເມຊັນ'],
+  ['แก้ข้อความ', 'Edit text', 'ແກ້ຂໍ້ຄວາມ'],
+  ['สีตัวอักษร / ไล่สี', 'Text colour / gradient', 'ສີຕົວອັກສອນ / ໄລ່ສີ'],
+  ['ขอบตัวอักษร', 'Outline', 'ຂອບຕົວອັກສອນ'],
+  ['แสงเรือง / 3D', 'Glow / 3D', 'ແສງເຮືອງ / 3D'],
+  ['ลดขนาด', 'Smaller', 'ຫຼຸດຂະໜາດ'],
+  ['เพิ่มขนาด', 'Larger', 'ເພີ່ມຂະໜາດ'],
+  ['เปลี่ยนลุค (แพ็กข้อความ)', 'Change look (text pack)', 'ປ່ຽນແບບ (ແພັກຂໍ້ຄວາມ)'],
+  ['แอนิเมชันข้อความ', 'Text animation', 'ແອນິເມຊັນຂໍ້ຄວາມ'],
+  ['สีอื่น', 'More colours', 'ສີອື່ນ'],
+  ['บรรทัดใหม่ = Enter · *คำ* = เน้นสีเหลือง', 'New line = Enter · *word* = highlight in yellow', 'ແຖວໃໝ່ = Enter · *ຄຳ* = ເນັ້ນສີເຫຼືອງ'],
+  ['สีตัวอักษร', 'Text colour', 'ສີຕົວອັກສອນ'],
+  ['สีไล่เฉด (ไล่สี)', 'Gradient', 'ສີໄລ່ເຈືອ'],
+  ['ปรับสี', 'Adjust', 'ປັບສີ'],
+  ['มุมไล่สี', 'Angle', 'ມຸມ'],
+  ['ปิดไล่สี', 'Gradient off', 'ປິດໄລ່ສີ'],
+  ['ความหนาขอบ', 'Thickness', 'ຄວາມໜາ'],
+  ['แสงเรือง', 'Glow', 'ແສງເຮືອງ'],
+  ['3D (ขอบหนาหลังตัวอักษร)', '3D (thick edge behind the letters)', '3D (ຂອບໜາຢູ່ຫຼັງຕົວອັກສອນ)'],
+  ['ความลึก', 'Depth', 'ຄວາມເລິກ'],
+  ['เปลี่ยนลุค (แพ็ก)', 'Change look (pack)', 'ປ່ຽນແບບ (ແພັກ)'],
+  ['ไล่สี / ขอบ / 3D', 'Gradient / outline / 3D', 'ໄລ່ສີ / ຂອບ / 3D'],
+  // v1.58: shop Lao fonts
+  ['ฟอนต์ที่เพิ่มจากเครื่องร้านยังไม่ได้ตรวจสิทธิ์การใช้เชิงพาณิชย์', 'Fonts added from the shop PC have not been checked for commercial-use rights', 'ຟອນທີ່ເພີ່ມຈາກເຄື່ອງຮ້ານຍັງບໍ່ໄດ້ກວດສິດການນຳໃຊ້ເຊິງການຄ້າ'],
+  ['ฟอนต์นี้อยู่บนเซิร์ฟเวอร์ร้าน — ต้องเชื่อมต่อเซิร์ฟเวอร์ก่อน (⚙ ตั้งค่า)', 'This font lives on the shop server — connect the server first (⚙ Settings)', 'ຟອນນີ້ຢູ່ເທິງເຊີບເວີຮ້ານ — ຕ້ອງເຊື່ອມຕໍ່ເຊີບເວີກ່ອນ (⚙ ຕັ້ງຄ່າ)']
+);
+
+// ---- 00-9-i18n-n.js ----
+// i18n rows N — v1.59: text-based editing ("แก้ไขตามข้อความ")   [thai, english, lao]
+I18N_ROWS.push(
+  ['แก้ไขตามข้อความ', 'Edit by text', 'ແກ້ໄຂຕາມຂໍ້ຄວາມ'],
+  ['✂ แก้ไขตามข้อความ', '✂ Edit by text', '✂ ແກ້ໄຂຕາມຂໍ້ຄວາມ'],
+  ['ดูข้อความที่ถอดเสียง คลิกเลือกคำ/ประโยคแล้วลบ หรือลบช่วงเงียบและคำอ้ำอึ้งทั้งหมดในครั้งเดียว (เหมือน Premiere)', 'See the transcript, click words or sentences and delete them, or delete all silences and filler words at once (like Premiere)', 'ເບິ່ງຂໍ້ຄວາມທີ່ຖອດສຽງ ກົດເລືອກຄຳ/ປະໂຫຍກແລ້ວລຶບ ຫຼືລຶບຊ່ວງງຽບ ແລະຄຳລັງເລທັງໝົດໃນເທື່ອດຽວ (ຄືກັບ Premiere)'],
+  ['เปิดแก้ไขตามข้อความ', 'Open text editing', 'ເປີດແກ້ໄຂຕາມຂໍ້ຄວາມ'],
+  ['คลิปนี้ยังไม่มีข้อความที่ถอดเสียง — ถอดเสียงก่อน (ทำครั้งเดียว เก็บไว้ใช้ต่อ)', 'This clip has no transcript yet — transcribe it first (done once, kept for later)', 'ຄລິບນີ້ຍັງບໍ່ມີຂໍ້ຄວາມທີ່ຖອດສຽງ — ຖອດສຽງກ່ອນ (ເຮັດເທື່ອດຽວ ເກັບໄວ້ໃຊ້ຕໍ່)'],
+  ['ถอดเสียงตอนนี้', 'Transcribe now', 'ຖອດສຽງດຽວນີ້'],
+  ['กำลังถอดเสียง…', 'Transcribing…', 'ກຳລັງຖອດສຽງ…'],
+  ['ค้นหาคำหรือประโยค', 'Search a word or sentence', 'ຄົ້ນຫາຄຳ ຫຼືປະໂຫຍກ'],
+  ['พบ', 'Found', 'ພົບ'],
+  ['แห่ง', 'places', 'ບ່ອນ'],
+  ['เลือกผลที่พบทั้งหมด', 'Select all results', 'ເລືອກຜົນທີ່ພົບທັງໝົດ'],
+  ['ล้างที่เลือก', 'Clear selection', 'ລ້າງທີ່ເລືອກ'],
+  ['กดคำเพื่อเลือก · กด Shift ค้างแล้วกดอีกคำเพื่อเลือกเป็นช่วง', 'Click a word to select it · hold Shift and click another word to select a range', 'ກົດຄຳເພື່ອເລືອກ · ກົດ Shift ຄ້າງໄວ້ແລ້ວກົດອີກຄຳ ເພື່ອເລືອກເປັນຊ່ວງ'],
+  ['ข้อความลาวที่ถอดด้วย Gemini แบ่งเป็นประโยค จึงเลือกทีละประโยค · กดเวลาด้านหน้าเพื่อไปดูที่ตำแหน่งนั้น', 'Lao text transcribed by Gemini is split into sentences, so you select one sentence at a time · click the time in front to jump there', 'ຂໍ້ຄວາມລາວທີ່ຖອດດ້ວຍ Gemini ແບ່ງເປັນປະໂຫຍກ ຈຶ່ງເລືອກເທື່ອລະປະໂຫຍກ · ກົດເວລາດ້ານໜ້າເພື່ອໄປເບິ່ງຕຳແໜ່ງນັ້ນ'],
+  ['ไปที่ตำแหน่งนี้', 'Go to this position', 'ໄປທີ່ຕຳແໜ່ງນີ້'],
+  ['ไม่พบช่วงเงียบ', 'No silences found', 'ບໍ່ພົບຊ່ວງງຽບ'],
+  ['ไม่พบคำอ้ำอึ้ง', 'No filler words found', 'ບໍ່ພົບຄຳລັງເລ'],
+  ['ตัดแล้วดึงเข้าหากัน (Extract)', 'Cut and close the gap (Extract)', 'ຕັດແລ້ວດຶງເຂົ້າຫາກັນ (Extract)'],
+  ['ตัดแล้วเว้นช่องว่างไว้ (Lift)', 'Cut and leave the gap (Lift)', 'ຕັດແລ້ວປະຊ່ອງວ່າງໄວ້ (Lift)'],
+  ['เลือกไว้', 'Selected', 'ເລືອກໄວ້'],
+  ['จะลดไป', 'will save', 'ຈະຫຼຸດໄປ'],
+  ['ยังไม่ได้เลือกอะไร', 'Nothing selected yet', 'ຍັງບໍ່ໄດ້ເລືອກຫຍັງ'],
+  ['ย้อนกลับ', 'Undo', 'ຍ້ອນກັບ'],
+  ['เลือก/ไม่เลือกทั้งหมด', 'Select / unselect all', 'ເລືອກ/ບໍ່ເລືອກທັງໝົດ'],
+  ['มีการแก้ไขต่อจากนี้แล้ว — ใช้ปุ่ม ↶ ย้อนกลับทีละขั้นแทน', 'There are later edits — use the ↶ undo button step by step instead', 'ມີການແກ້ໄຂຕໍ່ຈາກນີ້ແລ້ວ — ໃຊ້ປຸ່ມ ↶ ຍ້ອນກັບເທື່ອລະຂັ້ນແທນ'],
+  ['ย้อนกลับแล้ว', 'Undone', 'ຍ້ອນກັບແລ້ວ'],
+  ['ช่วงที่เลือกถูกลบไปแล้ว', 'The selected parts were already deleted', 'ສ່ວນທີ່ເລືອກຖືກລຶບໄປແລ້ວ'],
+  ['ปิดแม่เหล็กวิดีโอ 1 ให้แล้ว เพื่อเว้นช่องว่างไว้', 'Turned off the Video 1 magnet so the gap stays', 'ປິດແມ່ເຫຼັກວິດີໂອ 1 ໃຫ້ແລ້ວ ເພື່ອປະຊ່ອງວ່າງໄວ້'],
+  ['ลบแล้ว', 'Deleted', 'ລຶບແລ້ວ'],
+);
+
+// ---- 00-9-i18n-o.js ----
+// i18n rows O — v1.60: Mirror
+I18N_ROWS.push(
+  ['⇋ กลับซ้าย-ขวา', '⇋ Flip horizontal', '⇋ ກັບຊ້າຍ-ຂວາ'],
+  ['⇅ กลับบน-ล่าง', '⇅ Flip vertical', '⇅ ກັບເທິງ-ລຸ່ມ'],
+  ['กลับด้านซ้าย-ขวา (Mirror)', 'Flip horizontally (Mirror)', 'ກັບດ້ານຊ້າຍ-ຂວາ (Mirror)'],
+  ['กลับด้านบน-ล่าง', 'Flip vertically', 'ກັບດ້ານເທິງ-ລຸ່ມ'],
+);
+
+// ---- 00-9-i18n-p.js ----
+// i18n rows P — v1.62: Auto Cut for all clips   [thai, english, lao]
+I18N_ROWS.push(
+  ['⚡ Auto Cut ทุกคลิปในโปรเจกต์', '⚡ Auto Cut all clips in the project', '⚡ Auto Cut ທຸກຄລິບໃນໂປຣເຈັກ'],
+  ['Auto Cut ทุกคลิป', 'Auto Cut all clips', 'Auto Cut ທຸກຄລິບ'],
+  ['เริ่มทุกคลิป', 'Start all clips', 'ເລີ່ມທຸກຄລິບ'],
+  ['ยังไม่มีคลิปวิดีโอในโปรเจกต์', 'There are no video clips in the project yet', 'ຍັງບໍ່ມີຄລິບວິດີໂອໃນໂປຣເຈັກ'],
+  ['มีข้อความถอดไว้แล้ว', 'transcript already saved', 'ມີຂໍ້ຄວາມຖອດໄວ້ແລ້ວ'],
+  ['ต้องถอดเสียงใหม่', 'needs a new transcription', 'ຕ້ອງຖອດສຽງໃໝ່'],
+  ['ไม่มีเสียง / ยังวิเคราะห์ไม่เสร็จ (จะข้าม)', 'no audio / analysis not finished (will be skipped)', 'ບໍ່ມີສຽງ / ຍັງວິເຄາະບໍ່ແລ້ວ (ຈະຂ້າມ)'],
+  ['คลิปต้องถอดเสียงใหม่ — ภาษาลาวใช้ Gemini ซึ่งมีค่าใช้จ่ายต่อคลิป', 'clips need a new transcription — Lao uses Gemini, which costs money per clip', 'ຄລິບຕ້ອງຖອດສຽງໃໝ່ — ພາສາລາວໃຊ້ Gemini ຊຶ່ງມີຄ່າໃຊ້ຈ່າຍຕໍ່ຄລິບ'],
+  ['ทำกับทุกคลิปวิดีโอในโปรเจกต์ด้วยตัวเลือกด้านล่าง · ทำเสร็จแล้วกดยกเลิกทั้งหมดได้ · ใช้ครั้งเดียวต่อโปรเจกต์ (ถ้าเคยใส่ซับแล้ว ให้ยกเลิกก่อน)', 'Applies to every video clip in the project with the options below · you can undo everything afterwards · use it once per project (if captions were already added, undo first)', 'ເຮັດກັບທຸກຄລິບວິດີໂອໃນໂປຣເຈັກດ້ວຍຕົວເລືອກຂ້າງລຸ່ມ · ເຮັດແລ້ວກົດຍົກເລີກທັງໝົດໄດ້ · ໃຊ້ຄັ້ງດຽວຕໍ່ໂປຣເຈັກ (ຖ້າເຄີຍໃສ່ຊັບແລ້ວ ໃຫ້ຍົກເລີກກ່ອນ)'],
+  ['ข้าม (ไม่มีเสียง)', 'skipped (no audio)', 'ຂ້າມ (ບໍ່ມີສຽງ)'],
+  ['ทำไม่สำเร็จ', 'failed', 'ເຮັດບໍ່ສຳເລັດ'],
+  ['ทำสำเร็จ', 'done', 'ສຳເລັດ'],
+);
+I18N_ROWS.push(
+  ['คัดลอกคลิป', 'Copy clip', 'ຄັດລອກຄລິບ'],
+  ['ตัดคลิป (Cut)', 'Cut clip', 'ຕັດຄລິບ (Cut)'],
+  ['วางคลิปที่หัวอ่าน', 'Paste clip at playhead', 'ວາງຄລິບທີ່ເສັ້ນຫຼິ້ນ'],
+  ['ทำซ้ำคลิป', 'Duplicate clip', 'ເຮັດຊ້ຳຄລິບ'],
+  ['ลบคลิป', 'Delete clip', 'ລົບຄລິບ'],
+  ['ลบคลิปและปิดช่องว่าง', 'Delete clip and close the gap', 'ລົບຄລິບ ແລະປິດຊ່ອງຫວ່າງ'],
+  ['แยกคลิปที่หัวอ่าน', 'Split clip at playhead', 'ແຍກຄລິບທີ່ເສັ້ນຫຼິ້ນ'],
+  ['ตัดซ้ายถึงหัวอ่าน', 'Trim left to playhead', 'ຕັດຊ້າຍເຖິງເສັ້ນຫຼິ້ນ'],
+  ['ตัดขวาจากหัวอ่าน', 'Trim right from playhead', 'ຕັດຂວາຈາກເສັ້ນຫຼິ້ນ'],
+  ['หมุน 90°', 'Rotate 90°', 'ໝຸນ 90°'],
+  ['แยกเสียงออกจากวิดีโอ', 'Separate audio from video', 'ແຍກສຽງອອກຈາກວິດີໂອ'],
+  ['Auto Cut คลิปนี้', 'Auto Cut this clip', 'Auto Cut ຄລິບນີ້'],
+  ['ซ่อนคลิป', 'Hide clip', 'ເຊື່ອງຄລິບ'],
+  ['แสดงคลิป', 'Show clip', 'ສະແດງຄລິບ'],
+  ['คัดลอกคลิปแล้ว', 'Clip copied', 'ຄັດລອກຄລິບແລ້ວ'],
+  ['ตัดคลิปแล้ว — กดวางได้ที่หัวอ่าน', 'Clip cut — paste it at the playhead', 'ຕັດຄລິບແລ້ວ — ກົດວາງໄດ້ທີ່ເສັ້ນຫຼິ້ນ'],
+  ['ยังไม่ได้คัดลอกคลิป', 'No clip copied yet', 'ຍັງບໍ່ໄດ້ຄັດລອກຄລິບ'],
+  ['แม่เหล็กเปิดอยู่: คลิปในแถวนี้ชิดกันอัตโนมัติ', 'Magnet is on: clips in this row stay glued together', 'ແມ່ເຫຼັກເປີດຢູ່: ຄລິບໃນແຖວນີ້ຊິດກັນອັດຕະໂນມັດ'],
+  ['เปิดแม่เหล็ก: คลิปในแถวที่มีป้าย 🧲 จะชิดกันอัตโนมัติ', 'Magnet on: clips in the row marked 🧲 glue together automatically', 'ເປີດແມ່ເຫຼັກ: ຄລິບໃນແຖວທີ່ມີປ້າຍ 🧲 ຈະຊິດກັນອັດຕະໂນມັດ'],
+  ['ปิดแม่เหล็ก: วางคลิปได้อิสระ เว้นช่องว่างได้', 'Magnet off: place clips freely, gaps are allowed', 'ປິດແມ່ເຫຼັກ: ວາງຄລິບໄດ້ອິດສະຫຼະ ເວັ້ນຊ່ອງຫວ່າງໄດ້'],
+  ['แม่เหล็กใช้กับแถวที่มีป้าย 🧲 เท่านั้น — ลากคลิปลงไปวางที่แถวนั้นจึงจะดูดชิดกัน', 'The magnet only works on the row marked 🧲 — drag the clip down into that row to glue it', 'ແມ່ເຫຼັກໃຊ້ກັບແຖວທີ່ມີປ້າຍ 🧲 ເທົ່ານັ້ນ — ລາກຄລິບລົງໄປວາງແຖວນັ້ນຈຶ່ງຈະດູດຕິດກັນ'],
+);
+
+// ---- 00-9-i18n-q.js ----
+// i18n rows Q — v1.63: auto-transcribe the clips that arrive from the team   [thai, english, lao]
+I18N_ROWS.push(
+  ['ถอดเสียงคลิปที่นำเข้าอัตโนมัติ', 'Auto-transcribe imported clips', 'ຖອດສຽງຄລິບທີ່ນຳເຂົ້າອັດຕະໂນມັດ'],
+  ['(ข้ามคลิปที่เคยถอดแล้ว)', '(clips already transcribed are skipped)', '(ຂ້າມຄລິບທີ່ເຄີຍຖອດແລ້ວ)'],
+  ['กำลังถอดเสียงคลิปที่นำเข้าอัตโนมัติ…', 'Auto-transcribing the imported clips…', 'ກຳລັງຖອດສຽງຄລິບທີ່ນຳເຂົ້າອັດຕະໂນມັດ…'],
+  ['(คลิปที่เคยถอดแล้วจะข้าม ไม่เสียเงินซ้ำ)', '(clips already transcribed are skipped — no double charge)', '(ຄລິບທີ່ເຄີຍຖອດແລ້ວຈະຂ້າມ ບໍ່ເສຍເງິນຊ້ຳ)'],
+  ['ถอดเสียงอัตโนมัติ: ยังไม่ได้ใส่ Gemini API key (กด ⚙ ตั้งค่า) — ข้ามไปก่อน', 'Auto-transcribe: no Gemini API key yet (press ⚙ Settings) — skipped for now', 'ຖອດສຽງອັດຕະໂນມັດ: ຍັງບໍ່ໄດ້ໃສ່ Gemini API key (ກົດ ⚙ ຕັ້ງຄ່າ) — ຂ້າມໄປກ່ອນ'],
+  ['ถอดเสียงอัตโนมัติหยุดแล้ว:', 'Auto-transcribe stopped:', 'ຖອດສຽງອັດຕະໂນມັດຢຸດແລ້ວ:'],
+  ['— กดถอดเสียงเองได้ที่แท็บ AI', '— you can transcribe by hand in the AI tab', '— ກົດຖອດສຽງເອງໄດ້ທີ່ແທັບ AI'],
+  ['ถอดเสียงอัตโนมัติ: ถอดใหม่', 'Auto-transcribe: new', 'ຖອດສຽງອັດຕະໂນມັດ: ຖອດໃໝ່'],
+  ['· ใช้ข้อความเดิม', '· reused saved text', '· ໃຊ້ຂໍ້ຄວາມເດີມ'],
+  ['(ไม่เสียเงิน)', '(free)', '(ບໍ່ເສຍເງິນ)'],
+);
+
 // ---- 00-core.js ----
 'use strict';
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.55
-// APP_VERSION_PREV : 1.54
-// APP_VERSION_PREV_OLDER : 1.53
+// APP_VERSION  : 1.64
+// APP_VERSION_PREV : 1.63
+// APP_VERSION_PREV_OLDER : 1.62
+// 1.64 : Auto-transcribe now covers EVERY video that comes into the editor (drag-and-drop, the file button, and the team/VELARIS inbox) — not only the team's clips. Same safety: a clip that already has a transcript (any project, this browser or the shop server; same name + size + length) is never sent again; one clip at a time; stops on the first error; phones skip it; switch in the AI tab. Clips restored from an old project are not transcribed by themselves.
+// 1.63 : Auto-transcribe the team's clips — clips that arrive from VELARIS are transcribed by themselves (Lao = Gemini, Thai = chosen engine) and the text goes into the permanent transcript cache; a clip that already has a transcript (this browser or the shop server; same name + size + length, also when VELARIS put a random 8-hex prefix before the file name) is skipped so nothing is paid twice; one clip at a time, stops on the first error; switch in the AI tab; phones skip it
+// 1.62 : Right-click menu on timeline clips (CapCut style: copy / cut / paste, duplicate, delete, split, trim, Mirror, rotate 90°, separate audio, Auto Cut, edit by text, hide clip; Ctrl/⌘ C X V keys) — Mirror moved out of the crowded inspector into it; the row where the magnet works is marked with 🧲 and dragging a clip on another layer explains it; ⚡ Auto Cut for ALL clips of the project in one go (AI tab, under Auto Cut) — same options as Auto Cut (silences, filler words, animated captions), no dialog per clip, one summary, one "undo everything"; shows which clips still need a (paid, for Lao) transcription before it starts. Made for VELARIS jobs with several raw clips.
+// 1.61 : VELARIS link — clips that the VELARIS site PUTs into the server inbox as vl-<jobId>__<file>.mp4/.mov become the project "VELARIS | <jobId>" automatically (clips on Video 1; more clips for the same job are added to the same project, also when it is open or only exists on the server); exports of such a project are named vl-<jobId>_v001.mp4, v002 ... (one number per export) and go to /out on the shop server.
+// 1.60 : Magnet drag like CapCut but stickier — dragging a Video-1 clip opens a slot (others slide away smoothly), the slot glows when the clip is pulled in (dead-zone, then rubber band, then free flight; insert point has hysteresis; phones buzz); Mirror (flip left-right / top-bottom) for video and image clips, in preview and export.
+// 1.59 : ✂ Edit by text (AI tab, like Premiere's Transcript panel) — the transcript of a clip as clickable text with 3 tabs: text (click a word / sentence, Shift+click for a range, search box that highlights every match and can select them all), silences (length slider) and filler words; Delete cuts the picked parts from the timeline as Extract (close the gap) or Lift (leave the gap); ↶ undoes each delete, ▶ plays from the first cut. Lao transcripts made by Gemini have sentence times only, so Lao text is picked sentence by sentence (Thai Whisper transcripts have word times -> word by word). Reuses getTr / findSilences / findFillers / rippleCut; new liftCut. New file src/js/69-ztxtedit.js
+// 1.58 : the shop's own Lao fonts — 219 more Lao families in the 🔤 font gallery (all weights of each family: Thin / Light / Regular / Medium / SemiBold / Bold / Black, 293 files in total; Noto Sans / Serif / Looped now have 9 weights). They are served by the shop server (/fonts/, licence not checked -> not in the public repo); the weight slider now goes 100-900 and works with every multi-weight family
+// 1.57 : 🎨 text look pack (Text tab, first section) — 26 ready-made looks = Lao font + gradient fill + outline / 3D / glow + text animation; click = add at the playhead, drag onto the timeline or the preview (onto an existing text = change its look), or change the selected text's look from the inspector; NEW text properties it.grad (gradient fill, angle) and it.ext (3D extrusion) drawn in drawText; floating text toolbar above the selected text on the preview (edit words, font, colour / gradient, outline, glow & 3D, size, look, animation)
+// 1.56 : 🚀 Auto Cut (AI tab, first card) — one button: transcribe once (Lao = Gemini, Thai = Whisper; cached) -> cut silences + exact-position filler words (+ retakes when a Claude key exists) -> animated captions (every word, or only the key words / prices chosen by AI; look + 1/2 rows chosen in the dialog, settings remembered) -> result dialog with “watch” and “undo everything” (one click back to before Auto Cut). Also: transcripts are now shared through the shop server (server.js /tr, folder <SykhaiEditor>/transcripts): saved there when transcribed, pulled by every other computer / phone that opens the same clip (name + size + length), checked right before any Gemini call and at start-up; ☁ sync button in “saved transcripts”. Needs the new server.js (restart start.bat once); without it everything still works from the browser cache.
 // 1.55 : auto-captions — new options: 2 stacked rows for fast speech (the second row keeps the normal colour, only the spoken word is highlighted), minimum display time (a short caption is glued to the next one or held on screen until the next caption starts), keyword-only mode (Gemini reads the saved transcript and returns the key phrases of each sentence; the answer is saved with the transcript so it is not asked twice), calm default animations (new “soft” text animations), and a font choice from the Lao font library inside the caption dialog.
 // 1.54 : server.js CORS — the shop server now lists / echoes the allowed request headers instead of '*' (iPhone Safari may refuse '*' and then every call from editor.touktashop.online to the shop server fails with “Load failed”); the editor page itself is unchanged except for the new number. The server only picks this up after start.bat is restarted
 // 1.53 : iPhone — fields inside dialogs are 16 px on touch screens, so Safari no longer zooms the whole page (and leaves it scrolled sideways with the Save button off-screen) when a field such as the server address / password is tapped
@@ -2009,7 +2259,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.55';
+const APP_VERSION = '1.64';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -2358,6 +2608,7 @@ function drawMediaContent(ctx, it, t, W, H, extra) {
     ctx.restore();
   }
   ctx.translate(cx, cy); ctx.rotate(r * Math.PI / 180);
+  if (it.flipX || it.flipY) ctx.scale(it.flipX ? -1 : 1, it.flipY ? -1 : 1);   // v1.60 mirror
   const mk = it.mask || { type: 'none' };
   // frame / clip shapes
   if (mk.type === 'circle') {
@@ -2732,6 +2983,12 @@ function drawText(ctx, it, t, W, H) {
         if (bg && ei === 0) { ctx.save(); ctx.globalAlpha *= rowAlpha; ctx.fillStyle = bg; rrPath(ctx, x0 - pad, y - lineH / 2 + lineH * .06, row.w + pad * 2, lineH * .88, size * .22); ctx.fill(); ctx.restore(); }
       }
       let x = x0;
+      // v1.57: gradient fill — it.grad = { c:[colour,colour,(colour)], a:angle° (90 = top→bottom, 0 = left→right) }; built per row so every line of a caption gets the full gradient
+      const gradFill = () => {
+        const g = it.grad; if (!g || !g.c || g.c.length < 2) return null;
+        const an = (g.a == null ? 90 : g.a) * Math.PI / 180, ca = Math.cos(an), sa = Math.sin(an), L = (Math.abs(ca) * row.w / 2 + Math.abs(sa) * size * .62) || 1, mx = x0 + row.w / 2;
+        const gr = ctx.createLinearGradient(mx - ca * L, y - sa * L, mx + ca * L, y + sa * L); g.c.forEach((c2, i) => gr.addColorStop(i / (g.c.length - 1), c2)); return gr;
+      };
       // paint one string at px; P = optional per-unit animation params, gb = [left, width] of the animated group (for wipes)
       const paint = (s2, px, col, P, gb) => {
         ctx.textAlign = 'left'; ctx.save(); ctx.globalAlpha *= rowAlpha * (P ? clamp(P.a, 0, 1) : 1);
@@ -2741,10 +2998,16 @@ function drawText(ctx, it, t, W, H) {
         const gc = (P && P.glow) ? (it.glow || it.color2 || '#ffffff') : it.glow, gm = (P && P.glow) ? P.glow.m : 1;
         if (gc && ei === 0) { ctx.save(); ctx.shadowColor = gc; ctx.shadowBlur = size * .5 * gm; ctx.fillStyle = gc; ctx.fillText(s2, px, y); ctx.shadowBlur = size * .22 * gm; ctx.fillText(s2, px, y); ctx.restore(); }
         if (P && P.ghost) P.ghost.forEach(g => { ctx.save(); ctx.globalAlpha *= g.a; ctx.fillStyle = g.col; ctx.fillText(s2, px + g.dx, y + g.dy); ctx.restore(); });
+        if (it.ext && it.ext.c && ei === 0) {   // v1.57: 3D extrusion — solid copies stacked down/right (it.ext = { c:colour, d:depth as a fraction of the font size })
+          const n = Math.max(2, Math.round(size * (it.ext.d == null ? .06 : it.ext.d))), sw = (it.stroke && it.strokeW) ? it.strokeW * Math.min(W, H) / 1080 : 0;
+          ctx.save(); ctx.fillStyle = it.ext.c; ctx.strokeStyle = it.ext.c; ctx.lineWidth = sw; ctx.lineJoin = 'round';
+          for (let i = n; i >= 1; i--) { if (i < n) ctx.shadowColor = 'transparent'; const o = i * .8; if (sw) ctx.strokeText(s2, px + o * .35, y + o); ctx.fillText(s2, px + o * .35, y + o); }
+          ctx.restore(); ctx.shadowColor = 'transparent';
+        }
         if (it.stroke && it.strokeW) { ctx.lineWidth = it.strokeW * Math.min(W, H) / 1080; ctx.strokeStyle = it.stroke; ctx.strokeText(s2, px, y); ctx.shadowColor = 'transparent'; }
-        let fill = col;
+        let fill = col; const GR = (it.grad && col === base) ? gradFill() : null; if (GR) fill = GR;
         if (P && P.hue != null) fill = `hsl(${P.hue.toFixed(0)},95%,62%)`;
-        else if (P && P.shine != null) { const g = ctx.createLinearGradient(-blockW / 2, 0, blockW / 2, 0), q = P.shine, lo = clamp(q - .1, 0, 1), mid = clamp(q, 0, 1), hi = clamp(q + .1, 0, 1); g.addColorStop(0, col); g.addColorStop(lo, col); g.addColorStop(mid, '#ffffff'); g.addColorStop(hi, col); g.addColorStop(1, col); fill = g; }
+        else if (P && P.shine != null) { if (GR) { ctx.fillStyle = GR; ctx.fillText(s2, px, y); } const sc0 = GR ? 'rgba(255,255,255,0)' : col; const g = ctx.createLinearGradient(-blockW / 2, 0, blockW / 2, 0), q = P.shine, lo = clamp(q - .1, 0, 1), mid = clamp(q, 0, 1), hi = clamp(q + .1, 0, 1); g.addColorStop(0, sc0); g.addColorStop(lo, sc0); g.addColorStop(mid, '#ffffff'); g.addColorStop(hi, sc0); g.addColorStop(1, sc0); fill = g; }
         ctx.fillStyle = fill; ctx.fillText(s2, px, y); ctx.restore();
       };
       // run paint inside the unit's own transform (about its centre)
@@ -3044,7 +3307,7 @@ function renderTimeline() {
   const sx = body.scrollLeft, sy = body.scrollTop; const W = tlWidth();
   let h = `<div id="tlinner" style="width:${TL.labelW + W}px"><div id="ruler"><div class="corner"><i class="lwh" title="${T('ลากเพื่อปรับความกว้างของช่องชื่อแถว')}"></i></div><div class="rt" style="width:${W}px">${rulerTicks()}${(D.markers || []).map(m => `<i class="mk" data-id="${m.id}" style="left:${m.t * TL.pps}px" title="${T('มาร์กเกอร์ — ดับเบิลคลิกเพื่อลบ')}">⚑</i>`).join('')}</div></div>`;
   const ROWS = [...layerOrder().slice().reverse().map(id => TRACKS.find(t => t.id === id)).filter(Boolean), ...TRACKS.filter(t => t.kind === 'audio')];   // top lane = top layer
-  for (const tr of ROWS) h += `<div class="trow ${tr.kind}${trackH(tr) <= 24 ? ' slim' : ''}${trSt(tr.id).lock ? ' locked' : ''}${trSt(tr.id).hide ? ' hidt' : ''}${trSt(tr.id).mute ? ' mutet' : ''}" data-track="${tr.id}" style="height:${trackH(tr)}px"><div class="tlabel"><div class="tn">${tr.kind === 'audio' ? tr.label : T('เลเยอร์') + ' ' + (layerOrder().indexOf(tr.id) + 1)}</div>${trIcons(tr)}</div><div class="tlane" style="width:${W}px"></div><div class="trh" title="ลากเพื่อปรับความสูงของแถว"></div></div>`;
+  for (const tr of ROWS) h += `<div class="trow ${tr.kind}${trackH(tr) <= 24 ? ' slim' : ''}${trSt(tr.id).lock ? ' locked' : ''}${trSt(tr.id).hide ? ' hidt' : ''}${trSt(tr.id).mute ? ' mutet' : ''}" data-track="${tr.id}" style="height:${trackH(tr)}px"><div class="tlabel"><div class="tn">${tr.kind === 'audio' ? tr.label : T('เลเยอร์') + ' ' + (layerOrder().indexOf(tr.id) + 1)}${TLS.magnet && tr.id === 'V1' ? `<b class="magb" title="${T('แม่เหล็กเปิดอยู่: คลิปในแถวนี้ชิดกันอัตโนมัติ')}">🧲</b>` : ''}</div>${trIcons(tr)}</div><div class="tlane" style="width:${W}px"></div><div class="trh" title="ลากเพื่อปรับความสูงของแถว"></div></div>`;
   h += `<div id="playhead"><i></i></div></div>`;
   body.innerHTML = h;
   for (const it of D.items) {
@@ -3163,8 +3426,16 @@ function initTimelineEvents() {
       const dt = (ev.clientX - x0) / TL.pps; if (Math.abs(ev.clientX - x0) > 2) moved = true; if (!moved && mode === 'move' && Math.abs(ev.clientY - e.clientY) < 3) return;
       if (mode === 'move') {
         let s = Math.max(0, o.start + dt); const s1 = snapVal(s, pts, tol), s2 = snapVal(s + o.dur, pts, tol) - o.dur; s = Math.abs(s1 - s) <= Math.abs(s2 - s) ? s1 : s2; it.start = Math.max(0, s);
+        const rawS = Math.max(0, o.start + dt);
         const rowEl = document.elementFromPoint(ev.clientX, ev.clientY); const row = rowEl && rowEl.closest ? rowEl.closest('.trow') : null;
         if (row && LANE(row.dataset.track) === LANE(o.track)) it.track = row.dataset.track;
+        if (TLS.magnet && o.track !== 'V1' && it.track !== 'V1' && (it.type === 'video' || it.type === 'image') && Math.abs(ev.clientX - x0) > 8 && Date.now() - _mgHintT > 30000) { _mgHintT = Date.now(); toast('แม่เหล็กใช้กับแถวที่มีป้าย 🧲 เท่านั้น — ลากคลิปลงไปวางที่แถวนั้นจึงจะดูดชิดกัน', 6000); }
+        if (TLS.magnet && it.track === 'V1') {
+          magnetDrag(it, rawS);
+          if (!mgPaint(it)) { renderTimeline(); mgPaint(it); }
+          dirty(); emit('inspect-refresh'); seek(PB.t); return;
+        }
+        if (MG.on) mgReset();
       } else if (mode === 'tl') {
         let s = snapVal(o.start + dt, pts, tol); let d = s - o.start;
         if (it.type === 'video' || it.type === 'audio') d = Math.max(d, -(o.in / sp));
@@ -3177,12 +3448,12 @@ function initTimelineEvents() {
         if (it.type === 'audio' && m && !it.loop) d = Math.min(d, m.duration - o.in);
         it.dur = d;
       }
-      if (TLS.magnet && it.track === 'V1') magnetLayout(mode === 'move' ? it.id : null);
+      if (TLS.magnet && (it.track === 'V1' || o.track === 'V1')) magnetLayout(null);
       renderTimeline(); dirty(); emit('inspect-refresh');
       // like CapCut: the player follows the edge you are dragging (trim) or keeps showing the frame under the playhead while the clip moves
       if (mode === 'tl') seek(it.start + .02); else if (mode === 'tr') seek(Math.max(it.start, it.start + it.dur - .04)); else seek(PB.t);
     };
-    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); if (moved) { commit('edit'); } };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); if (MG.on) { if (it.track === 'V1') it.start = MG.slot; mgReset(); } if (moved) { commit('edit'); } };
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
     e.preventDefault();
   });
@@ -3191,12 +3462,15 @@ function initTimelineEvents() {
   }, { passive: false });
   // drag & drop from media bin
   body.addEventListener('dragover', e => {
-    const ty = e.dataTransfer.types; if (ty.includes('text/mediaid')) { e.preventDefault(); const rw = e.target.closest && e.target.closest('.trow'); showDropMark(rw ? { row: rw, mode: 'at', t: dropStart(e, rw.dataset.track) } : null); return; }
+    const ty = e.dataTransfer.types;
+    if (ty.includes('text/tpk')) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; const rw = e.target.closest && e.target.closest('.trow'); showDropMark(rw ? { row: rw, mode: 'at', t: tpkDropStart(e) } : null); return; }
+    if (ty.includes('text/mediaid')) { e.preventDefault(); const rw = e.target.closest && e.target.closest('.trow'); showDropMark(rw ? { row: rw, mode: 'at', t: dropStart(e, rw.dataset.track) } : null); return; }
     if (ty.includes('text/trans') || ty.includes('text/fx')) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; showDropMark(dropTarget(e)); }
   });
   body.addEventListener('dragleave', e => { if (!body.contains(e.relatedTarget)) showDropMark(null); });
   body.addEventListener('drop', e => {
     showDropMark(null);
+    if (e.dataTransfer.types.includes('text/tpk')) { e.preventDefault(); const k = e.dataTransfer.getData('text/tpk'); DRAG = null; tpkDropOnTimeline(e, k); return; }
     if (DRAG && (e.dataTransfer.types.includes('text/trans') || e.dataTransfer.types.includes('text/fx'))) {
       e.preventDefault(); const tg = dropTarget(e); const d = DRAG; DRAG = null; if (!tg) { toast('ปล่อยตรงรอยต่อหรือบนคลิปวิดีโอ/ภาพ'); return; }
       select(tg.it.id); if (d.kind === 'tween') applyTween(tg.it, d.key); else if (d.kind === 'trans') applyTransition(tg.it, d.key); else if (d.kind === 'fx') applyFxPreset(tg.it, d.key); else applyMaskPreset(tg.it, d.key); return;
@@ -3298,7 +3572,7 @@ function renderMediaBin() {
 
 async function importFiles(files, opts) {
   opts = opts || {};
-  const list = [...files]; if (!list.length) return;
+  const list = [...files]; if (!list.length) return; const _trIds = [];
   for (const f of list) {
     const type = f.type.startsWith('video') || /\.(mov|mp4|m4v|webm)$/i.test(f.name) ? 'video' : f.type.startsWith('image') ? 'image' : f.type.startsWith('audio') || /\.(mp3|wav|m4a|aac|ogg)$/i.test(f.name) ? 'audio' : null;
     if (!type) { toast('ไม่รองรับไฟล์: ' + f.name); continue; }
@@ -3313,10 +3587,12 @@ async function importFiles(files, opts) {
         el.removeAttribute('src'); el.load();
       }
     } catch (e) { console.warn(e); toast('เปิดไฟล์ไม่ได้: ' + f.name + ' (ลองไฟล์ H.264 / mp4)'); URL.revokeObjectURL(m.url); continue; }
-    MEDIA.set(m.id, m); if (!m.ref) binAdd(m.id); renderMediaBin(); emit('media-added', m); renderTimeline();
+    MEDIA.set(m.id, m); if (!m.ref && !opts.noBin) binAdd(m.id); renderMediaBin(); emit('media-added', m); renderTimeline();
+    if (opts.autoTr && type === 'video' && !m.ref && !m.proxyOnly) _trIds.push(m.id);
     if (type !== 'image') analyzeAudio(m).then(() => { renderMediaBin(); renderTimeline(); dbPut(m); }); else dbPut(m);
   }
   if (!opts.quiet) toast('นำเข้าแล้ว ' + list.length + ' ไฟล์');
+  if (_trIds.length && typeof trAutoRun === 'function') trAutoRun(_trIds);   // v1.64: transcribe by itself (skips clips that already have a transcript)
 }
 function seekTo(el, t) { return new Promise(res => { const done = () => { el.removeEventListener('seeked', done); res(); }; el.addEventListener('seeked', done); try { el.currentTime = t; } catch (e) { res(); } setTimeout(res, 3000); }); }
 function thumbFrom(src, w, h) {
@@ -3394,6 +3670,56 @@ function magnetLayout(skipId) {
     t = st + it.dur; prev = it;
   }
 }
+// ---- v1.60 magnet DRAG feel (CapCut style, but stickier): while a V1 clip is dragged the others open a slot for it, the slot glows when the clip is pulled in,
+// there is a dead-zone (the clip "sticks" to the slot), then a rubber band, then free flight; the insert point has hysteresis so it never flickers.
+let _mgHintT = 0;   // last time we explained that the magnet only works on the main row
+const MG = { on: false, k: null, slot: 0, snapped: false };
+const MG_SN = 30, MG_RL = 70, MG_H = 16; // px: stick radius, release radius, hysteresis
+function mgBuzz(n) { try { if (navigator.vibrate) navigator.vibrate(n); } catch (e) { } }
+function magnetDrag(it, raw) {
+  const others = D.items.filter(i => i.track === 'V1' && i.id !== it.id).sort((a, b) => a.start - b.start);
+  const ps = [], pe = []; let t = 0, prev = null;
+  for (const o of others) {
+    const ov = prev && o.transIn && o.transIn.ext && o.transIn.prevId === prev.id ? Math.min(o.transIn.ext, prev.dur * .9) : 0;
+    const st = Math.max(0, t - ov); ps.push(st); pe.push(st + o.dur); t = st + o.dur; prev = o;
+  }
+  const n = others.length, c = raw + it.dur / 2, H = MG_H / TL.pps, mid = i => (ps[i] + pe[i]) / 2;
+  let k = MG.k;
+  if (k == null || k > n) { k = 0; while (k < n && c > mid(k)) k++; }
+  else { // swap with a neighbour once the clip has travelled more than half of that neighbour's length past its slot (independent of the dragged clip's own length)
+    const sl = j => j === 0 ? 0 : pe[j - 1];
+    while (k > 0 && sl(k) - raw > (pe[k - 1] - ps[k - 1]) / 2 + H) k--;
+    while (k < n && raw - sl(k) > (pe[k] - ps[k]) / 2 + H) k++;
+  }
+  if (MG.on && k !== MG.k) mgBuzz(10);
+  MG.k = k; MG.on = true;
+  const slot = k === 0 ? 0 : pe[k - 1]; MG.slot = slot;
+  others.forEach((o, i) => { o.start = i < k ? ps[i] : ps[i] + it.dur; });
+  const d = (raw - slot) * TL.pps, ad = Math.abs(d); let off = 0;
+  if (ad >= MG_SN) off = (ad - MG_SN) * MG_RL / (MG_RL - MG_SN); if (ad >= MG_RL) off = ad;
+  const sn = ad < MG_SN; if (sn && !MG.snapped) mgBuzz(8); MG.snapped = sn;
+  it.start = Math.max(0, slot + Math.sign(d) * off / TL.pps);
+  return others;
+}
+function mgPaint(it) {
+  const row = document.querySelector('.trow[data-track="V1"] .tlane'); if (!row) return false;
+  const body = $('#tlbody'); if (body) body.classList.add('mgdrag');
+  let ok = true;
+  for (const i of D.items) {
+    if (i.track !== 'V1') continue;
+    const el = row.querySelector('.clip[data-id="' + i.id + '"]'); if (!el) { ok = false; continue; }
+    el.style.left = (i.start * TL.pps) + 'px';
+    el.classList.toggle('dragging', i.id === it.id); el.classList.toggle('mgsnap', i.id === it.id && MG.snapped);
+  }
+  let g = row.querySelector('.magslot'); if (!g) { g = document.createElement('div'); g.className = 'magslot'; row.insertBefore(g, row.firstChild); }
+  g.style.left = (MG.slot * TL.pps) + 'px'; g.style.width = Math.max(6, it.dur * TL.pps) + 'px'; g.classList.toggle('snap', MG.snapped);
+  return ok;
+}
+function mgReset() {
+  MG.on = false; MG.k = null; MG.snapped = false; 
+  const body = $('#tlbody'); if (body) body.classList.remove('mgdrag');
+  $$('.magslot').forEach(e => e.remove());
+}
 function magnetFix(label) {
   if (!TLS.magnet || label === 'init' || label === 'open') return;
   magnetLayout(null);
@@ -3431,7 +3757,7 @@ function initToolbar() {
   $('#tbSplit').onclick = cmdSplit; $('#tbTrimL').onclick = cmdTrimLeft; $('#tbTrimR').onclick = cmdTrimRight;
   $('#tbDel').onclick = () => cmdDelete(false); $('#tbRipple').onclick = () => cmdDelete(true); $('#tbMark').onclick = cmdMarker;
   const save = () => { try { localStorage.setItem('sk_tls', JSON.stringify(TLS)); } catch (e) { } };
-  $('#tbMagnet').onclick = () => { TLS.magnet = !TLS.magnet; setTog('#tbMagnet', 'magnet'); save(); if (TLS.magnet) { commit('gaps'); toast('เปิดแม่เหล็ก: คลิปบนวิดีโอ 1 จะชิดกันอัตโนมัติ'); } };
+  $('#tbMagnet').onclick = () => { TLS.magnet = !TLS.magnet; setTog('#tbMagnet', 'magnet'); save(); if (TLS.magnet) { commit('gaps'); toast('เปิดแม่เหล็ก: คลิปในแถวที่มีป้าย 🧲 จะชิดกันอัตโนมัติ'); } else { renderTimeline(); toast('ปิดแม่เหล็ก: วางคลิปได้อิสระ เว้นช่องว่างได้'); } };
   $('#tbCover').onclick = () => { if (typeof coverOpen === 'function') coverOpen(); };
   $('#tbSnap').onclick = () => { TLS.snap = !TLS.snap; setTog('#tbSnap', 'snap'); save(); };
   setTog('#tbMagnet', 'magnet'); setTog('#tbSnap', 'snap');
@@ -3439,6 +3765,63 @@ function initToolbar() {
   $('#tbFit').onclick = () => { const w = $('#tlbody').clientWidth - TL.labelW - 30; setZoom(w / Math.max(projectEnd(), 2)); };
   $('#tlbody').addEventListener('dblclick', e => { const mk = e.target.closest('.mk'); if (!mk) return; D.markers = (D.markers || []).filter(m => m.id !== mk.dataset.id); commit('marker'); });
 }
+
+// ---- 23-ctxmenu.js ----
+// ============================================================
+//  v1.62 — right-click menu on a timeline clip (CapCut style, only the commands that matter) + copy / cut / paste of clips.
+//  Mirror / rotate live here now (not in the crowded inspector on the right).
+// ============================================================
+const CB = { it: null };   // internal clip clipboard
+const MODK = /Mac|iPhone|iPad/.test(navigator.platform || '') ? '⌘' : 'Ctrl+';
+function cbCopy(id, quiet) { const it = getItem(id); if (!it) return; CB.it = JSON.parse(JSON.stringify(it)); if (!quiet) toast('คัดลอกคลิปแล้ว'); }
+function cbCut(id) { const it = getItem(id); if (!it) return; cbCopy(id, true); select(id); cmdDelete(false); toast('ตัดคลิปแล้ว — กดวางได้ที่หัวอ่าน'); }
+function cbPaste() {
+  if (!CB.it) return toast('ยังไม่ได้คัดลอกคลิป');
+  const b = JSON.parse(JSON.stringify(CB.it)); b.id = uid(); b.start = Math.max(0, PB.t); b.transIn = null; b.transOut = null; b.tween = null;
+  try { const kind = (TRACKS.find(t => t.id === b.track) || {}).kind; if (kind) { const tr = freeTrack(kind, b.start, b.dur, b.track); if (tr) b.track = tr; } } catch (e) { }
+  addItem(b); commit('paste'); select(b.id);
+}
+function ctxFlip(it, axis) { if (axis === 'x') it.flipX = !it.flipX; else it.flipY = !it.flipY; commit('flip'); renderInspector(); }
+function ctxRotate(it) { let n = Math.round(prop(it, 'r', PB.t) || 0) + 90; if (n > 180) n -= 360; setXf(it, 'r', n); commit('rotate'); renderInspector(); }
+function ctxItems(it) {
+  const t = PB.t, inside = t > it.start + .05 && t < it.start + it.dur - .05, vis = it.type === 'video' || it.type === 'image', vid = it.type === 'video';
+  const L = [
+    ['คัดลอกคลิป', MODK + 'C', () => cbCopy(it.id)],
+    ['ตัดคลิป (Cut)', MODK + 'X', () => cbCut(it.id)],
+    ['วางคลิปที่หัวอ่าน', MODK + 'V', () => cbPaste(), !CB.it],
+    ['ทำซ้ำคลิป', MODK + 'D', () => { const b = duplicateItem(it.id); commit('dup'); if (b) select(b.id); }],
+    ['ลบคลิป', '⌫', () => { select(it.id); cmdDelete(false); }],
+    ['ลบคลิปและปิดช่องว่าง', '⇧⌫', () => { select(it.id); cmdDelete(true); }],
+    '-',
+    ['แยกคลิปที่หัวอ่าน', 'S', () => { select(it.id); cmdSplit(); }, !inside],
+    ['ตัดซ้ายถึงหัวอ่าน', 'Q', () => { select(it.id); cmdTrimLeft(); }, !inside],
+    ['ตัดขวาจากหัวอ่าน', 'W', () => { select(it.id); cmdTrimRight(); }, !inside],
+  ];
+  if (vis) L.push('-', ['กลับด้านซ้าย-ขวา (Mirror)', it.flipX ? '✓' : '', () => ctxFlip(it, 'x')], ['กลับด้านบน-ล่าง', it.flipY ? '✓' : '', () => ctxFlip(it, 'y')], ['หมุน 90°', '', () => ctxRotate(it)]);
+  if (vid) L.push('-', ['แยกเสียงออกจากวิดีโอ', '', () => sepAudio(it)], ['Auto Cut คลิปนี้', '', () => { select(it.id); acUI(); }], ['แก้ไขตามข้อความ', '', () => { select(it.id); teUI(); }]);
+  L.push('-', [it.hidden ? 'แสดงคลิป' : 'ซ่อนคลิป', '', () => { it.hidden = !it.hidden; commit('hide'); }]);
+  return L;
+}
+function ctxHide() {
+  const m = $('#ctxm'); if (m) m.remove();
+  window.removeEventListener('pointerdown', ctxAway, true); window.removeEventListener('keydown', ctxKey, true); window.removeEventListener('blur', ctxHide); window.removeEventListener('wheel', ctxHide);
+}
+function ctxAway(e) { if (!e.target.closest || !e.target.closest('#ctxm')) ctxHide(); }
+function ctxKey(e) { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); ctxHide(); } }
+function ctxShow(x, y, items) {
+  ctxHide(); const m = document.createElement('div'); m.id = 'ctxm';
+  m.innerHTML = items.map((r, i) => r === '-' ? '<hr>' : `<button data-i="${i}" ${r[3] ? 'disabled' : ''}><span translate="no">${esc(T(r[0]))}</span><kbd>${esc(r[1] || '')}</kbd></button>`).join('');
+  document.body.appendChild(m);
+  const w = m.offsetWidth, h = m.offsetHeight; m.style.left = Math.max(4, Math.min(x, innerWidth - w - 6)) + 'px'; m.style.top = Math.max(4, Math.min(y, innerHeight - h - 6)) + 'px';
+  m.onclick = e => { const b = e.target.closest('button'); if (!b || b.disabled) return; const r = items[+b.dataset.i]; ctxHide(); r[2](); };
+  m.oncontextmenu = e => e.preventDefault();
+  setTimeout(() => { window.addEventListener('pointerdown', ctxAway, true); window.addEventListener('keydown', ctxKey, true); window.addEventListener('blur', ctxHide); window.addEventListener('wheel', ctxHide, { passive: true }); }, 0);
+}
+document.addEventListener('contextmenu', e => {
+  const c = e.target.closest && e.target.closest('#tlbody .clip'); if (!c || HOME.open) return;
+  const it = getItem(c.dataset.id); if (!it) return;
+  e.preventDefault(); select(it.id); ctxShow(e.clientX, e.clientY, ctxItems(it));
+});
 
 // ---- 25-store.js ----
 // ============================================================
@@ -3906,14 +4289,63 @@ async function srvInboxList() {
   try {
     const r = await srvFetch('/inbox?all=1'); if (!r.ok) return null;
     const have = new Set([...MEDIA.values()].map(m => m.name)), seen = refSeenGet();
-    SRV.inbox = (await r.json()).filter(x => /\.(mp4|mov|m4v|webm)$/i.test(x.name) && (!x.done || (!have.has(x.name) && !seen.has(x.name))));
+    SRV.inbox = (await r.json()).filter(x => /\.(mp4|mov|m4v|webm)$/i.test(x.name) && (VL_RE.test(x.name) ? !x.done : (!x.done || (!have.has(x.name) && !seen.has(x.name)))));
     return SRV.inbox;
   } catch (e) { return null; }
 }
+const VL_RE = /^vl-([A-Za-z0-9-]{1,60})__(.+\.(?:mp4|mov|m4v|webm))$/i;
 let _inboxBusy = false; const _inboxFail = new Set();
+// ----- v1.61: VELARIS jobs. The marketing site PUTs clips as  vl-<jobId>__<file>.mp4|mov  into the inbox; we build the project "VELARIS | <jobId>" (pid = vl-<jobId>) and put the clips on Video 1.
+// Exports of that project are named vl-<jobId>_v001.mp4, v002 ... (see 50-export.js) and go to /out where VELARIS picks them up.
+async function srvJobImport(list) {
+  const groups = {}; for (const f of list) { const m = VL_RE.exec(f.name); if (m) (groups[m[1]] = groups[m[1]] || []).push({ f, orig: m[2] }); }
+  let total = 0;
+  for (const jobId of Object.keys(groups)) {
+    const pid = 'vl-' + jobId, ready = [];
+    const arr = groups[jobId].sort((a, b) => a.f.name.localeCompare(b.f.name, undefined, { numeric: true }));
+    for (const { f, orig } of arr) {
+      if (_inboxFail.has(f.name)) continue;
+      try {
+        const r = await srvFetch('/inbox/' + srvId(f.name)); if (!r.ok) continue;
+        const blob = await r.blob(); const id = f.name + '|' + blob.size;
+        if (!MEDIA.has(id)) await importFiles([new File([blob], orig, { type: /\.webm$/i.test(orig) ? 'video/webm' : 'video/mp4' })], { quiet: true, noBin: true, id });
+        if (MEDIA.has(id)) ready.push({ f, id }); else _inboxFail.add(f.name);
+      } catch (e) { console.warn('srvJobImport', e); _inboxFail.add(f.name); }
+    }
+    if (!ready.length) continue;
+    let n = 0;
+    if (D && D.pid === pid) {            // that project is the one open right now: add to it directly
+      for (const { id } of ready) if (!D.items.some(i => i.mediaId === id)) { binAdd(id); addMediaToTimeline(id, 'V1'); n++; }
+      await projPut(projRec(D));
+    } else {
+      let rec0 = await projGet(pid);
+      try { const rr = await srvFetch('/projects/' + srvId(pid)); if (rr.ok) { const sv = await rr.json(); if (sv && sv.doc && (!rec0 || (sv.updated || 0) > (rec0.updated || 0))) rec0 = sv; } } catch (e) { }   // another computer may already have this job: never start over and overwrite it
+      let d = null;
+      if (rec0) { try { d = Object.assign(newDoc(), JSON.parse(rec0.doc)); } catch (e) { d = null; } }
+      if (!d) { d = newDoc(); d.pid = pid; d.name = 'VELARIS | ' + jobId; }
+      d.vl = jobId; d.bin = d.bin || [];
+      for (const { id } of ready) {
+        if (d.items.some(i => i.mediaId === id)) continue;
+        const m = MEDIA.get(id); if (!d.bin.includes(id)) d.bin.push(id);
+        const st = d.items.filter(i => i.track === 'V1').reduce((a, i) => Math.max(a, i.start + i.dur), 0);
+        const it = mkMedia('V1', id, st, 0, m.duration); if (m.type === 'video') { it.vol = 1; if (m.hasAudio) it.normalize = true; }
+        d.items.push(it); n++;
+      }
+      const rec = projRec(d); await projPut(rec); if (typeof srvSync === 'function') srvSync(rec);
+    }
+    if (D && D.pid === pid && !D.vl) D.vl = jobId;
+    srvQueueMedia(ready.map(x => x.id));
+    if (typeof trAutoRun === 'function') trAutoRun(ready.map(x => x.id));   // v1.63: transcribe the new clips by itself (skips anything already transcribed)
+    for (const { f } of ready) { try { await srvFetch('/inbox/' + srvId(f.name), { method: 'DELETE' }); } catch (e) { } }
+    total += n; toast(`ได้งานใหม่จาก VELARIS: ${jobId} (${n} คลิป) — เปิดได้ที่หน้าโปรเจกต์`, 9000);
+  }
+  if (total && HOME.open && typeof renderHome === 'function') renderHome();
+  return total;
+}
 async function srvInboxImport(opts) {
   opts = opts || {}; if (_inboxBusy) return 0;
-  const list = await srvInboxList(); if (!list) { if (!opts.quiet) toast('เซิร์ฟเวอร์ไม่พร้อม — ตรวจ ⚙ ตั้งค่า', 5000); return 0; }
+  let list = await srvInboxList(); if (!list) { if (!opts.quiet) toast('เซิร์ฟเวอร์ไม่พร้อม — ตรวจ ⚙ ตั้งค่า', 5000); return 0; }
+  if (list.some(x => VL_RE.test(x.name))) { _inboxBusy = true; let nj = 0; try { nj = await srvJobImport(list.filter(x => VL_RE.test(x.name))); } finally { _inboxBusy = false; } list = list.filter(x => !VL_RE.test(x.name)); if (!list.length) return nj; }
   if (!list.length) { if (!opts.quiet) toast('กล่องรับว่าง — ยังไม่มีคลิปใหม่', 4000); return 0; }
   _inboxBusy = true; let n = 0, i = 0;
   try {
@@ -4071,7 +4503,7 @@ function buildLeft() {
     const a = e.target.closest('[data-aadd]'); if (a) addMediaToTimeline(a.dataset.id, a.dataset.aadd, PB.t);
   };
   $('#btnImport').onclick = () => $('#fileIn').click();
-  $('#fileIn').onchange = e => { importFiles(e.target.files); e.target.value = ''; };
+  $('#fileIn').onchange = e => { importFiles(e.target.files, { autoTr: true }); e.target.value = ''; };
 }
 function showTab(id) {
   $$('#leftTabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === id));
@@ -4231,7 +4663,7 @@ function renderInspector() {
     h += `<div class="btnrow"><button data-act="translate">🌐 แปลไทย→ลาว</button></div>`;
     h += S('สไตล์สำเร็จรูป', 'style', TEXT_STYLES.map(s => [s.id, s.label]), it);
     h += `<div class="sec">ตำแหน่ง</div>` + R('แนวตั้ง (0=บน, 1=ล่าง)', 'ay', 0, 1, .005, it) + R('ซ้าย-ขวา', 'xf.x', -1, 1, .005, it, 1) + R('ขยับขึ้น-ลง', 'xf.y', -.5, .5, .005, it, 1) + R('ขนาดซูม', 'xf.s', .3, 3, .01, it, 1) + R('หมุน', 'xf.r', -45, 45, .5, it, 1) + R('ความกว้างสูงสุด', 'maxW', .3, 1, .01, it);
-    h += `<div class="sec">รูปแบบตัวอักษร</div><div class="btnrow"><button data-act="lfopen">🔤 ${lfIdOf(it.font) ? esc(LF_BY[lfIdOf(it.font)].name) : T('เลือกฟอนต์')}</button></div>` + R('ขนาด', 'size', 16, 200, 1, it) + R('น้ำหนัก', 'weight', 400, 900, 100, it) + C('สีบรรทัด 1', 'color', it) + C('สีบรรทัด 2 / เน้น', 'color2', it) + C('สีขอบตัวอักษร', 'stroke', it, '#000000') + R('ความหนาขอบ', 'strokeW', 0, 24, 1, it) + K('เงา', 'shadow', it, false);
+    h += `<div class="sec">รูปแบบตัวอักษร</div><div class="btnrow"><button data-act="lfopen">🔤 ${lfIdOf(it.font) ? esc(LF_BY[lfIdOf(it.font)].name) : T('เลือกฟอนต์')}</button><button data-act="tpkopen">🎨 ${T('เปลี่ยนลุค (แพ็ก)')}</button><button data-act="tbfill">🌈 ${T('ไล่สี / ขอบ / 3D')}</button></div>` + R('ขนาด', 'size', 16, 200, 1, it) + R('น้ำหนัก', 'weight', 100, 900, 100, it) + C('สีบรรทัด 1', 'color', it) + C('สีบรรทัด 2 / เน้น', 'color2', it) + C('สีขอบตัวอักษร', 'stroke', it, '#000000') + R('ความหนาขอบ', 'strokeW', 0, 24, 1, it) + K('เงา', 'shadow', it, false);
     h += S('กรอบพื้นหลัง', 'box', [['none', 'ไม่มี'], ['line', 'แถบต่อบรรทัด'], ['line2', 'แถบ: บรรทัดล่างสีต่าง'], ['block', 'ป้ายก้อนเดียว']], it);
     if (it.box && it.box !== 'none') h += C('สีพื้น', 'bg', it, '#000000') + (it.box === 'line2' ? C('สีแถบบรรทัด 2', 'bg2', it, '#E02B3A') : '');
     h += `<div class="sec">แอนิเมชัน</div>` + S('เข้า', 'anim.in', ANIM_IN, it) + S('ออก', 'anim.out', [['none', 'ไม่มี'], ['fade', 'เลือนหาย'], ['down', 'ตกลง']], it) + R('ความเร็ว (วิ)', 'anim.d', .1, 1, .05, it) + R('บรรทัด 2 ตามมาหลัง (วิ)', 'reveal', 0, 2, .05, it) + K('เอฟเฟกต์เงาตามหลัง', 'anim.echo', it, false);
@@ -4290,7 +4722,7 @@ function bindInspector(it) {
     if (act === 'del') cmdDelete(false); else if (act === 'dup') { const b = duplicateItem(it.id); commit('dup'); select(b.id); }
     else if (act === 'clearmutes') { it.mutes = []; commit('mutes'); renderInspector(); }
     else if (act === 'gaps') cmdCloseGaps('V1');
-    else if (act === 'lfopen') lfOpen(it); else if (act === 'taopen') taOpen(); else if (act === 'tanone') taSet(it, 'none');
+    else if (act === 'lfopen') lfOpen(it); else if (act === 'tpkopen') tpkOpen(it); else if (act === 'tbfill') tbOpen('fill'); else if (act === 'taopen') taOpen(); else if (act === 'tanone') taSet(it, 'none');
     else if (typeof AI !== 'undefined' && AI.inspectorAction) AI.inspectorAction(act, it);
   };
 }
@@ -4356,8 +4788,7 @@ function ccVideo(it) {
     h += sec('ตำแหน่งและขนาด') + RR('ขนาด (%)', 'xf.s', .1, 4, .01, it, { kf: 1, m: 100, def: 1 }) + K('ปรับขนาดสัดส่วนเดิม (Uniform)', 'uni', it, true);
     if (it.uni === false) h += RR('ขนาดแนวนอน (%)', 'sx', .1, 4, .01, it, { m: 100, def: 1 }) + RR('ขนาดแนวตั้ง (%)', 'sy', .1, 4, .01, it, { m: 100, def: 1 });
     h += RR('ซ้าย-ขวา', 'xf.x', -1, 1, .005, it, { kf: 1, def: 0 }) + RR('บน-ล่าง', 'xf.y', -1, 1, .005, it, { kf: 1, def: 0 }) + RR('หมุน (°)', 'xf.r', -180, 180, 1, it, { kf: 1, def: 0 });
-    h += `<div class="alignrow"><button data-act="align" data-v="l" title="ชิดซ้าย">⇤</button><button data-act="align" data-v="c" title="กึ่งกลางแนวนอน">⇔</button><button data-act="align" data-v="r" title="ชิดขวา">⇥</button><button data-act="align" data-v="t" title="ชิดบน">⤒</button><button data-act="align" data-v="m" title="กึ่งกลางแนวตั้ง">⇕</button><button data-act="align" data-v="b" title="ชิดล่าง">⤓</button></div>`;
-    h += S('การแสดงผล', 'fit', [['cover', 'เต็มจอ 9:16 (ครอป)'], ['contain', 'ทั้งภาพ (มีขอบ)']], it);
+    h += `<div class="alignrow"><button data-act="align" data-v="l" title="ชิดซ้าย">⇤</button><button data-act="align" data-v="c" title="กึ่งกลางแนวนอน">⇔</button><button data-act="align" data-v="r" title="ชิดขวา">⇥</button><button data-act="align" data-v="t" title="ชิดบน">⤒</button><button data-act="align" data-v="m" title="กึ่งกลางแนวตั้ง">⇕</button><button data-act="align" data-v="b" title="ชิดล่าง">⤓</button></div>`;    h += S('การแสดงผล', 'fit', [['cover', 'เต็มจอ 9:16 (ครอป)'], ['contain', 'ทั้งภาพ (มีขอบ)']], it);
     h += sec('การผสมภาพ (Blend)') + S('โหมด', 'blend', BLENDS, it) + RR('ความโปร่งใส (%)', 'xf.o', 0, 1, .01, it, { kf: 1, m: 100, def: 1 });
     h += sec('คุณภาพภาพ') + S('เพิ่มความคมชัด', 'fx.sharpen', [[0, 'ปิด'], [1, 'ปานกลาง'], [2, 'มาก']], it) + K('ลดนอยส์ภาพ', 'fx.denoise', it, false) + RR('เบลอ', 'fx.blur', 0, 20, .5, it, { def: 0 });
     h += `<div class="btnrow"><button data-act="enhance">✨ ปรับภาพให้สวย/ชัดอัตโนมัติ</button></div>`;
@@ -4500,14 +4931,15 @@ function ccAction(act, a, it) {
     case 'spdset': { const span = it.dur * (it.speed || 1); it.speed = +v; it.dur = Math.max(.1, span / it.speed); commit('speed'); renderInspector(); return true; }
     case 'spdreset': { const span = it.dur * (it.speed || 1); it.speed = 1; it.dur = span; commit('speed'); renderInspector(); return true; }
     case 'eyedrop': new EyeDropper().open().then(r => { setPath(it, 'chroma.color', r.sRGBHex); setPath(it, 'chroma.on', true); commit('chroma'); renderInspector(); }).catch(() => { }); return true;
-    case 'sepaudio': {
-      const m = MEDIA.get(it.mediaId); if (!m || m.hasAudio === false) { toast('คลิปนี้ไม่มีเสียง'); return true; }
-      if ((it.speed || 1) !== 1) { toast('แยกเสียงได้เฉพาะคลิปที่ความเร็ว 1 เท่า'); return true; }
-      const au = mkAudio('A2', it.mediaId, it.start, it.dur); au.in = it.in || 0; au.vol = it.vol ?? 1; au.fadeIn = it.fadeIn || 0; au.fadeOut = it.fadeOut || 0; au.duck = false; au.loop = false;
-      au.track = freeTrack('audio', it.start, it.dur, 'A2'); if (au.track === 'A1') au.track = 'A2'; addItem(au); it.muted = true; commit('sepaudio'); toast('แยกเสียงไปไว้แถวเสียงแล้ว'); renderInspector(); return true;
-    }
+    case 'sepaudio': sepAudio(it); return true;
   }
   return false;
+}
+function sepAudio(it) {   // also used by the right-click menu
+  const m = MEDIA.get(it.mediaId); if (!m || m.hasAudio === false) { toast('คลิปนี้ไม่มีเสียง'); return; }
+  if ((it.speed || 1) !== 1) { toast('แยกเสียงได้เฉพาะคลิปที่ความเร็ว 1 เท่า'); return; }
+  const au = mkAudio('A2', it.mediaId, it.start, it.dur); au.in = it.in || 0; au.vol = it.vol ?? 1; au.fadeIn = it.fadeIn || 0; au.fadeOut = it.fadeOut || 0; au.duck = false; au.loop = false;
+  au.track = freeTrack('audio', it.start, it.dur, 'A2'); if (au.track === 'A1') au.track = 'A2'; addItem(au); it.muted = true; commit('sepaudio'); toast('แยกเสียงไปไว้แถวเสียงแล้ว'); renderInspector();
 }
 
 // ---------- canvas widgets (curves, colour wheels) ----------
@@ -4658,10 +5090,11 @@ function tpDraw(cv, st) {
   const x = cv.getContext('2d'); x.clearRect(0, 0, cv.width, cv.height); x.drawImage(VP.tpc, 135, 399, 270, 162, 0, 0, cv.width, cv.height);
 }
 function buildTextPane() {
-  $('#pane-text').innerHTML = `<button id="btnTA" class="wide primary" style="margin-bottom:8px">✨ ${T('ห้องแอนิเมชันข้อความ (22 แบบ)')}</button><div class="hint">กดเพื่อเพิ่มข้อความที่ตำแหน่งหัวอ่าน (เส้นแดง) — ใช้ *คำ* เพื่อทำตัวเหลือง/เน้น</div><div class="vgrid tt-grid">` +
+  $('#pane-text').innerHTML = `<div class="sec" style="margin-top:0">🎨 ${T('แพ็กข้อความ — ลุคสำเร็จรูป')}</div><div class="hint">กดเพื่อเพิ่มที่หัวอ่าน · หรือลากการ์ดไปวางบนไทม์ไลน์/บนจอ (วางทับข้อความเดิม = เปลี่ยนลุค) · เอาเมาส์ชี้การ์ดเพื่อดูแอนิเมชัน</div><div class="vgrid tpkgrid" id="tpkPane">${tpkTiles()}</div><hr><button id="btnTA" class="wide primary" style="margin-bottom:8px">✨ ${T('ห้องแอนิเมชันข้อความ (22 แบบ)')}</button><div class="hint">กดเพื่อเพิ่มข้อความที่ตำแหน่งหัวอ่าน (เส้นแดง) — ใช้ *คำ* เพื่อทำตัวเหลือง/เน้น</div><div class="vgrid tt-grid">` +
     TEXT_STYLES.map(s => `<button class="vt tstyle" data-style="${s.id}"><canvas width="270" height="162"></canvas><span>${esc(s.label)}</span></button>`).join('') +
     `</div><hr><button id="btnFooter" class="wide">+ ใส่ข้อความท้ายจอตลอดคลิป</button>`;
-  $('#pane-text').onclick = e => { const b = e.target.closest('.tstyle'); if (b) addText(b.dataset.style); if (e.target.id === 'btnFooter') addFooter(); if (e.target.id === 'btnTA') taOpen(); };
+  tpkWire($('#tpkPane'));
+  $('#pane-text').onclick = e => { const k = e.target.closest('.tpk'); if (k) return tpkAdd(TPK_BY[k.dataset.pk]); const b = e.target.closest('.tstyle'); if (b) addText(b.dataset.style); if (e.target.id === 'btnFooter') addFooter(); if (e.target.id === 'btnTA') taOpen(); };
   drawTextTiles();
 }
 async function drawTextTiles() { await pvSamples(); $$('#pane-text .tstyle').forEach(b => { const st = TEXT_STYLES.find(s => s.id === b.dataset.style); if (st) tpDraw($('canvas', b), st); }); }
@@ -5154,36 +5587,44 @@ async function runExport(opts) {
   if (EXP.cancel) { msg.textContent = 'ยกเลิกแล้ว'; return null; }
   const blob = new Blob(chunks, { type: ext === 'mp4' ? 'video/mp4' : 'video/webm' });
   EXP.last = { size: blob.size, mime, ext, w: W, h: H, dur: total };
+  // v1.61: VELARIS jobs are exported as vl-<jobId>_v001, v002 ... (one number per export, never overwrites an older round); other projects keep their own name
+  let outBase = (D.name || 'video'); if (!opts.noDownload && D.vl) { D.vlRound = (D.vlRound || 0) + 1; outBase = 'vl-' + D.vl + '_v' + String(D.vlRound).padStart(3, '0'); emit('doc', 'vlround'); }
   if (!opts.noDownload) {
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = (D.name || 'video') + '.' + ext; document.body.appendChild(a); a.click(); setTimeout(() => { a.remove(); }, 2000);
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = outBase + '.' + ext; document.body.appendChild(a); a.click(); setTimeout(() => { a.remove(); }, 2000);
   }
   if (bar) bar.style.width = '100%'; if (msg) msg.textContent = `เสร็จแล้ว ✔ (${(blob.size / 1048576).toFixed(1)} MB, .${ext})` + (ext === 'webm' ? ' — เบราว์เซอร์ไม่รองรับ mp4 จึงได้ .webm' : '');
   if (!opts.noDownload && D.cover && typeof coverDownload === 'function') setTimeout(() => { coverDownload(true).catch(() => { }); }, 1800);
-  EXP.blob = blob; if (!opts.noDownload && typeof srvPushOut === 'function') srvPushOut(blob, (D.name || 'video').replace(/[\\/:*?"<>|]/g, '_') + '.' + ext);
+  EXP.blob = blob; if (!opts.noDownload && typeof srvPushOut === 'function') srvPushOut(blob, outBase.replace(/[\\/:*?"<>|]/g, '_') + '.' + ext);
   return blob;
 }
 
 // ---- 58-fonts.js ----
 // ============================================================
-//  v1.49 — Lao font library: 4 formal + 44 decorative free fonts (OFL), lazy-loaded from fonts/ when a font is picked
+//  v1.49 / v1.58 — Lao font library: 4 formal + 44 decorative free fonts (OFL) + the shop's own Lao fonts (server-only, all weights), lazy-loaded from fonts/ when a font is picked
 //  (never embedded in index.html). Files: fonts/<Id>.woff2 (display) and fonts/<Id>-<weight>.woff2 (formal).
 //  Picked fonts are stored in it.font as a CSS stack that starts with "LF-<Id>"; they are preloaded before preview/export.
 // ============================================================
-const LAOFONTS = [["NotoSansLao", "Noto Sans Lao", "formal"], ["NotoSerifLao", "Noto Serif Lao", "formal"], ["NotoSansLaoLooped", "Noto Sans Lao Looped", "formal"], ["Phetsarath", "Phetsarath", "formal"], ["Apsara", "Apsara", "script"], ["BaiLan", "Bai Lan", "traditional"], ["BanGuesthouse", "Ban Guesthouse", "handwritten"], ["Banteay", "Banteay", "traditional"], ["BlueMarketBrush", "Blue Market Brush", "brush"], ["CeruleanOrnament", "Cerulean Ornament", "fancy"], ["Chotmai", "Chotmai", "handwritten"], ["CivicMonoline", "Civic Monoline", "painted"], ["DekNoi", "Dek Noi", "handwritten"], ["ForestWeathered", "Forest Weathered", "brush"], ["Hankha", "Hankha", "painted"], ["HuayTem", "Huay Tem", "script"], ["IndigoChisel", "Indigo Chisel", "traditional"], ["Kamphaeng", "Kamphaeng", "stencil"], ["KdarKhien", "Kdar Khien", "handwritten"], ["Khanom", "Khanom", "fancy"], ["KouangSiWaterfall", "Kouang Si Waterfall", "handwritten"], ["Krathong", "Krathong", "script"], ["Lamvong", "Lamvong", "script"], ["NamOu", "Nam Ou", "script"], ["NganWat", "Ngan Wat", "fancy"], ["NonSawat", "Non Sawat", "script"], ["Paksong", "Paksong", "handwritten"], ["Phsar", "Phsar", "painted"], ["PreahNeak", "Preah Neak", "fancy"], ["RoadsideMenu", "Roadside Menu", "script"], ["Sila", "Sila", "traditional"], ["Songkran", "Songkran", "fancy"], ["StoneFlourish", "Stone Flourish", "script"], ["SuanAhan", "Suan Ahan", "painted"], ["Suksa", "Suksa", "script"], ["TaKot", "Ta Kot", "traditional"], ["TadFane", "Tad Fane", "painted"], ["Talat", "Talat", "handwritten"], ["TerracottaRounded", "Terracotta Rounded", "painted"], ["Thammasat", "Thammasat", "painted"], ["ThangTan", "Thang Tan", "painted"], ["TimberBrush", "Timber Brush", "brush"], ["TukTuk", "Tuk Tuk", "painted"], ["VermilionHeritage", "Vermilion Heritage", "traditional"], ["VillageNotice", "Village Notice", "handwritten"], ["WatPhou", "Wat Phou", "traditional"], ["WoodlandHook", "Woodland Hook", "painted"], ["Yaowarat", "Yaowarat", "painted"]];
+const LAOFONTS = [["NotoSansLao", "Noto Sans Lao", "formal"], ["NotoSerifLao", "Noto Serif Lao", "formal"], ["NotoSansLaoLooped", "Noto Sans Lao Looped", "formal"], ["Phetsarath", "Phetsarath", "formal"], ["Apsara", "Apsara", "script"], ["BaiLan", "Bai Lan", "traditional"], ["BanGuesthouse", "Ban Guesthouse", "handwritten"], ["Banteay", "Banteay", "traditional"], ["BlueMarketBrush", "Blue Market Brush", "brush"], ["CeruleanOrnament", "Cerulean Ornament", "fancy"], ["Chotmai", "Chotmai", "handwritten"], ["CivicMonoline", "Civic Monoline", "painted"], ["DekNoi", "Dek Noi", "handwritten"], ["ForestWeathered", "Forest Weathered", "brush"], ["Hankha", "Hankha", "painted"], ["HuayTem", "Huay Tem", "script"], ["IndigoChisel", "Indigo Chisel", "traditional"], ["Kamphaeng", "Kamphaeng", "stencil"], ["KdarKhien", "Kdar Khien", "handwritten"], ["Khanom", "Khanom", "fancy"], ["KouangSiWaterfall", "Kouang Si Waterfall", "handwritten"], ["Krathong", "Krathong", "script"], ["Lamvong", "Lamvong", "script"], ["NamOu", "Nam Ou", "script"], ["NganWat", "Ngan Wat", "fancy"], ["NonSawat", "Non Sawat", "script"], ["Paksong", "Paksong", "handwritten"], ["Phsar", "Phsar", "painted"], ["PreahNeak", "Preah Neak", "fancy"], ["RoadsideMenu", "Roadside Menu", "script"], ["Sila", "Sila", "traditional"], ["Songkran", "Songkran", "fancy"], ["StoneFlourish", "Stone Flourish", "script"], ["SuanAhan", "Suan Ahan", "painted"], ["Suksa", "Suksa", "script"], ["TaKot", "Ta Kot", "traditional"], ["TadFane", "Tad Fane", "painted"], ["Talat", "Talat", "handwritten"], ["TerracottaRounded", "Terracotta Rounded", "painted"], ["Thammasat", "Thammasat", "painted"], ["ThangTan", "Thang Tan", "painted"], ["TimberBrush", "Timber Brush", "brush"], ["TukTuk", "Tuk Tuk", "painted"], ["VermilionHeritage", "Vermilion Heritage", "traditional"], ["VillageNotice", "Village Notice", "handwritten"], ["WatPhou", "Wat Phou", "traditional"], ["WoodlandHook", "Woodland Hook", "painted"], ["Yaowarat", "Yaowarat", "painted"], ["Baihyar", "Baihyar", "formal"], ["Boonhome", "Boon Home", "formal"], ["Boonbaan", "Boonbaan", "formal"], ["Boonlor", "Boonlor", "formal"], ["Buangern", "Buangern", "painted"], ["Buddhapandit", "Buddhapandit", "formal"], ["Hinsiew", "Hinsiew", "formal"], ["Hongkad01", "Hongkad 01", "painted"], ["JGBasicLao", "JG Basic Lao", "formal"], ["KhamBuhan", "Kham Buhan", "formal"], ["Kom", "Kom", "handwritten"], ["LaiLao2020", "Lai Lao 2020", "painted"], ["Lao3D", "Lao 3D", "fancy"], ["LaoABCFORKID", "Lao ABC FOR KID", "fancy"], ["LaoABC1", "Lao ABC1", "fancy"], ["LaoABC2", "Lao ABC2", "fancy"], ["LaoAnouvong", "Lao Anouvong", "formal"], ["LaoBeauty1", "Lao Beauty 1", "fancy"], ["LaoBeauty2", "Lao Beauty 2", "fancy"], ["LaoBoupha", "Lao Boupha", "painted"], ["LaoBuathong", "Lao Buathong", "script"], ["LaoBuddhavong", "Lao Buddhavong", "traditional"], ["LaoBuhane1", "Lao Buhane 1", "script"], ["LaoBuhane2", "Lao Buhane 2", "painted"], ["LaoCafe", "Lao Cafe", "formal"], ["LaoChampasak", "Lao Champasak", "formal"], ["LaoChampathong1", "Lao Champathong 1", "formal"], ["LaoChampathong2", "Lao Champathong 2", "painted"], ["LaoChampathong3", "Lao Champathong 3", "formal"], ["LaoCircle", "Lao Circle", "formal"], ["LaoClassic1", "Lao Classic 1", "formal"], ["LaoClassic2", "Lao Classic 2", "painted"], ["LaoClassic3", "Lao Classic 3", "formal"], ["LaoClassic4", "Lao Classic 4", "painted"], ["LaoClassic5", "Lao Classic 5", "formal"], ["LaoClassic6", "Lao Classic 6", "painted"], ["LaoCollege", "Lao College", "painted"], ["LaoCurly", "Lao Curly", "script"], ["LaoDaoheuang", "Lao Daoheuang", "formal"], ["LaoDaojai", "Lao Daojai", "painted"], ["LaoDara", "Lao Dara", "script"], ["LaoDarbthong", "Lao Darbthong", "script"], ["LaoDeeJai", "Lao DeeJai", "formal"], ["LaoDerm1", "Lao Derm 1", "formal"], ["LaoDerm2", "Lao Derm 2", "formal"], ["LaoDokMaLi", "Lao Dok Ma Li", "fancy"], ["LaoDokHuk", "Lao DokHuk", "formal"], ["LaoDokkham", "Lao Dokkham", "traditional"], ["LaoDokkhoune", "Lao Dokkhoune", "formal"], ["LaoDokkularb", "Lao Dokkularb", "script"], ["LaoDokmai", "Lao Dokmai", "script"], ["LaoDokmai2", "Lao Dokmai 2", "script"], ["LaoDonekho", "Lao Donekho", "script"], ["LaoDonut", "Lao Donut", "fancy"], ["LaoDot", "Lao Dot", "fancy"], ["LaoDragon", "Lao Dragon", "fancy"], ["LaoDuangDuen", "Lao DuangDuen", "formal"], ["LaoExpress", "Lao Express", "painted"], ["LaoFancy", "Lao Fancy", "fancy"], ["LaoFengsui1", "Lao Fengsui 1", "fancy"], ["LaoFengsui2", "Lao Fengsui 2", "fancy"], ["LaoHandwriting01", "Lao Handwriting 01", "handwritten"], ["LaoHandwriting02", "Lao Handwriting 02", "handwritten"], ["LaoHandwriting03", "Lao Handwriting 03", "handwritten"], ["LaoHandwriting04", "Lao Handwriting 04", "handwritten"], ["LaoHandwriting05", "Lao Handwriting 05", "handwritten"], ["LaoHandwriting06", "Lao Handwriting 06", "handwritten"], ["LaoHandwriting07", "Lao Handwriting 07", "handwritten"], ["LaoHandwriting08", "Lao Handwriting 08", "handwritten"], ["LaoHandwriting09", "Lao Handwriting 09", "handwritten"], ["LaoHandwriting10", "Lao Handwriting 10", "handwritten"], ["LaoHandwriting11", "Lao Handwriting 11", "handwritten"], ["LaoHandwriting12", "Lao Handwriting 12", "handwritten"], ["LaoHandwriting13", "Lao Handwriting 13", "handwritten"], ["LaoHandwriting14", "Lao Handwriting 14", "handwritten"], ["LaoHandwriting15", "Lao Handwriting 15", "handwritten"], ["LaoHandwriting16", "Lao Handwriting 16", "handwritten"], ["LaoHoney", "Lao Honey", "painted"], ["LaoHongkham", "Lao Hongkham", "script"], ["LaoHouse", "Lao House", "formal"], ["LaoInkBrush", "Lao Ink Brush", "brush"], ["LaoInkBrush2", "Lao Ink Brush 2", "brush"], ["LaoInkPen", "Lao Ink Pen", "handwritten"], ["LaoInter", "Lao Inter", "painted"], ["LaoJaidee", "Lao Jaidee", "handwritten"], ["LaoJewellery", "Lao Jewellery", "fancy"], ["LaoJumbo", "Lao Jumbo", "painted"], ["LaoKetmany1", "Lao Ketmany 1", "script"], ["LaoKetmany2", "Lao Ketmany 2", "formal"], ["LaoKhankham", "Lao Khankham", "formal"], ["LaoKhaolam", "Lao Khaolam", "script"], ["LaoKhaoniew", "Lao Khaoniew", "script"], ["LaoKhenelao", "Lao Khenelao", "formal"], ["LaoKhobJai", "Lao KhobJai", "painted"], ["LaoKhonePhaPheng", "Lao KhonePhaPheng", "fancy"], ["LaoKhounlao1", "Lao Khounlao 1", "formal"], ["LaoKhounlao2", "Lao Khounlao 2", "formal"], ["LaoKhounlao3", "Lao Khounlao 3", "painted"], ["LaoKhounlao5", "Lao Khounlao 5", "painted"], ["LaoKhuanJai", "Lao KhuanJai", "script"], ["LaoKhunlor", "Lao Khunlor", "formal"], ["LaoKid", "Lao Kid", "formal"], ["LaoKid2", "Lao Kid 2", "formal"], ["LaoKid3", "Lao Kid 3", "formal"], ["LaoKid4", "Lao Kid 4", "formal"], ["LaoKinnaly", "Lao Kinnaly", "formal"], ["LaoKorean", "Lao Korean", "painted"], ["LaoLailao", "Lao Lailao", "formal"], ["LaoLanexang", "Lao Lanexang", "formal"], ["LaoLotus", "Lao Lotus", "script"], ["LaoLover", "Lao Lover", "script"], ["LaoLuangPhabang", "Lao LuangPhabang", "traditional"], ["LaoLuangpouchan1", "Lao Luangpouchan 1", "script"], ["LaoLuangpouchan2", "Lao Luangpouchan 2", "script"], ["LaoMahaxon", "Lao Mahaxon", "formal"], ["LaoManikhot1", "Lao Manikhot 1", "painted"], ["LaoManikhot4", "Lao Manikhot 4", "script"], ["LaoManora", "Lao Manora", "script"], ["LaoManotham", "Lao Manotham", "formal"], ["LaoMedia", "Lao Media", "painted"], ["LaoMekong", "Lao Mekong", "fancy"], ["LaoMN", "Lao MN", "formal"], ["LaoModern1", "Lao Modern 1", "formal"], ["LaoModern2", "Lao Modern 2", "formal"], ["LaoMuangDon", "Lao Muang Don", "traditional"], ["LaoMuangKhong", "Lao Muang Khong", "traditional"], ["LaoMuanglao", "Lao Muanglao", "traditional"], ["LaoMuangthong", "Lao Muangthong", "traditional"], ["LaoMyLetter1", "Lao My Letter 1", "traditional"], ["LaoMyLetter2", "Lao My Letter 2", "script"], ["LaoMyLetter3", "Lao My Letter 3", "script"], ["LaoNaga", "Lao Naga", "fancy"], ["LaoNakhorn", "Lao Nakhorn", "formal"], ["LaoNakkham2", "Lao Nakkham 2", "formal"], ["LaoNakpok", "Lao Nakpok", "painted"], ["LaoNakthong", "Lao Nakthong", "traditional"], ["LaoNeramid1", "Lao Neramid 1", "script"], ["LaoNeramid2", "Lao Neramid 2", "script"], ["LaoNokThong", "Lao NokThong", "formal"], ["LaoOldPhimdeed", "Lao Old Phimdeed", "formal"], ["LaoOldTyping2", "Lao Old Typing 2", "formal"], ["LaoOldPrinting", "Lao OldPrinting", "formal"], ["LaoPaen1", "Lao Paen 1", "formal"], ["LaoPaen2", "Lao Paen 2", "formal"], ["LaoPaKham", "Lao PaKham", "formal"], ["LaoPakse", "Lao Pakse", "formal"], ["LaoPanyaXon", "Lao PanyaXon", "painted"], ["LaoPatimok", "Lao Patimok", "traditional"], ["LaoPatuxai", "Lao Patuxai", "formal"], ["LaoPatuxai1", "Lao Patuxai 1", "formal"], ["LaoPatuxai2", "Lao Patuxai 2", "formal"], ["LaoPatuxai3", "Lao Patuxai 3", "formal"], ["LaoPatuxai4", "Lao Patuxai 4", "formal"], ["LaoPhagnum2", "Lao Phagnum 2", "painted"], ["LaoPhagnumNew", "Lao Phagnum New", "formal"], ["LaoPhimpha", "Lao Phimpha", "formal"], ["LaoPhrabang", "Lao Phrabang", "formal"], ["LaoPhraved", "Lao Phraved", "traditional"], ["LaoPrecious", "Lao Precious", "painted"], ["LaoRajabanditsabhatyping", "Lao Rajabanditsabha typing", "formal"], ["LaoRoute13", "Lao Route 13", "formal"], ["LaoSabaidee", "Lao Sabaidee", "formal"], ["LaoSaiFon", "Lao SaiFon", "formal"], ["LaoSailom", "Lao Sailom", "script"], ["LaoSamakhee", "Lao Samakhee", "handwritten"], ["LaoSamsaen", "Lao Samsaen", "fancy"], ["LaoSangsinxay1", "Lao Sangsinxay 1", "script"], ["LaoSangsinxay2", "Lao Sangsinxay 2", "script"], ["LaoSansPro", "Lao Sans Pro", "formal"], ["LaoSaoPhone", "Lao Sao Phone", "fancy"], ["LaoSaonoi", "Lao Saonoi", "handwritten"], ["LaoSavanh", "Lao Savanh", "formal"], ["LaoSengthien", "Lao Sengthien", "formal"], ["LaoSengthong", "Lao Sengthong", "formal"], ["LaoSiMuang", "Lao Si Muang", "traditional"], ["LaoSiengphin", "Lao Siengphin", "formal"], ["LaoSiengphin2", "Lao Siengphin 2", "formal"], ["LaoSignature", "Lao Signature", "script"], ["LaoSignature2", "Lao Signature 2", "script"], ["LaoSikhai", "Lao Sikhai", "formal"], ["LaoSiPhanDon", "Lao SiPhanDon", "formal"], ["LaoSisaket", "Lao Sisaket", "traditional"], ["LaoSivilay", "Lao Sivilay", "formal"], ["LaoSompong", "Lao Sompong", "painted"], ["LaoSomvang1", "Lao Somvang 1", "painted"], ["LaoSomvang2", "Lao Somvang 2", "formal"], ["LaoSongMee2020", "Lao Song Mee 2020", "formal"], ["LaoSongmeeValentine", "Lao Songmee Valentine", "fancy"], ["LaoSourigna", "Lao Sourigna", "formal"], ["LaoStencil", "Lao Stencil", "stencil"], ["LaoStickyrice", "Lao Stickyrice", "fancy"], ["LaoThatphon", "Lao Thatphon", "formal"], ["LaoUI", "Lao UI", "formal"], ["LaoUnicode", "Lao Unicode", "formal"], ["LaoViengthong", "Lao Viengthong", "script"], ["LaoVongdeuan", "Lao Vongdeuan", "painted"], ["LaoWatXiengthong", "Lao Wat Xiengthong", "traditional"], ["LaoXaiya", "Lao Xaiya", "traditional"], ["NDonkhamao2", "N Donkhamao 2", "formal"], ["NDonkhamao4", "N Donkhamao 4", "painted"], ["NDonkhamao8", "N Donkhamao 8", "formal"], ["Nuanta", "Nuanta", "formal"], ["PBChampasak", "PB Champasak", "formal"], ["PBMelon", "PB Melon", "script"], ["PBWarnjai", "PB Warnjai", "script"], ["PBSimple", "PBSimple", "formal"], ["Phanlana", "Phanlana", "formal"], ["PhanlanaMai", "PhanlanaMai", "formal"], ["Saysettha", "Saysettha", "formal"], ["SaysetthaMai", "Saysettha Mai", "formal"], ["SengBuhan", "Seng Buhan", "formal"], ["SengPathom", "Seng Pathom", "formal"], ["Simrattana", "Simrattana", "formal"], ["SntAnouvong", "SNT Anouvong", "formal"], ["Tiktok", "Tiktok", "formal"], ["Touk2", "Touk 2", "formal"], ["VangVieng", "Vang Vieng", "painted"], ["Vichitdhammaram", "Vichitdhammaram", "formal"], ["Viengchan", "Viengchan", "painted"]];
 const LF_CATS = [['all', 'ทั้งหมด'], ['formal', 'ทางการ'], ['handwritten', 'ลายมือ'], ['script', 'ตัวเขียนสวย'], ['brush', 'พู่กัน'], ['painted', 'แบบทาสี'], ['traditional', 'แบบโบราณ'], ['fancy', 'ตกแต่ง'], ['stencil', 'สเตนซิล']];
 const LF_BY = {}; LAOFONTS.forEach(r => LF_BY[r[0]] = { id: r[0], name: r[1], cat: r[2] });
-const LF_FORMAL_W = { NotoSansLao: [400, 700, 900], NotoSerifLao: [400, 700, 900], NotoSansLaoLooped: [400, 700, 900], Phetsarath: [400, 700] };
-const LF_BASES = ['fonts/', 'https://editor.touktashop.online/fonts/'];
+const LF_W = {Boonbaan: [400, 700], Boonhome: [400, 700], Hinsiew: [300, 400, 600, 700], KhamBuhan: [100, 300, 400, 500, 700, 900], LaoUI: [400, 700], LaoKinnaly: [400, 700], LaoPhimpha: [400, 700], LaoDerm2: [400, 600], Nuanta: [400, 500, 700], PBWarnjai: [400, 700], PBChampasak: [200, 300, 400, 600, 700], PBMelon: [200, 300, 400, 600, 700], SaysetthaMai: [100, 300, 400, 500, 700, 900], Saysettha: [100, 300, 400, 500, 700, 900], SengBuhan: [100, 300, 400, 500, 700, 900], SengPathom: [100, 300, 400, 500, 700, 900], SntAnouvong: [400, 500, 700], NotoSansLao: [100, 200, 300, 400, 500, 600, 700, 800, 900], NotoSerifLao: [100, 200, 300, 400, 500, 600, 700, 800, 900], NotoSansLaoLooped: [100, 200, 300, 400, 500, 600, 700, 800, 900], Phetsarath: [400, 700]};   // families that ship several weights (the weight slider picks among them)
+const LF_SRV = new Set(["Baihyar", "Boonhome", "Boonbaan", "Boonlor", "Buangern", "Buddhapandit", "Hinsiew", "Hongkad01", "JGBasicLao", "KhamBuhan", "Kom", "LaiLao2020", "Lao3D", "LaoABCFORKID", "LaoABC1", "LaoABC2", "LaoAnouvong", "LaoBeauty1", "LaoBeauty2", "LaoBoupha", "LaoBuathong", "LaoBuddhavong", "LaoBuhane1", "LaoBuhane2", "LaoCafe", "LaoChampasak", "LaoChampathong1", "LaoChampathong2", "LaoChampathong3", "LaoCircle", "LaoClassic1", "LaoClassic2", "LaoClassic3", "LaoClassic4", "LaoClassic5", "LaoClassic6", "LaoCollege", "LaoCurly", "LaoDaoheuang", "LaoDaojai", "LaoDara", "LaoDarbthong", "LaoDeeJai", "LaoDerm1", "LaoDerm2", "LaoDokMaLi", "LaoDokHuk", "LaoDokkham", "LaoDokkhoune", "LaoDokkularb", "LaoDokmai", "LaoDokmai2", "LaoDonekho", "LaoDonut", "LaoDot", "LaoDragon", "LaoDuangDuen", "LaoExpress", "LaoFancy", "LaoFengsui1", "LaoFengsui2", "LaoHandwriting01", "LaoHandwriting02", "LaoHandwriting03", "LaoHandwriting04", "LaoHandwriting05", "LaoHandwriting06", "LaoHandwriting07", "LaoHandwriting08", "LaoHandwriting09", "LaoHandwriting10", "LaoHandwriting11", "LaoHandwriting12", "LaoHandwriting13", "LaoHandwriting14", "LaoHandwriting15", "LaoHandwriting16", "LaoHoney", "LaoHongkham", "LaoHouse", "LaoInkBrush", "LaoInkBrush2", "LaoInkPen", "LaoInter", "LaoJaidee", "LaoJewellery", "LaoJumbo", "LaoKetmany1", "LaoKetmany2", "LaoKhankham", "LaoKhaolam", "LaoKhaoniew", "LaoKhenelao", "LaoKhobJai", "LaoKhonePhaPheng", "LaoKhounlao1", "LaoKhounlao2", "LaoKhounlao3", "LaoKhounlao5", "LaoKhuanJai", "LaoKhunlor", "LaoKid", "LaoKid2", "LaoKid3", "LaoKid4", "LaoKinnaly", "LaoKorean", "LaoLailao", "LaoLanexang", "LaoLotus", "LaoLover", "LaoLuangPhabang", "LaoLuangpouchan1", "LaoLuangpouchan2", "LaoMahaxon", "LaoManikhot1", "LaoManikhot4", "LaoManora", "LaoManotham", "LaoMedia", "LaoMekong", "LaoMN", "LaoModern1", "LaoModern2", "LaoMuangDon", "LaoMuangKhong", "LaoMuanglao", "LaoMuangthong", "LaoMyLetter1", "LaoMyLetter2", "LaoMyLetter3", "LaoNaga", "LaoNakhorn", "LaoNakkham2", "LaoNakpok", "LaoNakthong", "LaoNeramid1", "LaoNeramid2", "LaoNokThong", "LaoOldPhimdeed", "LaoOldTyping2", "LaoOldPrinting", "LaoPaen1", "LaoPaen2", "LaoPaKham", "LaoPakse", "LaoPanyaXon", "LaoPatimok", "LaoPatuxai", "LaoPatuxai1", "LaoPatuxai2", "LaoPatuxai3", "LaoPatuxai4", "LaoPhagnum2", "LaoPhagnumNew", "LaoPhimpha", "LaoPhrabang", "LaoPhraved", "LaoPrecious", "LaoRajabanditsabhatyping", "LaoRoute13", "LaoSabaidee", "LaoSaiFon", "LaoSailom", "LaoSamakhee", "LaoSamsaen", "LaoSangsinxay1", "LaoSangsinxay2", "LaoSansPro", "LaoSaoPhone", "LaoSaonoi", "LaoSavanh", "LaoSengthien", "LaoSengthong", "LaoSiMuang", "LaoSiengphin", "LaoSiengphin2", "LaoSignature", "LaoSignature2", "LaoSikhai", "LaoSiPhanDon", "LaoSisaket", "LaoSivilay", "LaoSompong", "LaoSomvang1", "LaoSomvang2", "LaoSongMee2020", "LaoSongmeeValentine", "LaoSourigna", "LaoStencil", "LaoStickyrice", "LaoThatphon", "LaoUI", "LaoUnicode", "LaoViengthong", "LaoVongdeuan", "LaoWatXiengthong", "LaoXaiya", "NDonkhamao2", "NDonkhamao4", "NDonkhamao8", "Nuanta", "PBChampasak", "PBMelon", "PBWarnjai", "PBSimple", "Phanlana", "PhanlanaMai", "Saysettha", "SaysetthaMai", "SengBuhan", "SengPathom", "Simrattana", "SntAnouvong", "Tiktok", "Touk2", "VangVieng", "Vichitdhammaram", "Viengchan"]);   // fonts that live only on the shop server (unknown licence, not in the public repo)
+const lfBases = id => {   // where to fetch font files: the server-only fonts come from the shop server; the others from fonts/ (same site) or the public site, then the server
+  const b = ['fonts/', 'https://editor.touktashop.online/fonts/']; let sv = null;
+  try { if (srvOn()) sv = SRV_SELF ? 'fonts/' : srvUrl('/fonts/'); } catch (e) { }
+  if (sv) { if (LF_SRV.has(id)) b.unshift(sv); else b.push(sv); }
+  return b;
+};
 const LF_P = new Map();    // id -> Promise<boolean>
 const LF_OK = new Set(), LF_FAIL = new Set();
 const lfStack = id => `"LF-${id}","Noto Sans Lao","Prompt","Noto Sans Thai",sans-serif`;
-const lfIdOf = font => { const m = /"LF-([A-Za-z]+)"/.exec(font || ''); return m && LF_BY[m[1]] ? m[1] : null; };
+const lfIdOf = font => { const m = /"LF-([A-Za-z0-9]+)"/.exec(font || ''); return m && LF_BY[m[1]] ? m[1] : null; };
 function lfEnsure(id) {
   if (!LF_BY[id]) return Promise.resolve(false);
   if (LF_P.has(id)) return LF_P.get(id);
-  const faces = LF_FORMAL_W[id] ? LF_FORMAL_W[id].map(w => [w, `${id}-${w}.woff2`]) : [[400, `${id}.woff2`]];
+  const faces = LF_W[id] ? LF_W[id].map(w => [w, `${id}-${w}.woff2`]) : [[400, `${id}.woff2`]];
   const p = Promise.all(faces.map(async ([w, file]) => {
-    for (const b of LF_BASES) { try { const ff = new FontFace('LF-' + id, `url(${b}${file})`, { weight: String(w) }); await ff.load(); document.fonts.add(ff); return true; } catch (e) { } }
+    for (const b of lfBases(id)) { try { const ff = new FontFace('LF-' + id, `url(${b}${file})`, { weight: String(w) }); await ff.load(); document.fonts.add(ff); return true; } catch (e) { } }
     return false;
   })).then(r => { const ok = r.every(Boolean); if (ok) { LF_OK.add(id); LF_FAIL.delete(id); } else { LF_P.delete(id); LF_FAIL.add(id); } return ok; });
   LF_P.set(id, p); return p;
@@ -5195,7 +5636,7 @@ function lfOpen(it) {
   const sample = (String(it.text || '').split('\n')[0] || '').trim().slice(0, 22) || 'ສະບາຍດີ ລາຄາພິເສດ';
   const cur = lfIdOf(it.font); let cat = 'all';
   const card = r => `<button class="lfcard${cur === r[0] ? ' on' : ''}" data-lf="${r[0]}"><span class="lfn" translate="no">${esc(r[1])}</span><span class="lfs" data-lfs="${r[0]}" translate="no">${esc(sample)}</span></button>`;
-  aiDlg('เลือกฟอนต์ข้อความ', `<div class="hint">ฟอนต์ลาวฟรี (ใช้งานเชิงธุรกิจได้) · กดเพื่อใช้ · ฟอนต์จะโหลดเมื่อเลื่อนมาเห็นเท่านั้น · ฟอนต์ตกแต่งส่วนใหญ่เป็นรุ่นทดลอง</div>
+  aiDlg('เลือกฟอนต์ข้อความ', `<div class="hint">ฟอนต์ลาวฟรี (ใช้งานเชิงธุรกิจได้) · กดเพื่อใช้ · ฟอนต์จะโหลดเมื่อเลื่อนมาเห็นเท่านั้น · ฟอนต์ตกแต่งส่วนใหญ่เป็นรุ่นทดลอง · ฟอนต์ที่เพิ่มจากเครื่องร้านยังไม่ได้ตรวจสิทธิ์การใช้เชิงพาณิชย์</div>
     <div class="lfcats">${LF_CATS.map(([k, l]) => `<button data-cat="${k}" class="${k === 'all' ? 'on' : ''}">${l}</button>`).join('')}</div>
     <div class="lfgrid" id="lfGrid">${LAOFONTS.map(card).join('')}</div>
     <div class="row"><button id="lfReset">กลับไปฟอนต์เดิมของสไตล์</button></div>`, root => {
@@ -5212,9 +5653,48 @@ function lfOpen(it) {
 }
 async function lfApply(it, id) {
   if (!id) { const st = TEXT_STYLES.find(s => s.id === it.style); it.font = (st && st.d && st.d.font) || FONT_STACK; commit('font'); renderInspector(); return; }
-  const ok = await lfEnsure(id); if (!ok) return toast('โหลดฟอนต์ไม่ได้ (ไม่มีไฟล์ในโฟลเดอร์ fonts)');
-  it.font = lfStack(id); if (LF_BY[id].cat !== 'formal') it.weight = 400;   // display fonts are already drawn heavy; do not fake-bold them
+  const ok = await lfEnsure(id); if (!ok) return toast(LF_SRV.has(id) && !srvOn() ? 'ฟอนต์นี้อยู่บนเซิร์ฟเวอร์ร้าน — ต้องเชื่อมต่อเซิร์ฟเวอร์ก่อน (⚙ ตั้งค่า)' : 'โหลดฟอนต์ไม่ได้ (ไม่มีไฟล์ในโฟลเดอร์ fonts)');
+  it.font = lfStack(id); if (!LF_W[id]) it.weight = 400;   // single-weight fonts are already drawn at their own weight; do not fake-bold them (multi-weight families keep the slider value)
   commit('font'); renderInspector();
+}
+
+// ---- 59-9-trauto.js ----
+// ============================================================
+//  v1.63/1.64 — auto-transcribe every video that comes into the editor (dragged in, file picker, or from the team/VELARIS inbox); not clips restored from an old project. Nobody has to press anything.
+//  It NEVER pays twice: a clip that already has a transcript in the permanent cache (this browser or the shop server; same file name + size + length,
+//  also when VELARIS put a random prefix in front of the name) is skipped. One clip at a time; on the first error everything stops (no retry loop that burns API money).
+//  Lao = Gemini (needs the Gemini key from ⚙), Thai = the chosen engine. The text goes only into the permanent cache, never into the open project.
+//  Off switch: AI tab -> "auto-transcribe clips from the team" (localStorage sk_autotr = 0). Phones skip it (mobile data). Switch AI tab -> auto-transcribe imported clips.
+// ============================================================
+let _trQuiet = 0, _trBusy = false, _trNoKeyToast = false; const _trQ = [];
+const trAutoOn = () => localStorage.getItem('sk_autotr') !== '0';
+function trAutoLang() { return localStorage.getItem('sk_lang') === 'th' ? 'th' : 'lo'; }
+function trAutoEngine(lang) { return lang === 'lo' ? 'gemini' : ((($('#aiEng') || {}).value) || 'whisper'); }
+const trHas = (m, lang) => { const r = trcRec(m); return !!(r && Object.keys(r.tr || {}).some(k => k.startsWith(lang + ':'))); };
+async function trWaitPcm(m) {   // importFiles() already started analyzeAudio(); wait for it (4K files take a few seconds), never decode twice
+  for (let i = 0; i < 360 && !m.pcm16 && m.hasAudio !== false; i++) await new Promise(r => setTimeout(r, 500));
+  return !!m.pcm16;
+}
+async function trAutoRun(ids) {
+  if (!trAutoOn() || (typeof IS_PHONE === 'function' && IS_PHONE())) return;
+  for (const id of ids) if (!_trQ.includes(id)) _trQ.push(id);
+  if (_trBusy) return; _trBusy = true;
+  const st = { fresh: 0, reused: 0 }; let told = false;
+  try {
+    try { await trcSyncQuick(); } catch (e) { }   // first look on the shop server: another computer may already have the text
+    while (_trQ.length) {
+      const m = MEDIA.get(_trQ.shift()); if (!m || m.type !== 'video' || !m.file) continue;
+      const lang = trAutoLang(), eng = trAutoEngine(lang);
+      if (trHas(m, lang)) { st.reused++; continue; }              // already transcribed -> no API call at all
+      if (!(await trWaitPcm(m))) continue;                          // no audio track
+      if (lang === 'lo' && !(loadKeys().gemini)) { if (!_trNoKeyToast) { _trNoKeyToast = true; toast('ถอดเสียงอัตโนมัติ: ยังไม่ได้ใส่ Gemini API key (กด ⚙ ตั้งค่า) — ข้ามไปก่อน', 9000); } _trQ.length = 0; break; }
+      if (!told) { told = true; toast('กำลังถอดเสียงคลิปที่นำเข้าอัตโนมัติ… (คลิปที่เคยถอดแล้วจะข้าม ไม่เสียเงินซ้ำ)', 6000); }
+      _trQuiet++; try { const tr = await transcribeCore(m, lang, eng); trcSave(m, tr); st.fresh++; } finally { _trQuiet--; }
+    }
+  } catch (e) { console.warn('trAutoRun', e); _trQ.length = 0; toast('ถอดเสียงอัตโนมัติหยุดแล้ว: ' + String(e && e.message || e).slice(0, 140) + ' — กดถอดเสียงเองได้ที่แท็บ AI', 12000); }
+  finally { _trBusy = false; }
+  if (st.fresh || st.reused) toast(`ถอดเสียงอัตโนมัติ: ถอดใหม่ ${st.fresh} คลิป · ใช้ข้อความเดิม ${st.reused} คลิป (ไม่เสียเงิน)`, 9000);
+  if (st.fresh && typeof renderAiPane === 'function' && $('#pane-ai')) renderAiPane();
 }
 
 // ---- 59-trcache.js ----
@@ -5237,18 +5717,20 @@ async function trcPut(rec) {
   catch (e) { console.warn('trcPut', e); }
 }
 async function trcDel(key) {
-  TRC.delete(key);
+  TRC.delete(key); try { if (SRV.up) srvFetch('/tr/' + encodeURIComponent(key), { method: 'DELETE' }).catch(() => { }); } catch (e) { }
   try { const db = await trcDb(); await new Promise(res => { const tx = db.transaction('tr', 'readwrite'); tx.objectStore('tr').delete(key); tx.oncomplete = res; tx.onerror = res; }); db.close(); } catch (e) { }
 }
+const trNorm = n => String(n || '').replace(/^[0-9a-f]{8}-/i, '');   // v1.63: the VELARIS site puts a random 8-hex prefix in front of the file name (a49d5099-IMG_5529.mov) — the same video must still be recognised
 function trcRec(m) {      // exact key first; otherwise same file name + (almost) same length, e.g. a re-saved copy
   const k = trKey(m); if (!k) return null; if (TRC.has(k)) return TRC.get(k);
   for (const r of TRC.values()) if (r.name === m.name && Math.abs((r.duration || 0) - (m.duration || 0)) < .3) return r;
+  const nn = trNorm(m.name); for (const r of TRC.values()) if (trNorm(r.name) === nn && r.size === (m.file && m.file.size) && Math.abs((r.duration || 0) - (m.duration || 0)) < .3) return r;
   return null;
 }
 function trcSave(m, tr) {
   const k = trKey(m); if (!k || !tr || !tr.segs) return; let rec = TRC.get(k);
   if (!rec) { rec = { key: k, name: m.name, size: m.file.size, duration: m.duration, tr: {} }; TRC.set(k, rec); }
-  rec.tr[trVar(tr.lang, tr.engine)] = tr; rec.savedAt = Date.now(); TRC_SAVED.add(tr); trcPut(rec);
+  rec.tr[trVar(tr.lang, tr.engine)] = tr; rec.savedAt = Date.now(); TRC_SAVED.add(tr); trcPut(rec); trcPush(rec);
 }
 function trcFind(m, lang, engine) { const r = trcRec(m); return r && r.tr[trVar(lang, engine)] || null; }
 function trcAny(m, lang) { const r = trcRec(m); if (!r) return null; const ks = Object.keys(r.tr); const k = ks.find(x => x.startsWith(lang + ':')) || ks[0]; return k ? r.tr[k] : null; }
@@ -5267,17 +5749,57 @@ async function trcImport(files) {
   }
   return n;
 }
+
+// ---------- v1.56: shared copy on the shop server ----------
+//  A transcript is saved in this browser AND on the shop server (<SykhaiEditor>/transcripts). When any other computer / phone opens the same clip
+//  (same name + size + length) it takes the text from the server instead of sending the video to Gemini again. Works only while the server is reachable;
+//  otherwise everything keeps working from this browser and syncs the next time the server is reachable.
+const TRS = { busy: null, at: 0, last: null };
+async function trcPush(rec) {
+  try {
+    if (!rec || !srvOn() || !SRV.up) return false;
+    const r = await srvFetch('/tr/' + encodeURIComponent(rec.key), { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ key: rec.key, name: rec.name, size: rec.size, duration: rec.duration, savedAt: rec.savedAt, tr: rec.tr }) });
+    return r.ok;
+  } catch (e) { return false; }
+}
+async function trcSyncRun() {
+  const res = { pulled: 0, pushed: 0, ok: false };
+  if (!srvOn()) return res; if (!SRV.up && !(await srvPing())) return res;
+  const r = await srvFetch('/tr'); if (!r.ok) return res; const list = await r.json(); if (!Array.isArray(list)) return res;
+  const remote = new Map(list.map(x => [x.key, x]));
+  for (const x of list) {            // server -> here: records or variants this browser does not have yet
+    const loc = TRC.get(x.key); const have = loc ? Object.keys(loc.tr) : [];
+    if (!(x.v || []).some(v => !have.includes(v))) continue;
+    try {
+      const rr = await srvFetch('/tr/' + encodeURIComponent(x.key)); if (!rr.ok) continue; const rec = await rr.json(); if (!rec || !rec.key || !rec.tr) continue;
+      let cur = TRC.get(rec.key); if (!cur) { cur = { key: rec.key, name: rec.name, size: rec.size, duration: rec.duration, savedAt: rec.savedAt || Date.now(), tr: {} }; TRC.set(cur.key, cur); }
+      for (const [k, v] of Object.entries(rec.tr)) if (!cur.tr[k] && v && v.segs) { cur.tr[k] = v; TRC_SAVED.add(v); }
+      cur.savedAt = Math.max(cur.savedAt || 0, rec.savedAt || 0); await trcPut(cur); res.pulled++;
+    } catch (e) { console.warn('trc pull', e); }
+  }
+  for (const rec of [...TRC.values()]) {   // here -> server: records the server has never seen
+    const rv = remote.get(rec.key); const rvv = rv ? rv.v || [] : [];
+    if (Object.keys(rec.tr).some(k => !rvv.includes(k))) { if (await trcPush(rec)) res.pushed++; }
+  }
+  res.ok = true; return res;
+}
+function trcSync(force) {   // one run at a time; at most every 45 s unless forced
+  if (TRS.busy) return TRS.busy; if (!force && Date.now() - TRS.at < 45000) return Promise.resolve(TRS.last || { pulled: 0, pushed: 0, ok: false });
+  TRS.busy = trcSyncRun().catch(e => { console.warn('trcSync', e); return { pulled: 0, pushed: 0, ok: false }; }).then(r => { TRS.busy = null; TRS.at = Date.now(); TRS.last = r; return r; }); return TRS.busy;
+}
+const trcSyncQuick = () => Promise.race([trcSync(false), new Promise(res => setTimeout(() => res(null), 6000))]);   // never makes the person wait long
 function trcUI() {
   const rows = () => [...TRC.values()].sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0));
   const body = () => rows().length ? `<table class="aitbl">${rows().map((r, i) => `<tr><td translate="no">${escN(r.name)}</td><td>${Object.entries(r.tr).map(([k, v]) => `${k.split(':')[0].toUpperCase()} ${v.segs.length}`).join(' · ')}</td><td>${r.savedAt ? new Date(r.savedAt).toLocaleDateString() : ''}</td><td><button data-dl="${i}" title="ดาวน์โหลดไฟล์ข้อความ">⬇</button> <button data-rm="${i}" title="ลบข้อความนี้">🗑</button></td></tr>`).join('')}</table>` : `<div class="hint">ยังไม่มีข้อความที่ถอดเก็บไว้</div>`;
-  aiDlg('ข้อความที่ถอดเก็บไว้', `<div class="hint">เก็บอัตโนมัติตามชื่อไฟล์วิดีโอ · คลิปเดิมไม่ต้องถอดซ้ำ (ไม่เสียเงิน API) · ใช้ได้ทุกโปรเจกต์</div><div id="trcList">${body()}</div>
-    <div class="row"><button id="trcImp">นำเข้าไฟล์ข้อความ (.json)</button><button id="trcAll">⬇ ดาวน์โหลดทั้งหมด</button><span class="sp"></span><input type="file" id="trcFile" accept=".json,application/json" multiple hidden></div>`, root => {
+  aiDlg('ข้อความที่ถอดเก็บไว้', `<div class="hint">เก็บอัตโนมัติตามชื่อไฟล์วิดีโอ · คลิปเดิมไม่ต้องถอดซ้ำ (ไม่เสียเงิน API) · ใช้ได้ทุกโปรเจกต์</div><div class="hint" id="trcSrv">${srvOn() ? (SRV.up ? '☁ ' + T('แชร์กับเซิร์ฟเวอร์ร้านด้วย — ทุกเครื่องใช้ข้อความเดียวกัน ไม่ต้องถอดซ้ำ') : '☁ ' + T('ติดต่อเซิร์ฟเวอร์ร้านไม่ได้ตอนนี้ — เก็บในเครื่องนี้ก่อน แล้วจะซิงค์ให้เมื่อต่อได้')) : T('ยังไม่ได้ต่อเซิร์ฟเวอร์ร้าน — ข้อความเก็บเฉพาะในเครื่องนี้')}</div><div id="trcList">${body()}</div>
+    <div class="row"><button id="trcImp">นำเข้าไฟล์ข้อความ (.json)</button><button id="trcAll">⬇ ดาวน์โหลดทั้งหมด</button><button id="trcSyn">☁ ซิงค์เซิร์ฟเวอร์</button><span class="sp"></span><input type="file" id="trcFile" accept=".json,application/json" multiple hidden></div>`, root => {
     const redraw = () => { $('#trcList', root).innerHTML = body(); };
     root.onclick = e => {
       const dl = e.target.closest('[data-dl]'), rm = e.target.closest('[data-rm]');
       if (dl) trcDownload(rows()[+dl.dataset.dl]);
       else if (rm) { const r = rows()[+rm.dataset.rm]; if (confirm(T('ลบข้อความที่ถอดของ') + ' ' + r.name + ' ?')) { trcDel(r.key).then(redraw); } }
     };
+    $('#trcSyn', root).onclick = async () => { const b = $('#trcSyn', root); b.disabled = true; const r = await trcSync(true); b.disabled = false; redraw(); toast(r.ok ? T('ซิงค์แล้ว') + ` · ⬇ ${r.pulled} · ⬆ ${r.pushed}` : T('ซิงค์ไม่ได้ — ต่อเซิร์ฟเวอร์ร้านไม่ได้')); };
     $('#trcImp', root).onclick = () => $('#trcFile', root).click();
     $('#trcFile', root).onchange = async e => { const n = await trcImport([...e.target.files]); toast(n ? 'นำเข้าข้อความสำเร็จ' : 'ไฟล์ไม่ถูกต้อง'); redraw(); };
     $('#trcAll', root).onclick = () => { const all = rows(); if (!all.length) return; const blob = new Blob([JSON.stringify(all.map(r => ({ sykhaiTranscript: 1, name: r.name, size: r.size, duration: r.duration, savedAt: r.savedAt, tr: r.tr })))], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'sykhai-transcripts.json'; document.body.appendChild(a); a.click(); a.remove(); };
@@ -5405,7 +5927,7 @@ function aiDlg(title, html, mount) {
   const bd = $('#aiBody'); bd.onclick = bd.onchange = bd.oninput = null;   // handlers of the previous dialog must not leak into this one
   $('#aiTitle').textContent = title; bd.innerHTML = html; const d = $('#dlgAi'); if (!d.open) d.showModal(); if (mount) mount($('#aiBody'));
 }
-function aiProg(msg, pct) { aiDlg('AI กำลังทำงาน…', `<div class="hint">${esc(msg)}</div><div class="progress"><div style="height:100%;width:${pct == null ? 40 : pct}%;background:var(--ac)"></div></div>`); }
+function aiProg(msg, pct) { if (typeof _trQuiet !== 'undefined' && _trQuiet > 0 && !AI.busy) return; aiDlg('AI กำลังทำงาน…', `<div class="hint">${esc(msg)}</div><div class="progress"><div style="height:100%;width:${pct == null ? 40 : pct}%;background:var(--ac)"></div></div>`); }
 function aiErr(e) { console.error(e); aiDlg('เกิดข้อผิดพลาด', `<div class="hint" style="color:#ff8a95">${esc(e.message || e)}</div>`); AI.busy = false; }
 function selMedia() { const s = $('#aiClip'); return s && s.value ? MEDIA.get(s.value) : null; }
 
@@ -5430,13 +5952,18 @@ function groupWords(words) {
 }
 const trPrompt = lname => `Transcribe this ${lname}-language audio exactly as spoken, in ${lname} script, no translation. Split it into short natural spoken phrases (about 2-7 seconds each). For each phrase give start and end time in seconds measured from the beginning of THIS audio clip (decimal numbers). Return only JSON: {"segments":[{"start":0.0,"end":2.4,"text":"..."}]}`;
 async function transcribe(m, lang, engine, force) {
+  if (!force) { await trcSyncQuick(); }   // v1.56: look on the shop server first — another computer may already have transcribed this clip
   if (!force) { const hit = trcFind(m, lang, engine); if (hit) { aiProg('ใช้ข้อความที่ถอดเก็บไว้แล้ว (ไม่เสียเงิน API)', 100); setTr(m.id, hit); return hit; } }
+  const tr = await transcribeCore(m, lang, engine); setTr(m.id, tr); return tr;
+}
+// v1.63: the real transcription work, without touching the open project (the auto-transcriber of VELARIS clips uses it and only fills the permanent cache)
+async function transcribeCore(m, lang, engine) {
   if (!m.pcm16) throw new Error('คลิปนี้ไม่มีเสียง หรือยังวิเคราะห์เสียงไม่เสร็จ');
   if (lang === 'th' && engine === 'whisper') {
     aiProg('กำลังโหลดโมเดลถอดเสียง…', 5); const asr = await getWhisper(); aiProg('กำลังถอดเสียงไทย…', 50);
     const out = await asr(m.pcm16, { language: 'thai', task: 'transcribe', return_timestamps: 'word', chunk_length_s: 30, stride_length_s: 5 });
     const words = (out.chunks || []).map(c => ({ a: c.timestamp[0], b: c.timestamp[1] ?? c.timestamp[0] + .3, text: c.text })).filter(w => w.text.trim());
-    const tr = { lang, engine: 'whisper', words, segs: groupWords(words) }; setTr(m.id, tr); return tr;
+    const tr = { lang, engine: 'whisper', words, segs: groupWords(words) }; return tr;
   }
   const lname = lang === 'lo' ? 'Lao' : 'Thai'; const dur = m.pcm16.length / 16000; const segs = [];
   for (let off = 0; off < dur; off += 110) {
@@ -5446,7 +5973,7 @@ async function transcribe(m, lang, engine, force) {
     const txt = await gemini([{ text: prompt }, { inline_data: { mime_type: 'audio/wav', data: wavB64(m.pcm16, 16000, a, b) } }], { label: 'ถอดเสียง ' + lname });
     const j = parseJsonLoose(txt); (j.segments || j).forEach(s => { const t = String(s.text || '').trim(); if (t) segs.push({ a: toSec(s.start) + a, b: toSec(s.end) + a, text: t }); });
   }
-  segs.sort((x, y) => x.a - y.a); const tr = { lang, engine: 'gemini', segs }; setTr(m.id, tr); return tr;
+  segs.sort((x, y) => x.a - y.a); const tr = { lang, engine: 'gemini', segs }; return tr;
 }
 
 // ---------- ripple cut ----------
@@ -5725,6 +6252,9 @@ function renderAiPane() {
   <div class="fld col"><label>คลิปที่ใช้</label><select id="aiClip">${vids.map(m => `<option translate="no" value="${m.id}" ${m.id === keep ? 'selected' : ''}>${esc(m.name)}${getTr(m.id) ? ' ✔' : ''}</option>`).join('') || '<option value="">(ยังไม่มีคลิป)</option>'}</select></div>
   <div class="fld"><label>ภาษาในคลิป</label><select id="aiLang"><option value="lo">ลาว (Gemini)</option><option value="th">ไทย</option></select></div>
   <div class="fld"><label>ตัวถอดเสียงไทย</label><select id="aiEng"><option value="whisper">Whisper ในเครื่อง (ฟรี แม่น)</option><option value="gemini">Gemini</option></select></div>
+  <div class="fld"><label><input type="checkbox" id="aiAutoTr"> ถอดเสียงคลิปที่นำเข้าอัตโนมัติ (ข้ามคลิปที่เคยถอดแล้ว)</label></div>
+  <div class="aicard"><h4>🚀 Auto Cut — ปุ่มเดียว</h4><div class="mini">ตัดช่วงเงียบ คำอ้ำอึ้ง ใส่ซับแอนิเมชันให้อัตโนมัติ แล้วเปิดให้ตรวจก่อนโพสต์ (ยกเลิกได้)</div><button class="wide primary" id="acBtn">เริ่ม Auto Cut</button><button class="wide" id="abBtn" style="margin-top:6px">⚡ Auto Cut ทุกคลิปในโปรเจกต์</button></div>
+  <div class="aicard"><h4>✂ แก้ไขตามข้อความ</h4><div class="mini">ดูข้อความที่ถอดเสียง คลิกเลือกคำ/ประโยคแล้วลบ หรือลบช่วงเงียบและคำอ้ำอึ้งทั้งหมดในครั้งเดียว (เหมือน Premiere)</div><button class="wide" id="teBtn">เปิดแก้ไขตามข้อความ</button></div>
   <div class="aicard"><h4>🍜 โยนฟุตอาหาร → ปุ่มเดียว</h4><div class="mini">เลือกช่วงที่สวยที่สุดของแต่ละคลิป ตัดสั้น เรียงลำดับ ใส่สี/ทรานสิชัน/ซูม ตัดตามจังหวะเพลง</div><button class="wide primary" id="fdA">เริ่ม</button></div>
   <div class="aicard"><h4>🎵 ตัดตามบีตเพลง</h4><div class="mini">จัดจุดตัดคลิปที่มีอยู่ในไทม์ไลน์ให้ตรงจังหวะเพลงที่ใส่ไว้</div><button class="wide" id="bsA">จัดจังหวะ</button></div>
   <div class="aicard"><h4>🔬 วิเคราะห์เทคนิคตัดต่อ</h4><div class="mini">วัดจังหวะตัด ฮุก ทรานสิชัน สี เสียง จากคลิปตัวอย่าง เพื่อนำไปสร้างพรีเซ็ต</div><button class="wide" id="anA">เปิดตัววิเคราะห์</button></div>
@@ -5739,8 +6269,8 @@ function renderAiPane() {
   <div class="aicard"><h4>⑤ ปรับภาพให้ชัด/สวย</h4><button class="wide" id="ai5">วิเคราะห์และปรับอัตโนมัติ</button></div>
   <div class="aicard"><h4>⑥ ให้ AI ตัดต่อ 4 แบบ</h4><div class="mini">ใช้ทุกคลิปในรายการสื่อ แล้วให้พนักงานเลือกแบบที่ชอบ</div><button class="wide primary" id="ai6">สร้าง 4 แบบ</button></div>
   <div class="hint small">ใช้ AI เดือนนี้ $${s.usd.toFixed(2)} จากเพดาน $${loadCap()}</div>`;
-  const lg = localStorage.getItem('sk_lang'); if (lg) $('#aiLang').value = lg; $('#aiLang').onchange = e => localStorage.setItem('sk_lang', e.target.value);
-  $('#aiCap').onclick = capOpen; $('#aiGT').onclick = aiGemTest; $('#ai1').onclick = () => aiTranscribeUI(); $('#aiTC').onclick = trcUI; $('#ai2').onclick = aiPriceUI; $('#ai3').onclick = aiKeyPointsUI; $('#ai4a').onclick = aiSilenceUI; $('#ai4b').onclick = aiRetakeUI; $('#ai5').onclick = () => aiEnhanceUI(null); $('#ai6').onclick = aiVariantsUI; $('#aiK').onclick = aiKittiUI; $('#fdA').onclick = foodUI; $('#bsA').onclick = beatSnapTimeline; $('#anA').onclick = anUI; $('#aiA').onclick = aiCleanUI; $('#aiB').onclick = aiSubsUI;
+  const lg = localStorage.getItem('sk_lang'); if (lg) $('#aiLang').value = lg; $('#aiLang').onchange = e => localStorage.setItem('sk_lang', e.target.value); $('#aiAutoTr').checked = trAutoOn(); $('#aiAutoTr').onchange = e => localStorage.setItem('sk_autotr', e.target.checked ? '1' : '0');
+  $('#acBtn').onclick = acUI; $('#abBtn').onclick = acbUI; $('#teBtn').onclick = teUI; $('#aiCap').onclick = capOpen; $('#aiGT').onclick = aiGemTest; $('#ai1').onclick = () => aiTranscribeUI(); $('#aiTC').onclick = trcUI; $('#ai2').onclick = aiPriceUI; $('#ai3').onclick = aiKeyPointsUI; $('#ai4a').onclick = aiSilenceUI; $('#ai4b').onclick = aiRetakeUI; $('#ai5').onclick = () => aiEnhanceUI(null); $('#ai6').onclick = aiVariantsUI; $('#aiK').onclick = aiKittiUI; $('#fdA').onclick = foodUI; $('#bsA').onclick = beatSnapTimeline; $('#anA').onclick = anUI; $('#aiA').onclick = aiCleanUI; $('#aiB').onclick = aiSubsUI;
 }
 AI.inspectorAction = (act, it) => {
   if (act === 'enhance') aiEnhanceUI(it);
@@ -6405,6 +6935,254 @@ function presetDialog(id) {
   });
 }
 
+// ---- 65-tbar.js ----
+// ============================================================
+//  v1.57 — floating text toolbar: select a text on the preview and a small bar appears right above it
+//  ✎ edit the words · Aa font · ● colour / gradient · ◯ outline · ✦ glow & 3D · A− A+ size · 🎨 change look (pack) · ✨ animation
+//  Move / resize / rotate is still done by dragging the text itself on the preview (handles from the overlay).
+// ============================================================
+const TB = { pop: null, last: '' };
+const TB_CH = ['#ffffff', '#000000', '#FFE14D', '#FFB300', '#FF5252', '#E0143C', '#FF4FD8', '#8F6BFF', '#2B6BFF', '#00C8FF', '#37D883', '#0E7A5F'];
+const TB_GR = [['#FFF4B8', '#F5C242', '#B87A10'], ['#FFF59D', '#FF9100', '#E53935'], ['#FFE259', '#FF7A59', '#C33764'], ['#00E5FF', '#7C4DFF'], ['#FF9DE6', '#8F6BFF'], ['#F1FFF7', '#37D883'], ['#FFFFFF', '#FF8FE9'], ['#FFFFFF', '#8FDCFF'], ['#FFFDE7', '#FFD600'], ['#FFFFFF', '#9aa0a6']];
+const tbItem = () => { const it = SEL ? getItem(SEL) : null; return it && it.type === 'text' ? it : null; };
+function tbBuild() {
+  const st = $('#stage'); if (!st || $('#tbar')) return;
+  const bar = document.createElement('div'); bar.id = 'tbar'; bar.hidden = true;
+  bar.innerHTML = `<div class="tbrow">
+    <button data-tb="text" title="แก้ข้อความ">✎</button><button data-tb="font" title="เลือกฟอนต์">Aa</button>
+    <button data-tb="fill" title="สีตัวอักษร / ไล่สี"><i class="tbsw"></i></button><button data-tb="stroke" title="ขอบตัวอักษร"><i class="tbring"></i></button>
+    <button data-tb="glow" title="แสงเรือง / 3D">✦</button><button data-tb="sm" title="ลดขนาด">A−</button><button data-tb="sp" title="เพิ่มขนาด">A+</button>
+    <button data-tb="pack" title="เปลี่ยนลุค (แพ็กข้อความ)">🎨</button><button data-tb="anim" title="แอนิเมชันข้อความ">✨</button></div><div id="tbpop" hidden></div>`;
+  st.appendChild(bar);
+  bar.addEventListener('pointerdown', e => e.stopPropagation());
+  bar.addEventListener('click', tbClick);
+  bar.addEventListener('input', tbInput);
+  bar.addEventListener('change', tbChange);
+}
+function tbSet(it, k, v) {   // one property of the text, from a chip / colour input
+  if (k === 'color') { it.color = v; it.grad = null; }
+  else if (k === 'stroke') { if (!v) { it.stroke = ''; it.strokeW = 0; } else { it.stroke = v; if (!it.strokeW) it.strokeW = 8; } }
+  else if (k === 'glow') it.glow = v || null;
+  else if (k === 'ext') it.ext = v ? { c: v, d: it.ext && it.ext.d != null ? it.ext.d : .06 } : null;
+  else if (k === 'grad') it.grad = null;
+}
+const tbChips = (k, cur, none) => (none ? `<button class="tbc none" data-tbv="${k}:" title="ไม่มี">⌀</button>` : '') + TB_CH.map(c => `<button class="tbc${cur && String(cur).toLowerCase() === c.toLowerCase() ? ' on' : ''}" data-tbv="${k}:${c}" style="background:${c}"></button>`).join('') + `<input type="color" class="tbcol" data-tbi="${k}" value="${toHex(cur || '#ffffff')}" title="สีอื่น">`;
+function tbPopHtml(name, it) {
+  if (name === 'text') return `<textarea id="tbTxt" rows="3" data-tbtxt>${esc(it.text)}</textarea><div class="tbh">บรรทัดใหม่ = Enter · *คำ* = เน้นสีเหลือง</div>`;
+  if (name === 'fill') {
+    let h = `<div class="tbl">สีตัวอักษร</div><div class="tbr">${tbChips('color', it.grad ? '' : it.color)}</div>
+      <div class="tbl">สีไล่เฉด (ไล่สี)</div><div class="tbr">${TB_GR.map(g => `<button class="tbg" data-tbg="${g.join(',')}" style="background:linear-gradient(90deg,${g.join(',')})"></button>`).join('')}</div>`;
+    if (it.grad) h += `<div class="tbr"><span class="tbh">ปรับสี</span>${it.grad.c.map((c, i) => `<input type="color" class="tbcol" data-tbgi="${i}" value="${toHex(c)}">`).join('')}<label class="tbh">มุมไล่สี <input type="range" min="0" max="180" step="1" value="${it.grad.a == null ? 90 : it.grad.a}" data-tbga></label><button class="tbx" data-tbv="grad:">ปิดไล่สี</button></div>`;
+    return h;
+  }
+  if (name === 'stroke') return `<div class="tbl">สีขอบ</div><div class="tbr">${tbChips('stroke', it.stroke, true)}</div><div class="tbr"><label class="tbh">ความหนาขอบ <input type="range" min="0" max="30" step="1" value="${it.strokeW || 0}" data-tbsw></label></div>`;
+  if (name === 'glow') return `<div class="tbl">แสงเรือง</div><div class="tbr">${tbChips('glow', it.glow, true)}</div><div class="tbl">3D (ขอบหนาหลังตัวอักษร)</div><div class="tbr">${tbChips('ext', it.ext && it.ext.c, true)}</div><div class="tbr"><label class="tbh">ความลึก <input type="range" min="1" max="15" step="1" value="${Math.round((it.ext && it.ext.d != null ? it.ext.d : .06) * 100)}" data-tbed></label></div>`;
+  return '';
+}
+function tbPop(name) {
+  const it = tbItem(), pop = $('#tbpop'); if (!it || !pop) return;
+  TB.pop = name; pop.innerHTML = tbPopHtml(name, it); pop.hidden = !name;
+  $$('#tbar [data-tb]').forEach(b => b.classList.toggle('on', b.dataset.tb === name));
+  if (name === 'text') { const ta = $('#tbTxt'); if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); } }
+  TB.last = ''; tbUpdate();
+}
+function tbOpen(name) {   // also callable from the inspector: bring the playhead onto the clip so the bar can show
+  const it = tbItem(); if (!it) return; if (PB.t < it.start - 1e-3 || PB.t >= it.start + it.dur) seek(it.start + .01); pause(); tbPop(name);
+}
+function tbSwatch() {
+  const it = tbItem(), sw = $('#tbar .tbsw'), rg = $('#tbar .tbring'); if (!it) return;
+  if (sw) sw.style.background = (it.grad && it.grad.c && it.grad.c.length > 1) ? `linear-gradient(135deg,${it.grad.c.join(',')})` : toHex(it.color || '#ffffff');
+  if (rg) rg.style.borderColor = it.stroke ? toHex(it.stroke) : 'transparent';
+}
+function tbClick(e) {
+  const it = tbItem(); if (!it) return;
+  const chip = e.target.closest('[data-tbv]');
+  if (chip) { const [k, ...r] = chip.dataset.tbv.split(':'); tbSet(it, k, r.join(':')); commit('tb-' + k); renderInspector(); tbPop(TB.pop); return; }
+  const g = e.target.closest('[data-tbg]');
+  if (g) { it.grad = { c: g.dataset.tbg.split(','), a: it.grad && it.grad.a != null ? it.grad.a : 90 }; commit('tb-grad'); renderInspector(); tbPop('fill'); return; }
+  const b = e.target.closest('[data-tb]'); if (!b) return; const k = b.dataset.tb;
+  if (k === 'sm' || k === 'sp') { it.size = clamp(Math.round((it.size || 60) * (k === 'sp' ? 1.08 : .92)), 12, 300); commit('tb-size'); renderInspector(); return; }
+  if (k === 'font') { lfOpen(it); return; }
+  if (k === 'pack') { tpkOpen(it); return; }
+  if (k === 'anim') { taOpen(); return; }
+  tbPop(TB.pop === k ? null : k);
+}
+function tbInput(e) {
+  const it = tbItem(), el = e.target; if (!it) return;
+  if (el.hasAttribute('data-tbtxt')) { it.text = el.value; dirty(); renderTimeline(); return; }
+  if (el.dataset.tbi) { tbSet(it, el.dataset.tbi, el.value); dirty(); tbSwatch(); return; }
+  if (el.dataset.tbgi != null && it.grad) { it.grad.c[+el.dataset.tbgi] = el.value; dirty(); tbSwatch(); return; }
+  if (el.hasAttribute('data-tbga') && it.grad) { it.grad.a = +el.value; dirty(); return; }
+  if (el.hasAttribute('data-tbsw')) { it.strokeW = +el.value; if (it.strokeW && !it.stroke) it.stroke = '#000000'; dirty(); tbSwatch(); return; }
+  if (el.hasAttribute('data-tbed') && it.ext) { it.ext.d = (+el.value) / 100; dirty(); return; }
+  if (el.hasAttribute('data-tbed') && !it.ext) { it.ext = { c: '#000000', d: (+el.value) / 100 }; dirty(); }
+}
+function tbChange(e) {
+  const it = tbItem(); if (!it) return; const el = e.target;
+  if (el.hasAttribute('data-tbtxt')) { commit('text'); renderInspector(); return; }
+  if (el.matches('[data-tbi],[data-tbgi],[data-tbga],[data-tbsw],[data-tbed]')) { commit('tb'); renderInspector(); tbPop(TB.pop); }
+}
+// place the bar above the selected text (below it when there is no room); called on every frame, touches the DOM only when something changed
+function tbUpdate() {
+  const bar = $('#tbar'); if (!bar) return;
+  const it = tbItem(), b = it ? BOUNDS[it.id] : null;
+  const show = !!(b && !PB.playing && !PB.starting && !PB.exporting && PB.t >= it.start - 1e-3 && PB.t < it.start + it.dur - 1e-3 && !document.querySelector('dialog[open]'));
+  if (!show) { if (!bar.hidden) { bar.hidden = true; } return; }
+  const st = $('#stage'), sr = st.getBoundingClientRect(), kx = sr.width / PW, ky = sr.height / PH, vw = window.innerWidth, vh = window.innerHeight;   // the bar is position:fixed, so it may be wider than a small phone stage
+  const key = [it.id, b.cx | 0, b.cy | 0, b.w | 0, b.h | 0, b.rot | 0, sr.left | 0, sr.top | 0, sr.width | 0, vw, vh, TB.pop, it.grad ? 1 : 0].join('|');
+  if (!bar.hidden && key === TB.last) return; TB.last = key; bar.hidden = false;
+  const rad = b.rot * Math.PI / 180, ext = Math.abs(b.h / 2 * Math.cos(rad)) + Math.abs(b.w / 2 * Math.sin(rad));
+  const bh = bar.querySelector('.tbrow').offsetHeight, ty = sr.top + (b.cy - ext) * ky, by = sr.top + (b.cy + ext) * ky;
+  const spaceAbove = ty - 44, spaceBelow = vh - by - 16;
+  const up = spaceAbove >= spaceBelow, top = up ? spaceAbove - bh : by + 16;   // the side with more room (stays put while editing); the popover opens away from the text
+  bar.classList.toggle('up', up); bar.style.top = clamp(top, 4, Math.max(4, vh - bh - 4)) + 'px';
+  const pop = $('#tbpop'); if (pop) pop.style.maxHeight = Math.max(110, (up ? top : vh - top - bh) - 14) + 'px';
+  bar.style.left = clamp(sr.left + b.cx * kx - bar.offsetWidth / 2, 4, Math.max(4, vw - bar.offsetWidth - 4)) + 'px';
+}
+function tbInit() {
+  tbBuild();
+  on('sel', () => { TB.pop = null; const p = $('#tbpop'); if (p) p.hidden = true; $$('#tbar [data-tb]').forEach(b => b.classList.remove('on')); TB.last = ''; tbSwatch(); });
+  on('doc', () => { TB.last = ''; tbSwatch(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && TB.pop) { tbPop(null); } });
+}
+
+// ---- 65-tpack.js ----
+// ============================================================
+//  v1.57 — text look pack ("แพ็กข้อความ"): ready-made looks = Lao font + gradient fill + outline / 3D / glow + text animation.
+//  · click a tile  → a new text at the playhead      · drag a tile onto the timeline or onto the preview (onto an existing text = change its look)
+//  · tpkOpen(it)   → the same pack as a dialog that CHANGES the look of the selected text (text, time and position stay)
+//  Every look is just plain text-item properties (it.grad / it.ext / it.glow / it.stroke / it.font / it.tanim …), so everything stays editable.
+// ============================================================
+const TPG = (c, a) => ({ c, a });
+const TPACK = [
+  { id: 'gold', label: 'ทองหรู', f: 'Banteay', ta: 'shine', d: { size: 120, grad: TPG(['#FFF4B8', '#F5C242', '#B87A10'], 90), color: '#F5C242', stroke: '#4a2a00', strokeW: 5, ext: { c: '#5b3300', d: .05 }, shadow: true } },
+  { id: 'goldscript', label: 'ทองตัวเขียน', f: 'Krathong', ta: 'rise', d: { size: 112, grad: TPG(['#FFF6C9', '#F0B93A', '#C98512'], 90), color: '#F0B93A', glow: '#ff9f1a' } },
+  { id: 'champagne', label: 'แชมเปญ เรียบหรู', f: 'Apsara', ta: 'cine', d: { size: 120, grad: TPG(['#FFFFFF', '#F2D9A0'], 90), color: '#F7EACB', shadow: true } },
+  { id: 'emerald', label: 'ทองเรืองแสงเขียว', f: 'Banteay', ta: 'cine', d: { size: 118, grad: TPG(['#FFF3B0', '#D4A72C'], 90), color: '#E6C35C', glow: '#1bb36b' } },
+  { id: 'sale', label: 'ลดแรง แดงไฟ', f: 'PreahNeak', ta: 'impact', text: 'ลดราคา', d: { size: 124, grad: TPG(['#FFF59D', '#FF5252'], 90), color: '#FF9E80', stroke: '#6b0000', strokeW: 9, ext: { c: '#a30000', d: .07 } } },
+  { id: 'fire', label: 'ไฟลุก', f: 'TimberBrush', ta: 'pulse', d: { size: 126, grad: TPG(['#FFF59D', '#FF9100', '#E53935'], 90), color: '#FF9100', glow: '#ff6d00' } },
+  { id: 'price', label: 'ราคาเด้ง เหลือง', f: 'Banteay', ta: 'drop', text: 'ราคาพิเศษ', d: { size: 116, grad: TPG(['#FFFDE7', '#FFD600'], 90), color: '#FFE74C', stroke: '#000000', strokeW: 11, ext: { c: '#000000', d: .05 } } },
+  { id: 'tagred', label: 'ป้ายแดง ตัวขาว', f: 'WatPhou', ta: 'elastic', d: { size: 80, color: '#ffffff', box: 'block', bg: '#E0143C', ay: .25, shadow: true } },
+  { id: 'neonpink', label: 'นีออนชมพู', f: 'NamOu', ta: 'neon', d: { size: 112, grad: TPG(['#FFFFFF', '#FF8FE9'], 90), color: '#ffc4f3', glow: '#ff2bd6' } },
+  { id: 'neonblue', label: 'นีออนฟ้า', f: 'Suksa', ta: 'glow', d: { size: 112, grad: TPG(['#FFFFFF', '#8FDCFF'], 90), color: '#bfeaff', glow: '#00b7ff' } },
+  { id: 'neongreen', label: 'เขียวเรืองแสง', f: 'WoodlandHook', ta: 'glow', d: { size: 116, grad: TPG(['#F2FFF8', '#5CFFA8'], 90), color: '#a6ffd2', glow: '#18ff8a' } },
+  { id: 'sunset', label: 'พระอาทิตย์ตก', f: 'PreahNeak', ta: 'rise', d: { size: 120, grad: TPG(['#FFE259', '#FF7A59', '#C33764'], 90), color: '#FF7A59', shadow: true } },
+  { id: 'ocean', label: 'ฟ้า-ม่วง ไล่สี', f: 'Hankha', ta: 'blur', d: { size: 120, grad: TPG(['#00E5FF', '#7C4DFF'], 0), color: '#5aa0ff', glow: '#7c4dff' } },
+  { id: 'candy', label: 'ลูกกวาดชมพู', f: 'TadFane', ta: 'pop', d: { size: 118, grad: TPG(['#FF9DE6', '#8F6BFF'], 90), color: '#c58bff', stroke: '#ffffff', strokeW: 9, shadow: true } },
+  { id: 'mint', label: 'เขียวมิ้นต์ สุขภาพ', f: 'WatPhou', ta: 'softw', d: { size: 116, grad: TPG(['#F1FFF7', '#37D883'], 90), color: '#9af0c4', stroke: '#05482a', strokeW: 7, shadow: true } },
+  { id: 'impactw', label: 'ขาวหนา ขอบดำ', f: 'TadFane', ta: 'impact', d: { size: 124, color: '#ffffff', stroke: '#000000', strokeW: 14, shadow: true } },
+  { id: 'impacty', label: 'เหลืองหนา ขอบดำ', f: 'PreahNeak', ta: 'zoom', d: { size: 124, grad: TPG(['#FFFBB0', '#FFD400'], 90), color: '#FFE74C', stroke: '#000000', strokeW: 14 } },
+  { id: 'comic', label: 'การ์ตูนป๊อป', f: 'BanGuesthouse', ta: 'elastic', d: { size: 112, color: '#ffffff', stroke: '#2b2be0', strokeW: 11, ext: { c: '#2b2be0', d: .06 } } },
+  { id: 'retro', label: 'ย้อนยุค ส้ม-ครีม', f: 'Krathong', ta: 'drop', d: { size: 112, grad: TPG(['#FFF1CC', '#FF9A3C'], 90), color: '#FFC27A', stroke: '#5a1f00', strokeW: 8, ext: { c: '#5a1f00', d: .08 } } },
+  { id: 'outline', label: 'ตัวเส้นขอบ', f: 'PreahNeak', ta: 'write', d: { size: 120, color: 'rgba(255,255,255,0)', stroke: '#ffffff', strokeW: 5 } },
+  { id: 'soft', label: 'ขาวนุ่ม เบลอเข้า', f: 'NotoSansLao', w: 700, ta: 'blur', d: { size: 100, color: '#ffffff', shadow: true } },
+  { id: 'cinema', label: 'ชื่อเรื่องหนัง', f: 'Sila', ta: 'cine', d: { size: 112, color: '#ffffff', glow: '#ffd9a0' } },
+  { id: 'cyber', label: 'ไซเบอร์ กลิตช์', f: 'Kamphaeng', ta: 'glitch', d: { size: 112, color: '#ffffff', glow: '#00e5ff' } },
+  { id: 'rainbow', label: 'รุ้งเปลี่ยนสี', f: 'Hankha', ta: 'rainbow', d: { size: 120, color: '#ffffff', stroke: '#000000', strokeW: 8, shadow: true } },
+  { id: 'taggreen', label: 'ป้ายเขียว ตัวขาว', f: 'Suksa', ta: 'lineup', d: { size: 76, color: '#ffffff', box: 'block', bg: '#0E7A5F', ay: .25 } },
+  { id: 'lower', label: 'แถบชื่อ ล่างจอ', f: 'WatPhou', ta: 'write', d: { size: 64, color: '#ffffff', box: 'line', bg: '#000000d9', ay: .82 } },
+];
+const TPK_BY = {}; TPACK.forEach(p => TPK_BY[p.id] = p);
+const tpkText = pk => T(pk.text || 'ข้อความ');
+
+// text-item properties of a look (everything a look may set is reset first, so a look never inherits the old one)
+function tpkProps(pk) {
+  const d = JSON.parse(JSON.stringify(pk.d));
+  const o = Object.assign({ stroke: '', strokeW: 0, box: 'none', bg: '', shadow: false, glow: null, grad: null, ext: null, ay: .42, weight: pk.w || 400 }, d);
+  o.color2 = o.color; o.font = pk.f ? lfStack(pk.f) : FONT_STACK; o.pack = pk.id;
+  return o;
+}
+function tpkSetAnim(it, pk) {
+  if (pk.ta && TAX_BY[pk.ta]) { const fx = TAX_BY[pk.ta]; it.tanim = { id: fx.id, d: fx.d, mode: fx.mode }; it.anim = { in: 'none', out: 'fade', d: .25 }; }
+  else { delete it.tanim; it.anim = { in: 'pop', out: 'fade', d: .25 }; }
+}
+function tpkMake(pk, text, start, dur) {
+  const it = mkText('clean', text == null ? tpkText(pk) : text, start, dur, tpkProps(pk)); tpkSetAnim(it, pk); return it;
+}
+function tpkAdd(pk, o) {
+  o = o || {}; const start = o.start == null ? PB.t : o.start, dur = o.dur || 3;
+  if (pk.f) lfEnsure(pk.f);
+  const it = tpkMake(pk, null, start, dur);
+  const free = tr => !D.items.some(i => i.track === tr && i.start < start + dur - 1e-3 && i.start + i.dur > start + 1e-3);
+  it.track = (o.track && TRACK_KIND[o.track] === 'text' && free(o.track)) ? o.track : freeTrack('text', start, dur, 'T1');
+  if (o.ay != null) it.ay = o.ay; if (o.x) setXf(it, 'x', o.x);
+  addItem(it); commit('text'); select(it.id);
+  seek(it.start); if (it.tanim) { play(); setTimeout(() => { if (PB.playing && PB.t > it.start + (it.tanim ? it.tanim.d : 1) + 1.2) pause(); }, 3500); }
+  return it;
+}
+// change the look of an existing text: text, time, track, position and size multiplier stay
+function tpkApply(it, pk) {
+  if (!it || it.type !== 'text') return false;
+  if (pk.f) lfEnsure(pk.f);
+  const p = tpkProps(pk); delete p.ay; if (!pk.d.box && it.box && it.box !== 'none') p.box = 'none';
+  Object.assign(it, p); tpkSetAnim(it, pk);
+  commit('pack'); renderInspector();
+  if (it.tanim) { seek(it.start); play(); setTimeout(() => { if (PB.playing && PB.t > it.start + (it.tanim ? it.tanim.d : 1) + 1.2) pause(); }, 3500); }
+  return true;
+}
+
+// ---------- tiles ----------
+const tpkRest = pk => (pk.ta && TAX_BY[pk.ta]) ? TAX_BY[pk.ta].d + .35 : 1;
+function tpkDrawTile(cv, pk, t) {
+  const W = 540, H = 960; if (!VP.tpc) { VP.tpc = document.createElement('canvas'); VP.tpc.width = W; VP.tpc.height = H; }
+  const c = VP.tpc.getContext('2d'); c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; vpBg(c, W, H);
+  const it = tpkMake(pk, tpkText(pk), 0, 6); it.ay = .5; it.maxW = .98; it.anim = { in: 'none', out: 'none' };
+  const k = Math.min(1, 96 / it.size); it.size = Math.round(it.size * k); if (it.strokeW) it.strokeW *= k;
+  try { drawText(c, it, t, W, H); } catch (e) { console.warn(e); } delete BOUNDS[it.id];
+  const x = cv.getContext('2d'); x.clearRect(0, 0, cv.width, cv.height); x.drawImage(VP.tpc, 120, 399, 300, 162, 0, 0, cv.width, cv.height);
+}
+const tpkTiles = () => TPACK.map(p => `<button class="vt tpk" data-pk="${p.id}" draggable="true"><canvas width="300" height="162"></canvas><span>${esc(T(p.label))}</span></button>`).join('');
+// draw tiles lazily (fonts are fetched only when a tile scrolls into view), animate the tile under the pointer
+async function tpkWire(root) {
+  await pvSamples();
+  const io = typeof IntersectionObserver !== 'undefined' ? new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return; io.unobserve(e.target); const b = e.target, pk = TPK_BY[b.dataset.pk], cv = b.querySelector('canvas');
+    (pk.f ? lfEnsure(pk.f) : Promise.resolve(true)).then(() => { if (b.isConnected) tpkDrawTile(cv, pk, tpkRest(pk)); });
+  })) : null;
+  root.querySelectorAll('.tpk').forEach(b => {
+    const pk = TPK_BY[b.dataset.pk], cv = b.querySelector('canvas'); let raf = 0, t0 = 0;
+    if (io) io.observe(b); else (pk.f ? lfEnsure(pk.f) : Promise.resolve()).then(() => tpkDrawTile(cv, pk, tpkRest(pk)));
+    const loop = now => { if (!b.isConnected) { raf = 0; return; } tpkDrawTile(cv, pk, ((now - t0) / 1000) % (tpkRest(pk) + .9)); raf = requestAnimationFrame(loop); };
+    b.addEventListener('pointerenter', () => { if (raf || !LF_OK.has(pk.f) && pk.f) return; t0 = performance.now(); raf = requestAnimationFrame(loop); });
+    b.addEventListener('pointerleave', () => { if (!raf) return; cancelAnimationFrame(raf); raf = 0; tpkDrawTile(cv, pk, tpkRest(pk)); });
+  });
+}
+function tpkOpen(it) {
+  if (!it || it.type !== 'text') return;
+  aiDlg('เปลี่ยนลุคข้อความ (แพ็ก)', `<div class="hint">กดเพื่อใช้ลุคนี้กับข้อความที่เลือก — ข้อความ เวลา และตำแหน่งเดิมจะไม่เปลี่ยน · เอาเมาส์ชี้การ์ดเพื่อดูแอนิเมชัน</div><div class="vgrid tpkgrid" id="tpkDlg">${tpkTiles()}</div>`, root => {
+    tpkWire(root);
+    root.onclick = e => { const b = e.target.closest('.tpk'); if (!b) return; $('#dlgAi').close(); tpkApply(it, TPK_BY[b.dataset.pk]); };
+  });
+}
+
+// ---------- drop onto the timeline / the preview ----------
+function tpkDropStart(e) { return Math.max(0, snapVal(dropTimeFromEvent(e), snapPoints(null), 12 / TL.pps)); }
+function tpkDropOnTimeline(e, key) {
+  const pk = TPK_BY[key]; if (!pk) return; const row = e.target.closest ? e.target.closest('.trow') : null;
+  tpkAdd(pk, { start: tpkDropStart(e), track: row ? row.dataset.track : null });
+}
+function tpkHitText(p) {   // p in preview pixels → an active text clip under the point, or null
+  for (const o of D.items) {
+    if (o.type !== 'text' || o.hidden || PB.t < o.start || PB.t >= o.start + o.dur) continue; const b = BOUNDS[o.id]; if (!b) continue;
+    const a = -b.rot * Math.PI / 180, dx = p.x - b.cx, dy = p.y - b.cy, lx = dx * Math.cos(a) - dy * Math.sin(a), ly = dx * Math.sin(a) + dy * Math.cos(a);
+    if (Math.abs(lx) <= b.w / 2 && Math.abs(ly) <= b.h / 2) return o;
+  }
+  return null;
+}
+function tpkInit() {
+  const pane = $('#pane-text'); if (!pane) return;
+  pane.addEventListener('dragstart', e => { const b = e.target.closest && e.target.closest('.tpk'); if (!b) return; DRAG = { kind: 'tpk', key: b.dataset.pk }; e.dataTransfer.setData('text/tpk', b.dataset.pk); e.dataTransfer.effectAllowed = 'copy'; });
+  pane.addEventListener('dragend', () => { DRAG = null; });
+  const st = $('#stage'), ov = $('#ov');
+  st.addEventListener('dragover', e => { if (e.dataTransfer.types.includes('text/tpk')) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; } });
+  st.addEventListener('drop', e => {
+    if (!e.dataTransfer.types.includes('text/tpk')) return; e.preventDefault(); e.stopPropagation(); DRAG = null;
+    const pk = TPK_BY[e.dataTransfer.getData('text/tpk')]; if (!pk) return; const r = ov.getBoundingClientRect();
+    const fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height, hit = tpkHitText({ x: fx * PW, y: fy * PH });
+    if (hit) { select(hit.id); tpkApply(hit, pk); } else tpkAdd(pk, { ay: clamp(fy, .06, .94), x: clamp(fx - .5, -.45, .45) });
+  });
+}
+
 // ---- 66-analyzer.js ----
 // ============================================================
 //  Reference-video analyzer (v1.29)
@@ -6732,7 +7510,7 @@ const capLook = id => CAP_LOOKS.find(l => l[0] === id) || CAP_LOOKS[0];
 function capItem(text, extra) {   // a caption text item (not yet on the timeline) in the chosen look
   const l = capLook(CAPS.look); const o = Object.assign({ sub: 1, anim: { in: 'none', out: 'none', d: 0 }, reveal: 0, maxW: .9 }, l[3], { ay: CAPS.pos }, extra || {});
   const it = mkText(l[2], text, 0, 3, o); it.color2 = CAPS.color || l[4];
-  if (CAPS.font && LF_BY[CAPS.font]) { it.font = lfStack(CAPS.font); if (LF_BY[CAPS.font].cat !== 'formal') it.weight = 400; }   // v1.55: font from the Lao font library
+  if (CAPS.font && LF_BY[CAPS.font]) { it.font = lfStack(CAPS.font); if (!LF_W[CAPS.font]) it.weight = 400; }   // v1.55: font from the Lao font library
   if (CAPS.anim && CAPS.anim !== 'none' && TAX_BY[CAPS.anim]) it.tanim = { id: CAPS.anim, d: Math.min(TAX_BY[CAPS.anim].d, .7), mode: TAX_BY[CAPS.anim].mode };
   return it;
 }
@@ -6868,6 +7646,283 @@ function capInit() {
   };
 }
 
+// ---- 69-zautocut.js ----
+// ============================================================
+//  v1.56 — Auto Cut: ONE button.
+//   transcribe once (Lao = Gemini, Thai = Whisper in the browser; kept forever and shared through the shop server)
+//   -> cut silences + filler words (+ retakes when a Claude key exists)
+//   -> animated captions (every word, or only the key words / prices chosen by AI)
+//   -> the project stays open for checking; "undo everything" goes back to before Auto Cut.
+//  It only chains tools that already exist (findSilences, findFillers, cutSourceRanges, capApply, capKeywords).
+// ============================================================
+const ACUT = { o: { sil: true, min: .5, fil: true, ret: false, cap: true, look: '', rows: 1, kw: 'all' } };
+try { Object.assign(ACUT.o, JSON.parse(localStorage.getItem('sk_ac') || '{}')); } catch (e) { }
+
+function acUI() {
+  const m = selMedia(); if (!m) return toast('เลือกคลิปก่อน'); if (!m.pcm16) return toast('คลิปนี้ไม่มีเสียง หรือยังวิเคราะห์เสียงไม่เสร็จ');
+  const o = ACUT.o, hasC = !!loadKeys().claude, look = o.look || CAPS.look;
+  aiDlg('Auto Cut', `<div class="hint">เลือกสิ่งที่ให้ทำ แล้วกดเริ่ม · ถอดเสียงแค่ 1 ครั้ง (เก็บไว้ ไม่ถอดซ้ำ) · ทำเสร็จแล้วกดยกเลิกทั้งหมดได้</div>
+    <div class="fld col"><label>คลิปที่ใช้</label><div translate="no">${esc(m.name)}</div></div>
+    <div class="fld chk"><label><input type="checkbox" id="acSil" ${o.sil ? 'checked' : ''}> ✂ ตัดช่วงเงียบ</label></div>
+    <div class="fld"><label>เงียบนานกว่า (วิ)</label><input id="acMin" type="range" min=".25" max="1.5" step=".05" value="${o.min}"><output>${o.min}</output></div>
+    <div class="fld chk"><label><input type="checkbox" id="acFil" ${o.fil ? 'checked' : ''}> ✂ ตัดคำอ้ำอึ้ง (เอ่อ อืม)</label></div>
+    <div class="fld chk"><label><input type="checkbox" id="acRet" ${hasC && o.ret ? 'checked' : ''} ${hasC ? '' : 'disabled'}> ✂ ตัดเทคพูดผิด/พูดซ้ำ (ต้องใช้ Claude API key)</label></div>
+    <div class="fld chk"><label><input type="checkbox" id="acCap" ${o.cap ? 'checked' : ''}> 💬 ใส่ซับแอนิเมชัน</label></div>
+    <div class="fld"><label>หน้าตาซับ</label><select id="acLook">${CAP_LOOKS.map(l => `<option value="${l[0]}" ${l[0] === look ? 'selected' : ''}>${esc(T(l[1]))}</option>`).join('')}</select></div>
+    <div class="fld"><label>จำนวนแถว</label><select id="acRows"><option value="1" ${o.rows !== 2 ? 'selected' : ''}>1 แถว</option><option value="2" ${o.rows === 2 ? 'selected' : ''}>ซ้อน 2 แถว (คนพูดเร็ว)</option></select></div>
+    <div class="fld"><label>ข้อความที่แสดง</label><select id="acKw"><option value="all" ${o.kw !== 'key' ? 'selected' : ''}>ทุกคำที่พูด</option><option value="key" ${o.kw === 'key' ? 'selected' : ''}>เฉพาะคำสำคัญ (AI เลือก)</option></select></div>
+    <div class="row"><span class="sp"></span><button class="primary" id="acGo">เริ่ม Auto Cut</button></div>`, root => {
+    $('#acMin', root).oninput = e => { e.target.nextElementSibling.textContent = e.target.value; };
+    $('#acGo', root).onclick = () => {
+      const v = { sil: $('#acSil', root).checked, min: +$('#acMin', root).value, fil: $('#acFil', root).checked, ret: $('#acRet', root).checked, cap: $('#acCap', root).checked, look: $('#acLook', root).value, rows: +$('#acRows', root).value === 2 ? 2 : 1, kw: $('#acKw', root).value === 'key' ? 'key' : 'all' };
+      if (!v.sil && !v.fil && !v.ret && !v.cap) return toast('เลือกอย่างน้อย 1 อย่าง');
+      ACUT.o = v; try { localStorage.setItem('sk_ac', JSON.stringify(v)); } catch (e) { }
+      acRun(m, v);
+    };
+  });
+}
+
+async function acRun(m, o, batch) {   // batch = { i, n, st } when called by "Auto Cut all clips" (no dialog, stats are added to batch.st)
+  if (!batch) { if (AI.busy) return; AI.busy = true; }
+  const h0 = HPOS, st = batch ? batch.st : { cuts: 0, saved: 0, caps: 0, tr: 0, notes: [] };
+  const P = (t, p) => aiProg((batch ? `(${batch.i}/${batch.n}) ` : '') + t, p);
+  try {
+    P('กำลังเตรียมคลิป…', 3); ensureOnTimeline(m);
+    let tr = null;
+    if (o.fil || o.ret || o.cap) { tr = getTr(m.id) || await ensureTranscript(m); st.tr = tr.segs.length; }
+    // ---- 1) cut ----
+    const rs = [];
+    if (o.sil) { P('กำลังหาช่วงเงียบ…', 55); D.items.filter(it => it.type === 'video' && it.mediaId === m.id).forEach(it => findSilences(m, it.in, it.in + it.dur * (it.speed || 1), o.min, .12).forEach(r => rs.push([r[0], r[1]]))); }
+    if (o.fil && tr) findFillers(tr).filter(f => !f.approx).forEach(f => rs.push([snapValley(m, f.a - .02, .1), snapValley(m, f.b + .03, .1)]));   // only fillers whose position is exact (never a guessed spot)
+    if (o.ret && tr) { P('AI กำลังหาเทคที่พูดซ้ำ/พูดผิด…', 62); try { (await findRetakes(m, tr)).forEach(r => rs.push([r.a, r.b])); } catch (e) { console.warn('retakes', e); st.notes.push('retake'); } }
+    const merged = mergeRanges(rs);
+    if (merged.length) { st.saved += merged.reduce((a, r) => a + r[1] - r[0], 0); st.cuts += cutSourceRanges(m.id, merged); commit('autocut'); }
+    // ---- 2) captions ----
+    if (o.cap) {
+      if (!tr || !tr.segs.length) st.notes.push('nospeech');
+      else {
+        CAPS.look = o.look || CAPS.look; CAPS.rows = o.rows; CAPS.kw = o.kw; let kw = null;
+        if (CAPS.kw === 'key') { P('กำลังให้ AI เลือกคำสำคัญจากข้อความที่ถอดไว้…', 75); try { kw = await capKeywords(tr); } catch (e) { console.warn('capKeywords', e); st.notes.push('kwfail'); CAPS.kw = 'all'; } }
+        if (CAPS.font) { try { await lfEnsure(CAPS.font); } catch (e) { } }
+        P('กำลังใส่ซับ…', 90); const nc = capApply(m, tr, kw); st.caps += nc;
+        if (!nc) st.notes.push(kw ? 'nokey' : 'nospeech');
+      }
+    }
+    if (!batch) { AI.busy = false; acDone(m, st, h0, HPOS); }
+  } catch (e) { if (batch) throw e; aiErr(e); }
+}
+
+function acDone(m, st, h0, hEnd) {
+  const L = [];
+  L.push(st.cuts ? `<li>✂ ${T('ตัดออก')} <b>${st.cuts}</b> ${T('จุด')} · ${T('ลดไป')} <b>${st.saved.toFixed(1)}</b> ${T('วินาที')}</li>` : `<li>✂ ${T('ไม่ได้ตัดอะไร (ไม่พบช่วงเงียบ/คำอ้ำอึ้ง)')}</li>`);
+  if (st.caps) L.push(`<li>💬 ${T('ใส่ซับ')} <b>${st.caps}</b> ${T('ช่วง')}</li>`);
+  const N = { nospeech: 'ไม่พบข้อความพูดในคลิปนี้ จึงยังไม่ได้ใส่ซับ', nokey: 'AI ไม่พบคำสำคัญในคลิปนี้ จึงยังไม่ได้ใส่ซับ', kwfail: 'AI เลือกคำสำคัญไม่ได้ จึงใส่ซับทุกคำที่พูดแทน', retake: 'หาเทคที่พูดซ้ำไม่ได้ (ข้ามขั้นนี้)' };
+  st.notes.forEach(k => N[k] && L.push(`<li style="color:#ffb86b">⚠ ${T(N[k])}</li>`));
+  (st.extra || []).forEach(x => L.push(`<li translate="no">${esc(x)}</li>`));
+  aiDlg('Auto Cut เสร็จแล้ว', `<ul style="margin:0 0 8px 18px;padding:0">${L.join('')}</ul>
+    <div class="hint">ตรวจดูทั้งคลิปก่อนโพสต์ทุกครั้ง — AI อาจตัดหรือเลือกคำพลาดได้ แก้ต่อที่ไทม์ไลน์ได้เลย</div>
+    <div class="row"><button class="primary" id="acPlay">▶ ดูผลลัพธ์</button><button id="acUndo">↶ ยกเลิกทั้งหมด</button><span class="sp"></span><button id="acClose">ปิด</button></div>`, root => {
+    $('#acPlay', root).onclick = () => { $('#dlgAi').close(); seek(0); play(); };
+    $('#acClose', root).onclick = () => $('#dlgAi').close();
+    $('#acUndo', root).onclick = () => {
+      if (HPOS !== hEnd) return toast('มีการแก้ไขต่อจาก Auto Cut แล้ว — ใช้ปุ่ม ↶ ย้อนกลับทีละขั้นแทน');
+      for (let i = hEnd - h0; i > 0; i--) undo(); $('#dlgAi').close(); toast('ยกเลิก Auto Cut แล้ว');
+    };
+  });
+}
+
+// ============================================================
+//  v1.62 — Auto Cut for ALL clips of the project in one go (the "recipe" button): same options as Auto Cut, no dialog per clip,
+//  one summary at the end, one "undo everything". Made for VELARIS jobs (several raw clips) but works in any project.
+// ============================================================
+function acbClips() {
+  const ids = []; D.items.filter(i => i.type === 'video' && i.mediaId).sort((a, b) => a.start - b.start).forEach(i => { if (!ids.includes(i.mediaId)) ids.push(i.mediaId); });
+  return ids.map(id => MEDIA.get(id)).filter(Boolean);
+}
+function acbUI() {
+  const list = acbClips(); if (!list.length) return toast('ยังไม่มีคลิปวิดีโอในโปรเจกต์');
+  const o = ACUT.o, look = o.look || CAPS.look; let need = 0;
+  const rows = list.map(m => { const st = !m.pcm16 ? 'no' : getTr(m.id) ? 'ok' : 'new'; if (st === 'new') need++; return `<div class="fld col" style="margin:2px 0"><span translate="no">${esc(m.name)}</span> — ${st === 'ok' ? T('มีข้อความถอดไว้แล้ว') : st === 'new' ? T('ต้องถอดเสียงใหม่') : '<span style="color:#ffb86b">' + T('ไม่มีเสียง / ยังวิเคราะห์ไม่เสร็จ (จะข้าม)') + '</span>'}</div>`; }).join('');
+  aiDlg('Auto Cut ทุกคลิป', `<div class="hint">ทำกับทุกคลิปวิดีโอในโปรเจกต์ด้วยตัวเลือกด้านล่าง · ทำเสร็จแล้วกดยกเลิกทั้งหมดได้ · ใช้ครั้งเดียวต่อโปรเจกต์ (ถ้าเคยใส่ซับแล้ว ให้ยกเลิกก่อน)</div>
+    ${rows}
+    ${need ? `<div class="hint" style="color:#ffb86b">⚠ ${need} ${T('คลิปต้องถอดเสียงใหม่ — ภาษาลาวใช้ Gemini ซึ่งมีค่าใช้จ่ายต่อคลิป')}</div>` : ''}
+    <div class="fld chk"><label><input type="checkbox" id="abSil" ${o.sil ? 'checked' : ''}> ✂ ตัดช่วงเงียบ</label></div>
+    <div class="fld"><label>เงียบนานกว่า (วิ)</label><input id="abMin" type="range" min=".25" max="1.5" step=".05" value="${o.min}"><output>${o.min}</output></div>
+    <div class="fld chk"><label><input type="checkbox" id="abFil" ${o.fil ? 'checked' : ''}> ✂ ตัดคำอ้ำอึ้ง (เอ่อ อืม)</label></div>
+    <div class="fld chk"><label><input type="checkbox" id="abCap" ${o.cap ? 'checked' : ''}> 💬 ใส่ซับแอนิเมชัน</label></div>
+    <div class="fld"><label>หน้าตาซับ</label><select id="abLook">${CAP_LOOKS.map(l => `<option value="${l[0]}" ${l[0] === look ? 'selected' : ''}>${esc(T(l[1]))}</option>`).join('')}</select></div>
+    <div class="fld"><label>จำนวนแถว</label><select id="abRows"><option value="1" ${o.rows !== 2 ? 'selected' : ''}>1 แถว</option><option value="2" ${o.rows === 2 ? 'selected' : ''}>ซ้อน 2 แถว (คนพูดเร็ว)</option></select></div>
+    <div class="row"><span class="sp"></span><button class="primary" id="abGo">เริ่มทุกคลิป</button></div>`, root => {
+    $('#abMin', root).oninput = e => { e.target.nextElementSibling.textContent = e.target.value; };
+    $('#abGo', root).onclick = () => {
+      const v = { sil: $('#abSil', root).checked, min: +$('#abMin', root).value, fil: $('#abFil', root).checked, ret: false, cap: $('#abCap', root).checked, look: $('#abLook', root).value, rows: +$('#abRows', root).value === 2 ? 2 : 1, kw: ACUT.o.kw === 'key' ? 'key' : 'all' };
+      if (!v.sil && !v.fil && !v.cap) return toast('เลือกอย่างน้อย 1 อย่าง');
+      ACUT.o = Object.assign({}, ACUT.o, v); try { localStorage.setItem('sk_ac', JSON.stringify(ACUT.o)); } catch (e) { }
+      acbRun(list, v);
+    };
+  });
+}
+async function acbRun(list, o) {
+  if (AI.busy) return; AI.busy = true;
+  const h0 = HPOS, st = { cuts: 0, saved: 0, caps: 0, tr: 0, notes: [], extra: [] }; let done = 0;
+  try {
+    for (let i = 0; i < list.length; i++) {
+      const m = list[i];
+      if (!m.pcm16) { st.extra.push(`${m.name}: ${T('ข้าม (ไม่มีเสียง)')}`); continue; }
+      try { await acRun(m, o, { i: i + 1, n: list.length, st }); done++; }
+      catch (e) { console.warn('acbRun', m.name, e); st.extra.push(`${m.name}: ${T('ทำไม่สำเร็จ')} (${String(e && e.message || e).slice(0, 80)})`); }
+    }
+    AI.busy = false; st.extra.unshift(`${done}/${list.length} · ${T('ทำสำเร็จ')}`); acDone(list[0], st, h0, HPOS);
+  } catch (e) { aiErr(e); }
+}
+
+// ---- 69-ztxtedit.js ----
+// ============================================================
+//  v1.59 — Text-based editing (like Premiere's Transcript panel)
+//   AI tab -> "แก้ไขตามข้อความ": the transcript of a clip as clickable text. Tabs: text / pauses / filler words.
+//   Pick text (click, shift+click for a range) or use the search box, then delete -> the matching video is cut from the timeline.
+//   Extract = cut and close the gap (ripple).  Lift = cut but leave the gap.  Everything can be undone (↶).
+//   Lao transcripts made with Gemini only have sentences (no word times), so Lao text is selected sentence by sentence;
+//   Thai (Whisper) transcripts have word times, so Thai text is selected word by word.
+//   It only reuses what exists: getTr, findSilences, findFillers, snapValley, srcPieces, rippleCut.
+// ============================================================
+const TE = { m: null, tr: null, tab: 'txt', mode: 'ext', min: .5, q: '', S: new Set(), U: null, P: null, F: null, hist: [], last: null, anchor: null };
+try { const s = JSON.parse(localStorage.getItem('sk_te') || '{}'); if (s.mode === 'lift') TE.mode = 'lift'; if (s.min >= .25 && s.min <= 1.5) TE.min = +s.min; } catch (e) { }
+const teSave = () => { try { localStorage.setItem('sk_te', JSON.stringify({ mode: TE.mode, min: TE.min })); } catch (e) { } };
+
+function liftCut(t0, t1) {   // like rippleCut, but the gap stays (later clips are not moved)
+  if (t1 - t0 < .02) return;
+  for (const edge of [t0, t1]) for (const it of [...D.items]) { if (it.track !== 'A1' && isMediaLike(it)) splitItem(it.id, edge); }
+  D.items = D.items.filter(it => !(it.track !== 'A1' && isMediaLike(it) && it.start >= t0 - 1e-3 && it.start + it.dur <= t1 + 1e-3));
+}
+function teCut(mediaId, ranges, lift) {   // ranges in source seconds -> cut; returns { n, t0 }
+  let tl = []; for (const [a, b] of ranges) srcPieces(mediaId, a, b).forEach(p => tl.push([p[0], p[1]]));
+  tl = mergeRanges(tl, 0); if (!tl.length) return { n: 0, t0: 0 };
+  const t0 = tl[0][0]; tl.sort((x, y) => y[0] - x[0]); tl.forEach(([x, y]) => lift ? liftCut(x, y) : rippleCut(x, y)); return { n: tl.length, t0 };
+}
+const teAlive = (m, u) => tlTimes(m.id, (u.a + u.b) / 2).length > 0;   // still on the timeline?
+
+function teUnits(tr) {
+  if (tr.words && tr.words.length) return { word: true, u: tr.words.filter(w => String(w.text || '').trim()).map(w => ({ a: w.a, b: w.b, t: String(w.text).trim() })) };
+  return { word: false, u: tr.segs.map(s => ({ a: s.a, b: s.b, t: String(s.text || '').trim() })).filter(s => s.t) };
+}
+function teHits(U, q) {   // search: spaces ignored (Lao/Thai have none); a match may run across several words
+  const nq = String(q || '').replace(/\s+/g, '').toLowerCase(); const hit = new Set(); let count = 0; if (!nq) return { hit, count };
+  let C = '', map = []; U.forEach((u, i) => { const s = u.t.replace(/\s+/g, '').toLowerCase(); for (let k = 0; k < s.length; k++) map.push(i); C += s; });
+  for (let p = C.indexOf(nq); p >= 0; p = C.indexOf(nq, p + nq.length)) { count++; for (let k = p; k < p + nq.length; k++) hit.add(map[k]); }
+  return { hit, count };
+}
+
+// ---------- entry ----------
+function teUI() {
+  const m = selMedia(); if (!m) return toast('เลือกคลิปก่อน'); if (!m.pcm16) return toast('คลิปนี้ไม่มีเสียง หรือยังวิเคราะห์เสียงไม่เสร็จ');
+  ensureOnTimeline(m); const tr = getTr(m.id);
+  Object.assign(TE, { m, tr: tr && tr.segs && tr.segs.length ? tr : null, tab: 'txt', q: '', S: new Set(), U: null, P: null, F: null, hist: [], last: null, anchor: null });
+  teShow();
+}
+function teProbe() {   // lists that depend on the timeline as it is now
+  const m = TE.m, tr = TE.tr;
+  TE.U = tr ? teUnits(tr) : null;
+  TE.P = []; D.items.filter(it => it.type === 'video' && it.mediaId === m.id).forEach(it => findSilences(m, it.in, it.in + it.dur * (it.speed || 1), TE.min, .12).forEach(r => TE.P.push({ a: r[0], b: r[1], on: true })));
+  TE.P = mergeRanges(TE.P.map(r => [r.a, r.b]), .02).map(r => ({ a: r[0], b: r[1], on: true }));
+  TE.F = tr ? findFillers(tr).map(f => ({ a: snapValley(m, f.a - .02, .1), b: snapValley(m, f.b + .03, .1), text: f.text, approx: f.approx, on: !f.approx })).filter(r => tlTimes(m.id, (r.a + r.b) / 2).length) : [];
+}
+function teRanges() {   // what the current tab would delete (source seconds)
+  const m = TE.m; let rs = [];
+  if (TE.tab === 'txt') { if (!TE.U) return []; [...TE.S].sort((x, y) => x - y).forEach(i => { const u = TE.U.u[i]; if (u && teAlive(m, u)) rs.push([snapValley(m, u.a - .03, .1), snapValley(m, u.b + .04, .1)]); }); }
+  else (TE.tab === 'pau' ? TE.P : TE.F).forEach(r => { if (r.on) rs.push([r.a, r.b]); });
+  return mergeRanges(rs, .03);
+}
+function teSummary(root) {
+  const rs = teRanges(), n = rs.length, sec = rs.reduce((a, r) => a + r[1] - r[0], 0);
+  const el = $('#teSum', root); if (el) el.innerHTML = n ? `${T('เลือกไว้')} <b>${n}</b> ${T('จุด')} · ${T('จะลดไป')} <b>${sec.toFixed(1)}</b> ${T('วินาที')}` : T('ยังไม่ได้เลือกอะไร');
+  const b = $('#teDel', root); if (b) b.disabled = !n;
+  const u = $('#teUndo', root); if (u) u.disabled = !TE.hist.length;
+}
+
+// ---------- dialog ----------
+function teShow() {
+  teProbe(); const m = TE.m, tr = TE.tr, tab = TE.tab;
+  const tabs = [['txt', 'ข้อความ'], ['pau', 'ช่วงเงียบ'], ['fil', 'คำอ้ำอึ้ง']].map(([k, l]) => `<button data-tab="${k}" class="${k === tab ? 'on' : ''}">${T(l)}</button>`).join('');
+  let body = '';
+  const needTr = `<div class="hint">${T('คลิปนี้ยังไม่มีข้อความที่ถอดเสียง — ถอดเสียงก่อน (ทำครั้งเดียว เก็บไว้ใช้ต่อ)')}</div><div class="row"><button class="primary" id="teTr">${T('ถอดเสียงตอนนี้')}</button></div>`;
+  if (tab === 'txt') {
+    if (!tr) body = needTr;
+    else {
+      const { word, u } = TE.U, H = teHits(u, TE.q);
+      TE._hit = H.hit;
+      const units = u.map((x, i) => {
+        const dead = !teAlive(m, x), cls = 'te-u' + (dead ? ' dead' : '') + (TE.S.has(i) ? ' on' : '') + (H.hit.has(i) ? ' hit' : '');
+        return word ? `<span class="${cls}" data-i="${i}" title="${fmt(x.a)}" translate="no">${esc(x.t)}</span> `
+          : `<div class="te-s${dead ? ' dead' : ''}"><span class="te-t" data-seek="${i}" title="${T('ไปที่ตำแหน่งนี้')}">${fmt(x.a)}</span><span class="${cls}" data-i="${i}" translate="no">${esc(x.t)}</span></div>`;
+      }).join('');
+      body = `<div class="fld col"><input id="teQ" type="text" placeholder="${T('ค้นหาคำหรือประโยค')}" value="${esc(TE.q)}"></div>
+        <div class="row" style="margin:4px 0"><span class="mini" id="teHitN">${TE.q ? `${T('พบ')} <b>${H.count}</b> ${T('แห่ง')}` : ''}</span><span class="sp"></span><button id="teSelHits" ${H.count ? '' : 'disabled'}>${T('เลือกผลที่พบทั้งหมด')}</button><button id="teClr">${T('ล้างที่เลือก')}</button></div>
+        <div class="te-box${word ? ' w' : ''}" id="teBox">${units}</div>
+        <div class="mini">${word ? T('กดคำเพื่อเลือก · กด Shift ค้างแล้วกดอีกคำเพื่อเลือกเป็นช่วง') : T('ข้อความลาวที่ถอดด้วย Gemini แบ่งเป็นประโยค จึงเลือกทีละประโยค · กดเวลาด้านหน้าเพื่อไปดูที่ตำแหน่งนั้น')}</div>`;
+    }
+  } else if (tab === 'pau') {
+    body = `<div class="fld"><label>${T('เงียบนานกว่า (วิ)')}</label><input id="teMin" type="range" min=".25" max="1.5" step=".05" value="${TE.min}"><output>${TE.min}</output></div>`
+      + (TE.P.length ? `<div class="sillist">${TE.P.map((r, i) => `<div class="silrow"><input type="checkbox" data-li="${i}" ${r.on ? 'checked' : ''}><span class="te-t" data-seekt="${r.a}">${fmt(r.a)}</span><span class="d">${(r.b - r.a).toFixed(2)} ${T('วินาที')}</span></div>`).join('')}</div>` : `<div class="hint">${T('ไม่พบช่วงเงียบ')}</div>`);
+  } else {
+    body = !tr ? needTr : (TE.F.length ? `<div class="sillist">${TE.F.map((r, i) => `<div class="silrow"><input type="checkbox" data-li="${i}" ${r.on ? 'checked' : ''}><span class="te-t" data-seekt="${r.a}">${fmt(r.a)}</span><span class="d" translate="no">${esc(r.text || '')}</span>${r.approx ? `<span class="mini">${T('ตำแหน่งโดยประมาณ')}</span>` : ''}</div>`).join('')}</div>` : `<div class="hint">${T('ไม่พบคำอ้ำอึ้ง')}</div>`);
+  }
+  const listTab = tab !== 'txt', listArr = tab === 'pau' ? TE.P : TE.F;
+  aiDlg(T('แก้ไขตามข้อความ'), `<div class="lfcats">${tabs}</div><div class="mini" translate="no" style="margin-bottom:4px">${esc(m.name)}</div>${body}
+    <div class="te-foot">
+      <div class="te-mode"><label><input type="radio" name="teMode" value="ext" ${TE.mode === 'ext' ? 'checked' : ''}> ${T('ตัดแล้วดึงเข้าหากัน (Extract)')}</label><label><input type="radio" name="teMode" value="lift" ${TE.mode === 'lift' ? 'checked' : ''}> ${T('ตัดแล้วเว้นช่องว่างไว้ (Lift)')}</label></div>
+      <div class="hint" id="teSum"></div>
+      <div class="row"><button id="teUndo">↶ ${T('ย้อนกลับ')}</button><button id="tePlay">▶ ${T('ดูผลลัพธ์')}</button>${listTab && listArr.length ? `<button id="teAll">${T('เลือก/ไม่เลือกทั้งหมด')}</button>` : ''}<span class="sp"></span><button class="primary danger" id="teDel">${T('ลบที่เลือก')}</button></div>
+    </div>`, root => teWire(root));
+}
+
+function teWire(root) {
+  teSummary(root);
+  const goto = t => { if (t != null) seek(t); };
+  const tlOf = srcT => tlTimes(TE.m.id, srcT)[0];
+  root.onclick = e => {
+    const el = e.target.closest('[data-tab],[data-seek],[data-seekt],.te-u,#teTr,#teDel,#teUndo,#tePlay,#teAll,#teSelHits,#teClr'); if (!el) return;
+    if (el.dataset.tab) { TE.tab = el.dataset.tab; return teShow(); }
+    if (el.dataset.seek != null) { const u = TE.U.u[+el.dataset.seek]; return goto(tlOf(u.a)); }
+    if (el.dataset.seekt != null) return goto(tlOf(+el.dataset.seekt));
+    if (el.id === 'teTr') { if (AI.busy) return; AI.busy = true; aiProg('กำลังถอดเสียง…', 20); ensureTranscript(TE.m).then(t => { AI.busy = false; TE.tr = t && t.segs && t.segs.length ? t : null; teShow(); }).catch(aiErr); return; }
+    if (el.classList.contains('te-u')) {
+      const i = +el.dataset.i, u = TE.U.u[i]; if (!teAlive(TE.m, u)) return;
+      if (e.shiftKey && TE.anchor != null) { const [x, y] = [Math.min(TE.anchor, i), Math.max(TE.anchor, i)]; for (let k = x; k <= y; k++) if (teAlive(TE.m, TE.U.u[k])) TE.S.add(k); }
+      else { if (TE.S.has(i)) TE.S.delete(i); else TE.S.add(i); TE.anchor = i; }
+      $$('.te-u', root).forEach(s => s.classList.toggle('on', TE.S.has(+s.dataset.i))); return teSummary(root);
+    }
+    if (el.id === 'teSelHits') { (TE._hit || new Set()).forEach(i => { if (teAlive(TE.m, TE.U.u[i])) TE.S.add(i); }); $$('.te-u', root).forEach(s => s.classList.toggle('on', TE.S.has(+s.dataset.i))); return teSummary(root); }
+    if (el.id === 'teClr') { TE.S.clear(); $$('.te-u', root).forEach(s => s.classList.remove('on')); return teSummary(root); }
+    if (el.id === 'teAll') { const arr = TE.tab === 'pau' ? TE.P : TE.F, v = !arr.every(r => r.on); arr.forEach(r => r.on = v); $$('[data-li]', root).forEach(c => c.checked = v); return teSummary(root); }
+    if (el.id === 'tePlay') { $('#dlgAi').close(); seek(Math.max(0, (TE.last == null ? 0 : TE.last) - 1.5)); play(); return; }
+    if (el.id === 'teUndo') {
+      if (!TE.hist.length) return; if (HPOS !== TE.hist[TE.hist.length - 1]) return toast('มีการแก้ไขต่อจากนี้แล้ว — ใช้ปุ่ม ↶ ย้อนกลับทีละขั้นแทน');
+      undo(); TE.hist.pop(); toast('ย้อนกลับแล้ว'); return teShow();
+    }
+    if (el.id === 'teDel') {
+      const rs = teRanges(); if (!rs.length) return toast('ยังไม่ได้เลือกอะไร');
+      const lift = TE.mode === 'lift'; if (lift && TLS.magnet) { $('#tbMagnet').click(); toast('ปิดแม่เหล็กวิดีโอ 1 ให้แล้ว เพื่อเว้นช่องว่างไว้'); }   // the magnetic main track would close the gap again
+      const r = teCut(TE.m.id, rs, lift); if (!r.n) return toast('ช่วงที่เลือกถูกลบไปแล้ว');
+      commit('textedit'); TE.hist.push(HPOS); TE.last = r.t0; TE.S.clear(); toast(`${T('ลบแล้ว')} ${r.n} ${T('จุด')}`); return teShow();
+    }
+  };
+  root.onchange = e => {
+    const t = e.target;
+    if (t.name === 'teMode') { TE.mode = t.value === 'lift' ? 'lift' : 'ext'; teSave(); }
+    else if (t.dataset && t.dataset.li != null) { (TE.tab === 'pau' ? TE.P : TE.F)[+t.dataset.li].on = t.checked; teSummary(root); }
+    else if (t.id === 'teMin') { TE.min = +t.value; teSave(); teShow(); }
+  };
+  root.oninput = e => {
+    if (e.target.id === 'teMin') e.target.nextElementSibling.textContent = e.target.value;
+    else if (e.target.id === 'teQ') {   // only the highlights change, so typing never loses focus or scroll
+      TE.q = e.target.value; const H = teHits(TE.U.u, TE.q); TE._hit = H.hit;
+      $$('.te-u', root).forEach(s => s.classList.toggle('hit', H.hit.has(+s.dataset.i)));
+      $('#teHitN', root).innerHTML = TE.q ? `${T('พบ')} <b>${H.count}</b> ${T('แห่ง')}` : ''; $('#teSelHits', root).disabled = !H.count;
+    }
+  };
+}
+
 // ---- 70-main.js ----
 // ============================================================
 //  Main: init, preview overlay, shortcuts, project I/O, dialogs
@@ -6910,7 +7965,7 @@ function initPreviewInteraction() {
 
 let _lastUiT = -1, _uiTick = 0;
 window.onFrame = () => {
-  drawOverlay(); updatePlayhead();
+  drawOverlay(); updatePlayhead(); tbUpdate();
   $('#tpTime').textContent = fmt(PB.t) + ' / ' + fmt(projectEnd());
   if (!PB.playing && PB.t !== _lastUiT) { _lastUiT = PB.t; refreshInspectorValues(); }
 };
@@ -6998,7 +8053,7 @@ async function init() {
   window.addEventListener('dragenter', e => { if (e.dataTransfer.types.includes('Files')) { dc++; dz.classList.add('drop'); } });
   window.addEventListener('dragleave', () => { dc = Math.max(0, dc - 1); if (!dc) dz.classList.remove('drop'); });
   window.addEventListener('dragover', e => { if (e.dataTransfer.types.includes('Files')) e.preventDefault(); });
-  window.addEventListener('drop', e => { dc = 0; dz.classList.remove('drop'); if (e.dataTransfer.files && e.dataTransfer.files.length) { e.preventDefault(); importFiles(e.dataTransfer.files); } });
+  window.addEventListener('drop', e => { dc = 0; dz.classList.remove('drop'); if (e.dataTransfer.files && e.dataTransfer.files.length) { e.preventDefault(); importFiles(e.dataTransfer.files, { autoTr: true }); } });
   // keys
   window.addEventListener('keydown', e => {
     const tg = e.target; if (tg && /^(INPUT|TEXTAREA|SELECT)$/.test(tg.tagName) && !(tg.type === 'range')) return; if (document.querySelector('dialog[open]') || HOME.open) return;
@@ -7007,6 +8062,9 @@ async function init() {
     else if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
     else if (mod && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
     else if (mod && e.key.toLowerCase() === 'd') { e.preventDefault(); if (SEL) { const b = duplicateItem(SEL); commit('dup'); select(b.id); } }
+    else if (mod && e.key.toLowerCase() === 'c' && SEL && !String(getSelection())) { e.preventDefault(); cbCopy(SEL); }
+    else if (mod && e.key.toLowerCase() === 'x' && SEL) { e.preventDefault(); cbCut(SEL); }
+    else if (mod && e.key.toLowerCase() === 'v' && CB.it) { e.preventDefault(); cbPaste(); }
     else if (!mod && e.key.toLowerCase() === 's') { cmdSplit(); }
     else if (!mod && e.key.toLowerCase() === 'q') { cmdTrimLeft(); }
     else if (!mod && e.key.toLowerCase() === 'w') { cmdTrimRight(); }
@@ -7018,8 +8076,8 @@ async function init() {
     else if (e.key === 'ArrowRight') { pause(); seek(PB.t + (e.shiftKey ? 1 : 1 / 30)); }
     else if (e.key === 'Home') { pause(); seek(0); }
   });
-  initSplitters(); initToolbar(); if (typeof coverInit === 'function') coverInit(); scrInit(); taInit(); capInit();
-  initHome(); await showHome(); await srvApplyLink(); if (srvOn()) srvPing().then(ok => ok && srvLoadSizes()).then(() => srvAdoptProxies()).then(() => srvInboxAuto()).then(() => srvInboxWatch()).catch(() => { });
+  initSplitters(); initToolbar(); if (typeof coverInit === 'function') coverInit(); scrInit(); taInit(); capInit(); tpkInit(); tbInit();
+  initHome(); await showHome(); await srvApplyLink(); if (srvOn()) srvPing().then(ok => ok && srvLoadSizes()).then(() => trcSync(true)).then(() => srvAdoptProxies()).then(() => srvInboxAuto()).then(() => srvInboxWatch()).catch(() => { });
   tick();
   window.__ready = true;
 }

@@ -86,7 +86,7 @@ async function openById(id) {
   let doc; try { doc = Object.assign(newDoc(), JSON.parse(rec.doc)); } catch (e) { toast('ไฟล์โปรเจกต์เสียหาย'); return; }
   doc.pid = rec.id; doc.created = doc.created || rec.created;
   D = doc; await ensureSfx();
-  resetDoc(D); hideHome();
+  resetDoc(D); hideHome(); PS.sig.set(D.pid, JSON.stringify(D)); if (typeof SRV !== 'undefined') { SRV.upd.set(D.pid, rec.updated || 0); SRV.stale.delete(D.pid); }
   const miss = [...new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => mediaNameFromId(i.mediaId)))];
   const missIds = [...new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => i.mediaId))];
   if (missIds.length && srvOn()) await srvPullMissing();

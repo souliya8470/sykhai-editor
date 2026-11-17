@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.64</title>
+<title>Sykhai Editor v1.65</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -2184,6 +2184,10 @@ I18N_ROWS.push(
   ['ถอดเสียงอัตโนมัติ: ถอดใหม่', 'Auto-transcribe: new', 'ຖອດສຽງອັດຕະໂນມັດ: ຖອດໃໝ່'],
   ['· ใช้ข้อความเดิม', '· reused saved text', '· ໃຊ້ຂໍ້ຄວາມເດີມ'],
   ['(ไม่เสียเงิน)', '(free)', '(ບໍ່ເສຍເງິນ)'],
+  ['เซิร์ฟเวอร์มีเวอร์ชันใหม่กว่าของโปรเจกต์นี้', 'The server has a newer version of this project', 'ເຊີເວີມີເວີຊັນໃໝ່ກວ່າຂອງໂປຣເຈັກນີ້'],
+  ['โหลดเวอร์ชันใหม่', 'Load the newer version', 'ໂຫຼດເວີຊັນໃໝ່'],
+  ['ใช้ของเครื่องนี้ต่อ', "Keep this computer's version", 'ໃຊ້ອັນໃນເຄື່ອງນີ້ຕໍ່'],
+  ['โหลดเวอร์ชันใหม่จากเซิร์ฟเวอร์แล้ว', 'Loaded the newer version from the server', 'ໂຫຼດເວີຊັນໃໝ່ຈາກເຊີເວີແລ້ວ'],
 );
 
 // ---- 00-core.js ----
@@ -2191,9 +2195,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.64
-// APP_VERSION_PREV : 1.63
-// APP_VERSION_PREV_OLDER : 1.62
+// APP_VERSION  : 1.65
+// APP_VERSION_PREV : 1.64
+// APP_VERSION_PREV_OLDER : 1.63
+// 1.65 : Safer project sync — (1) opening a project no longer re-stamps it: it is saved/pushed only when its content really changed, so just having an old copy open can no longer overwrite a newer copy made elsewhere (by Claude, or on another computer); (2) while a project is open the editor checks the server every 30 s; if the server copy is newer a green bar asks "load the newer version" or "keep this computer's version", and saving of that project is paused until the person chooses.
 // 1.64 : Auto-transcribe now covers EVERY video that comes into the editor (drag-and-drop, the file button, and the team/VELARIS inbox) — not only the team's clips. Same safety: a clip that already has a transcript (any project, this browser or the shop server; same name + size + length) is never sent again; one clip at a time; stops on the first error; phones skip it; switch in the AI tab. Clips restored from an old project are not transcribed by themselves.
 // 1.63 : Auto-transcribe the team's clips — clips that arrive from VELARIS are transcribed by themselves (Lao = Gemini, Thai = chosen engine) and the text goes into the permanent transcript cache; a clip that already has a transcript (this browser or the shop server; same name + size + length, also when VELARIS put a random 8-hex prefix before the file name) is skipped so nothing is paid twice; one clip at a time, stops on the first error; switch in the AI tab; phones skip it
 // 1.62 : Right-click menu on timeline clips (CapCut style: copy / cut / paste, duplicate, delete, split, trim, Mirror, rotate 90°, separate audio, Auto Cut, edit by text, hide clip; Ctrl/⌘ C X V keys) — Mirror moved out of the crowded inspector into it; the row where the magnet works is marked with 🧲 and dragging a clip on another layer explains it; ⚡ Auto Cut for ALL clips of the project in one go (AI tab, under Auto Cut) — same options as Auto Cut (silences, filler words, animated captions), no dialog per clip, one summary, one "undo everything"; shows which clips still need a (paid, for Lao) transcription before it starts. Made for VELARIS jobs with several raw clips.
@@ -2259,7 +2264,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.64';
+const APP_VERSION = '1.65';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -3887,7 +3892,7 @@ function mediaNameFromId(id) { return String(id || '').split('|')[0] || '?'; }
 //  Projects store (IndexedDB 'projects') — per-project autosave for the Home page
 // ============================================================
 const HOME = { open: true, started: false };
-const PS = { timer: 0, known: new Set() };
+const PS = { timer: 0, known: new Set(), sig: new Map(), min: new Map() };   // sig: project id -> doc text at the last save/open (v1.65: an unchanged project is never re-stamped or re-pushed)
 async function idbTx(store, mode, fn) {
   const db = await dbOpen();
   try {
@@ -3917,14 +3922,15 @@ function projRec(doc) {
     id: doc.pid, name: doc.name || 'โปรเจกต์', doc: JSON.stringify(doc), thumb: projThumb(doc), n: items.length,
     dur: items.reduce((m, i) => Math.max(m, i.start + i.dur), 0),
     mids: [...new Set(items.map(i => i.mediaId).filter(x => x && !String(x).startsWith('sfx-')))],
-    created: doc.created || Date.now(), updated: Date.now(),
+    created: doc.created || Date.now(), updated: Math.max(Date.now(), (PS.min.get(doc.pid) || 0) + 1),   // min: after "keep this computer's version" the new stamp must beat the server copy even if the two clocks differ
   };
 }
 async function projSaveNow() {
   clearTimeout(PS.timer); PS.timer = 0;
   if (!D || !D.pid || HOME.open) return;
   if (!D.items.length && !PS.known.has(D.pid)) return;
-  const rec = projRec(D); const ok = await projPut(rec); if (ok && typeof srvSync === 'function') srvSync(rec); return ok;
+  const sig = JSON.stringify(D); if (PS.sig.get(D.pid) === sig) return true;   // v1.65: nothing changed since open/last save -> keep the old time stamp, push nothing (else just opening a project could overwrite a newer copy made elsewhere)
+  const rec = projRec(D); const ok = await projPut(rec); if (ok) { PS.sig.set(D.pid, sig); if (typeof srvSync === 'function') srvSync(rec); } return ok;
 }
 function projSaveSoon() { clearTimeout(PS.timer); PS.timer = setTimeout(projSaveNow, 700); }
 on('doc', l => { if (l && l !== 'init' && l !== 'open') projSaveSoon(); });
@@ -4020,7 +4026,7 @@ async function openById(id) {
   let doc; try { doc = Object.assign(newDoc(), JSON.parse(rec.doc)); } catch (e) { toast('ไฟล์โปรเจกต์เสียหาย'); return; }
   doc.pid = rec.id; doc.created = doc.created || rec.created;
   D = doc; await ensureSfx();
-  resetDoc(D); hideHome();
+  resetDoc(D); hideHome(); PS.sig.set(D.pid, JSON.stringify(D)); if (typeof SRV !== 'undefined') { SRV.upd.set(D.pid, rec.updated || 0); SRV.stale.delete(D.pid); }
   const miss = [...new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => mediaNameFromId(i.mediaId)))];
   const missIds = [...new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => i.mediaId))];
   if (missIds.length && srvOn()) await srvPullMissing();
@@ -4073,7 +4079,7 @@ function initHome() {
 //  shop server's disk. Talks to server/server.js. No polling: syncs only when saving,
 //  opening a project, exporting, or when you press the Home "sync" button.
 // ============================================================
-const SRV = { up: false, sizes: new Map(), q: [], busy: false, prog: null, label: '', err: '', info: null };
+const SRV = { up: false, sizes: new Map(), q: [], busy: false, prog: null, label: '', err: '', info: null, upd: new Map(), stale: new Set(), chk: false };   // upd: project id -> server time stamp we last saw; stale: projects whose server copy is newer than ours (v1.65)
 const SRV_SELF = !!document.querySelector('meta[name="sk-server"]');      // page is served by the shop server itself -> same-origin, no CORS/https problems
 const srvCfg = () => { let c = {}; try { c = JSON.parse(localStorage.getItem('sk_srv') || '{}'); } catch (e) { } if (SRV_SELF) c.url = location.origin; return c; };
 const srvOn = () => { const c = srvCfg(); return !!(c.url && c.token); };
@@ -4214,8 +4220,10 @@ async function srvRun() {
 // ----- projects -----
 async function srvPushProject(rec) {
   if (!srvOn()) return false;
+  if (SRV.stale.has(rec.id)) return false;          // v1.65: the server has a newer copy and the person has not chosen yet -> never overwrite it
   try {
     const r = await srvFetch('/projects/' + srvId(rec.id), { method: 'PUT', body: JSON.stringify(rec) });
+    if (r.ok) SRV.upd.set(rec.id, rec.updated);
     if (r.status === 409) { toast('โปรเจกต์ “' + rec.name + '” บนเซิร์ฟเวอร์ใหม่กว่า — ไม่เขียนทับ (กดซิงค์ในหน้าโปรเจกต์เพื่อดึง)', 6000); return false; }
     SRV.up = r.ok; updateSrvBadge(); return r.ok;
   } catch (e) { SRV.up = false; SRV.err = 'ติดต่อไม่ได้'; updateSrvBadge(); return false; }
@@ -4234,7 +4242,7 @@ async function srvSyncAll() {          // manual button on Home
   let remote = []; try { remote = await (await srvFetch('/projects')).json(); } catch (e) { toast('อ่านรายการจากเซิร์ฟเวอร์ไม่ได้'); return; }
   const local = await projAll(); const lm = new Map(local.map(r => [r.id, r])), rm = new Map(remote.map(r => [r.id, r]));
   let down = 0, up = 0;
-  for (const r of remote) { const l = lm.get(r.id); if (!l || l.updated < r.updated) { try { const full = await (await srvFetch('/projects/' + srvId(r.id))).json(); if (await projPut(full)) down++; } catch (e) { } } }
+  for (const r of remote) { const l = lm.get(r.id); if (!l || l.updated < r.updated) { try { const full = await (await srvFetch('/projects/' + srvId(r.id))).json(); if (await projPut(full)) { down++; SRV.upd.set(full.id, full.updated); } } catch (e) { } } }
   for (const l of local) { const r = rm.get(l.id); if (!r || r.updated > 0 && r.updated < l.updated) { if (await srvPushProject(l)) up++; } srvQueueMedia(l.mids || []); }
   toast(`ซิงค์แล้ว — ดึงลงเครื่อง ${down} โปรเจกต์ · ส่งขึ้นเซิร์ฟเวอร์ ${up} โปรเจกต์` + (SRV.q.length ? ` · กำลังส่งไฟล์วิดีโอ ${SRV.q.length} ไฟล์` : ''), 6000);
   renderHome();
@@ -4440,6 +4448,45 @@ async function srvPushOut(blob, name) {
   catch (e) { toast('ส่งวิดีโอขึ้นเซิร์ฟเวอร์ไม่สำเร็จ (ไฟล์ยังโหลดลงเครื่องแล้ว)', 5000); }
   SRV.prog = null; updateSrvBadge();
 }
+
+// ----- v1.65: "the server has a newer version of this project" notice -----
+// A project can be changed on the server by someone else (or by Claude). While it is open here we look every 30 s; if the server copy is newer
+// than the one we loaded/pushed, saving is paused and a bar asks: load the newer one, or keep this computer's version.
+function srvNewerBar(show, name) {
+  let el = document.getElementById('srvNewer');
+  if (!show) { if (el) el.hidden = true; return; }
+  if (!el) {
+    el = document.createElement('div'); el.id = 'srvNewer';
+    el.style.cssText = 'position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:99999;background:#1f9d4a;color:#fff;padding:10px 14px;border-radius:12px;box-shadow:0 6px 24px #0008;display:flex;gap:10px;align-items:center;font-weight:700;max-width:92vw;flex-wrap:wrap;justify-content:center';
+    el.innerHTML = '<span class="m"></span><button class="ld" style="background:#fff;color:#0d4a22;border:0;border-radius:8px;padding:6px 12px;font-weight:800;cursor:pointer"></button><button class="kp" style="background:#0d4a22;color:#fff;border:1px solid #fff6;border-radius:8px;padding:6px 12px;cursor:pointer"></button>';
+    el.querySelector('.ld').onclick = srvLoadNewer; el.querySelector('.kp').onclick = srvKeepMine; document.body.appendChild(el);
+  }
+  el.querySelector('.m').textContent = T('เซิร์ฟเวอร์มีเวอร์ชันใหม่กว่าของโปรเจกต์นี้') + (name ? ' — ' + name : '');
+  el.querySelector('.ld').textContent = T('โหลดเวอร์ชันใหม่'); el.querySelector('.kp').textContent = T('ใช้ของเครื่องนี้ต่อ'); el.hidden = false;
+}
+async function srvCheckNewer() {
+  if (!srvOn() || SRV.chk || HOME.open || !D || !D.pid) return; SRV.chk = true;
+  try {
+    const r = await srvFetch('/projects/' + srvId(D.pid)); if (!r.ok) return; const s = await r.json();
+    if (s && s.updated > (SRV.upd.get(D.pid) || 0)) { SRV.stale.add(D.pid); srvNewerBar(true, s.name); }
+  } catch (e) { } finally { SRV.chk = false; }
+}
+async function srvLoadNewer() {
+  const pid = D && D.pid; if (!pid) return;
+  try {
+    const full = await (await srvFetch('/projects/' + srvId(pid))).json();
+    PS.sig.set(pid, JSON.stringify(D));             // drop this computer's unsaved edits (the person chose the server copy)
+    await projPut(full); SRV.upd.set(pid, full.updated); SRV.stale.delete(pid); srvNewerBar(false);
+    await openById(pid); toast(T('โหลดเวอร์ชันใหม่จากเซิร์ฟเวอร์แล้ว') + (full.name ? ' — ' + full.name : ''), 4500);
+  } catch (e) { toast('โหลดไม่สำเร็จ: ' + e.message, 5000); }
+}
+async function srvKeepMine() {
+  const pid = D && D.pid; if (!pid) return;
+  try { const s = await (await srvFetch('/projects/' + srvId(pid))).json(); SRV.upd.set(pid, s.updated || 0); PS.min.set(pid, s.updated || 0); } catch (e) { }
+  SRV.stale.delete(pid); srvNewerBar(false); projSaveSoon();
+}
+setInterval(() => { if (document.visibilityState === 'visible') srvCheckNewer(); }, 30000);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') setTimeout(srvCheckNewer, 800); });
 
 // ---- 30-panels.js ----
 // ============================================================

@@ -61,7 +61,7 @@ function mediaNameFromId(id) { return String(id || '').split('|')[0] || '?'; }
 //  Projects store (IndexedDB 'projects') — per-project autosave for the Home page
 // ============================================================
 const HOME = { open: true, started: false };
-const PS = { timer: 0, known: new Set() };
+const PS = { timer: 0, known: new Set(), sig: new Map(), min: new Map() };   // sig: project id -> doc text at the last save/open (v1.65: an unchanged project is never re-stamped or re-pushed)
 async function idbTx(store, mode, fn) {
   const db = await dbOpen();
   try {
@@ -91,14 +91,15 @@ function projRec(doc) {
     id: doc.pid, name: doc.name || 'โปรเจกต์', doc: JSON.stringify(doc), thumb: projThumb(doc), n: items.length,
     dur: items.reduce((m, i) => Math.max(m, i.start + i.dur), 0),
     mids: [...new Set(items.map(i => i.mediaId).filter(x => x && !String(x).startsWith('sfx-')))],
-    created: doc.created || Date.now(), updated: Date.now(),
+    created: doc.created || Date.now(), updated: Math.max(Date.now(), (PS.min.get(doc.pid) || 0) + 1),   // min: after "keep this computer's version" the new stamp must beat the server copy even if the two clocks differ
   };
 }
 async function projSaveNow() {
   clearTimeout(PS.timer); PS.timer = 0;
   if (!D || !D.pid || HOME.open) return;
   if (!D.items.length && !PS.known.has(D.pid)) return;
-  const rec = projRec(D); const ok = await projPut(rec); if (ok && typeof srvSync === 'function') srvSync(rec); return ok;
+  const sig = JSON.stringify(D); if (PS.sig.get(D.pid) === sig) return true;   // v1.65: nothing changed since open/last save -> keep the old time stamp, push nothing (else just opening a project could overwrite a newer copy made elsewhere)
+  const rec = projRec(D); const ok = await projPut(rec); if (ok) { PS.sig.set(D.pid, sig); if (typeof srvSync === 'function') srvSync(rec); } return ok;
 }
 function projSaveSoon() { clearTimeout(PS.timer); PS.timer = setTimeout(projSaveNow, 700); }
 on('doc', l => { if (l && l !== 'init' && l !== 'open') projSaveSoon(); });

@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.64
-// APP_VERSION_PREV : 1.63
-// APP_VERSION_PREV_OLDER : 1.62
+// APP_VERSION  : 1.65
+// APP_VERSION_PREV : 1.64
+// APP_VERSION_PREV_OLDER : 1.63
+// 1.65 : Safer project sync — (1) opening a project no longer re-stamps it: it is saved/pushed only when its content really changed, so just having an old copy open can no longer overwrite a newer copy made elsewhere (by Claude, or on another computer); (2) while a project is open the editor checks the server every 30 s; if the server copy is newer a green bar asks "load the newer version" or "keep this computer's version", and saving of that project is paused until the person chooses.
 // 1.64 : Auto-transcribe now covers EVERY video that comes into the editor (drag-and-drop, the file button, and the team/VELARIS inbox) — not only the team's clips. Same safety: a clip that already has a transcript (any project, this browser or the shop server; same name + size + length) is never sent again; one clip at a time; stops on the first error; phones skip it; switch in the AI tab. Clips restored from an old project are not transcribed by themselves.
 // 1.63 : Auto-transcribe the team's clips — clips that arrive from VELARIS are transcribed by themselves (Lao = Gemini, Thai = chosen engine) and the text goes into the permanent transcript cache; a clip that already has a transcript (this browser or the shop server; same name + size + length, also when VELARIS put a random 8-hex prefix before the file name) is skipped so nothing is paid twice; one clip at a time, stops on the first error; switch in the AI tab; phones skip it
 // 1.62 : Right-click menu on timeline clips (CapCut style: copy / cut / paste, duplicate, delete, split, trim, Mirror, rotate 90°, separate audio, Auto Cut, edit by text, hide clip; Ctrl/⌘ C X V keys) — Mirror moved out of the crowded inspector into it; the row where the magnet works is marked with 🧲 and dragging a clip on another layer explains it; ⚡ Auto Cut for ALL clips of the project in one go (AI tab, under Auto Cut) — same options as Auto Cut (silences, filler words, animated captions), no dialog per clip, one summary, one "undo everything"; shows which clips still need a (paid, for Lao) transcription before it starts. Made for VELARIS jobs with several raw clips.
@@ -70,7 +71,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.64';
+const APP_VERSION = '1.65';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
