@@ -265,6 +265,7 @@ async function srvJobImport(list) {
     }
     if (D && D.pid === pid && !D.vl) D.vl = jobId;
     srvQueueMedia(ready.map(x => x.id));
+    if (typeof trAutoRun === 'function') trAutoRun(ready.map(x => x.id));   // v1.63: transcribe the new clips by itself (skips anything already transcribed)
     for (const { f } of ready) { try { await srvFetch('/inbox/' + srvId(f.name), { method: 'DELETE' }); } catch (e) { } }
     total += n; toast(`ได้งานใหม่จาก VELARIS: ${jobId} (${n} คลิป) — เปิดได้ที่หน้าโปรเจกต์`, 9000);
   }

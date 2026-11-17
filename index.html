@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.62</title>
+<title>Sykhai Editor v1.63</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -2171,14 +2171,30 @@ I18N_ROWS.push(
   ['แม่เหล็กใช้กับแถวที่มีป้าย 🧲 เท่านั้น — ลากคลิปลงไปวางที่แถวนั้นจึงจะดูดชิดกัน', 'The magnet only works on the row marked 🧲 — drag the clip down into that row to glue it', 'ແມ່ເຫຼັກໃຊ້ກັບແຖວທີ່ມີປ້າຍ 🧲 ເທົ່ານັ້ນ — ລາກຄລິບລົງໄປວາງແຖວນັ້ນຈຶ່ງຈະດູດຕິດກັນ'],
 );
 
+// ---- 00-9-i18n-q.js ----
+// i18n rows Q — v1.63: auto-transcribe the clips that arrive from the team   [thai, english, lao]
+I18N_ROWS.push(
+  ['ถอดเสียงคลิปจากทีมงานอัตโนมัติ', 'Auto-transcribe clips from the team', 'ຖອດສຽງຄລິບຈາກທີມງານອັດຕະໂນມັດ'],
+  ['(ข้ามคลิปที่เคยถอดแล้ว)', '(clips already transcribed are skipped)', '(ຂ້າມຄລິບທີ່ເຄີຍຖອດແລ້ວ)'],
+  ['กำลังถอดเสียงคลิปจากทีมงานอัตโนมัติ…', 'Auto-transcribing the team\'s clips…', 'ກຳລັງຖອດສຽງຄລິບຈາກທີມງານອັດຕະໂນມັດ…'],
+  ['(คลิปที่เคยถอดแล้วจะข้าม ไม่เสียเงินซ้ำ)', '(clips already transcribed are skipped — no double charge)', '(ຄລິບທີ່ເຄີຍຖອດແລ້ວຈະຂ້າມ ບໍ່ເສຍເງິນຊ້ຳ)'],
+  ['ถอดเสียงอัตโนมัติ: ยังไม่ได้ใส่ Gemini API key (กด ⚙ ตั้งค่า) — ข้ามไปก่อน', 'Auto-transcribe: no Gemini API key yet (press ⚙ Settings) — skipped for now', 'ຖອດສຽງອັດຕະໂນມັດ: ຍັງບໍ່ໄດ້ໃສ່ Gemini API key (ກົດ ⚙ ຕັ້ງຄ່າ) — ຂ້າມໄປກ່ອນ'],
+  ['ถอดเสียงอัตโนมัติหยุดแล้ว:', 'Auto-transcribe stopped:', 'ຖອດສຽງອັດຕະໂນມັດຢຸດແລ້ວ:'],
+  ['— กดถอดเสียงเองได้ที่แท็บ AI', '— you can transcribe by hand in the AI tab', '— ກົດຖອດສຽງເອງໄດ້ທີ່ແທັບ AI'],
+  ['ถอดเสียงอัตโนมัติ: ถอดใหม่', 'Auto-transcribe: new', 'ຖອດສຽງອັດຕະໂນມັດ: ຖອດໃໝ່'],
+  ['· ใช้ข้อความเดิม', '· reused saved text', '· ໃຊ້ຂໍ້ຄວາມເດີມ'],
+  ['(ไม่เสียเงิน)', '(free)', '(ບໍ່ເສຍເງິນ)'],
+);
+
 // ---- 00-core.js ----
 'use strict';
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.62
-// APP_VERSION_PREV : 1.61
-// APP_VERSION_PREV_OLDER : 1.60
+// APP_VERSION  : 1.63
+// APP_VERSION_PREV : 1.62
+// APP_VERSION_PREV_OLDER : 1.61
+// 1.63 : Auto-transcribe the team's clips — clips that arrive from VELARIS are transcribed by themselves (Lao = Gemini, Thai = chosen engine) and the text goes into the permanent transcript cache; a clip that already has a transcript (this browser or the shop server; same name + size + length, also when VELARIS put a random 8-hex prefix before the file name) is skipped so nothing is paid twice; one clip at a time, stops on the first error; switch in the AI tab; phones skip it
 // 1.62 : Right-click menu on timeline clips (CapCut style: copy / cut / paste, duplicate, delete, split, trim, Mirror, rotate 90°, separate audio, Auto Cut, edit by text, hide clip; Ctrl/⌘ C X V keys) — Mirror moved out of the crowded inspector into it; the row where the magnet works is marked with 🧲 and dragging a clip on another layer explains it; ⚡ Auto Cut for ALL clips of the project in one go (AI tab, under Auto Cut) — same options as Auto Cut (silences, filler words, animated captions), no dialog per clip, one summary, one "undo everything"; shows which clips still need a (paid, for Lao) transcription before it starts. Made for VELARIS jobs with several raw clips.
 // 1.61 : VELARIS link — clips that the VELARIS site PUTs into the server inbox as vl-<jobId>__<file>.mp4/.mov become the project "VELARIS | <jobId>" automatically (clips on Video 1; more clips for the same job are added to the same project, also when it is open or only exists on the server); exports of such a project are named vl-<jobId>_v001.mp4, v002 ... (one number per export) and go to /out on the shop server.
 // 1.60 : Magnet drag like CapCut but stickier — dragging a Video-1 clip opens a slot (others slide away smoothly), the slot glows when the clip is pulled in (dead-zone, then rubber band, then free flight; insert point has hysteresis; phones buzz); Mirror (flip left-right / top-bottom) for video and image clips, in preview and export.
@@ -2242,7 +2258,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.62';
+const APP_VERSION = '1.63';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -4316,6 +4332,7 @@ async function srvJobImport(list) {
     }
     if (D && D.pid === pid && !D.vl) D.vl = jobId;
     srvQueueMedia(ready.map(x => x.id));
+    if (typeof trAutoRun === 'function') trAutoRun(ready.map(x => x.id));   // v1.63: transcribe the new clips by itself (skips anything already transcribed)
     for (const { f } of ready) { try { await srvFetch('/inbox/' + srvId(f.name), { method: 'DELETE' }); } catch (e) { } }
     total += n; toast(`ได้งานใหม่จาก VELARIS: ${jobId} (${n} คลิป) — เปิดได้ที่หน้าโปรเจกต์`, 9000);
   }
@@ -5638,6 +5655,45 @@ async function lfApply(it, id) {
   commit('font'); renderInspector();
 }
 
+// ---- 59-9-trauto.js ----
+// ============================================================
+//  v1.63 — auto-transcribe the clips that arrive from VELARIS (the marketing team), so nobody has to press anything.
+//  It NEVER pays twice: a clip that already has a transcript in the permanent cache (this browser or the shop server; same file name + size + length,
+//  also when VELARIS put a random prefix in front of the name) is skipped. One clip at a time; on the first error everything stops (no retry loop that burns API money).
+//  Lao = Gemini (needs the Gemini key from ⚙), Thai = the chosen engine. The text goes only into the permanent cache, never into the open project.
+//  Off switch: AI tab -> "auto-transcribe clips from the team" (localStorage sk_autotr = 0). Phones skip it (mobile data).
+// ============================================================
+let _trQuiet = 0, _trBusy = false, _trNoKeyToast = false; const _trQ = [];
+const trAutoOn = () => localStorage.getItem('sk_autotr') !== '0';
+function trAutoLang() { return localStorage.getItem('sk_lang') === 'th' ? 'th' : 'lo'; }
+function trAutoEngine(lang) { return lang === 'lo' ? 'gemini' : ((($('#aiEng') || {}).value) || 'whisper'); }
+const trHas = (m, lang) => { const r = trcRec(m); return !!(r && Object.keys(r.tr || {}).some(k => k.startsWith(lang + ':'))); };
+async function trWaitPcm(m) {   // importFiles() already started analyzeAudio(); wait for it (4K files take a few seconds), never decode twice
+  for (let i = 0; i < 360 && !m.pcm16 && m.hasAudio !== false; i++) await new Promise(r => setTimeout(r, 500));
+  return !!m.pcm16;
+}
+async function trAutoRun(ids) {
+  if (!trAutoOn() || (typeof IS_PHONE === 'function' && IS_PHONE())) return;
+  for (const id of ids) if (!_trQ.includes(id)) _trQ.push(id);
+  if (_trBusy) return; _trBusy = true;
+  const st = { fresh: 0, reused: 0 }; let told = false;
+  try {
+    try { await trcSyncQuick(); } catch (e) { }   // first look on the shop server: another computer may already have the text
+    while (_trQ.length) {
+      const m = MEDIA.get(_trQ.shift()); if (!m || m.type !== 'video' || !m.file) continue;
+      const lang = trAutoLang(), eng = trAutoEngine(lang);
+      if (trHas(m, lang)) { st.reused++; continue; }              // already transcribed -> no API call at all
+      if (!(await trWaitPcm(m))) continue;                          // no audio track
+      if (lang === 'lo' && !(loadKeys().gemini)) { if (!_trNoKeyToast) { _trNoKeyToast = true; toast('ถอดเสียงอัตโนมัติ: ยังไม่ได้ใส่ Gemini API key (กด ⚙ ตั้งค่า) — ข้ามไปก่อน', 9000); } _trQ.length = 0; break; }
+      if (!told) { told = true; toast('กำลังถอดเสียงคลิปจากทีมงานอัตโนมัติ… (คลิปที่เคยถอดแล้วจะข้าม ไม่เสียเงินซ้ำ)', 6000); }
+      _trQuiet++; try { const tr = await transcribeCore(m, lang, eng); trcSave(m, tr); st.fresh++; } finally { _trQuiet--; }
+    }
+  } catch (e) { console.warn('trAutoRun', e); _trQ.length = 0; toast('ถอดเสียงอัตโนมัติหยุดแล้ว: ' + String(e && e.message || e).slice(0, 140) + ' — กดถอดเสียงเองได้ที่แท็บ AI', 12000); }
+  finally { _trBusy = false; }
+  if (st.fresh || st.reused) toast(`ถอดเสียงอัตโนมัติ: ถอดใหม่ ${st.fresh} คลิป · ใช้ข้อความเดิม ${st.reused} คลิป (ไม่เสียเงิน)`, 9000);
+  if (st.fresh && typeof renderAiPane === 'function' && $('#pane-ai')) renderAiPane();
+}
+
 // ---- 59-trcache.js ----
 // ============================================================
 //  v1.48 — permanent transcript cache. Every transcript is kept (IndexedDB, separate DB "sykhai-tr") under the clip's
@@ -5661,9 +5717,11 @@ async function trcDel(key) {
   TRC.delete(key); try { if (SRV.up) srvFetch('/tr/' + encodeURIComponent(key), { method: 'DELETE' }).catch(() => { }); } catch (e) { }
   try { const db = await trcDb(); await new Promise(res => { const tx = db.transaction('tr', 'readwrite'); tx.objectStore('tr').delete(key); tx.oncomplete = res; tx.onerror = res; }); db.close(); } catch (e) { }
 }
+const trNorm = n => String(n || '').replace(/^[0-9a-f]{8}-/i, '');   // v1.63: the VELARIS site puts a random 8-hex prefix in front of the file name (a49d5099-IMG_5529.mov) — the same video must still be recognised
 function trcRec(m) {      // exact key first; otherwise same file name + (almost) same length, e.g. a re-saved copy
   const k = trKey(m); if (!k) return null; if (TRC.has(k)) return TRC.get(k);
   for (const r of TRC.values()) if (r.name === m.name && Math.abs((r.duration || 0) - (m.duration || 0)) < .3) return r;
+  const nn = trNorm(m.name); for (const r of TRC.values()) if (trNorm(r.name) === nn && r.size === (m.file && m.file.size) && Math.abs((r.duration || 0) - (m.duration || 0)) < .3) return r;
   return null;
 }
 function trcSave(m, tr) {
@@ -5866,7 +5924,7 @@ function aiDlg(title, html, mount) {
   const bd = $('#aiBody'); bd.onclick = bd.onchange = bd.oninput = null;   // handlers of the previous dialog must not leak into this one
   $('#aiTitle').textContent = title; bd.innerHTML = html; const d = $('#dlgAi'); if (!d.open) d.showModal(); if (mount) mount($('#aiBody'));
 }
-function aiProg(msg, pct) { aiDlg('AI กำลังทำงาน…', `<div class="hint">${esc(msg)}</div><div class="progress"><div style="height:100%;width:${pct == null ? 40 : pct}%;background:var(--ac)"></div></div>`); }
+function aiProg(msg, pct) { if (typeof _trQuiet !== 'undefined' && _trQuiet > 0 && !AI.busy) return; aiDlg('AI กำลังทำงาน…', `<div class="hint">${esc(msg)}</div><div class="progress"><div style="height:100%;width:${pct == null ? 40 : pct}%;background:var(--ac)"></div></div>`); }
 function aiErr(e) { console.error(e); aiDlg('เกิดข้อผิดพลาด', `<div class="hint" style="color:#ff8a95">${esc(e.message || e)}</div>`); AI.busy = false; }
 function selMedia() { const s = $('#aiClip'); return s && s.value ? MEDIA.get(s.value) : null; }
 
@@ -5893,12 +5951,16 @@ const trPrompt = lname => `Transcribe this ${lname}-language audio exactly as sp
 async function transcribe(m, lang, engine, force) {
   if (!force) { await trcSyncQuick(); }   // v1.56: look on the shop server first — another computer may already have transcribed this clip
   if (!force) { const hit = trcFind(m, lang, engine); if (hit) { aiProg('ใช้ข้อความที่ถอดเก็บไว้แล้ว (ไม่เสียเงิน API)', 100); setTr(m.id, hit); return hit; } }
+  const tr = await transcribeCore(m, lang, engine); setTr(m.id, tr); return tr;
+}
+// v1.63: the real transcription work, without touching the open project (the auto-transcriber of VELARIS clips uses it and only fills the permanent cache)
+async function transcribeCore(m, lang, engine) {
   if (!m.pcm16) throw new Error('คลิปนี้ไม่มีเสียง หรือยังวิเคราะห์เสียงไม่เสร็จ');
   if (lang === 'th' && engine === 'whisper') {
     aiProg('กำลังโหลดโมเดลถอดเสียง…', 5); const asr = await getWhisper(); aiProg('กำลังถอดเสียงไทย…', 50);
     const out = await asr(m.pcm16, { language: 'thai', task: 'transcribe', return_timestamps: 'word', chunk_length_s: 30, stride_length_s: 5 });
     const words = (out.chunks || []).map(c => ({ a: c.timestamp[0], b: c.timestamp[1] ?? c.timestamp[0] + .3, text: c.text })).filter(w => w.text.trim());
-    const tr = { lang, engine: 'whisper', words, segs: groupWords(words) }; setTr(m.id, tr); return tr;
+    const tr = { lang, engine: 'whisper', words, segs: groupWords(words) }; return tr;
   }
   const lname = lang === 'lo' ? 'Lao' : 'Thai'; const dur = m.pcm16.length / 16000; const segs = [];
   for (let off = 0; off < dur; off += 110) {
@@ -5908,7 +5970,7 @@ async function transcribe(m, lang, engine, force) {
     const txt = await gemini([{ text: prompt }, { inline_data: { mime_type: 'audio/wav', data: wavB64(m.pcm16, 16000, a, b) } }], { label: 'ถอดเสียง ' + lname });
     const j = parseJsonLoose(txt); (j.segments || j).forEach(s => { const t = String(s.text || '').trim(); if (t) segs.push({ a: toSec(s.start) + a, b: toSec(s.end) + a, text: t }); });
   }
-  segs.sort((x, y) => x.a - y.a); const tr = { lang, engine: 'gemini', segs }; setTr(m.id, tr); return tr;
+  segs.sort((x, y) => x.a - y.a); const tr = { lang, engine: 'gemini', segs }; return tr;
 }
 
 // ---------- ripple cut ----------
@@ -6187,6 +6249,7 @@ function renderAiPane() {
   <div class="fld col"><label>คลิปที่ใช้</label><select id="aiClip">${vids.map(m => `<option translate="no" value="${m.id}" ${m.id === keep ? 'selected' : ''}>${esc(m.name)}${getTr(m.id) ? ' ✔' : ''}</option>`).join('') || '<option value="">(ยังไม่มีคลิป)</option>'}</select></div>
   <div class="fld"><label>ภาษาในคลิป</label><select id="aiLang"><option value="lo">ลาว (Gemini)</option><option value="th">ไทย</option></select></div>
   <div class="fld"><label>ตัวถอดเสียงไทย</label><select id="aiEng"><option value="whisper">Whisper ในเครื่อง (ฟรี แม่น)</option><option value="gemini">Gemini</option></select></div>
+  <div class="fld"><label><input type="checkbox" id="aiAutoTr"> ถอดเสียงคลิปจากทีมงานอัตโนมัติ (ข้ามคลิปที่เคยถอดแล้ว)</label></div>
   <div class="aicard"><h4>🚀 Auto Cut — ปุ่มเดียว</h4><div class="mini">ตัดช่วงเงียบ คำอ้ำอึ้ง ใส่ซับแอนิเมชันให้อัตโนมัติ แล้วเปิดให้ตรวจก่อนโพสต์ (ยกเลิกได้)</div><button class="wide primary" id="acBtn">เริ่ม Auto Cut</button><button class="wide" id="abBtn" style="margin-top:6px">⚡ Auto Cut ทุกคลิปในโปรเจกต์</button></div>
   <div class="aicard"><h4>✂ แก้ไขตามข้อความ</h4><div class="mini">ดูข้อความที่ถอดเสียง คลิกเลือกคำ/ประโยคแล้วลบ หรือลบช่วงเงียบและคำอ้ำอึ้งทั้งหมดในครั้งเดียว (เหมือน Premiere)</div><button class="wide" id="teBtn">เปิดแก้ไขตามข้อความ</button></div>
   <div class="aicard"><h4>🍜 โยนฟุตอาหาร → ปุ่มเดียว</h4><div class="mini">เลือกช่วงที่สวยที่สุดของแต่ละคลิป ตัดสั้น เรียงลำดับ ใส่สี/ทรานสิชัน/ซูม ตัดตามจังหวะเพลง</div><button class="wide primary" id="fdA">เริ่ม</button></div>
@@ -6203,7 +6266,7 @@ function renderAiPane() {
   <div class="aicard"><h4>⑤ ปรับภาพให้ชัด/สวย</h4><button class="wide" id="ai5">วิเคราะห์และปรับอัตโนมัติ</button></div>
   <div class="aicard"><h4>⑥ ให้ AI ตัดต่อ 4 แบบ</h4><div class="mini">ใช้ทุกคลิปในรายการสื่อ แล้วให้พนักงานเลือกแบบที่ชอบ</div><button class="wide primary" id="ai6">สร้าง 4 แบบ</button></div>
   <div class="hint small">ใช้ AI เดือนนี้ $${s.usd.toFixed(2)} จากเพดาน $${loadCap()}</div>`;
-  const lg = localStorage.getItem('sk_lang'); if (lg) $('#aiLang').value = lg; $('#aiLang').onchange = e => localStorage.setItem('sk_lang', e.target.value);
+  const lg = localStorage.getItem('sk_lang'); if (lg) $('#aiLang').value = lg; $('#aiLang').onchange = e => localStorage.setItem('sk_lang', e.target.value); $('#aiAutoTr').checked = trAutoOn(); $('#aiAutoTr').onchange = e => localStorage.setItem('sk_autotr', e.target.checked ? '1' : '0');
   $('#acBtn').onclick = acUI; $('#abBtn').onclick = acbUI; $('#teBtn').onclick = teUI; $('#aiCap').onclick = capOpen; $('#aiGT').onclick = aiGemTest; $('#ai1').onclick = () => aiTranscribeUI(); $('#aiTC').onclick = trcUI; $('#ai2').onclick = aiPriceUI; $('#ai3').onclick = aiKeyPointsUI; $('#ai4a').onclick = aiSilenceUI; $('#ai4b').onclick = aiRetakeUI; $('#ai5').onclick = () => aiEnhanceUI(null); $('#ai6').onclick = aiVariantsUI; $('#aiK').onclick = aiKittiUI; $('#fdA').onclick = foodUI; $('#bsA').onclick = beatSnapTimeline; $('#anA').onclick = anUI; $('#aiA').onclick = aiCleanUI; $('#aiB').onclick = aiSubsUI;
 }
 AI.inspectorAction = (act, it) => {

@@ -20,9 +20,11 @@ async function trcDel(key) {
   TRC.delete(key); try { if (SRV.up) srvFetch('/tr/' + encodeURIComponent(key), { method: 'DELETE' }).catch(() => { }); } catch (e) { }
   try { const db = await trcDb(); await new Promise(res => { const tx = db.transaction('tr', 'readwrite'); tx.objectStore('tr').delete(key); tx.oncomplete = res; tx.onerror = res; }); db.close(); } catch (e) { }
 }
+const trNorm = n => String(n || '').replace(/^[0-9a-f]{8}-/i, '');   // v1.63: the VELARIS site puts a random 8-hex prefix in front of the file name (a49d5099-IMG_5529.mov) — the same video must still be recognised
 function trcRec(m) {      // exact key first; otherwise same file name + (almost) same length, e.g. a re-saved copy
   const k = trKey(m); if (!k) return null; if (TRC.has(k)) return TRC.get(k);
   for (const r of TRC.values()) if (r.name === m.name && Math.abs((r.duration || 0) - (m.duration || 0)) < .3) return r;
+  const nn = trNorm(m.name); for (const r of TRC.values()) if (trNorm(r.name) === nn && r.size === (m.file && m.file.size) && Math.abs((r.duration || 0) - (m.duration || 0)) < .3) return r;
   return null;
 }
 function trcSave(m, tr) {

@@ -118,7 +118,7 @@ function aiDlg(title, html, mount) {
   const bd = $('#aiBody'); bd.onclick = bd.onchange = bd.oninput = null;   // handlers of the previous dialog must not leak into this one
   $('#aiTitle').textContent = title; bd.innerHTML = html; const d = $('#dlgAi'); if (!d.open) d.showModal(); if (mount) mount($('#aiBody'));
 }
-function aiProg(msg, pct) { aiDlg('AI กำลังทำงาน…', `<div class="hint">${esc(msg)}</div><div class="progress"><div style="height:100%;width:${pct == null ? 40 : pct}%;background:var(--ac)"></div></div>`); }
+function aiProg(msg, pct) { if (typeof _trQuiet !== 'undefined' && _trQuiet > 0 && !AI.busy) return; aiDlg('AI กำลังทำงาน…', `<div class="hint">${esc(msg)}</div><div class="progress"><div style="height:100%;width:${pct == null ? 40 : pct}%;background:var(--ac)"></div></div>`); }
 function aiErr(e) { console.error(e); aiDlg('เกิดข้อผิดพลาด', `<div class="hint" style="color:#ff8a95">${esc(e.message || e)}</div>`); AI.busy = false; }
 function selMedia() { const s = $('#aiClip'); return s && s.value ? MEDIA.get(s.value) : null; }
 
@@ -145,12 +145,16 @@ const trPrompt = lname => `Transcribe this ${lname}-language audio exactly as sp
 async function transcribe(m, lang, engine, force) {
   if (!force) { await trcSyncQuick(); }   // v1.56: look on the shop server first — another computer may already have transcribed this clip
   if (!force) { const hit = trcFind(m, lang, engine); if (hit) { aiProg('ใช้ข้อความที่ถอดเก็บไว้แล้ว (ไม่เสียเงิน API)', 100); setTr(m.id, hit); return hit; } }
+  const tr = await transcribeCore(m, lang, engine); setTr(m.id, tr); return tr;
+}
+// v1.63: the real transcription work, without touching the open project (the auto-transcriber of VELARIS clips uses it and only fills the permanent cache)
+async function transcribeCore(m, lang, engine) {
   if (!m.pcm16) throw new Error('คลิปนี้ไม่มีเสียง หรือยังวิเคราะห์เสียงไม่เสร็จ');
   if (lang === 'th' && engine === 'whisper') {
     aiProg('กำลังโหลดโมเดลถอดเสียง…', 5); const asr = await getWhisper(); aiProg('กำลังถอดเสียงไทย…', 50);
     const out = await asr(m.pcm16, { language: 'thai', task: 'transcribe', return_timestamps: 'word', chunk_length_s: 30, stride_length_s: 5 });
     const words = (out.chunks || []).map(c => ({ a: c.timestamp[0], b: c.timestamp[1] ?? c.timestamp[0] + .3, text: c.text })).filter(w => w.text.trim());
-    const tr = { lang, engine: 'whisper', words, segs: groupWords(words) }; setTr(m.id, tr); return tr;
+    const tr = { lang, engine: 'whisper', words, segs: groupWords(words) }; return tr;
   }
   const lname = lang === 'lo' ? 'Lao' : 'Thai'; const dur = m.pcm16.length / 16000; const segs = [];
   for (let off = 0; off < dur; off += 110) {
@@ -160,7 +164,7 @@ async function transcribe(m, lang, engine, force) {
     const txt = await gemini([{ text: prompt }, { inline_data: { mime_type: 'audio/wav', data: wavB64(m.pcm16, 16000, a, b) } }], { label: 'ถอดเสียง ' + lname });
     const j = parseJsonLoose(txt); (j.segments || j).forEach(s => { const t = String(s.text || '').trim(); if (t) segs.push({ a: toSec(s.start) + a, b: toSec(s.end) + a, text: t }); });
   }
-  segs.sort((x, y) => x.a - y.a); const tr = { lang, engine: 'gemini', segs }; setTr(m.id, tr); return tr;
+  segs.sort((x, y) => x.a - y.a); const tr = { lang, engine: 'gemini', segs }; return tr;
 }
 
 // ---------- ripple cut ----------
@@ -439,6 +443,7 @@ function renderAiPane() {
   <div class="fld col"><label>คลิปที่ใช้</label><select id="aiClip">${vids.map(m => `<option translate="no" value="${m.id}" ${m.id === keep ? 'selected' : ''}>${esc(m.name)}${getTr(m.id) ? ' ✔' : ''}</option>`).join('') || '<option value="">(ยังไม่มีคลิป)</option>'}</select></div>
   <div class="fld"><label>ภาษาในคลิป</label><select id="aiLang"><option value="lo">ลาว (Gemini)</option><option value="th">ไทย</option></select></div>
   <div class="fld"><label>ตัวถอดเสียงไทย</label><select id="aiEng"><option value="whisper">Whisper ในเครื่อง (ฟรี แม่น)</option><option value="gemini">Gemini</option></select></div>
+  <div class="fld"><label><input type="checkbox" id="aiAutoTr"> ถอดเสียงคลิปจากทีมงานอัตโนมัติ (ข้ามคลิปที่เคยถอดแล้ว)</label></div>
   <div class="aicard"><h4>🚀 Auto Cut — ปุ่มเดียว</h4><div class="mini">ตัดช่วงเงียบ คำอ้ำอึ้ง ใส่ซับแอนิเมชันให้อัตโนมัติ แล้วเปิดให้ตรวจก่อนโพสต์ (ยกเลิกได้)</div><button class="wide primary" id="acBtn">เริ่ม Auto Cut</button><button class="wide" id="abBtn" style="margin-top:6px">⚡ Auto Cut ทุกคลิปในโปรเจกต์</button></div>
   <div class="aicard"><h4>✂ แก้ไขตามข้อความ</h4><div class="mini">ดูข้อความที่ถอดเสียง คลิกเลือกคำ/ประโยคแล้วลบ หรือลบช่วงเงียบและคำอ้ำอึ้งทั้งหมดในครั้งเดียว (เหมือน Premiere)</div><button class="wide" id="teBtn">เปิดแก้ไขตามข้อความ</button></div>
   <div class="aicard"><h4>🍜 โยนฟุตอาหาร → ปุ่มเดียว</h4><div class="mini">เลือกช่วงที่สวยที่สุดของแต่ละคลิป ตัดสั้น เรียงลำดับ ใส่สี/ทรานสิชัน/ซูม ตัดตามจังหวะเพลง</div><button class="wide primary" id="fdA">เริ่ม</button></div>
@@ -455,7 +460,7 @@ function renderAiPane() {
   <div class="aicard"><h4>⑤ ปรับภาพให้ชัด/สวย</h4><button class="wide" id="ai5">วิเคราะห์และปรับอัตโนมัติ</button></div>
   <div class="aicard"><h4>⑥ ให้ AI ตัดต่อ 4 แบบ</h4><div class="mini">ใช้ทุกคลิปในรายการสื่อ แล้วให้พนักงานเลือกแบบที่ชอบ</div><button class="wide primary" id="ai6">สร้าง 4 แบบ</button></div>
   <div class="hint small">ใช้ AI เดือนนี้ $${s.usd.toFixed(2)} จากเพดาน $${loadCap()}</div>`;
-  const lg = localStorage.getItem('sk_lang'); if (lg) $('#aiLang').value = lg; $('#aiLang').onchange = e => localStorage.setItem('sk_lang', e.target.value);
+  const lg = localStorage.getItem('sk_lang'); if (lg) $('#aiLang').value = lg; $('#aiLang').onchange = e => localStorage.setItem('sk_lang', e.target.value); $('#aiAutoTr').checked = trAutoOn(); $('#aiAutoTr').onchange = e => localStorage.setItem('sk_autotr', e.target.checked ? '1' : '0');
   $('#acBtn').onclick = acUI; $('#abBtn').onclick = acbUI; $('#teBtn').onclick = teUI; $('#aiCap').onclick = capOpen; $('#aiGT').onclick = aiGemTest; $('#ai1').onclick = () => aiTranscribeUI(); $('#aiTC').onclick = trcUI; $('#ai2').onclick = aiPriceUI; $('#ai3').onclick = aiKeyPointsUI; $('#ai4a').onclick = aiSilenceUI; $('#ai4b').onclick = aiRetakeUI; $('#ai5').onclick = () => aiEnhanceUI(null); $('#ai6').onclick = aiVariantsUI; $('#aiK').onclick = aiKittiUI; $('#fdA').onclick = foodUI; $('#bsA').onclick = beatSnapTimeline; $('#anA').onclick = anUI; $('#aiA').onclick = aiCleanUI; $('#aiB').onclick = aiSubsUI;
 }
 AI.inspectorAction = (act, it) => {
