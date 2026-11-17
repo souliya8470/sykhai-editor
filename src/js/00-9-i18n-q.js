@@ -16,3 +16,19 @@ I18N_ROWS.push(
   ['ใช้ของเครื่องนี้ต่อ', "Keep this computer's version", 'ໃຊ້ອັນໃນເຄື່ອງນີ້ຕໍ່'],
   ['โหลดเวอร์ชันใหม่จากเซิร์ฟเวอร์แล้ว', 'Loaded the newer version from the server', 'ໂຫຼດເວີຊັນໃໝ່ຈາກເຊີເວີແລ້ວ'],
 );
+
+// v1.67 multi-take
+I18N_ROWS.push(
+  ['เลือกเทคที่ดีที่สุดจากเทคซ้ำ (ข้ามคลิป เริ่มที่ต้นประโยคเสมอ)', 'Pick the best take from retakes (across clips, always start at a sentence start)', 'ເລືອກເທກທີ່ດີທີ່ສຸດຈາກເທກຊ້ຳ (ຂ້າມຄລິບ ເລີ່ມທີ່ຕົ້ນປະໂຫຍກສະເໝີ)'],
+  ['กำลังเทียบเทคซ้ำข้ามคลิป…', 'Comparing retakes across clips…', 'ກຳລັງປຽບທຽບເທກຊ້ຳຂ້າມຄລິບ…'],
+  ['เทคนี้คะแนน', 'Take score', 'ເທກນີ້ຄະແນນ'],
+  ['มีเทคซ้ำ', 'has retakes', 'ມີເທກຊ້ຳ'],
+  ['เทคที่ไม่ได้ใช้', 'Takes not used', 'ເທກທີ່ບໍ່ໄດ້ໃຊ້'],
+  ['เริ่มด้วยคำเอ่อ/อืม', 'Starts with a filler (uh/um)', 'ເລີ່ມດ້ວຍຄຳ ເອີ/ອືມ'],
+  ['ต้นประโยคอาจติดเสียงก่อนหน้า', 'The start may carry sound from the previous sentence', 'ຕົ້ນປະໂຫຍກອາດຕິດສຽງກ່ອນໜ້າ'],
+  ['จบแบบถูกตัด (กดหยุดอัด)', 'Ends abruptly (recording stopped)', 'ຈົບແບບຖືກຕັດ (ກົດຢຸດອັດ)'],
+  ['ปรับให้เริ่มที่ต้นประโยค', 'Adjusted to start at a sentence start', 'ປັບໃຫ້ເລີ່ມທີ່ຕົ້ນປະໂຫຍກ'],
+  ['ปรับให้จบที่ท้ายประโยค', 'Adjusted to end at a sentence end', 'ປັບໃຫ້ຈົບທີ່ທ້າຍປະໂຫຍກ'],
+  ['เทคซ้ำกับฉากก่อนหน้า', 'Same line as an earlier scene', 'ເທກຊ້ຳກັບສາກກ່ອນໜ້າ'],
+  ['ฉากเปิดไม่มีเสียงพูด — ตรวจว่าเปิดเรื่องพอไหม', 'The opening scene has no speech — check that it works as a hook', 'ສາກເປີດບໍ່ມີສຽງເວົ້າ — ກວດວ່າເປີດເລື່ອງພໍບໍ'],
+);

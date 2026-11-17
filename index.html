@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.66</title>
+<title>Sykhai Editor v1.67</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -2195,14 +2195,31 @@ I18N_ROWS.push(
   ['โหลดเวอร์ชันใหม่จากเซิร์ฟเวอร์แล้ว', 'Loaded the newer version from the server', 'ໂຫຼດເວີຊັນໃໝ່ຈາກເຊີເວີແລ້ວ'],
 );
 
+// v1.67 multi-take
+I18N_ROWS.push(
+  ['เลือกเทคที่ดีที่สุดจากเทคซ้ำ (ข้ามคลิป เริ่มที่ต้นประโยคเสมอ)', 'Pick the best take from retakes (across clips, always start at a sentence start)', 'ເລືອກເທກທີ່ດີທີ່ສຸດຈາກເທກຊ້ຳ (ຂ້າມຄລິບ ເລີ່ມທີ່ຕົ້ນປະໂຫຍກສະເໝີ)'],
+  ['กำลังเทียบเทคซ้ำข้ามคลิป…', 'Comparing retakes across clips…', 'ກຳລັງປຽບທຽບເທກຊ້ຳຂ້າມຄລິບ…'],
+  ['เทคนี้คะแนน', 'Take score', 'ເທກນີ້ຄະແນນ'],
+  ['มีเทคซ้ำ', 'has retakes', 'ມີເທກຊ້ຳ'],
+  ['เทคที่ไม่ได้ใช้', 'Takes not used', 'ເທກທີ່ບໍ່ໄດ້ໃຊ້'],
+  ['เริ่มด้วยคำเอ่อ/อืม', 'Starts with a filler (uh/um)', 'ເລີ່ມດ້ວຍຄຳ ເອີ/ອືມ'],
+  ['ต้นประโยคอาจติดเสียงก่อนหน้า', 'The start may carry sound from the previous sentence', 'ຕົ້ນປະໂຫຍກອາດຕິດສຽງກ່ອນໜ້າ'],
+  ['จบแบบถูกตัด (กดหยุดอัด)', 'Ends abruptly (recording stopped)', 'ຈົບແບບຖືກຕັດ (ກົດຢຸດອັດ)'],
+  ['ปรับให้เริ่มที่ต้นประโยค', 'Adjusted to start at a sentence start', 'ປັບໃຫ້ເລີ່ມທີ່ຕົ້ນປະໂຫຍກ'],
+  ['ปรับให้จบที่ท้ายประโยค', 'Adjusted to end at a sentence end', 'ປັບໃຫ້ຈົບທີ່ທ້າຍປະໂຫຍກ'],
+  ['เทคซ้ำกับฉากก่อนหน้า', 'Same line as an earlier scene', 'ເທກຊ້ຳກັບສາກກ່ອນໜ້າ'],
+  ['ฉากเปิดไม่มีเสียงพูด — ตรวจว่าเปิดเรื่องพอไหม', 'The opening scene has no speech — check that it works as a hook', 'ສາກເປີດບໍ່ມີສຽງເວົ້າ — ກວດວ່າເປີດເລື່ອງພໍບໍ'],
+);
+
 // ---- 00-core.js ----
 'use strict';
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.66
-// APP_VERSION_PREV : 1.65
-// APP_VERSION_PREV_OLDER : 1.64
+// APP_VERSION  : 1.67
+// APP_VERSION_PREV : 1.66
+// APP_VERSION_PREV_OLDER : 1.65
+// 1.67 : "AI cut it all" now picks the BEST TAKE across many clips — it groups lines that were spoken more than once (retakes, also across different clips), scores every transcript segment (clean start/end from the audio, fillers, stutters, cut-off recordings), builds each scene from whole sentences, never uses two takes of the same line, orders hook -> problem -> product -> how-to -> proof -> CTA, and always opens on the start of a complete hook sentence. Scene cards show the take score, warnings and the takes that were not used. Tick-box "เลือกเทคที่ดีที่สุด" (default on).
 // 1.66 : Project page — square (1:1) thumbnails, project names may use 2 lines (the full name is also the tooltip), and a size slider (small ↔ large, remembered in this browser) like a file manager; project thumbnails made by the editor are sharper (270x480).
 // 1.65 : Safer project sync — (1) opening a project no longer re-stamps it: it is saved/pushed only when its content really changed, so just having an old copy open can no longer overwrite a newer copy made elsewhere (by Claude, or on another computer); (2) while a project is open the editor checks the server every 30 s; if the server copy is newer a green bar asks "load the newer version" or "keep this computer's version", and saving of that project is paused until the person chooses.
 // 1.64 : Auto-transcribe now covers EVERY video that comes into the editor (drag-and-drop, the file button, and the team/VELARIS inbox) — not only the team's clips. Same safety: a clip that already has a transcript (any project, this browser or the shop server; same name + size + length) is never sent again; one clip at a time; stops on the first error; phones skip it; switch in the AI tab. Clips restored from an old project are not transcribed by themselves.
@@ -2270,7 +2287,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.66';
+const APP_VERSION = '1.67';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -6511,16 +6528,50 @@ function subsPreview(m, chunks, style, rep) {
 // ============================================================
 //  C) "cut it all for me" — concepts -> storyboard -> approve -> timeline
 // ============================================================
-const KIT = { clips: [], concepts: [], boards: [], brief: '', target: 30, subs: true, footer: true, music: true };
+const KIT = { clips: [], concepts: [], boards: [], brief: '', target: 30, subs: true, footer: true, music: true, takes: true, groups: [], segIdx: new Map() };
+// ---- v1.67: take analysis (retakes across clips) ----
+const takeNorm = s => stripP(s).replace(/[0-9๐-๙໐-໙]/g, '').toLowerCase();
+function takeSim(x, y) {   // Dice coefficient on character bigrams (works for Lao/Thai without word breaks)
+  x = takeNorm(x); y = takeNorm(y); if (x.length < 5 || y.length < 5) return 0;
+  const bg = t => { const m = new Map(); for (let i = 0; i < t.length - 1; i++) { const k = t.substr(i, 2); m.set(k, (m.get(k) || 0) + 1); } return m; };
+  const A = bg(x), B = bg(y); let n = 0; for (const [k, v] of A) n += Math.min(v, B.get(k) || 0);
+  return 2 * n / ((x.length - 1) + (y.length - 1));
+}
+function kitPrepTakes() {
+  const all = [];
+  KIT.clips.forEach((c, ci) => {
+    const segs = (c.tr && c.tr.segs) || [], e = envelope(c.m), dur = c.m.duration; c.sm = [];
+    let med = 0; if (e) { const x = Array.from(e).filter(v => v > 0).sort((p, q) => p - q); med = x[Math.floor(x.length * .6)] || 0; }
+    const avg = (t0, t1) => { if (!e) return 0; const i0 = Math.max(0, Math.floor(t0 * 100)), i1 = Math.min(e.length, Math.ceil(t1 * 100)); let q = 0, n = 0; for (let i = i0; i < i1; i++) { q += e[i]; n++; } return n ? q / n : 0; };
+    segs.forEach((s, i) => {
+      const pv = segs[i - 1], nx = segs[i + 1], lead = +(s.a - (pv ? pv.b : 0)).toFixed(2), tail = +((nx ? nx.a : dur) - s.b).toFixed(2);
+      const toks = String(s.text || '').split(/\s+/).filter(Boolean), fill = toks.filter(isFiller).length; let stut = 0; for (let k = 1; k < toks.length; k++) if (toks[k] === toks[k - 1] && toks[k].length <= 4) stut++;
+      const qS = !e || avg(s.a - .15, s.a - .03) < med * .35, qE = !e || avg(s.b + .03, s.b + .15) < med * .35, cut = s.b >= dur - .25, d = s.b - s.a;
+      const score = 60 + (qS || lead >= .35 ? 10 : -10) + (qE || tail >= .35 ? 10 : -5) - 12 * fill - 15 * stut - (cut ? 25 : 0) - (d < 1.2 ? 15 : 0) - (/\.{2,}|…$/.test(s.text || '') ? 10 : 0);
+      const o = { id: c.id + '.' + i, c, ci, i, a: s.a, b: s.b, text: s.text, lead, tail, fill, stut, qS, qE, cut, score: clamp(Math.round(score), 0, 100), grp: '' };
+      c.sm.push(o); all.push(o);
+    });
+  });
+  const par = all.map((_, i) => i), find = i => par[i] === i ? i : (par[i] = find(par[i]));
+  for (let i = 0; i < all.length; i++) for (let j = i + 1; j < all.length; j++) if (takeSim(all[i].text, all[j].text) >= .6) par[find(j)] = find(i);
+  const gm = new Map(); all.forEach((q, i) => { const r = find(i); if (!gm.has(r)) gm.set(r, []); gm.get(r).push(q); });
+  KIT.groups = []; let g = 0;
+  for (const mem of gm.values()) if (mem.length > 1) { g++; mem.forEach((q, k) => { q.grp = 'G' + g; q.score = clamp(q.score + Math.min(k, 3) * 3, 0, 100); }); KIT.groups.push({ id: 'G' + g, segs: mem }); }
+  KIT.segIdx = new Map(all.map(q => [q.id, q]));
+}
+const kitSegLine = q => `${q.id} | ${q.a.toFixed(1)}-${q.b.toFixed(1)} | lead ${q.lead}s tail ${q.tail}s | start ${q.qS ? 'clean' : 'noisy'} end ${q.qE ? 'clean' : 'noisy'}${q.cut ? ' CUT-OFF(recording stopped)' : ''} | filler ${q.fill} stutter ${q.stut} | score ${q.score}${q.grp ? ' | ' + q.grp : ''} | ${q.text}`;
+function kitGroupText() { return KIT.groups.length ? 'RETAKE GROUPS (the same line spoken more than once — use at most ONE member of each group):\n' + KIT.groups.map(g => g.id + ': ' + g.segs.map(q => `${q.id}(score ${q.score})`).join(', ')).join('\n') : 'No retake groups found.'; }
 function kitClipBlocks() {
   const out = [];
   for (const c of KIT.clips) {
-    out.push({ type: 'text', text: `--- CLIP ${c.id} "${c.m.name}" duration ${c.m.duration.toFixed(1)}s, sharpness ${c.sharp}, brightness ${c.bright}. ${c.tr ? 'Transcript phrases (start-end seconds | text):\n' + c.tr.segs.map(s => `${s.a.toFixed(1)}-${s.b.toFixed(1)} | ${s.text}`).join('\n') : 'No transcript (no speech).'}\nSample frames at 15%, 50%, 85%:` });
+    const trTxt = !c.tr ? 'No transcript (no speech).' : (KIT.takes && c.sm ? 'Transcript segments (id | start-end s | silence before/after | start/end cleanliness | fillers | score | retake group | text):\n' + c.sm.map(kitSegLine).join('\n') : 'Transcript phrases (start-end seconds | text):\n' + c.tr.segs.map(s => `${s.a.toFixed(1)}-${s.b.toFixed(1)} | ${s.text}`).join('\n'));
+    out.push({ type: 'text', text: `--- CLIP ${c.id} "${c.m.name}" duration ${c.m.duration.toFixed(1)}s, sharpness ${c.sharp}, brightness ${c.bright}. ${trTxt}\nSample frames at 15%, 50%, 85%:` });
     c.frames.forEach(f => out.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: f.b64 } }));
   }
   return out;
 }
-function kitClipText() { return KIT.clips.map(c => `${c.id} | ${c.m.name} | ${c.m.duration.toFixed(1)}s | ${c.tr ? c.tr.segs.map(s => `${s.a.toFixed(1)}-${s.b.toFixed(1)} ${s.text}`).join(' / ') : 'no speech'}`).join('\n'); }
+function kitClipText() { return KIT.clips.map(c => `${c.id} | ${c.m.name} | ${c.m.duration.toFixed(1)}s | ${c.tr ? (KIT.takes && c.sm ? '\n' + c.sm.map(kitSegLine).join('\n') : c.tr.segs.map(s => `${s.a.toFixed(1)}-${s.b.toFixed(1)} ${s.text}`).join(' / ')) : 'no speech'}`).join('\n'); }
+const KIT_TAKE_RULES = 'TAKE RULES (very important): the owner filmed many takes; some lines were re-shot. (1) A scene is built from consecutive transcript segment ids of ONE clip: give "segs":["c1.2","c1.3"] — the editor cuts exactly at their sentence boundaries; never give raw seconds for a scene that has speech (use "a"/"b" only for a b-roll scene with no speech). (2) Choose the BEST take per beat: highest score, complete sentence, start clean and end clean, no filler/stutter, not CUT-OFF, sharp well-lit picture; never use two members of the same retake group, and never repeat a line the viewer already heard. (3) Order the beats like a sales story: hook -> problem -> product -> how-to/dose -> proof -> cta (skip beats the footage does not have). (4) The FIRST scene is the hook and MUST open on the start of a complete, strong sentence with a clean start (never mid-sentence, never a filler like เอ่อ/ເອີ, never right after a cut-off) so the viewer is not dropped into the middle of a thought; if the first line needs context, open with the strongest complete sentence and put the context right after. (5) Also list every retake member you did NOT use in "dropped" with a short Thai reason.';
 const KIT_RULES = 'Rules: use only clip ids above; segment start/end are SOURCE seconds and must align with phrase boundaries (never cut a sentence in half); prefer the best complete take, skip stumbles/repeats/dead air; avoid blurry or dark footage unless it is the only take; keep the speaker\'s voice continuous. Overlay text: "line1" short Lao-script text (2-5 words, wrap the key word in *asterisks*), "line2" optional short Lao detail (translate to Lao if the speech is Thai); leave both empty when the scene needs no text.';
 
 function aiKittiUI() {
@@ -6531,13 +6582,14 @@ function aiKittiUI() {
     <div class="kclips">${vids.map(m => `<label class="kcl"><input type="checkbox" data-m="${m.id}" checked> <span translate="no">${esc(m.name)}</span> <span class="mini">${fmt(m.duration)}</span></label>`).join('')}</div>
     <div class="fld col"><label>โจทย์ / สิ่งที่อยากได้ (ไม่ใส่ก็ได้)</label><textarea id="kBrief" rows="2" placeholder="เช่น ขายครีมกันแดด เน้นไม่เหนียว"></textarea></div>
     <div class="fld"><label>ความยาวที่ต้องการ</label><select id="kLen"><option value="15">ประมาณ 15 วินาที</option><option value="30" selected>ประมาณ 30 วินาที</option><option value="45">ประมาณ 45 วินาที</option><option value="60">ประมาณ 60 วินาที</option></select></div>
+    <div class="fld chk"><label><input type="checkbox" id="kTake" checked> เลือกเทคที่ดีที่สุดจากเทคซ้ำ (ข้ามคลิป เริ่มที่ต้นประโยคเสมอ)</label></div>
     <div class="fld chk"><label><input type="checkbox" id="kSubs" checked> ใส่ซับจากเสียงพูด</label></div>
     <div class="fld chk"><label><input type="checkbox" id="kFoot" checked> ใส่ข้อความท้ายจอ</label></div>
     ${hasMus ? '<div class="fld chk"><label><input type="checkbox" id="kMus" checked> ใส่เพลงพื้นหลังที่นำเข้าไว้</label></div>' : ''}
     <div class="row"><span class="sp"></span><button class="primary" id="kGo">ให้ AI ดูคลิป</button></div>`, root => {
     $('#kGo', root).onclick = () => {
       const ids = [...root.querySelectorAll('[data-m]')].filter(x => x.checked).map(x => x.dataset.m); if (!ids.length) return toast('เลือกคลิปก่อน');
-      Object.assign(KIT, { brief: $('#kBrief', root).value.trim(), target: +$('#kLen', root).value, subs: $('#kSubs', root).checked, footer: $('#kFoot', root).checked, music: !!($('#kMus', root) && $('#kMus', root).checked) });
+      Object.assign(KIT, { brief: $('#kBrief', root).value.trim(), target: +$('#kLen', root).value, takes: $('#kTake', root).checked, subs: $('#kSubs', root).checked, footer: $('#kFoot', root).checked, music: !!($('#kMus', root) && $('#kMus', root).checked) });
       kitAnalyze(ids.slice(0, 24));
     };
   });
@@ -6553,9 +6605,10 @@ async function kitAnalyze(ids) {
       for (const q of [.15, .5, .85]) { const c = await grabFrame(m, m.duration * q, 288); const a = analyzePixels(c); frames.push({ b64: c.toDataURL('image/jpeg', .6).split(',')[1], a }); }
       KIT.clips.push({ id: 'c' + (KIT.clips.length + 1), m, tr, frames, sharp: Math.round(frames.reduce((s, f) => s + f.a.sharp, 0) / 3), bright: +(frames.reduce((s, f) => s + f.a.mean, 0) / 3).toFixed(2) });
     }
+    KIT.groups = []; KIT.segIdx = new Map(); if (KIT.takes) { aiProg('กำลังเทียบเทคซ้ำข้ามคลิป…', 70); kitPrepTakes(); }
     aiProg('AI กำลังคิดแนวเรื่อง…', 75);
     const content = [{ type: 'text', text: `You plan short vertical (9:16) videos for a Lao online shop (cosmetics/supplements) from the raw clips below. ${KIT.brief ? 'Owner brief: ' + KIT.brief + '\n' : ''}Target length about ${KIT.target} seconds each.` }, ...kitClipBlocks(),
-      { type: 'text', text: 'Task: propose EXACTLY 3 clearly different story angles (concepts) that are realistic with THIS footage (e.g. hook-first, problem->solution, proof/result, offer-focused). For each: "name" short Thai name, "pitch" 1-2 Thai sentences describing what the viewer sees and hears, "hook" the opening hook in Thai. Return ONLY JSON: {"concepts":[{"name":"","pitch":"","hook":""}]}' }];
+      { type: 'text', text: (KIT.takes && KIT.groups.length ? kitGroupText() + '\n' : '') + 'Task: propose EXACTLY 3 clearly different story angles (concepts) that are realistic with THIS footage (e.g. hook-first, problem->solution, proof/result, offer-focused). For each: "name" short Thai name, "pitch" 1-2 Thai sentences describing what the viewer sees and hears, "hook" the opening hook in Thai. Return ONLY JSON: {"concepts":[{"name":"","pitch":"","hook":""}]}' }];
     const txt = await claude({ system: 'You are an expert short-form video editor and storyteller. Reply with JSON only.', content, max_tokens: 2500, useStyle: true, label: 'แนวเรื่อง', estUsd: .1 });
     KIT.concepts = (parseJsonLoose(txt).concepts || []).slice(0, 4).map(c => ({ name: String(c.name || ''), pitch: String(c.pitch || ''), hook: String(c.hook || '') })).filter(c => c.name || c.pitch);
     AI.busy = false; kitShowConcepts();
@@ -6570,9 +6623,21 @@ function kitShowConcepts() {
   });
 }
 function kitScene(s) {
-  const c = KIT.clips.find(x => x.id === s.clip); if (!c) return null; const m = c.m;
-  let a = clamp(snapValley(m, toSec(s.a), .2), 0, m.duration), b = clamp(snapValley(m, toSec(s.b), .2), 0, m.duration); if (b - a < .3) { a = clamp(toSec(s.a), 0, m.duration); b = clamp(toSec(s.b), 0, m.duration); } if (b - a < .3) return null;
-  return { id: uid(), role: String(s.role || ''), c, m, a, b, line1: String(s.line1 || ''), line2: String(s.line2 || ''), why: String(s.why || ''), status: 'pending', thumb: '' };
+  let c = KIT.clips.find(x => x.id === s.clip);
+  let segs = (Array.isArray(s.segs) ? s.segs : []).map(id => KIT.segIdx.get(String(id))).filter(Boolean);
+  if (segs.length) { c = segs[0].c; segs = segs.filter(q => q.c === c).sort((p, q) => p.i - q.i); }
+  if (!c) return null;
+  const m = c.m; let a, b, warn = '', segIds = [];
+  if (segs.length) {   // v1.67: cut exactly on the sentence boundaries, then settle in the nearest silence
+    segIds = segs.map(q => q.id); a = clamp(snapValley(m, segs[0].a - .04, .22), 0, m.duration); b = clamp(snapValley(m, segs[segs.length - 1].b + .04, .22), 0, m.duration);
+    if (a > segs[0].a + .15) a = Math.max(0, segs[0].a - .04); if (b < segs[segs.length - 1].b - .15) b = Math.min(m.duration, segs[segs.length - 1].b + .04);
+    if (segs[0].fill || isFiller(segs[0].text)) warn = 'เริ่มด้วยคำเอ่อ/อืม'; else if (!segs[0].qS && segs[0].lead < .35) warn = 'ต้นประโยคอาจติดเสียงก่อนหน้า'; else if (segs[segs.length - 1].cut) warn = 'จบแบบถูกตัด (กดหยุดอัด)';
+  } else {
+    a = clamp(snapValley(m, toSec(s.a), .2), 0, m.duration); b = clamp(snapValley(m, toSec(s.b), .2), 0, m.duration); if (b - a < .3) { a = clamp(toSec(s.a), 0, m.duration); b = clamp(toSec(s.b), 0, m.duration); }
+    if (KIT.takes && c.tr && c.sm) { const st = c.sm.find(q => a > q.a + .3 && a < q.b - .3); if (st) { a = clamp(st.a - .04, 0, m.duration); warn = 'ปรับให้เริ่มที่ต้นประโยค'; } const en = c.sm.find(q => b > q.a + .3 && b < q.b - .3); if (en) { b = clamp(en.b + .04, 0, m.duration); warn = warn || 'ปรับให้จบที่ท้ายประโยค'; } }
+  }
+  if (b - a < .3) return null;
+  return { id: uid(), role: String(s.role || ''), c, m, a, b, line1: String(s.line1 || ''), line2: String(s.line2 || ''), why: String(s.why || ''), segIds, warn, grp: segs.map(q => q.grp).filter(Boolean).join(','), score: segs.length ? Math.round(segs.reduce((x, q) => x + q.score, 0) / segs.length) : 0, status: 'pending', thumb: '' };
 }
 async function kitMakeBoards(sel) {
   if (AI.busy) return; AI.busy = true;
@@ -6581,9 +6646,13 @@ async function kitMakeBoards(sel) {
     for (let k = 0; k < sel.length; k++) {
       const cc = KIT.concepts[sel[k]]; aiProg(`AI กำลังเขียน storyboard ${k + 1}/${sel.length}: ${cc.name}`, 10 + 80 * k / sel.length);
       const content = [{ type: 'text', text: `You build a storyboard for ONE short vertical (9:16) product video for a Lao online shop (cosmetics/supplements) from the raw clips below. ${KIT.brief ? 'Owner brief: ' + KIT.brief + '\n' : ''}Target length about ${KIT.target} seconds in total.` }, ...kitClipBlocks(),
-        { type: 'text', text: `Chosen concept: ${JSON.stringify(cc)}\nTask: write a storyboard of 3-6 scenes in playing order that tells this concept and totals about ${KIT.target}s. Each scene = one continuous piece of ONE clip. ${KIT_RULES}\nReturn ONLY JSON: {"scenes":[{"role":"hook|problem|product|proof|offer|cta","clip":"c1","a":0.0,"b":3.2,"line1":"","line2":"","why":"1 short Thai sentence"}]}` }];
-      const txt = await claude({ system: 'You are an expert short-form video editor producing storyboards as edit decision lists. Reply with JSON only.', content, max_tokens: 3500, useStyle: true, label: 'storyboard', estUsd: .1 });
-      const scenes = (parseJsonLoose(txt).scenes || []).map(kitScene).filter(Boolean); KIT.boards.push({ concept: cc, scenes });
+        { type: 'text', text: `Chosen concept: ${JSON.stringify(cc)}\nTask: write a storyboard of 3-6 scenes in playing order that tells this concept and totals about ${KIT.target}s. Each scene = one continuous piece of ONE clip. ${KIT_RULES}${KIT.takes ? '\n' + KIT_TAKE_RULES + '\n' + kitGroupText() : ''}\nReturn ONLY JSON: ${KIT.takes ? '{"scenes":[{"role":"hook|problem|product|howto|proof|offer|cta","clip":"c1","segs":["c1.2"],"line1":"","line2":"","why":"1 short Thai sentence: why this take"}],"dropped":[{"seg":"c1.1","reason":"short Thai reason"}]}' : '{"scenes":[{"role":"hook|problem|product|proof|offer|cta","clip":"c1","a":0.0,"b":3.2,"line1":"","line2":"","why":"1 short Thai sentence"}]}'}` }];
+      const txt = await claude({ system: 'You are an expert short-form video editor producing storyboards as edit decision lists. Reply with JSON only.', content, max_tokens: 4500, useStyle: true, label: 'storyboard', estUsd: .1 });
+      const pj = parseJsonLoose(txt); const scenes = (pj.scenes || []).map(kitScene).filter(Boolean);
+      const used = new Set(scenes.flatMap(x => x.segIds)), dropped = (pj.dropped || []).map(d => ({ q: KIT.segIdx.get(String(d.seg)), reason: String(d.reason || '') })).filter(d => d.q && !used.has(d.q.id));
+      const seenG = new Map(); scenes.forEach(x => { (x.grp || '').split(',').filter(Boolean).forEach(g => { if (seenG.has(g)) x.warn = x.warn || 'เทคซ้ำกับฉากก่อนหน้า'; else seenG.set(g, 1); }); });
+      if (scenes[0] && KIT.takes && !scenes[0].warn && scenes[0].segIds.length === 0) scenes[0].warn = 'ฉากเปิดไม่มีเสียงพูด — ตรวจว่าเปิดเรื่องพอไหม';
+      KIT.boards.push({ concept: cc, scenes, dropped });
     }
     const all = KIT.boards.flatMap(b => b.scenes); for (let i = 0; i < all.length; i++) { aiProg(`กำลังทำภาพตัวอย่างฉาก ${i + 1}/${all.length}`, 92); try { const c = await grabFrame(all[i].m, all[i].a + .2, 120); all[i].thumb = c.toDataURL('image/jpeg', .55); } catch (e) { } }
     AI.busy = false; kitShowBoards();
@@ -6591,14 +6660,14 @@ async function kitMakeBoards(sel) {
 }
 function kitSceneHtml(sc) {
   const segs = sc.c.tr ? sc.c.tr.segs.filter(s => s.b > sc.a && s.a < sc.b).map(s => s.text).join(' ') : '';
-  return `<img src="${sc.thumb || ''}" alt=""><div class="kb"><div><span class="chip">${esc(sc.role || 'scene')}</span> <span class="mini" translate="no">${esc(sc.m.name)} · ${fmt(sc.a)}–${fmt(sc.b)} (${(sc.b - sc.a).toFixed(1)}s)</span></div>${segs ? `<div class="kt" translate="no">🎤 ${esc(segs)}</div>` : ''}${sc.why ? `<div class="kt" translate="no">${esc(sc.why)}</div>` : ''}
+  return `<img src="${sc.thumb || ''}" alt=""><div class="kb"><div><span class="chip">${esc(sc.role || 'scene')}</span> <span class="mini" translate="no">${esc(sc.m.name)} · ${fmt(sc.a)}–${fmt(sc.b)} (${(sc.b - sc.a).toFixed(1)}s)</span>${sc.score ? ` <span class="mini">· ${T('เทคนี้คะแนน')} ${sc.score}${sc.grp ? ' · ' + T('มีเทคซ้ำ') : ''}</span>` : ''}</div>${sc.warn ? `<div class="kt" style="color:#e8a33d">⚠ ${esc(T(sc.warn))}</div>` : ''}${segs ? `<div class="kt" translate="no">🎤 ${esc(segs)}</div>` : ''}${sc.why ? `<div class="kt" translate="no">${esc(sc.why)}</div>` : ''}
     <textarea data-k="txt" rows="2" placeholder="(ไม่มีข้อความบนจอ)">${esc(sc.line1 + (sc.line2 ? '\n' + sc.line2 : ''))}</textarea>
     <div class="krow"><button data-k="ok" class="primary">✓ ผ่าน</button><button data-k="rev">✎ แก้</button><button data-k="drop">✕ ตัดฉากนี้ทิ้ง</button></div>
     <div class="krev"><input data-k="note" placeholder="บอกสิ่งที่อยากแก้ เช่น ตัดสั้นลง / ใช้ช็อตอื่น"><button data-k="send">ส่ง</button></div></div>`;
 }
 function kitShowBoards() {
   if (!KIT.boards.length || !KIT.boards.some(b => b.scenes.length)) return aiDlg('Storyboard', '<div class="hint">AI ไม่ได้ส่งฉากที่ใช้ได้กลับมา ลองใหม่อีกครั้ง</div>');
-  const html = KIT.boards.map((b, bi) => `<div class="aicard"><h4 translate="no">${bi + 1}. ${esc(b.concept.name)}</h4><div class="mini" translate="no">${esc(b.concept.pitch)}</div><div data-board="${bi}">${b.scenes.map((s, si) => `<div class="kscene" data-s="${si}">${kitSceneHtml(s)}</div>`).join('')}</div><div class="row"><span class="sp"></span><button data-allok="${bi}">ผ่านทั้งหมดของแนวนี้</button></div></div>`).join('');
+  const html = KIT.boards.map((b, bi) => `<div class="aicard"><h4 translate="no">${bi + 1}. ${esc(b.concept.name)}</h4><div class="mini" translate="no">${esc(b.concept.pitch)}</div><div data-board="${bi}">${b.scenes.map((s, si) => `<div class="kscene" data-s="${si}">${kitSceneHtml(s)}</div>`).join('')}</div>${b.dropped && b.dropped.length ? `<details class="mini"><summary>${T('เทคที่ไม่ได้ใช้')} (${b.dropped.length})</summary>${b.dropped.map(d => `<div translate="no">✕ ${esc(d.q.c.m.name)} ${fmt(d.q.a)}–${fmt(d.q.b)} · ${esc(d.q.text)}${d.reason ? ' — ' + esc(d.reason) : ''}</div>`).join('')}</details>` : ''}<div class="row"><span class="sp"></span><button data-allok="${bi}">ผ่านทั้งหมดของแนวนี้</button></div></div>`).join('');
   aiDlg('ตรวจ storyboard ทีละฉาก', `<div class="hint">กด ✓ ผ่าน ฉากที่ใช้ได้ · ไม่ผ่านให้กด ✎ แก้ แล้วพิมพ์บอก · ผ่านครบทุกฉากแล้วจึงสร้างคลิปได้</div>${html}<div id="kSum" class="hint"></div><div class="row"><span class="sp"></span><button class="primary" id="kBuild" disabled>สร้างคลิป</button></div>`, root => {
     const upd = () => { const pend = KIT.boards.reduce((a, b) => a + b.scenes.filter(s => s.status === 'pending').length, 0), kept = KIT.boards.reduce((a, b) => a + b.scenes.filter(s => s.status !== 'drop').length, 0); $('#kSum', root).textContent = pend ? `ยังไม่ได้ตรวจ ${pend} ฉาก` : (kept ? 'ผ่านครบแล้ว — กดสร้างคลิปได้' : 'ตัดทุกฉากทิ้งหมดแล้ว'); $('#kBuild', root).disabled = !!pend || !kept; };
     const paint = (el, sc) => { el.className = 'kscene' + (sc.status === 'ok' ? ' ok' : sc.status === 'drop' ? ' drop' : ''); };
@@ -6621,9 +6690,9 @@ function kitShowBoards() {
 }
 async function kitRevise(bi, sc, note) {
   const b = KIT.boards[+bi], idx = b.scenes.indexOf(sc);
-  const cur = b.scenes.map(s => ({ role: s.role, clip: s.c.id, a: +s.a.toFixed(2), b: +s.b.toFixed(2), line1: s.line1, line2: s.line2 }));
+  const cur = b.scenes.map(s => ({ role: s.role, clip: s.c.id, segs: s.segIds, a: +s.a.toFixed(2), b: +s.b.toFixed(2), line1: s.line1, line2: s.line2 }));
   const txt = await claude({ system: 'You revise ONE scene of a short-video storyboard according to the owner\'s note. Reply with JSON only.', label: 'แก้ฉาก', useStyle: true, max_tokens: 1200, estUsd: .04,
-    content: `Clips (id | name | duration | transcript phrases):\n${kitClipText()}\n\nConcept: ${JSON.stringify(b.concept)}\nCurrent storyboard: ${JSON.stringify(cur)}\n\nRevise ONLY scene index ${idx} following the owner's note: "${note}". ${KIT_RULES}\nReturn ONLY JSON: {"scene":{"role":"","clip":"c1","a":0.0,"b":3.2,"line1":"","line2":"","why":"1 short Thai sentence"}}` });
+    content: `Clips (id | name | duration | transcript phrases):\n${kitClipText()}\n\nConcept: ${JSON.stringify(b.concept)}\nCurrent storyboard: ${JSON.stringify(cur)}\n\nRevise ONLY scene index ${idx} following the owner's note: "${note}". ${KIT_RULES}${KIT.takes ? '\n' + KIT_TAKE_RULES + '\n' + kitGroupText() : ''}\nReturn ONLY JSON: ${KIT.takes ? '{"scene":{"role":"","clip":"c1","segs":["c1.2"],"line1":"","line2":"","why":"1 short Thai sentence"}}' : '{"scene":{"role":"","clip":"c1","a":0.0,"b":3.2,"line1":"","line2":"","why":"1 short Thai sentence"}}'}` });
   const ns = kitScene(Object.assign({ role: sc.role }, parseJsonLoose(txt).scene || {})); if (!ns) throw new Error('AI ตอบกลับฉากที่ใช้ไม่ได้ ลองพิมพ์ใหม่');
   try { const c = await grabFrame(ns.m, ns.a + .2, 120); ns.thumb = c.toDataURL('image/jpeg', .55); } catch (e) { }
   Object.assign(sc, ns, { id: sc.id, status: 'pending' });
