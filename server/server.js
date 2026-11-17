@@ -295,6 +295,42 @@ const VP = {   // pull worker
   start() { try { this.st = JSON.parse(fs.readFileSync(VL_STATE_FILE, 'utf8')); this.st.pulled = this.st.pulled || {}; this.st.pushed = this.st.pushed || {}; } catch (e) { } this.load(); setInterval(() => this.tick(), 60000); setTimeout(() => this.tick(), 8000); }
 };
 
+// v1.64 — public upload page for the team (no secrets inside; the upload key is typed by the person and sent as x-token — the restricted VELARIS key is enough)
+const STAFF_PAGE = `<!doctype html><html lang="lo"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ສົ່ງຄລິບໃຫ້ທີມຕັດຕໍ່</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:'Noto Sans Lao','Leelawadee UI',Tahoma,sans-serif;background:#12141a;color:#eef0f5;padding:18px}
+.w{max-width:560px;margin:0 auto}h1{font-size:22px;margin:0 0 14px}label{display:block;font-size:14px;margin:14px 0 6px;color:#c9cdd8}
+input[type=text],input[type=password]{width:100%;padding:12px;border-radius:10px;border:1px solid #3a3f4d;background:#1c1f28;color:#fff;font-size:16px}
+.drop{border:2px dashed #5b6178;border-radius:14px;padding:30px 14px;text-align:center;cursor:pointer;margin-top:14px;background:#171a22}.drop.on{border-color:#f5c542;background:#232019}
+button{width:100%;margin-top:14px;padding:14px;border:0;border-radius:12px;background:#f5c542;color:#1a1500;font-size:18px;font-weight:700;cursor:pointer}button:disabled{opacity:.45;cursor:default}
+.f{margin-top:10px;background:#1c1f28;border-radius:10px;padding:10px 12px;font-size:14px;word-break:break-all}.bar{height:8px;border-radius:5px;background:#2b2f3b;margin-top:7px;overflow:hidden}.bar i{display:block;height:100%;width:0;background:#4ade80}
+.ok{color:#4ade80}.er{color:#ff7b7b}.hint{font-size:13px;color:#9aa1b4;margin-top:12px;line-height:1.6}
+</style></head><body><div class="w">
+<h1>📤 ສົ່ງຄລິບໃຫ້ທີມຕັດຕໍ່</h1>
+<div id="keyBox"><label>ລະຫັດສົ່ງຄລິບ (ຂໍຈາກເຈົ້າຂອງຮ້ານ)</label><input type="password" id="key" autocomplete="off"></div>
+<label>ຊື່ງານ (ຕົວອັກສອນອັງກິດ ຫຼື ຕົວເລກ ເຊັ່ນ LC)</label><input type="text" id="job" value="LC" maxlength="30">
+<div class="drop" id="drop">ເລືອກຄລິບ ຫຼື ລາກມາວາງບ່ອນນີ້<input type="file" id="pick" accept="video/*,.mov,.mp4,.m4v,.webm" multiple hidden></div>
+<div id="list"></div>
+<button id="go" disabled>ສົ່ງຄລິບ</button>
+<div class="hint">ຖ່າຍເປັນ 1080p 30fps ໄຟລ໌ຈະນ້ອຍ ສົ່ງໄວ ແລະ ຢ່າປິດໜ້ານີ້ຈົນກວ່າຈະສົ່ງສຳເລັດ</div>
+</div><script>
+const $=s=>document.querySelector(s);let Q=[],busy=false;
+$('#key').value=localStorage.getItem('sk_staffkey')||'';
+const jobId=()=>{const j=($('#job').value||'').replace(/[^A-Za-z0-9-]/g,'').slice(0,30)||'clip';const d=new Date(),p=n=>String(n).padStart(2,'0');return j+'-'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())};
+function add(fs){for(const f of fs){if(!/\\.(mp4|mov|m4v|webm)$/i.test(f.name))continue;if(!Q.some(q=>q.f.name===f.name&&q.f.size===f.size))Q.push({f,st:'wait',p:0,msg:''})}draw()}
+function draw(){const L=$('#list');L.innerHTML='';for(const q of Q){const d=document.createElement('div');d.className='f';const mb=(q.f.size/1048576).toFixed(0)+' MB';d.innerHTML='<div>'+q.f.name.replace(/[<>&]/g,'')+' · '+mb+' · <b class="'+(q.st==='ok'?'ok':q.st==='er'?'er':'')+'">'+(q.st==='ok'?'✅ ສົ່ງແລ້ວ':q.st==='er'?'❌ '+q.msg:q.st==='up'?'ກຳລັງສົ່ງ '+q.p+'%':'ລໍຖ້າ')+'</b></div><div class="bar"><i style="width:'+q.p+'%"></i></div>';L.appendChild(d)}$('#go').disabled=busy||!Q.some(q=>q.st==='wait'||q.st==='er')}
+$('#drop').onclick=()=>$('#pick').click();$('#pick').onchange=e=>{add(e.target.files);e.target.value=''};
+$('#drop').ondragover=e=>{e.preventDefault();$('#drop').classList.add('on')};$('#drop').ondragleave=()=>$('#drop').classList.remove('on');$('#drop').ondrop=e=>{e.preventDefault();$('#drop').classList.remove('on');add(e.dataTransfer.files)};
+function send(q,job,key){return new Promise(res=>{const x=new XMLHttpRequest();x.open('PUT','/inbox/'+encodeURIComponent('vl-'+job+'__'+q.f.name));x.setRequestHeader('x-token',key);
+x.upload.onprogress=e=>{if(e.lengthComputable){q.p=Math.round(e.loaded*100/e.total);draw()}};
+x.onload=()=>{if(x.status>=200&&x.status<300){q.st='ok';q.p=100}else{q.st='er';q.msg=x.status===401?'ລະຫັດບໍ່ຖືກຕ້ອງ':'ສົ່ງບໍ່ສຳເລັດ ('+x.status+')'}draw();res()};
+x.onerror=()=>{q.st='er';q.msg='ສົ່ງບໍ່ສຳເລັດ (ເນັດຂາດ)';draw();res()};x.send(q.f)})}
+$('#go').onclick=async()=>{const key=$('#key').value.trim();if(!key){alert('ໃສ່ລະຫັດກ່ອນ');return}
+busy=true;const job=jobId();for(const q of Q){if(q.st==='ok')continue;q.st='up';q.p=0;draw();await send(q,job,key);if(q.st==='er'&&/ລະຫັດ/.test(q.msg))break}
+if(Q.some(q=>q.st==='ok'))localStorage.setItem('sk_staffkey',key);busy=false;draw()};
+window.addEventListener('beforeunload',e=>{if(busy){e.preventDefault();e.returnValue=''}});
+</script></body></html>
+`;
 const server = http.createServer(async (req, res) => {
   try {
     if (req.method === 'OPTIONS') { const rh = req.headers['access-control-request-headers']; return send(res, 204, '', rh ? { 'Access-Control-Allow-Headers': rh } : {}); }   // v1.54: list/echo the headers instead of '*' — iPhone Safari does not honour '*' ("Load failed")
@@ -305,6 +341,7 @@ const server = http.createServer(async (req, res) => {
       html = html.replace('<head>', '<head><meta name="sk-server" content="1">');
       return send(res, 200, html, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
     }
+    if (req.method === 'GET' && u.pathname === '/staff') return send(res, 200, STAFF_PAGE, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });   // v1.64
     if (req.method === 'GET' && parts.length === 2 && parts[0] === 'fonts' && /^[A-Za-z0-9_-]+\.woff2$/.test(parts[1])) {   // Lao font files for the editor page (public OFL fonts, no secrets): local copy first, else pulled once from GitHub and cached
       const fp = path.join(FONT_DIR, parts[1]);
       if (!fs.existsSync(fp)) {
