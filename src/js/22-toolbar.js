@@ -77,19 +77,49 @@ function trimTargets() {
   const hit = it => it && t > it.start + 0.05 && t < it.start + it.dur - 0.05 && (it.type === 'video' || it.type === 'image' || it.type === 'audio');
   return hit(target) ? [target] : D.items.filter(hit);
 }
+// ----- v1.77: overlays follow the main row. When a Video-1 clip is trimmed (to skip dead air, a hand pressing the phone...) the text / captions / stickers / overlay pictures / sound effects that sit on the
+// OTHER rows move with the speech they belong to, instead of staying at the old time. Works by mapping every old time through the clip it was in (source time -> new timeline time). Music (A1) is left alone.
+const followOn = () => TLS.follow !== false;
+function followSnap() {
+  const clips = D.items.filter(i => i.track === 'V1').sort((a, b) => a.start - b.start).map(i => ({ id: i.id, s: i.start, e: i.start + i.dur, in: i.in || 0, sp: i.speed || 1 }));
+  const others = D.items.filter(i => i.track !== 'V1' && i.track !== 'A1').map(i => ({ id: i.id, s: i.start, e: i.start + i.dur, d: i.dur }));
+  return { clips, others };
+}
+function followApply(sn) {
+  if (!sn || !sn.clips.length) return;
+  const nc = new Map(D.items.filter(i => i.track === 'V1').map(i => [i.id, i])), cs = sn.clips;
+  const mapT = (t, isEnd) => {
+    for (const c of cs) {
+      if (isEnd ? (t > c.s + 1e-6 && t <= c.e + 1e-6) : (t >= c.s - 1e-6 && t < c.e - 1e-6)) {
+        const n = nc.get(c.id); if (!n) return t; const sv = c.in + (t - c.s) * c.sp;
+        return clamp(n.start + (sv - (n.in || 0)) / (n.speed || 1), n.start, n.start + n.dur);
+      }
+    }
+    let d = 0; for (const c of cs) if (c.e <= t + 1e-6) { const n = nc.get(c.id); if (n) d = n.start + n.dur - c.e; }
+    return Math.max(0, t + d);
+  };
+  for (const o of sn.others) {
+    const it = getItem(o.id); if (!it) continue;
+    if (isMediaLike(it)) { it.start = mapT(o.s, false); it.dur = o.d; }
+    else { const a = mapT(o.s, false), b = mapT(o.e, true); it.start = a; it.dur = Math.max(.1, b - a); }
+  }
+}
 function cmdTrimLeft() {
   const list = trimTargets(); if (!list.length) { toast('เลื่อนหัวอ่านไปกลางคลิปก่อนตัด'); return; }
-  const t = PB.t;
+  const t = PB.t; const fsn = followOn() && list.some(i => i.track === 'V1') ? followSnap() : null, ord0 = D.items.filter(i => i.track === 'V1').sort((a, b) => a.start - b.start).map(i => i.id);
   for (const it of list) {
     const lt = t - it.start, sp = it.speed || 1;
     if (it.in != null) it.in += lt * sp; it.dur -= lt; it.start = t; it.transIn = null;
     if (it.kf) for (const k in it.kf) it.kf[k] = it.kf[k].map(p => ({ t: p.t - lt, v: p.v }));
   }
+  if (fsn) { if (TLS.magnet) magnetLayout(null, ord0); followApply(fsn); }
   commit('trimL'); if (TLS.magnet) seek(Math.min(PB.t, projectEnd()));
 }
 function cmdTrimRight() {
   const list = trimTargets(); if (!list.length) { toast('เลื่อนหัวอ่านไปกลางคลิปก่อนตัด'); return; }
+  const fsn = followOn() && list.some(i => i.track === 'V1') ? followSnap() : null, ord0 = D.items.filter(i => i.track === 'V1').sort((a, b) => a.start - b.start).map(i => i.id);
   for (const it of list) { it.dur = PB.t - it.start; it.transOut = null; }
+  if (fsn) { if (TLS.magnet) magnetLayout(null, ord0); followApply(fsn); }
   commit('trimR');
 }
 function cmdMarker() {
@@ -106,9 +136,10 @@ function initToolbar() {
   $('#tbDel').onclick = () => cmdDelete(false); $('#tbRipple').onclick = () => cmdDelete(true); $('#tbMark').onclick = cmdMarker;
   const save = () => { try { localStorage.setItem('sk_tls', JSON.stringify(TLS)); } catch (e) { } };
   $('#tbMagnet').onclick = () => { TLS.magnet = !TLS.magnet; setTog('#tbMagnet', 'magnet'); save(); if (TLS.magnet) { commit('gaps'); toast('เปิดแม่เหล็ก: คลิปในแถวที่มีป้าย 🧲 จะชิดกันอัตโนมัติ'); } else { renderTimeline(); toast('ปิดแม่เหล็ก: วางคลิปได้อิสระ เว้นช่องว่างได้'); } };
+  $('#tbFollow').onclick = () => { TLS.follow = !followOn(); setTog('#tbFollow', 'follow'); save(); toast(TLS.follow ? 'เปิด: ข้อความ/เอฟเฟกต์ตามคลิปหลักเมื่อหด-ยืดคลิปในชั้น 1' : 'ปิด: ข้อความ/เอฟเฟกต์อยู่ที่เวลาเดิม ไม่ตามเมื่อหด-ยืดคลิป'); };
   $('#tbCover').onclick = () => { if (typeof coverOpen === 'function') coverOpen(); };
   $('#tbSnap').onclick = () => { TLS.snap = !TLS.snap; setTog('#tbSnap', 'snap'); save(); };
-  setTog('#tbMagnet', 'magnet'); setTog('#tbSnap', 'snap');
+  setTog('#tbMagnet', 'magnet'); setTog('#tbSnap', 'snap'); TLS.follow = followOn(); setTog('#tbFollow', 'follow');
   $('#tbZoomIn').onclick = () => setZoom(TL.pps * 1.3); $('#tbZoomOut').onclick = () => setZoom(TL.pps / 1.3);
   $('#tbFit').onclick = () => { const w = $('#tlbody').clientWidth - TL.labelW - 30; setZoom(w / Math.max(projectEnd(), 2)); };
   $('#tlbody').addEventListener('dblclick', e => { const mk = e.target.closest('.mk'); if (!mk) return; D.markers = (D.markers || []).filter(m => m.id !== mk.dataset.id); commit('marker'); });

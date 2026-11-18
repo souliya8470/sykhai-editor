@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.76</title>
+<title>Sykhai Editor v1.77</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -564,6 +564,7 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
       <button id="tbCover" class="wide" title="เลือกรูปหน้าปกวิดีโอ"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/></svg><span>หน้าปก</span></button>
       <span class="sp"></span>
       <button id="tbMagnet" class="tog" title="แม่เหล็กวิดีโอ 1 — ชิดคลิปอัตโนมัติ ไม่มีช่องว่าง"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 14a7 7 0 0 0 14 0V4h-4v10a3 3 0 0 1-6 0V4H5z"/><path d="M5 8h4M15 8h4"/></svg></button>
+      <button id="tbFollow" class="tog on" title="ตามคลิปหลัก — เมื่อหด/ยืดคลิปในชั้น 1 ข้อความ เอฟเฟกต์ และเสียงในชั้นอื่นจะเลื่อนตามช่วงเสียงที่ผูกอยู่"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></button>
       <button id="tbSnap" class="tog on" title="ดูดติดขอบคลิป/มาร์กเกอร์เมื่อลาก"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M3 12h6M21 12h-6"/></svg></button><span class="tsep"></span>
       <button id="tbFit" title="ซูมให้พอดีจอ"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
       <button id="tbZoomOut" title="ซูมออก"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><path d="M8 11h6M16 16l4 4"/></svg></button>
@@ -2216,6 +2217,9 @@ I18N_ROWS.push(
   ['ปรับให้จบที่ท้ายประโยค', 'Adjusted to end at a sentence end', 'ປັບໃຫ້ຈົບທີ່ທ້າຍປະໂຫຍກ'],
   ['เทคซ้ำกับฉากก่อนหน้า', 'Same line as an earlier scene', 'ເທກຊ້ຳກັບສາກກ່ອນໜ້າ'],
   ['ฉากเปิดไม่มีเสียงพูด — ตรวจว่าเปิดเรื่องพอไหม', 'The opening scene has no speech — check that it works as a hook', 'ສາກເປີດບໍ່ມີສຽງເວົ້າ — ກວດວ່າເປີດເລື່ອງພໍບໍ'],
+  ['เปิด: ข้อความ/เอฟเฟกต์ตามคลิปหลักเมื่อหด-ยืดคลิปในชั้น 1', 'On: text/effects follow the main clip when you trim or stretch Layer 1 clips', 'ເປີດ: ຂໍ້ຄວາມ/ເອັບເຟັກຕາມຄລິບຫຼັກເມື່ອຫຍໍ້-ຍືດຄລິບໃນຊັ້ນ 1'],
+  ['ปิด: ข้อความ/เอฟเฟกต์อยู่ที่เวลาเดิม ไม่ตามเมื่อหด-ยืดคลิป', 'Off: text/effects stay at their old time when clips are trimmed or stretched', 'ປິດ: ຂໍ້ຄວາມ/ເອັບເຟັກຢູ່ທີ່ເວລາເດີມ ບໍ່ຕາມເມື່ອຫຍໍ້-ຍືດຄລິບ'],
+  ['ตามคลิปหลัก — เมื่อหด/ยืดคลิปในชั้น 1 ข้อความ เอฟเฟกต์ และเสียงในชั้นอื่นจะเลื่อนตามช่วงเสียงที่ผูกอยู่', 'Follow main clip — when you trim or stretch a Layer 1 clip, text, effects and sounds on other layers move with the speech they belong to', 'ຕາມຄລິບຫຼັກ — ເມື່ອຫຍໍ້/ຍືດຄລິບໃນຊັ້ນ 1 ຂໍ້ຄວາມ ເອັບເຟັກ ແລະສຽງໃນຊັ້ນອື່ນຈະເລື່ອນຕາມຊ່ວງສຽງທີ່ຜູກຢູ່'],
   ['ชั้นใหม่', 'New layer', 'ຊັ້ນໃໝ່'],
   ['ซ้อนกับอันอื่นในชั้นเดียวกัน — ย้ายไปชั้น', 'Overlapped another item on the same layer — moved to layer', 'ຊ້ອນກັບອັນອື່ນໃນຊັ້ນດຽວກັນ — ຍ້າຍໄປຊັ້ນ'],
   ['ให้แล้ว', 'for you', 'ໃຫ້ແລ້ວ'],
@@ -2227,9 +2231,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.76
-// APP_VERSION_PREV : 1.75
-// APP_VERSION_PREV_OLDER : 1.74
+// APP_VERSION  : 1.77
+// APP_VERSION_PREV : 1.76
+// APP_VERSION_PREV_OLDER : 1.75
+// 1.77 : Text, captions, stickers, overlay pictures and sound effects now FOLLOW the main row. When a Video-1 clip is trimmed or stretched (drag an edge, the W/Q trim buttons, or the junction handle) everything on the other rows that belongs to that clip's speech moves with it (each time is mapped through the clip it was in: source time -> new timeline time), and everything after the clip moves by the same amount — so cutting out dead air no longer leaves the captions behind. Music (A1) stays put. A chain-link button next to the magnet turns this on/off (default on).
 // 1.76 : Only the layers that hold something are shown (plus Video 1 and ONE thin "＋ new layer" strip on top to drop onto) — no more rows of empty layers. A new layer appears by itself when you drop something on the strip or when items would overlap; a layer that becomes empty disappears.
 // 1.75 : Up to 40 layers (was 12): picture layers V1-V3 and text layers T1-T37; layers beyond the first six appear only when used (plus one empty spare on top). Tested with 30 items stacked at the same moment.
 // 1.74 : More layers, and no more piling up on one layer. Moving or stretching an item (text, caption, picture...) so that it overlaps another item on the same layer now gives it a layer of its own — the nearest free layer above (then below), with a toast that says which. Six spare text layers (7-12) were added: they appear only when used, plus one empty spare on top, so the timeline stays tidy. Older projects keep their layer order. Adding text/stickers when every text layer is busy now also finds any free layer instead of stacking.
@@ -2307,7 +2312,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.76';
+const APP_VERSION = '1.77';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -3509,6 +3514,7 @@ function initTimelineEvents() {
     select(it.id);   // (select re-renders the timeline, so the clip's rectangle is measured before it)
     // v1.70: the edge zone is measured from the mouse position (up to 12 px, at most 28% of a narrow clip) so grabbing "near the edge" always trims instead of moving the clip
     const mode = forceMode || (e.target.classList.contains('th') ? (e.target.classList.contains('l') ? 'tl' : 'tr') : (e.clientX - cr.left <= ez ? 'tl' : (cr.right - e.clientX <= ez ? 'tr' : 'move')));
+    const fsn0 = (forceMode || mode !== 'move') && followOn() && it.track === 'V1' ? followSnap() : null;   // v1.77: overlays follow trims of main-row clips
     const ord0 = D.items.filter(i => i.track === 'V1').sort((a, b) => a.start - b.start).map(i => i.id);   // clip order of the main row before this drag
     const o = { start: it.start, dur: it.dur, in: it.in || 0, track: it.track }; const x0 = e.clientX; const pts = snapPoints(it.id); const tol = snapTol() / TL.pps; let moved = false;
     const m = MEDIA.get(it.mediaId); const sp = it.speed || 1;
@@ -3539,6 +3545,7 @@ function initTimelineEvents() {
         it.dur = d;
       }
       if (TLS.magnet && (it.track === 'V1' || o.track === 'V1')) magnetLayout(null, ord0);
+      if (fsn0 && mode !== 'move') followApply(fsn0);
       renderTimeline(); dirty(); emit('inspect-refresh');
       // like CapCut: the player follows the edge you are dragging (trim) or keeps showing the frame under the playhead while the clip moves
       if (mode === 'tl') seek(it.start + .02); else if (mode === 'tr') seek(Math.max(it.start, it.start + it.dur - .04)); else seek(PB.t);
@@ -3834,19 +3841,49 @@ function trimTargets() {
   const hit = it => it && t > it.start + 0.05 && t < it.start + it.dur - 0.05 && (it.type === 'video' || it.type === 'image' || it.type === 'audio');
   return hit(target) ? [target] : D.items.filter(hit);
 }
+// ----- v1.77: overlays follow the main row. When a Video-1 clip is trimmed (to skip dead air, a hand pressing the phone...) the text / captions / stickers / overlay pictures / sound effects that sit on the
+// OTHER rows move with the speech they belong to, instead of staying at the old time. Works by mapping every old time through the clip it was in (source time -> new timeline time). Music (A1) is left alone.
+const followOn = () => TLS.follow !== false;
+function followSnap() {
+  const clips = D.items.filter(i => i.track === 'V1').sort((a, b) => a.start - b.start).map(i => ({ id: i.id, s: i.start, e: i.start + i.dur, in: i.in || 0, sp: i.speed || 1 }));
+  const others = D.items.filter(i => i.track !== 'V1' && i.track !== 'A1').map(i => ({ id: i.id, s: i.start, e: i.start + i.dur, d: i.dur }));
+  return { clips, others };
+}
+function followApply(sn) {
+  if (!sn || !sn.clips.length) return;
+  const nc = new Map(D.items.filter(i => i.track === 'V1').map(i => [i.id, i])), cs = sn.clips;
+  const mapT = (t, isEnd) => {
+    for (const c of cs) {
+      if (isEnd ? (t > c.s + 1e-6 && t <= c.e + 1e-6) : (t >= c.s - 1e-6 && t < c.e - 1e-6)) {
+        const n = nc.get(c.id); if (!n) return t; const sv = c.in + (t - c.s) * c.sp;
+        return clamp(n.start + (sv - (n.in || 0)) / (n.speed || 1), n.start, n.start + n.dur);
+      }
+    }
+    let d = 0; for (const c of cs) if (c.e <= t + 1e-6) { const n = nc.get(c.id); if (n) d = n.start + n.dur - c.e; }
+    return Math.max(0, t + d);
+  };
+  for (const o of sn.others) {
+    const it = getItem(o.id); if (!it) continue;
+    if (isMediaLike(it)) { it.start = mapT(o.s, false); it.dur = o.d; }
+    else { const a = mapT(o.s, false), b = mapT(o.e, true); it.start = a; it.dur = Math.max(.1, b - a); }
+  }
+}
 function cmdTrimLeft() {
   const list = trimTargets(); if (!list.length) { toast('เลื่อนหัวอ่านไปกลางคลิปก่อนตัด'); return; }
-  const t = PB.t;
+  const t = PB.t; const fsn = followOn() && list.some(i => i.track === 'V1') ? followSnap() : null, ord0 = D.items.filter(i => i.track === 'V1').sort((a, b) => a.start - b.start).map(i => i.id);
   for (const it of list) {
     const lt = t - it.start, sp = it.speed || 1;
     if (it.in != null) it.in += lt * sp; it.dur -= lt; it.start = t; it.transIn = null;
     if (it.kf) for (const k in it.kf) it.kf[k] = it.kf[k].map(p => ({ t: p.t - lt, v: p.v }));
   }
+  if (fsn) { if (TLS.magnet) magnetLayout(null, ord0); followApply(fsn); }
   commit('trimL'); if (TLS.magnet) seek(Math.min(PB.t, projectEnd()));
 }
 function cmdTrimRight() {
   const list = trimTargets(); if (!list.length) { toast('เลื่อนหัวอ่านไปกลางคลิปก่อนตัด'); return; }
+  const fsn = followOn() && list.some(i => i.track === 'V1') ? followSnap() : null, ord0 = D.items.filter(i => i.track === 'V1').sort((a, b) => a.start - b.start).map(i => i.id);
   for (const it of list) { it.dur = PB.t - it.start; it.transOut = null; }
+  if (fsn) { if (TLS.magnet) magnetLayout(null, ord0); followApply(fsn); }
   commit('trimR');
 }
 function cmdMarker() {
@@ -3863,9 +3900,10 @@ function initToolbar() {
   $('#tbDel').onclick = () => cmdDelete(false); $('#tbRipple').onclick = () => cmdDelete(true); $('#tbMark').onclick = cmdMarker;
   const save = () => { try { localStorage.setItem('sk_tls', JSON.stringify(TLS)); } catch (e) { } };
   $('#tbMagnet').onclick = () => { TLS.magnet = !TLS.magnet; setTog('#tbMagnet', 'magnet'); save(); if (TLS.magnet) { commit('gaps'); toast('เปิดแม่เหล็ก: คลิปในแถวที่มีป้าย 🧲 จะชิดกันอัตโนมัติ'); } else { renderTimeline(); toast('ปิดแม่เหล็ก: วางคลิปได้อิสระ เว้นช่องว่างได้'); } };
+  $('#tbFollow').onclick = () => { TLS.follow = !followOn(); setTog('#tbFollow', 'follow'); save(); toast(TLS.follow ? 'เปิด: ข้อความ/เอฟเฟกต์ตามคลิปหลักเมื่อหด-ยืดคลิปในชั้น 1' : 'ปิด: ข้อความ/เอฟเฟกต์อยู่ที่เวลาเดิม ไม่ตามเมื่อหด-ยืดคลิป'); };
   $('#tbCover').onclick = () => { if (typeof coverOpen === 'function') coverOpen(); };
   $('#tbSnap').onclick = () => { TLS.snap = !TLS.snap; setTog('#tbSnap', 'snap'); save(); };
-  setTog('#tbMagnet', 'magnet'); setTog('#tbSnap', 'snap');
+  setTog('#tbMagnet', 'magnet'); setTog('#tbSnap', 'snap'); TLS.follow = followOn(); setTog('#tbFollow', 'follow');
   $('#tbZoomIn').onclick = () => setZoom(TL.pps * 1.3); $('#tbZoomOut').onclick = () => setZoom(TL.pps / 1.3);
   $('#tbFit').onclick = () => { const w = $('#tlbody').clientWidth - TL.labelW - 30; setZoom(w / Math.max(projectEnd(), 2)); };
   $('#tlbody').addEventListener('dblclick', e => { const mk = e.target.closest('.mk'); if (!mk) return; D.markers = (D.markers || []).filter(m => m.id !== mk.dataset.id); commit('marker'); });

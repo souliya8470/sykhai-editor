@@ -180,6 +180,7 @@ function initTimelineEvents() {
     select(it.id);   // (select re-renders the timeline, so the clip's rectangle is measured before it)
     // v1.70: the edge zone is measured from the mouse position (up to 12 px, at most 28% of a narrow clip) so grabbing "near the edge" always trims instead of moving the clip
     const mode = forceMode || (e.target.classList.contains('th') ? (e.target.classList.contains('l') ? 'tl' : 'tr') : (e.clientX - cr.left <= ez ? 'tl' : (cr.right - e.clientX <= ez ? 'tr' : 'move')));
+    const fsn0 = (forceMode || mode !== 'move') && followOn() && it.track === 'V1' ? followSnap() : null;   // v1.77: overlays follow trims of main-row clips
     const ord0 = D.items.filter(i => i.track === 'V1').sort((a, b) => a.start - b.start).map(i => i.id);   // clip order of the main row before this drag
     const o = { start: it.start, dur: it.dur, in: it.in || 0, track: it.track }; const x0 = e.clientX; const pts = snapPoints(it.id); const tol = snapTol() / TL.pps; let moved = false;
     const m = MEDIA.get(it.mediaId); const sp = it.speed || 1;
@@ -210,6 +211,7 @@ function initTimelineEvents() {
         it.dur = d;
       }
       if (TLS.magnet && (it.track === 'V1' || o.track === 'V1')) magnetLayout(null, ord0);
+      if (fsn0 && mode !== 'move') followApply(fsn0);
       renderTimeline(); dirty(); emit('inspect-refresh');
       // like CapCut: the player follows the edge you are dragging (trim) or keeps showing the frame under the playhead while the clip moves
       if (mode === 'tl') seek(it.start + .02); else if (mode === 'tr') seek(Math.max(it.start, it.start + it.dur - .04)); else seek(PB.t);
