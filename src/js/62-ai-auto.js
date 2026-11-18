@@ -356,7 +356,7 @@ async function kitBuild() {
     if (!docs.length) { AI.busy = false; return aiDlg('สร้างคลิป', '<div class="hint">ไม่มีฉากให้สร้างคลิป</div>'); }
     await projSaveNow();
     for (const d of docs.slice(1)) { const rec = projRec(d); await projPut(rec); if (typeof srvSync === 'function') srvSync(rec); }
-    D = docs[0]; SEL = null; commit('kitti'); emit('sel'); seek(0); AI.busy = false; $('#dlgAi').close();
+    D = docs[0]; SEL = null; if (typeof srvCheckNewer === 'function') srvCheckNewer(); commit('kitti'); emit('sel'); seek(0); AI.busy = false; $('#dlgAi').close();
     toast(docs.length > 1 ? `สร้างแล้ว ${docs.length} คลิป — คลิปแรกอยู่ในไทม์ไลน์ ที่เหลืออยู่ในหน้าโปรเจกต์` : 'สร้างคลิปแล้ว — ✂ แก้ต่อได้เลย', 5000);
   } catch (e) { aiErr(e); }
 }

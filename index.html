@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.67</title>
+<title>Sykhai Editor v1.68</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -2216,9 +2216,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.67
-// APP_VERSION_PREV : 1.66
-// APP_VERSION_PREV_OLDER : 1.65
+// APP_VERSION  : 1.68
+// APP_VERSION_PREV : 1.67
+// APP_VERSION_PREV_OLDER : 1.66
+// 1.68 : The green "server has a newer version" bar now belongs to the project it was raised for — it hides by itself when another project is opened (e.g. after "AI cut it all" builds a new project), instead of staying on screen and pointing at the old one.
 // 1.67 : "AI cut it all" now picks the BEST TAKE across many clips — it groups lines that were spoken more than once (retakes, also across different clips), scores every transcript segment (clean start/end from the audio, fillers, stutters, cut-off recordings), builds each scene from whole sentences, never uses two takes of the same line, orders hook -> problem -> product -> how-to -> proof -> CTA, and always opens on the start of a complete hook sentence. Scene cards show the take score, warnings and the takes that were not used. Tick-box "เลือกเทคที่ดีที่สุด" (default on).
 // 1.66 : Project page — square (1:1) thumbnails, project names may use 2 lines (the full name is also the tooltip), and a size slider (small ↔ large, remembered in this browser) like a file manager; project thumbnails made by the editor are sharper (270x480).
 // 1.65 : Safer project sync — (1) opening a project no longer re-stamps it: it is saved/pushed only when its content really changed, so just having an old copy open can no longer overwrite a newer copy made elsewhere (by Claude, or on another computer); (2) while a project is open the editor checks the server every 30 s; if the server copy is newer a green bar asks "load the newer version" or "keep this computer's version", and saving of that project is paused until the person chooses.
@@ -2287,7 +2288,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.67';
+const APP_VERSION = '1.68';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -4049,7 +4050,7 @@ async function openById(id) {
   let doc; try { doc = Object.assign(newDoc(), JSON.parse(rec.doc)); } catch (e) { toast('ไฟล์โปรเจกต์เสียหาย'); return; }
   doc.pid = rec.id; doc.created = doc.created || rec.created;
   D = doc; await ensureSfx();
-  resetDoc(D); hideHome(); PS.sig.set(D.pid, JSON.stringify(D)); if (typeof SRV !== 'undefined') { SRV.upd.set(D.pid, rec.updated || 0); SRV.stale.delete(D.pid); }
+  resetDoc(D); hideHome(); if (typeof srvCheckNewer === 'function') setTimeout(srvCheckNewer, 0); PS.sig.set(D.pid, JSON.stringify(D)); if (typeof SRV !== 'undefined') { SRV.upd.set(D.pid, rec.updated || 0); SRV.stale.delete(D.pid); }
   const miss = [...new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => mediaNameFromId(i.mediaId)))];
   const missIds = [...new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => i.mediaId))];
   if (missIds.length && srvOn()) await srvPullMissing();
@@ -4491,10 +4492,11 @@ function srvNewerBar(show, name) {
   el.querySelector('.ld').textContent = T('โหลดเวอร์ชันใหม่'); el.querySelector('.kp').textContent = T('ใช้ของเครื่องนี้ต่อ'); el.hidden = false;
 }
 async function srvCheckNewer() {
+  { const bar = document.getElementById('srvNewer'); if (bar && !bar.hidden && D && bar.dataset.pid !== D.pid) bar.hidden = true; }   // v1.68: the bar belongs to the project it was raised for — hide it when another project is open
   if (!srvOn() || SRV.chk || HOME.open || !D || !D.pid) return; SRV.chk = true;
   try {
     const r = await srvFetch('/projects/' + srvId(D.pid)); if (!r.ok) return; const s = await r.json();
-    if (s && s.updated > (SRV.upd.get(D.pid) || 0)) { SRV.stale.add(D.pid); srvNewerBar(true, s.name); }
+    if (s && s.updated > (SRV.upd.get(D.pid) || 0)) { SRV.stale.add(D.pid); srvNewerBar(true, s.name); const bar = document.getElementById('srvNewer'); if (bar) bar.dataset.pid = D.pid; }
   } catch (e) { } finally { SRV.chk = false; }
 }
 async function srvLoadNewer() {
@@ -6711,7 +6713,7 @@ async function kitBuild() {
     if (!docs.length) { AI.busy = false; return aiDlg('สร้างคลิป', '<div class="hint">ไม่มีฉากให้สร้างคลิป</div>'); }
     await projSaveNow();
     for (const d of docs.slice(1)) { const rec = projRec(d); await projPut(rec); if (typeof srvSync === 'function') srvSync(rec); }
-    D = docs[0]; SEL = null; commit('kitti'); emit('sel'); seek(0); AI.busy = false; $('#dlgAi').close();
+    D = docs[0]; SEL = null; if (typeof srvCheckNewer === 'function') srvCheckNewer(); commit('kitti'); emit('sel'); seek(0); AI.busy = false; $('#dlgAi').close();
     toast(docs.length > 1 ? `สร้างแล้ว ${docs.length} คลิป — คลิปแรกอยู่ในไทม์ไลน์ ที่เหลืออยู่ในหน้าโปรเจกต์` : 'สร้างคลิปแล้ว — ✂ แก้ต่อได้เลย', 5000);
   } catch (e) { aiErr(e); }
 }

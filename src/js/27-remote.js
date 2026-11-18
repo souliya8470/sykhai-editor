@@ -389,10 +389,11 @@ function srvNewerBar(show, name) {
   el.querySelector('.ld').textContent = T('โหลดเวอร์ชันใหม่'); el.querySelector('.kp').textContent = T('ใช้ของเครื่องนี้ต่อ'); el.hidden = false;
 }
 async function srvCheckNewer() {
+  { const bar = document.getElementById('srvNewer'); if (bar && !bar.hidden && D && bar.dataset.pid !== D.pid) bar.hidden = true; }   // v1.68: the bar belongs to the project it was raised for — hide it when another project is open
   if (!srvOn() || SRV.chk || HOME.open || !D || !D.pid) return; SRV.chk = true;
   try {
     const r = await srvFetch('/projects/' + srvId(D.pid)); if (!r.ok) return; const s = await r.json();
-    if (s && s.updated > (SRV.upd.get(D.pid) || 0)) { SRV.stale.add(D.pid); srvNewerBar(true, s.name); }
+    if (s && s.updated > (SRV.upd.get(D.pid) || 0)) { SRV.stale.add(D.pid); srvNewerBar(true, s.name); const bar = document.getElementById('srvNewer'); if (bar) bar.dataset.pid = D.pid; }
   } catch (e) { } finally { SRV.chk = false; }
 }
 async function srvLoadNewer() {
