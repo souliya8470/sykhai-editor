@@ -31,6 +31,7 @@ I18N_ROWS.push(
   ['ปรับให้จบที่ท้ายประโยค', 'Adjusted to end at a sentence end', 'ປັບໃຫ້ຈົບທີ່ທ້າຍປະໂຫຍກ'],
   ['เทคซ้ำกับฉากก่อนหน้า', 'Same line as an earlier scene', 'ເທກຊ້ຳກັບສາກກ່ອນໜ້າ'],
   ['ฉากเปิดไม่มีเสียงพูด — ตรวจว่าเปิดเรื่องพอไหม', 'The opening scene has no speech — check that it works as a hook', 'ສາກເປີດບໍ່ມີສຽງເວົ້າ — ກວດວ່າເປີດເລື່ອງພໍບໍ'],
+  ['ชั้นใหม่', 'New layer', 'ຊັ້ນໃໝ່'],
   ['ซ้อนกับอันอื่นในชั้นเดียวกัน — ย้ายไปชั้น', 'Overlapped another item on the same layer — moved to layer', 'ຊ້ອນກັບອັນອື່ນໃນຊັ້ນດຽວກັນ — ຍ້າຍໄປຊັ້ນ'],
   ['ให้แล้ว', 'for you', 'ໃຫ້ແລ້ວ'],
   ['ย้ายลำดับคลิปแล้ว — ถ้าไม่ได้ตั้งใจ กด Ctrl+Z เพื่อย้อนกลับ', 'Clip order changed — press Ctrl+Z if that was not intended', 'ຍ້າຍລຳດັບຄລິບແລ້ວ — ຖ້າບໍ່ໄດ້ຕັ້ງໃຈ ກົດ Ctrl+Z ເພື່ອຍ້ອນກັບ'],

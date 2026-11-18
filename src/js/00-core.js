@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.75
-// APP_VERSION_PREV : 1.74
-// APP_VERSION_PREV_OLDER : 1.73
+// APP_VERSION  : 1.76
+// APP_VERSION_PREV : 1.75
+// APP_VERSION_PREV_OLDER : 1.74
+// 1.76 : Only the layers that hold something are shown (plus Video 1 and ONE thin "＋ new layer" strip on top to drop onto) — no more rows of empty layers. A new layer appears by itself when you drop something on the strip or when items would overlap; a layer that becomes empty disappears.
 // 1.75 : Up to 40 layers (was 12): picture layers V1-V3 and text layers T1-T37; layers beyond the first six appear only when used (plus one empty spare on top). Tested with 30 items stacked at the same moment.
 // 1.74 : More layers, and no more piling up on one layer. Moving or stretching an item (text, caption, picture...) so that it overlaps another item on the same layer now gives it a layer of its own — the nearest free layer above (then below), with a toast that says which. Six spare text layers (7-12) were added: they appear only when used, plus one empty spare on top, so the timeline stays tidy. Older projects keep their layer order. Adding text/stickers when every text layer is busy now also finds any free layer instead of stacking.
 // 1.73 : Timeline like CapCut — (1) 0:00 is no longer glued to the edge of the row-name column: there is a 52 px empty strip before it, so the start of the timeline is easy to click and to hit with the playhead; (2) a "Cover" tile in that strip on the main row (Video 1) shows the chosen cover (or the first frame) and opens the cover picker when clicked. The row-name column keeps its old width (stored width is unchanged).
@@ -81,7 +82,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.75';
+const APP_VERSION = '1.76';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -135,17 +136,18 @@ function trToggle(id, k) {
   commit('track'); if (typeof DIRTY !== 'undefined') DIRTY = true; renderTimeline();
 }
 const RENDER_ORDER = TRACKS.filter(t => t.kind !== 'audio').map(t => t.id);   // default stack, bottom -> top
-const BASE_LANES = 6;   // the first six layers are always shown; T4..T9 show only when used (plus one empty spare on top)
+const BASE_LANES = 6;   // layers the saved order must contain (older projects)
 // layer stack of the open project, bottom -> top. The timeline shows it top-down (top lane = top layer, like CapCut / Photoshop).
 function layerOrder() {   // v1.74: older projects saved a 6-layer order — the new spare layers are appended on top
   const d = D && D.lorder; if (!Array.isArray(d)) return RENDER_ORDER;
   const k = d.filter(x => RENDER_ORDER.includes(x)); if (!RENDER_ORDER.slice(0, BASE_LANES).every(x => k.includes(x))) return RENDER_ORDER;
   return RENDER_ORDER.every(x => k.includes(x)) ? k : [...k, ...RENDER_ORDER.filter(x => !k.includes(x))];
 }
-function visLayers() {   // layers shown in the timeline, bottom -> top
-  const lo = layerOrder(), used = new Set(D.items.map(i => i.track)); const extra = lo.filter(id => RENDER_ORDER.indexOf(id) >= BASE_LANES);
-  const spare = extra.find(id => !used.has(id));
-  return lo.filter(id => RENDER_ORDER.indexOf(id) < BASE_LANES || used.has(id) || id === spare);
+function visLayers() {   // layers shown in the timeline, bottom -> top: V1 + every layer that holds something + ONE empty strip on top to drop onto (a new layer)
+  const lo = layerOrder(), used = new Set(D.items.map(i => i.track)); used.add('V1');
+  let top = -1; lo.forEach((id, i) => { if (used.has(id)) top = i; });
+  const spare = lo.slice(top + 1).find(id => !used.has(id)) || lo.find(id => !used.has(id));
+  return lo.filter(id => used.has(id) || id === spare);
 }
 function layerMove(id, dir) {            // dir: 'up' = bring toward the top of the stack, 'down' = send toward the bottom
   const o = layerOrder().slice(), vis = visLayers(), vi = vis.indexOf(id), nb = vis[dir === 'up' ? vi + 1 : vi - 1]; if (vi < 0 || !nb) return;

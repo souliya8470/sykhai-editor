@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.75</title>
+<title>Sykhai Editor v1.76</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -2216,6 +2216,7 @@ I18N_ROWS.push(
   ['ปรับให้จบที่ท้ายประโยค', 'Adjusted to end at a sentence end', 'ປັບໃຫ້ຈົບທີ່ທ້າຍປະໂຫຍກ'],
   ['เทคซ้ำกับฉากก่อนหน้า', 'Same line as an earlier scene', 'ເທກຊ້ຳກັບສາກກ່ອນໜ້າ'],
   ['ฉากเปิดไม่มีเสียงพูด — ตรวจว่าเปิดเรื่องพอไหม', 'The opening scene has no speech — check that it works as a hook', 'ສາກເປີດບໍ່ມີສຽງເວົ້າ — ກວດວ່າເປີດເລື່ອງພໍບໍ'],
+  ['ชั้นใหม่', 'New layer', 'ຊັ້ນໃໝ່'],
   ['ซ้อนกับอันอื่นในชั้นเดียวกัน — ย้ายไปชั้น', 'Overlapped another item on the same layer — moved to layer', 'ຊ້ອນກັບອັນອື່ນໃນຊັ້ນດຽວກັນ — ຍ້າຍໄປຊັ້ນ'],
   ['ให้แล้ว', 'for you', 'ໃຫ້ແລ້ວ'],
   ['ย้ายลำดับคลิปแล้ว — ถ้าไม่ได้ตั้งใจ กด Ctrl+Z เพื่อย้อนกลับ', 'Clip order changed — press Ctrl+Z if that was not intended', 'ຍ້າຍລຳດັບຄລິບແລ້ວ — ຖ້າບໍ່ໄດ້ຕັ້ງໃຈ ກົດ Ctrl+Z ເພື່ອຍ້ອນກັບ'],
@@ -2226,9 +2227,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.75
-// APP_VERSION_PREV : 1.74
-// APP_VERSION_PREV_OLDER : 1.73
+// APP_VERSION  : 1.76
+// APP_VERSION_PREV : 1.75
+// APP_VERSION_PREV_OLDER : 1.74
+// 1.76 : Only the layers that hold something are shown (plus Video 1 and ONE thin "＋ new layer" strip on top to drop onto) — no more rows of empty layers. A new layer appears by itself when you drop something on the strip or when items would overlap; a layer that becomes empty disappears.
 // 1.75 : Up to 40 layers (was 12): picture layers V1-V3 and text layers T1-T37; layers beyond the first six appear only when used (plus one empty spare on top). Tested with 30 items stacked at the same moment.
 // 1.74 : More layers, and no more piling up on one layer. Moving or stretching an item (text, caption, picture...) so that it overlaps another item on the same layer now gives it a layer of its own — the nearest free layer above (then below), with a toast that says which. Six spare text layers (7-12) were added: they appear only when used, plus one empty spare on top, so the timeline stays tidy. Older projects keep their layer order. Adding text/stickers when every text layer is busy now also finds any free layer instead of stacking.
 // 1.73 : Timeline like CapCut — (1) 0:00 is no longer glued to the edge of the row-name column: there is a 52 px empty strip before it, so the start of the timeline is easy to click and to hit with the playhead; (2) a "Cover" tile in that strip on the main row (Video 1) shows the chosen cover (or the first frame) and opens the cover picker when clicked. The row-name column keeps its old width (stored width is unchanged).
@@ -2305,7 +2307,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.75';
+const APP_VERSION = '1.76';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -2359,17 +2361,18 @@ function trToggle(id, k) {
   commit('track'); if (typeof DIRTY !== 'undefined') DIRTY = true; renderTimeline();
 }
 const RENDER_ORDER = TRACKS.filter(t => t.kind !== 'audio').map(t => t.id);   // default stack, bottom -> top
-const BASE_LANES = 6;   // the first six layers are always shown; T4..T9 show only when used (plus one empty spare on top)
+const BASE_LANES = 6;   // layers the saved order must contain (older projects)
 // layer stack of the open project, bottom -> top. The timeline shows it top-down (top lane = top layer, like CapCut / Photoshop).
 function layerOrder() {   // v1.74: older projects saved a 6-layer order — the new spare layers are appended on top
   const d = D && D.lorder; if (!Array.isArray(d)) return RENDER_ORDER;
   const k = d.filter(x => RENDER_ORDER.includes(x)); if (!RENDER_ORDER.slice(0, BASE_LANES).every(x => k.includes(x))) return RENDER_ORDER;
   return RENDER_ORDER.every(x => k.includes(x)) ? k : [...k, ...RENDER_ORDER.filter(x => !k.includes(x))];
 }
-function visLayers() {   // layers shown in the timeline, bottom -> top
-  const lo = layerOrder(), used = new Set(D.items.map(i => i.track)); const extra = lo.filter(id => RENDER_ORDER.indexOf(id) >= BASE_LANES);
-  const spare = extra.find(id => !used.has(id));
-  return lo.filter(id => RENDER_ORDER.indexOf(id) < BASE_LANES || used.has(id) || id === spare);
+function visLayers() {   // layers shown in the timeline, bottom -> top: V1 + every layer that holds something + ONE empty strip on top to drop onto (a new layer)
+  const lo = layerOrder(), used = new Set(D.items.map(i => i.track)); used.add('V1');
+  let top = -1; lo.forEach((id, i) => { if (used.has(id)) top = i; });
+  const spare = lo.slice(top + 1).find(id => !used.has(id)) || lo.find(id => !used.has(id));
+  return lo.filter(id => used.has(id) || id === spare);
 }
 function layerMove(id, dir) {            // dir: 'up' = bring toward the top of the stack, 'down' = send toward the bottom
   const o = layerOrder().slice(), vis = visLayers(), vi = vis.indexOf(id), nb = vis[dir === 'up' ? vi + 1 : vi - 1]; if (vi < 0 || !nb) return;
@@ -3384,7 +3387,7 @@ function renderTimeline() {
   const sx = body.scrollLeft, sy = body.scrollTop; const W = tlWidth();
   let h = `<div id="tlinner" style="width:${TL.labelW + W}px"><div id="ruler"><div class="corner"><i class="lwh" title="${T('ลากเพื่อปรับความกว้างของช่องชื่อแถว')}"></i></div><div class="rt" style="width:${W}px">${rulerTicks()}${(D.markers || []).map(m => `<i class="mk" data-id="${m.id}" style="left:${m.t * TL.pps}px" title="${T('มาร์กเกอร์ — ดับเบิลคลิกเพื่อลบ')}">⚑</i>`).join('')}</div></div>`;
   const ROWS = [...visLayers().slice().reverse().map(id => TRACKS.find(t => t.id === id)).filter(Boolean), ...TRACKS.filter(t => t.kind === 'audio')];   // top lane = top layer
-  for (const tr of ROWS) h += `<div class="trow ${tr.kind}${trackH(tr) <= 24 ? ' slim' : ''}${trSt(tr.id).lock ? ' locked' : ''}${trSt(tr.id).hide ? ' hidt' : ''}${trSt(tr.id).mute ? ' mutet' : ''}" data-track="${tr.id}" style="height:${trackH(tr)}px"><div class="tlabel"><div class="tn">${tr.kind === 'audio' ? tr.label : T('เลเยอร์') + ' ' + (visLayers().indexOf(tr.id) + 1)}${TLS.magnet && tr.id === 'V1' ? `<b class="magb" title="${T('แม่เหล็กเปิดอยู่: คลิปในแถวนี้ชิดกันอัตโนมัติ')}">🧲</b>` : ''}</div>${trIcons(tr)}</div><div class="tlane" style="width:${W}px"></div>${tr.id === 'V1' ? coverTileHtml(trackH(tr)) : ''}<div class="trh" title="ลากเพื่อปรับความสูงของแถว"></div></div>`;
+  for (const tr of ROWS) h += `<div class="trow ${tr.kind}${trackH(tr) <= 24 ? ' slim' : ''}${trSt(tr.id).lock ? ' locked' : ''}${trSt(tr.id).hide ? ' hidt' : ''}${trSt(tr.id).mute ? ' mutet' : ''}" data-track="${tr.id}" style="height:${trackH(tr)}px"><div class="tlabel"><div class="tn">${tr.kind === 'audio' ? tr.label : (!D.items.some(i => i.track === tr.id) && tr.id !== 'V1' ? '＋ ' + T('ชั้นใหม่') : T('เลเยอร์') + ' ' + (visLayers().indexOf(tr.id) + 1))}${TLS.magnet && tr.id === 'V1' ? `<b class="magb" title="${T('แม่เหล็กเปิดอยู่: คลิปในแถวนี้ชิดกันอัตโนมัติ')}">🧲</b>` : ''}</div>${trIcons(tr)}</div><div class="tlane" style="width:${W}px"></div>${tr.id === 'V1' ? coverTileHtml(trackH(tr)) : ''}<div class="trh" title="ลากเพื่อปรับความสูงของแถว"></div></div>`;
   h += `<div id="playhead"><i></i></div></div>`;
   body.innerHTML = h;
   for (const it of D.items) {
