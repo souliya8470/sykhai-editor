@@ -84,11 +84,11 @@ button.vt.tpk canvas{background:#000}button.vt.tpk[draggable=true]{cursor:grab}
 #tlbody{flex:1;overflow:auto;position:relative;min-height:0;background:#17191e}
 #tlinner{position:relative;min-height:100%}
 #ruler{display:flex;height:22px;position:sticky;top:0;z-index:6;background:var(--p2);border-bottom:1px solid var(--ln);cursor:pointer}
-#ruler .corner{width:var(--tlw,124px);flex:none;position:sticky;left:0;background:var(--p2);z-index:3;border-right:1px solid var(--ln)}
+#ruler .corner{width:calc(var(--tlw,176px) - var(--tlpad,52px));margin-right:var(--tlpad,52px);flex:none;position:sticky;left:0;background:var(--p2);z-index:3;border-right:1px solid var(--ln)}
 #ruler .rt{position:relative;height:100%}
 #ruler .rt span{position:absolute;top:4px;font-size:10px;color:var(--mu);padding-left:4px;border-left:1px solid var(--ln);height:18px}
 .trow{display:flex;border-bottom:1px solid #262a32;position:relative}
-.tlabel{width:var(--tlw,124px);flex:none;position:sticky;left:0;z-index:5;background:var(--p2);border-right:1px solid var(--ln);font-size:11px;color:var(--mu);padding:4px 6px;overflow:hidden}
+.tlabel{width:calc(var(--tlw,176px) - var(--tlpad,52px));margin-right:var(--tlpad,52px);flex:none;position:sticky;left:0;z-index:5;background:var(--p2);border-right:1px solid var(--ln);font-size:11px;color:var(--mu);padding:4px 6px;overflow:hidden}
 .tlane{position:relative;flex:none;background:repeating-linear-gradient(90deg,transparent 0 55px,rgba(255,255,255,.02) 55px 56px)}
 .trow.video .tlabel,.trow.text .tlabel{border-left:3px solid #2d6a8f}.trow.audio .tlabel{border-left:3px solid #2f8a5b}
 .clip{position:absolute;top:3px;bottom:3px;border-radius:5px;background:var(--c);overflow:hidden;border:1px solid rgba(0,0,0,.35);cursor:grab;user-select:none}
@@ -486,3 +486,9 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
 #ctxm kbd{font-family:inherit;color:#9aa0aa;font-size:12px}
 #ctxm hr{border:0;border-top:1px solid #3d3f46;margin:4px 2px}
 .magb{margin-left:4px;font-size:11px;filter:drop-shadow(0 0 4px #2ee6c5)}
+
+/* v1.73: Cover tile before 0:00 on the main row (CapCut style) */
+.cvtile{position:absolute;top:5px;z-index:2;border-radius:6px;overflow:hidden;background:#2a2f38;border:1px solid #4a515e;cursor:pointer;display:flex;align-items:flex-end;justify-content:center}
+.cvtile i{position:absolute;inset:0;background-size:cover;background-position:center}
+.cvtile b{position:relative;font-size:9.5px;font-weight:700;color:#fff;background:rgba(0,0,0,.55);width:100%;text-align:center;padding:1px 0;line-height:1.2}
+.cvtile:hover{border-color:#7be0c3}.cvtile.set{border-color:#2dd4a7}

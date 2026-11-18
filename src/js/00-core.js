@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.72
-// APP_VERSION_PREV : 1.71
-// APP_VERSION_PREV_OLDER : 1.70
+// APP_VERSION  : 1.73
+// APP_VERSION_PREV : 1.72
+// APP_VERSION_PREV_OLDER : 1.71
+// 1.73 : Timeline like CapCut — (1) 0:00 is no longer glued to the edge of the row-name column: there is a 52 px empty strip before it, so the start of the timeline is easy to click and to hit with the playhead; (2) a "Cover" tile in that strip on the main row (Video 1) shows the chosen cover (or the first frame) and opens the cover picker when clicked. The row-name column keeps its old width (stored width is unchanged).
 // 1.72 : Two sync bugs. (1) The big videos were sent to the shop server AGAIN on every project open/save (the top bar kept showing "☁ clip 27%" for minutes): the editor only asked the server which files it already has when the server had not answered yet, so it believed it had nothing. It now asks first (and refreshes every 20 s), skips every file that is already there with the same size, and re-checks right before each upload. (2) The green "server has a newer version" bar did not go away after choosing a button (its flex style overrode the hidden flag) — it now really hides.
 // 1.71 : Play starts at once. Pressing play used to wait about a second (the 0.9 s pre-roll cap) before anything moved: the pre-roll re-positioned the videos on every 40 ms check, which restarted their seek each time, so "seeking" never finished. It now only re-positions a video when it is really off, so play starts in a few tens of milliseconds when the videos are already in place, and after a fresh click on the timeline it waits only until the frame is ready (~0.1-0.25 s measured on the project's real proxy files).
 // 1.70 : Safer timeline editing — clips no longer swap places by accident. (1) A click or a wobbly tap on a clip never starts a move (6 px of real drag needed). (2) The trim zone is measured from the mouse: the outer 12 px of a clip (28% on a narrow one) always trims, and the white bracket handles are bigger on the selected clip. (3) Trimming or stretching an edge keeps the clip order fixed (the main row used to re-sort by clip centres, which could swap clips when a clip was stretched past its neighbour). (4) On the main row a clip must be dragged at least 28 px past a neighbour before they swap, however short the neighbour is. (5) After a drop that changed the order, a toast says so and reminds Ctrl+Z.
@@ -78,7 +79,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.72';
+const APP_VERSION = '1.73';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
