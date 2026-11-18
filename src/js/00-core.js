@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.68
-// APP_VERSION_PREV : 1.67
-// APP_VERSION_PREV_OLDER : 1.66
+// APP_VERSION  : 1.69
+// APP_VERSION_PREV : 1.68
+// APP_VERSION_PREV_OLDER : 1.67
+// 1.69 : Timeline zoom is anchored on the playhead (the red line) like CapCut — the slider, the +/- buttons and Ctrl/⌘ + scroll/pinch all zoom around it, so the line stays where it is on screen instead of the view jumping to another place; if the line is off-screen it is brought back into view.
 // 1.68 : The green "server has a newer version" bar now belongs to the project it was raised for — it hides by itself when another project is opened (e.g. after "AI cut it all" builds a new project), instead of staying on screen and pointing at the old one.
 // 1.67 : "AI cut it all" now picks the BEST TAKE across many clips — it groups lines that were spoken more than once (retakes, also across different clips), scores every transcript segment (clean start/end from the audio, fillers, stutters, cut-off recordings), builds each scene from whole sentences, never uses two takes of the same line, orders hook -> problem -> product -> how-to -> proof -> CTA, and always opens on the start of a complete hook sentence. Scene cards show the take score, warnings and the takes that were not used. Tick-box "เลือกเทคที่ดีที่สุด" (default on).
 // 1.66 : Project page — square (1:1) thumbnails, project names may use 2 lines (the full name is also the tooltip), and a size slider (small ↔ large, remembered in this browser) like a file manager; project thumbnails made by the editor are sharper (270x480).
@@ -74,7 +75,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.68';
+const APP_VERSION = '1.69';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];

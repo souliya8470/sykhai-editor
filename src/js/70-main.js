@@ -89,7 +89,7 @@ async function init() {
   try { const ls = localStorage.getItem('sk_autosave'); if (ls) { const d = JSON.parse(ls); let ok = true; if (d && d.items && d.items.length) { d.pid = d.pid || uid(); d.created = d.created || Date.now(); d.name = d.name || 'โปรเจกต์เดิม'; ok = await projPut(projRec(d)); } if (ok) localStorage.removeItem('sk_autosave'); } } catch (e) { console.warn(e); }
   HIST = []; HPOS = -1; commit('init');
   renderMediaBin(); renderTimeline(); renderInspector(); updateCostBadge && updateCostBadge();
-  $('#zoom').oninput = e => { TL.pps = Math.exp(parseFloat(e.target.value)); renderTimeline(); }; $('#zoom').value = Math.log(TL.pps);
+  $('#zoom').oninput = e => setZoom(Math.exp(parseFloat(e.target.value))); $('#zoom').value = Math.log(TL.pps);
   $('#tpPlay').onclick = togglePlay; $('#tpStart').onclick = () => { if (SRC.m) { if (SRC.el.pause) SRC.el.currentTime = 0; return; } pause(); seek(0); };
   $('#srcClose').onclick = srcExit;
   { const sk = $('#srcSeek'); sk.addEventListener('pointerdown', () => { sk._drag = true; }); sk.addEventListener('pointerup', () => { sk._drag = false; });

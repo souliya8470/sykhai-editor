@@ -255,7 +255,14 @@ function labelWDrag(e) {
   const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); document.body.classList.remove('resizing'); try { localStorage.setItem('sk_tlw', String(TL.labelW)); } catch (e) { } renderTimeline(); };
   window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
 }
-function setZoom(p) { TL.pps = clamp(p, 8, 1200); const z = $('#zoom'); if (z) z.value = Math.log(TL.pps); renderTimeline(); }
+function setZoom(p, anchorT) {   // v1.69: zoom around the playhead (like CapCut): the red line keeps its place on screen; if it is off-screen, bring it into view
+  const body = $('#tlbody'), old = TL.pps, np = clamp(p, 8, 1200);
+  const t = anchorT != null ? anchorT : (typeof PB !== 'undefined' && PB ? PB.t : 0) || 0;
+  const vis = body ? Math.max(1, body.clientWidth - TL.labelW) : 0; let rel = body ? t * old - body.scrollLeft : 0;
+  if (!body || rel < 0 || rel > vis) rel = vis * .4;
+  TL.pps = np; const z = $('#zoom'); if (z) z.value = Math.log(TL.pps); renderTimeline();
+  const nb = $('#tlbody'); if (nb) nb.scrollLeft = Math.max(0, t * TL.pps - rel);
+}
 
 // ---------- editing commands ----------
 function cmdSplit() {

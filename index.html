@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.68</title>
+<title>Sykhai Editor v1.69</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -2216,9 +2216,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.68
-// APP_VERSION_PREV : 1.67
-// APP_VERSION_PREV_OLDER : 1.66
+// APP_VERSION  : 1.69
+// APP_VERSION_PREV : 1.68
+// APP_VERSION_PREV_OLDER : 1.67
+// 1.69 : Timeline zoom is anchored on the playhead (the red line) like CapCut — the slider, the +/- buttons and Ctrl/⌘ + scroll/pinch all zoom around it, so the line stays where it is on screen instead of the view jumping to another place; if the line is off-screen it is brought back into view.
 // 1.68 : The green "server has a newer version" bar now belongs to the project it was raised for — it hides by itself when another project is opened (e.g. after "AI cut it all" builds a new project), instead of staying on screen and pointing at the old one.
 // 1.67 : "AI cut it all" now picks the BEST TAKE across many clips — it groups lines that were spoken more than once (retakes, also across different clips), scores every transcript segment (clean start/end from the audio, fillers, stutters, cut-off recordings), builds each scene from whole sentences, never uses two takes of the same line, orders hook -> problem -> product -> how-to -> proof -> CTA, and always opens on the start of a complete hook sentence. Scene cards show the take score, warnings and the takes that were not used. Tick-box "เลือกเทคที่ดีที่สุด" (default on).
 // 1.66 : Project page — square (1:1) thumbnails, project names may use 2 lines (the full name is also the tooltip), and a size slider (small ↔ large, remembered in this browser) like a file manager; project thumbnails made by the editor are sharper (270x480).
@@ -2288,7 +2289,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.68';
+const APP_VERSION = '1.69';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -3539,7 +3540,14 @@ function labelWDrag(e) {
   const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); document.body.classList.remove('resizing'); try { localStorage.setItem('sk_tlw', String(TL.labelW)); } catch (e) { } renderTimeline(); };
   window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
 }
-function setZoom(p) { TL.pps = clamp(p, 8, 1200); const z = $('#zoom'); if (z) z.value = Math.log(TL.pps); renderTimeline(); }
+function setZoom(p, anchorT) {   // v1.69: zoom around the playhead (like CapCut): the red line keeps its place on screen; if it is off-screen, bring it into view
+  const body = $('#tlbody'), old = TL.pps, np = clamp(p, 8, 1200);
+  const t = anchorT != null ? anchorT : (typeof PB !== 'undefined' && PB ? PB.t : 0) || 0;
+  const vis = body ? Math.max(1, body.clientWidth - TL.labelW) : 0; let rel = body ? t * old - body.scrollLeft : 0;
+  if (!body || rel < 0 || rel > vis) rel = vis * .4;
+  TL.pps = np; const z = $('#zoom'); if (z) z.value = Math.log(TL.pps); renderTimeline();
+  const nb = $('#tlbody'); if (nb) nb.scrollLeft = Math.max(0, t * TL.pps - rel);
+}
 
 // ---------- editing commands ----------
 function cmdSplit() {
@@ -8142,7 +8150,7 @@ async function init() {
   try { const ls = localStorage.getItem('sk_autosave'); if (ls) { const d = JSON.parse(ls); let ok = true; if (d && d.items && d.items.length) { d.pid = d.pid || uid(); d.created = d.created || Date.now(); d.name = d.name || 'โปรเจกต์เดิม'; ok = await projPut(projRec(d)); } if (ok) localStorage.removeItem('sk_autosave'); } } catch (e) { console.warn(e); }
   HIST = []; HPOS = -1; commit('init');
   renderMediaBin(); renderTimeline(); renderInspector(); updateCostBadge && updateCostBadge();
-  $('#zoom').oninput = e => { TL.pps = Math.exp(parseFloat(e.target.value)); renderTimeline(); }; $('#zoom').value = Math.log(TL.pps);
+  $('#zoom').oninput = e => setZoom(Math.exp(parseFloat(e.target.value))); $('#zoom').value = Math.log(TL.pps);
   $('#tpPlay').onclick = togglePlay; $('#tpStart').onclick = () => { if (SRC.m) { if (SRC.el.pause) SRC.el.currentTime = 0; return; } pause(); seek(0); };
   $('#srcClose').onclick = srcExit;
   { const sk = $('#srcSeek'); sk.addEventListener('pointerdown', () => { sk._drag = true; }); sk.addEventListener('pointerup', () => { sk._drag = false; });
