@@ -109,7 +109,8 @@ async function srvPing() {
   updateSrvBadge(); return SRV.up;
 }
 async function srvLoadSizes() {
-  try { const r = await srvFetch('/media'); if (r.ok) { SRV.sizes = new Map((await r.json()).map(m => [m.id, m.size])); } } catch (e) { }
+  try { const r = await srvFetch('/media'); if (r.ok) { SRV.sizes = new Map((await r.json()).map(m => [m.id, m.size])); SRV.sizesAt = Date.now(); return true; } } catch (e) { }
+  return false;
 }
 function xhrPut(path, body, headers, onp) {
   return new Promise((res, rej) => {
@@ -120,8 +121,15 @@ function xhrPut(path, body, headers, onp) {
   });
 }
 // ----- uploads of source media (sequential queue) -----
-function srvQueueMedia(ids) {
+async function srvEnsureSizes(force) {   // v1.72: server file sizes were only loaded when the server had not answered yet -> every save re-sent every video
+  if (!srvOn()) return false;
+  if (!force && SRV.sizesAt && Date.now() - SRV.sizesAt < 20000) return true;
+  if (!SRV.up && !(await srvPing())) return false;
+  return await srvLoadSizes();
+}
+async function srvQueueMedia(ids) {
   if (!srvOn()) return;
+  if (!(await srvEnsureSizes())) return;            // cannot tell what the server already has -> send nothing rather than everything
   for (const id of ids) { const m = MEDIA.get(id); if (m && m.file && !m.builtin && !m.hidden && !m.ref && !m.proxyOnly && SRV.sizes.get(id) !== m.file.size && !SRV.q.includes(id)) SRV.q.push(id); }
   updateSrvBadge(); srvRun();
 }
@@ -131,6 +139,7 @@ async function srvRun() {
     while (SRV.q.length) {
       if (!SRV.up && !(await srvPing())) { SRV.q = []; break; }
       const id = SRV.q[0], m = MEDIA.get(id);
+      if (m && m.file && SRV.sizes.get(id) === m.file.size) { SRV.q.shift(); continue; }   // v1.72: already on the server
       if (m && m.file) {
         SRV.label = m.name.length > 14 ? m.name.slice(0, 12) + '…' : m.name; SRV.prog = 0; updateSrvBadge();
         try { await xhrPut('/media/' + srvId(id), m.file, { 'x-name': encodeURIComponent(m.name), 'x-type': m.file.type || 'application/octet-stream' }, p => { SRV.prog = p; updateSrvBadge(); }); SRV.sizes.set(id, m.file.size); }
@@ -154,7 +163,6 @@ async function srvPushProject(rec) {
 }
 async function srvSync(rec) {          // called after every local autosave
   if (!srvOn()) return;
-  if (!SRV.sizes.size && !SRV.up) await srvPing() && await srvLoadSizes();
   if (await srvPushProject(rec)) srvQueueMedia(rec.mids || []);
 }
 async function srvDeleteProject(id) { if (srvOn()) { try { await srvFetch('/projects/' + srvId(id), { method: 'DELETE' }); } catch (e) { } } }
@@ -378,7 +386,7 @@ async function srvPushOut(blob, name) {
 // than the one we loaded/pushed, saving is paused and a bar asks: load the newer one, or keep this computer's version.
 function srvNewerBar(show, name) {
   let el = document.getElementById('srvNewer');
-  if (!show) { if (el) el.hidden = true; return; }
+  if (!show) { if (el) { el.hidden = true; el.style.display = 'none'; } return; }   // v1.72: inline display:flex beats [hidden], so hide with display too
   if (!el) {
     el = document.createElement('div'); el.id = 'srvNewer';
     el.style.cssText = 'position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:99999;background:#1f9d4a;color:#fff;padding:10px 14px;border-radius:12px;box-shadow:0 6px 24px #0008;display:flex;gap:10px;align-items:center;font-weight:700;max-width:92vw;flex-wrap:wrap;justify-content:center';
@@ -386,10 +394,10 @@ function srvNewerBar(show, name) {
     el.querySelector('.ld').onclick = srvLoadNewer; el.querySelector('.kp').onclick = srvKeepMine; document.body.appendChild(el);
   }
   el.querySelector('.m').textContent = T('เซิร์ฟเวอร์มีเวอร์ชันใหม่กว่าของโปรเจกต์นี้') + (name ? ' — ' + name : '');
-  el.querySelector('.ld').textContent = T('โหลดเวอร์ชันใหม่'); el.querySelector('.kp').textContent = T('ใช้ของเครื่องนี้ต่อ'); el.hidden = false;
+  el.querySelector('.ld').textContent = T('โหลดเวอร์ชันใหม่'); el.querySelector('.kp').textContent = T('ใช้ของเครื่องนี้ต่อ'); el.hidden = false; el.style.display = 'flex';
 }
 async function srvCheckNewer() {
-  { const bar = document.getElementById('srvNewer'); if (bar && !bar.hidden && D && bar.dataset.pid !== D.pid) bar.hidden = true; }   // v1.68: the bar belongs to the project it was raised for — hide it when another project is open
+  { const bar = document.getElementById('srvNewer'); if (bar && !bar.hidden && D && bar.dataset.pid !== D.pid) { bar.hidden = true; bar.style.display = 'none'; } }   // v1.68: the bar belongs to the project it was raised for — hide it when another project is open
   if (!srvOn() || SRV.chk || HOME.open || !D || !D.pid) return; SRV.chk = true;
   try {
     const r = await srvFetch('/projects/' + srvId(D.pid)); if (!r.ok) return; const s = await r.json();
