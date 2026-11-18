@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.70</title>
+<title>Sykhai Editor v1.71</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -2218,9 +2218,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.70
-// APP_VERSION_PREV : 1.69
-// APP_VERSION_PREV_OLDER : 1.68
+// APP_VERSION  : 1.71
+// APP_VERSION_PREV : 1.70
+// APP_VERSION_PREV_OLDER : 1.69
+// 1.71 : Play starts at once. Pressing play used to wait about a second (the 0.9 s pre-roll cap) before anything moved: the pre-roll re-positioned the videos on every 40 ms check, which restarted their seek each time, so "seeking" never finished. It now only re-positions a video when it is really off, so play starts in a few tens of milliseconds when the videos are already in place, and after a fresh click on the timeline it waits only until the frame is ready (~0.1-0.25 s measured on the project's real proxy files).
 // 1.70 : Safer timeline editing — clips no longer swap places by accident. (1) A click or a wobbly tap on a clip never starts a move (6 px of real drag needed). (2) The trim zone is measured from the mouse: the outer 12 px of a clip (28% on a narrow one) always trims, and the white bracket handles are bigger on the selected clip. (3) Trimming or stretching an edge keeps the clip order fixed (the main row used to re-sort by clip centres, which could swap clips when a clip was stretched past its neighbour). (4) On the main row a clip must be dragged at least 28 px past a neighbour before they swap, however short the neighbour is. (5) After a drop that changed the order, a toast says so and reminds Ctrl+Z.
 // 1.69 : Timeline zoom is anchored on the playhead (the red line) like CapCut — the slider, the +/- buttons and Ctrl/⌘ + scroll/pinch all zoom around it, so the line stays where it is on screen instead of the view jumping to another place; if the line is off-screen it is brought back into view.
 // 1.68 : The green "server has a newer version" bar now belongs to the project it was raised for — it hides by itself when another project is opened (e.g. after "AI cut it all" builds a new project), instead of staying on screen and pointing at the old one.
@@ -2292,7 +2293,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.70';
+const APP_VERSION = '1.71';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -5369,11 +5370,12 @@ function play() {
   if (PB.exporting) return playGo();
   // pre-roll: get the first frames of all layers decoded and positioned BEFORE the clock starts, otherwise the phone spends the first
   // seconds decoding at 5-12 fps while the playhead already runs (v1.24 recording)
-  syncMedia(true); if (prerollReady()) return playGo();
+  // v1.71: syncMedia(false) here and in the poll below — syncMedia(true) re-assigned currentTime on every poll, which restarts the seek each time, so "seeking" never ended and play always waited the full 0.9 s cap
+  syncMedia(false); if (prerollReady()) return playGo();
   const tok = PB.starting = performance.now() + Math.random(); emit('transport');
   const t0 = performance.now(), poll = () => {
     if (PB.starting !== tok) return;
-    syncMedia(true);
+    syncMedia(false);
     if (prerollReady() || performance.now() - t0 > 900) return playGo();
     setTimeout(poll, 40);
   };

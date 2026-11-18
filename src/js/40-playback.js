@@ -117,11 +117,12 @@ function play() {
   if (PB.exporting) return playGo();
   // pre-roll: get the first frames of all layers decoded and positioned BEFORE the clock starts, otherwise the phone spends the first
   // seconds decoding at 5-12 fps while the playhead already runs (v1.24 recording)
-  syncMedia(true); if (prerollReady()) return playGo();
+  // v1.71: syncMedia(false) here and in the poll below — syncMedia(true) re-assigned currentTime on every poll, which restarts the seek each time, so "seeking" never ended and play always waited the full 0.9 s cap
+  syncMedia(false); if (prerollReady()) return playGo();
   const tok = PB.starting = performance.now() + Math.random(); emit('transport');
   const t0 = performance.now(), poll = () => {
     if (PB.starting !== tok) return;
-    syncMedia(true);
+    syncMedia(false);
     if (prerollReady() || performance.now() - t0 > 900) return playGo();
     setTimeout(poll, 40);
   };
