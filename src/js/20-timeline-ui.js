@@ -44,7 +44,7 @@ const TIC = {
 function trIcons(tr) {
   const st = trSt(tr.id), ks = LANE(tr.id) === 'visual' ? ['lock', 'hide', 'mute'] : ['lock', 'mute'];
   const tip = { lock: ['ล็อกแถวนี้ (กันแก้ไขโดยไม่ตั้งใจ)', 'ปลดล็อกแถวนี้'], hide: ['ซ่อนภาพของแถวนี้', 'แสดงภาพของแถวนี้'], mute: ['ปิดเสียงของแถวนี้', 'เปิดเสียงของแถวนี้'] };
-  const lo = layerOrder(), li = lo.indexOf(tr.id), lm = li < 0 ? '' : `<button class="tic tlm" data-lm="up" ${li >= lo.length - 1 ? 'disabled' : ''} title="${T('ยกชั้นนี้ขึ้นบน')}">▲</button><button class="tic tlm" data-lm="down" ${li <= 0 ? 'disabled' : ''} title="${T('ลดชั้นนี้ลงล่าง')}">▼</button>`;
+  const lo = visLayers(), li = lo.indexOf(tr.id), lm = li < 0 ? '' : `<button class="tic tlm" data-lm="up" ${li >= lo.length - 1 ? 'disabled' : ''} title="${T('ยกชั้นนี้ขึ้นบน')}">▲</button><button class="tic tlm" data-lm="down" ${li <= 0 ? 'disabled' : ''} title="${T('ลดชั้นนี้ลงล่าง')}">▼</button>`;
   return `<div class="tic-row">` + lm + ks.map(k => `<button class="tic${st[k] ? ' on' : ''}" data-tk="${k}" title="${tip[k][st[k] ? 1 : 0]}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${TIC[k][st[k] ? 1 : 0]}</svg></button>`).join('') + `</div>`;
 }
 function coverTileHtml(rowH) {     // v1.73: CapCut-style "Cover" tile in front of 0:00 on the main row — click = choose the cover
@@ -57,8 +57,8 @@ function renderTimeline() {
   const body = $('#tlbody'); if (!body) return;
   const sx = body.scrollLeft, sy = body.scrollTop; const W = tlWidth();
   let h = `<div id="tlinner" style="width:${TL.labelW + W}px"><div id="ruler"><div class="corner"><i class="lwh" title="${T('ลากเพื่อปรับความกว้างของช่องชื่อแถว')}"></i></div><div class="rt" style="width:${W}px">${rulerTicks()}${(D.markers || []).map(m => `<i class="mk" data-id="${m.id}" style="left:${m.t * TL.pps}px" title="${T('มาร์กเกอร์ — ดับเบิลคลิกเพื่อลบ')}">⚑</i>`).join('')}</div></div>`;
-  const ROWS = [...layerOrder().slice().reverse().map(id => TRACKS.find(t => t.id === id)).filter(Boolean), ...TRACKS.filter(t => t.kind === 'audio')];   // top lane = top layer
-  for (const tr of ROWS) h += `<div class="trow ${tr.kind}${trackH(tr) <= 24 ? ' slim' : ''}${trSt(tr.id).lock ? ' locked' : ''}${trSt(tr.id).hide ? ' hidt' : ''}${trSt(tr.id).mute ? ' mutet' : ''}" data-track="${tr.id}" style="height:${trackH(tr)}px"><div class="tlabel"><div class="tn">${tr.kind === 'audio' ? tr.label : T('เลเยอร์') + ' ' + (layerOrder().indexOf(tr.id) + 1)}${TLS.magnet && tr.id === 'V1' ? `<b class="magb" title="${T('แม่เหล็กเปิดอยู่: คลิปในแถวนี้ชิดกันอัตโนมัติ')}">🧲</b>` : ''}</div>${trIcons(tr)}</div><div class="tlane" style="width:${W}px"></div>${tr.id === 'V1' ? coverTileHtml(trackH(tr)) : ''}<div class="trh" title="ลากเพื่อปรับความสูงของแถว"></div></div>`;
+  const ROWS = [...visLayers().slice().reverse().map(id => TRACKS.find(t => t.id === id)).filter(Boolean), ...TRACKS.filter(t => t.kind === 'audio')];   // top lane = top layer
+  for (const tr of ROWS) h += `<div class="trow ${tr.kind}${trackH(tr) <= 24 ? ' slim' : ''}${trSt(tr.id).lock ? ' locked' : ''}${trSt(tr.id).hide ? ' hidt' : ''}${trSt(tr.id).mute ? ' mutet' : ''}" data-track="${tr.id}" style="height:${trackH(tr)}px"><div class="tlabel"><div class="tn">${tr.kind === 'audio' ? tr.label : T('เลเยอร์') + ' ' + (visLayers().indexOf(tr.id) + 1)}${TLS.magnet && tr.id === 'V1' ? `<b class="magb" title="${T('แม่เหล็กเปิดอยู่: คลิปในแถวนี้ชิดกันอัตโนมัติ')}">🧲</b>` : ''}</div>${trIcons(tr)}</div><div class="tlane" style="width:${W}px"></div>${tr.id === 'V1' ? coverTileHtml(trackH(tr)) : ''}<div class="trh" title="ลากเพื่อปรับความสูงของแถว"></div></div>`;
   h += `<div id="playhead"><i></i></div></div>`;
   body.innerHTML = h;
   for (const it of D.items) {
@@ -216,6 +216,7 @@ function initTimelineEvents() {
     };
     const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); if (MG.on) { if (it.track === 'V1') it.start = MG.slot; mgReset(); }
       if (moved) {
+        if (resolveOverlap(it)) { const nm = visLayers().indexOf(it.track) + 1; renderTimeline(); toast(T('ซ้อนกับอันอื่นในชั้นเดียวกัน — ย้ายไปชั้น') + ' ' + nm + ' ' + T('ให้แล้ว'), 4500); }
         commit('edit');
         if (mode === 'move' && it.track === 'V1') { const ord1 = D.items.filter(i => i.track === 'V1').sort((a, b) => a.start - b.start).map(i => i.id); if (ord1.join() !== ord0.join()) toast(T('ย้ายลำดับคลิปแล้ว — ถ้าไม่ได้ตั้งใจ กด Ctrl+Z เพื่อย้อนกลับ'), 6000); }
       } };

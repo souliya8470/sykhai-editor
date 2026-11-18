@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.73
-// APP_VERSION_PREV : 1.72
-// APP_VERSION_PREV_OLDER : 1.71
+// APP_VERSION  : 1.74
+// APP_VERSION_PREV : 1.73
+// APP_VERSION_PREV_OLDER : 1.72
+// 1.74 : More layers, and no more piling up on one layer. Moving or stretching an item (text, caption, picture...) so that it overlaps another item on the same layer now gives it a layer of its own — the nearest free layer above (then below), with a toast that says which. Six spare text layers (7-12) were added: they appear only when used, plus one empty spare on top, so the timeline stays tidy. Older projects keep their layer order. Adding text/stickers when every text layer is busy now also finds any free layer instead of stacking.
 // 1.73 : Timeline like CapCut — (1) 0:00 is no longer glued to the edge of the row-name column: there is a 52 px empty strip before it, so the start of the timeline is easy to click and to hit with the playhead; (2) a "Cover" tile in that strip on the main row (Video 1) shows the chosen cover (or the first frame) and opens the cover picker when clicked. The row-name column keeps its old width (stored width is unchanged).
 // 1.72 : Two sync bugs. (1) The big videos were sent to the shop server AGAIN on every project open/save (the top bar kept showing "☁ clip 27%" for minutes): the editor only asked the server which files it already has when the server had not answered yet, so it believed it had nothing. It now asks first (and refreshes every 20 s), skips every file that is already there with the same size, and re-checks right before each upload. (2) The green "server has a newer version" bar did not go away after choosing a button (its flex style overrode the hidden flag) — it now really hides.
 // 1.71 : Play starts at once. Pressing play used to wait about a second (the 0.9 s pre-roll cap) before anything moved: the pre-roll re-positioned the videos on every 40 ms check, which restarted their seek each time, so "seeking" never finished. It now only re-positions a video when it is really off, so play starts in a few tens of milliseconds when the videos are already in place, and after a fresh click on the timeline it waits only until the frame is ready (~0.1-0.25 s measured on the project's real proxy files).
@@ -79,7 +80,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.73';
+const APP_VERSION = '1.74';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -118,6 +119,8 @@ const TRACKS = [
   { id: 'T1', kind: 'text', label: 'ข้อความ 1' },
   { id: 'T2', kind: 'text', label: 'ข้อความ 2' },
   { id: 'T3', kind: 'text', label: 'ข้อความ 3' },
+  { id: 'T4', kind: 'text', label: 'ข้อความ 4' }, { id: 'T5', kind: 'text', label: 'ข้อความ 5' }, { id: 'T6', kind: 'text', label: 'ข้อความ 6' },   // v1.74: spare layers — an item that would overlap another on its lane moves up to a free one
+  { id: 'T7', kind: 'text', label: 'ข้อความ 7' }, { id: 'T8', kind: 'text', label: 'ข้อความ 8' }, { id: 'T9', kind: 'text', label: 'ข้อความ 9' },
   { id: 'A1', kind: 'audio', label: 'เพลง' },
   { id: 'A2', kind: 'audio', label: 'เสียงเอฟเฟกต์' },
 ];
@@ -130,12 +133,22 @@ function trToggle(id, k) {
   if (k === 'lock' && st.lock && SEL) { const it = getItem(SEL); if (it && it.track === id) select(null); }
   commit('track'); if (typeof DIRTY !== 'undefined') DIRTY = true; renderTimeline();
 }
-const RENDER_ORDER = ['V1', 'V2', 'V3', 'T1', 'T2', 'T3'];   // default stack, bottom -> top
+const RENDER_ORDER = ['V1', 'V2', 'V3', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9'];   // default stack, bottom -> top
+const BASE_LANES = 6;   // the first six layers are always shown; T4..T9 show only when used (plus one empty spare on top)
 // layer stack of the open project, bottom -> top. The timeline shows it top-down (top lane = top layer, like CapCut / Photoshop).
-function layerOrder() { const d = D && D.lorder; return Array.isArray(d) && d.length === RENDER_ORDER.length && RENDER_ORDER.every(x => d.includes(x)) ? d : RENDER_ORDER; }
+function layerOrder() {   // v1.74: older projects saved a 6-layer order — the new spare layers are appended on top
+  const d = D && D.lorder; if (!Array.isArray(d)) return RENDER_ORDER;
+  const k = d.filter(x => RENDER_ORDER.includes(x)); if (!RENDER_ORDER.slice(0, BASE_LANES).every(x => k.includes(x))) return RENDER_ORDER;
+  return RENDER_ORDER.every(x => k.includes(x)) ? k : [...k, ...RENDER_ORDER.filter(x => !k.includes(x))];
+}
+function visLayers() {   // layers shown in the timeline, bottom -> top
+  const lo = layerOrder(), used = new Set(D.items.map(i => i.track)); const extra = lo.filter(id => RENDER_ORDER.indexOf(id) >= BASE_LANES);
+  const spare = extra.find(id => !used.has(id));
+  return lo.filter(id => RENDER_ORDER.indexOf(id) < BASE_LANES || used.has(id) || id === spare);
+}
 function layerMove(id, dir) {            // dir: 'up' = bring toward the top of the stack, 'down' = send toward the bottom
-  const o = layerOrder().slice(), i = o.indexOf(id), j = dir === 'up' ? i + 1 : i - 1; if (i < 0 || j < 0 || j >= o.length) return;
-  [o[i], o[j]] = [o[j], o[i]]; D.lorder = o; commit('track'); if (typeof DIRTY !== 'undefined') DIRTY = true; renderTimeline();
+  const o = layerOrder().slice(), vis = visLayers(), vi = vis.indexOf(id), nb = vis[dir === 'up' ? vi + 1 : vi - 1]; if (vi < 0 || !nb) return;
+  const i = o.indexOf(id), j = o.indexOf(nb); [o[i], o[j]] = [o[j], o[i]]; D.lorder = o; commit('track'); if (typeof DIRTY !== 'undefined') DIRTY = true; renderTimeline();
 }
 
 function newDoc() { return { pid: uid(), created: Date.now(), name: T('โปรเจกต์ใหม่'), w: 1080, h: 1920, fps: 30, items: [], markers: [], duckLevel: 0.22, ver: 1, bin: [] }; }
@@ -262,7 +275,20 @@ function freeTrack(kind, start, dur, prefer) {
   for (const tr of order) {
     if (!D.items.some(i => i.track === tr && i.start < start + dur - 1e-3 && i.start + i.dur > start + 1e-3)) return tr;
   }
+  if (kind !== 'audio') { const f = laneFreeFor(null, start, dur, 'V1'); if (f) return f; }   // v1.74: every layer of that kind is busy -> use any free layer
   return order[0];
+}
+function laneFree(tr, start, dur, exceptId) { return !D.items.some(i => i.id !== exceptId && i.track === tr && i.start < start + dur - 1e-3 && i.start + i.dur > start + 1e-3); }
+function laneFreeFor(exceptId, start, dur, from, skipV1) {   // nearest free picture layer: first upward from `from`, then downward
+  const lo = layerOrder(), i0 = Math.max(0, lo.indexOf(from)); const up = lo.slice(i0 + 1), down = lo.slice(0, i0).reverse();
+  for (const tr of [...up, ...down]) { if (skipV1 !== false && tr === 'V1') continue; if (trSt(tr).lock) continue; if (laneFree(tr, start, dur, exceptId)) return tr; }
+  return null;
+}
+function resolveOverlap(it) {   // v1.74: an item dropped/stretched onto another one on the same layer gets a layer of its own
+  if (!it || LANE(it.track) !== 'visual' || it.track === 'V1') return false;
+  if (laneFree(it.track, it.start, it.dur, it.id)) return false;
+  const tr = laneFreeFor(it.id, it.start, it.dur, it.track); if (!tr) return false;
+  it.track = tr; return true;
 }
 function addItem(it) { D.items.push(it); return it; }
 function removeItem(id, ripple) {
