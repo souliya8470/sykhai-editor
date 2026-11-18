@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.69</title>
+<title>Sykhai Editor v1.70</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -107,7 +107,7 @@ button.vt.tpk canvas{background:#000}button.vt.tpk[draggable=true]{cursor:grab}
 .clip.audio .cl{top:1px}
 .clip.video .cl,.clip.image .cl{left:0;right:0;top:0;padding:2px 8px 8px;background:linear-gradient(rgba(0,0,0,.6),rgba(0,0,0,0))}
 .clip .cl i{font-style:normal;opacity:.75;margin-left:8px;font-size:10px}
-.clip .th{position:absolute;top:0;bottom:0;width:8px;cursor:ew-resize;background:rgba(255,255,255,.0);z-index:3}.clip .th.l{left:0}.clip .th.r{right:0}
+.clip .th{position:absolute;top:0;bottom:0;width:min(12px,28%);cursor:ew-resize;background:rgba(255,255,255,.0);z-index:3}.clip .th.l{left:0}.clip .th.r{right:0}
 .clip:hover .th,.clip.sel .th{background:rgba(255,255,255,.35)}
 .clip .trb{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,rgba(255,255,255,.55),rgba(255,255,255,0));font-style:normal;font-size:10px;color:#000;padding:2px 3px;pointer-events:none}
 .clip .spd{position:absolute;right:10px;bottom:2px;font-size:10px;background:rgba(0,0,0,.6);padding:0 4px;border-radius:4px;font-style:normal}
@@ -414,7 +414,8 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
 #playhead i::before{left:-5px;top:0;border:5px solid transparent;border-top:8px solid #fff;filter:drop-shadow(0 0 .5px rgba(0,0,0,.6))}
 .clip{border-width:0 1px 0 0;border-color:rgba(0,0,0,.45)}
 .clip.sel{outline:1px solid #fff;outline-offset:-1px;border-color:#fff}
-.clip .th{width:7px}
+.clip .th{width:min(12px,28%)}
+.clip.sel .th.l{border-left:3px solid #fff;border-radius:5px 0 0 5px}.clip.sel .th.r{border-right:3px solid #fff;border-radius:0 5px 5px 0}
 .clip:hover .th,.clip.sel .th{background:rgba(255,255,255,.28)}
 .clip .vl{border-top-width:1px}
 .trow{border-bottom-color:#22252b}
@@ -2209,6 +2210,7 @@ I18N_ROWS.push(
   ['ปรับให้จบที่ท้ายประโยค', 'Adjusted to end at a sentence end', 'ປັບໃຫ້ຈົບທີ່ທ້າຍປະໂຫຍກ'],
   ['เทคซ้ำกับฉากก่อนหน้า', 'Same line as an earlier scene', 'ເທກຊ້ຳກັບສາກກ່ອນໜ້າ'],
   ['ฉากเปิดไม่มีเสียงพูด — ตรวจว่าเปิดเรื่องพอไหม', 'The opening scene has no speech — check that it works as a hook', 'ສາກເປີດບໍ່ມີສຽງເວົ້າ — ກວດວ່າເປີດເລື່ອງພໍບໍ'],
+  ['ย้ายลำดับคลิปแล้ว — ถ้าไม่ได้ตั้งใจ กด Ctrl+Z เพื่อย้อนกลับ', 'Clip order changed — press Ctrl+Z if that was not intended', 'ຍ້າຍລຳດັບຄລິບແລ້ວ — ຖ້າບໍ່ໄດ້ຕັ້ງໃຈ ກົດ Ctrl+Z ເພື່ອຍ້ອນກັບ'],
 );
 
 // ---- 00-core.js ----
@@ -2216,9 +2218,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.69
-// APP_VERSION_PREV : 1.68
-// APP_VERSION_PREV_OLDER : 1.67
+// APP_VERSION  : 1.70
+// APP_VERSION_PREV : 1.69
+// APP_VERSION_PREV_OLDER : 1.68
+// 1.70 : Safer timeline editing — clips no longer swap places by accident. (1) A click or a wobbly tap on a clip never starts a move (6 px of real drag needed). (2) The trim zone is measured from the mouse: the outer 12 px of a clip (28% on a narrow one) always trims, and the white bracket handles are bigger on the selected clip. (3) Trimming or stretching an edge keeps the clip order fixed (the main row used to re-sort by clip centres, which could swap clips when a clip was stretched past its neighbour). (4) On the main row a clip must be dragged at least 28 px past a neighbour before they swap, however short the neighbour is. (5) After a drop that changed the order, a toast says so and reminds Ctrl+Z.
 // 1.69 : Timeline zoom is anchored on the playhead (the red line) like CapCut — the slider, the +/- buttons and Ctrl/⌘ + scroll/pinch all zoom around it, so the line stays where it is on screen instead of the view jumping to another place; if the line is off-screen it is brought back into view.
 // 1.68 : The green "server has a newer version" bar now belongs to the project it was raised for — it hides by itself when another project is opened (e.g. after "AI cut it all" builds a new project), instead of staying on screen and pointing at the old one.
 // 1.67 : "AI cut it all" now picks the BEST TAKE across many clips — it groups lines that were spoken more than once (retakes, also across different clips), scores every transcript segment (clean start/end from the audio, fillers, stutters, cut-off recordings), builds each scene from whole sentences, never uses two takes of the same line, orders hook -> problem -> product -> how-to -> proof -> CTA, and always opens on the start of a complete hook sentence. Scene cards show the take score, warnings and the takes that were not used. Tick-box "เลือกเทคที่ดีที่สุด" (default on).
@@ -2289,7 +2292,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.69';
+const APP_VERSION = '1.70';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -3434,12 +3437,18 @@ function initTimelineEvents() {
     if (e.button !== 0) return;
     const lmb = e.target.closest('.tlm'); if (lmb) { e.preventDefault(); e.stopPropagation(); if (!lmb.disabled) layerMove(lmb.closest('.trow').dataset.track, lmb.dataset.lm); return; }
     const tkb = e.target.closest('.tic'); if (tkb) { e.preventDefault(); e.stopPropagation(); trToggle(tkb.closest('.trow').dataset.track, tkb.dataset.tk); return; }
-    const jn = e.target.closest('.junc'); if (jn) { select(jn.dataset.id); showTab('trans'); return; }
+    const jn = e.target.closest('.junc'); let forceMode = null, jClip = null;
+    if (jn) {   // v1.70: the round "+" at a join sits right on top of the trim handles — when one of the two clips is selected, grabbing it trims that clip's edge instead of opening the Transition tab
+      const jB = getItem(jn.dataset.id), jl = jB ? itemsOn(jB.track).filter(i => i.type === 'video' || i.type === 'image') : [], jk = jl.indexOf(jB), jA = jk > 0 ? jl[jk - 1] : null;
+      const tgt = SEL && jB ? (SEL === jB.id ? jB : (jA && SEL === jA.id ? jA : null)) : null;
+      if (tgt) { forceMode = tgt === jB ? 'tl' : 'tr'; jClip = document.querySelector('.clip[data-id="' + tgt.id + '"]'); }
+      if (!jClip) { select(jn.dataset.id); showTab('trans'); return; }
+    }
     const lwh = e.target.closest('.lwh'); if (lwh) { e.preventDefault(); e.stopPropagation(); labelWDrag(e); return; }
     const trh = e.target.closest('.trh'); if (trh) { e.preventDefault(); rowResizeStart(e, trh.closest('.trow')); return; }
     const vlu = e.target.closest('.vl u'); if (vlu) { e.preventDefault(); e.stopPropagation(); volDragStart(e, vlu.closest('.clip')); return; }
     const fhe = e.target.closest('.fh'); if (fhe) { e.preventDefault(); e.stopPropagation(); fadeDragStart(e, fhe.closest('.clip'), fhe.dataset.side); return; }
-    const clipEl = e.target.closest('.clip');
+    const clipEl = jClip || e.target.closest('.clip');
     const mkEl = e.target.closest('.mk'); if (mkEl) { const mm = (D.markers || []).find(x => x.id === mkEl.dataset.id); if (mm) { pause(); seek(mm.t); } return; }
     const rulerEl = e.target.closest('#ruler');
     if (rulerEl && !e.target.closest('.corner')) { scrubStart(e); return; }
@@ -3448,12 +3457,15 @@ function initTimelineEvents() {
       return;
     }
     const it = getItem(clipEl.dataset.id); if (!it) return;
-    select(it.id);
-    const mode = e.target.classList.contains('th') ? (e.target.classList.contains('l') ? 'tl' : 'tr') : 'move';
+    const cr = clipEl.getBoundingClientRect(), ez = Math.min(12, cr.width * .28);
+    select(it.id);   // (select re-renders the timeline, so the clip's rectangle is measured before it)
+    // v1.70: the edge zone is measured from the mouse position (up to 12 px, at most 28% of a narrow clip) so grabbing "near the edge" always trims instead of moving the clip
+    const mode = forceMode || (e.target.classList.contains('th') ? (e.target.classList.contains('l') ? 'tl' : 'tr') : (e.clientX - cr.left <= ez ? 'tl' : (cr.right - e.clientX <= ez ? 'tr' : 'move')));
+    const ord0 = D.items.filter(i => i.track === 'V1').sort((a, b) => a.start - b.start).map(i => i.id);   // clip order of the main row before this drag
     const o = { start: it.start, dur: it.dur, in: it.in || 0, track: it.track }; const x0 = e.clientX; const pts = snapPoints(it.id); const tol = snapTol() / TL.pps; let moved = false;
     const m = MEDIA.get(it.mediaId); const sp = it.speed || 1;
     const move = ev => {
-      const dt = (ev.clientX - x0) / TL.pps; if (Math.abs(ev.clientX - x0) > 2) moved = true; if (!moved && mode === 'move' && Math.abs(ev.clientY - e.clientY) < 3) return;
+      const dt = (ev.clientX - x0) / TL.pps; if (Math.abs(ev.clientX - x0) > (mode === 'move' ? 6 : 2)) moved = true; if (!moved && mode === 'move' && Math.abs(ev.clientY - e.clientY) < 6) return;   // v1.70: a click (or a wobbly tap) no longer starts a move
       if (mode === 'move') {
         let s = Math.max(0, o.start + dt); const s1 = snapVal(s, pts, tol), s2 = snapVal(s + o.dur, pts, tol) - o.dur; s = Math.abs(s1 - s) <= Math.abs(s2 - s) ? s1 : s2; it.start = Math.max(0, s);
         const rawS = Math.max(0, o.start + dt);
@@ -3478,12 +3490,16 @@ function initTimelineEvents() {
         if (it.type === 'audio' && m && !it.loop) d = Math.min(d, m.duration - o.in);
         it.dur = d;
       }
-      if (TLS.magnet && (it.track === 'V1' || o.track === 'V1')) magnetLayout(null);
+      if (TLS.magnet && (it.track === 'V1' || o.track === 'V1')) magnetLayout(null, ord0);
       renderTimeline(); dirty(); emit('inspect-refresh');
       // like CapCut: the player follows the edge you are dragging (trim) or keeps showing the frame under the playhead while the clip moves
       if (mode === 'tl') seek(it.start + .02); else if (mode === 'tr') seek(Math.max(it.start, it.start + it.dur - .04)); else seek(PB.t);
     };
-    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); if (MG.on) { if (it.track === 'V1') it.start = MG.slot; mgReset(); } if (moved) { commit('edit'); } };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); if (MG.on) { if (it.track === 'V1') it.start = MG.slot; mgReset(); }
+      if (moved) {
+        commit('edit');
+        if (mode === 'move' && it.track === 'V1') { const ord1 = D.items.filter(i => i.track === 'V1').sort((a, b) => a.start - b.start).map(i => i.id); if (ord1.join() !== ord0.join()) toast(T('ย้ายลำดับคลิปแล้ว — ถ้าไม่ได้ตั้งใจ กด Ctrl+Z เพื่อย้อนกลับ'), 6000); }
+      } };
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
     e.preventDefault();
   });
@@ -3698,8 +3714,10 @@ try { Object.assign(TLS, JSON.parse(localStorage.getItem('sk_tls') || '{}')); } 
 const snapTol = () => TLS.snap ? 9 : 0;
 // magnetic main track (Video 1, like CapCut): clips are always glued end to end — no gaps, no overlaps (a transition keeps its own small overlap).
 // skipId = the clip being dragged: it floats under the mouse, the others close up around the slot it would take.
-function magnetLayout(skipId) {
-  const list = D.items.filter(i => i.track === 'V1').sort((a, b) => (a.start + a.dur / 2) - (b.start + b.dur / 2)); let t = 0, prev = null;
+// ord (optional) = the clip ids in the order they had when the drag/trim started: trimming or stretching an edge can then never swap clips
+function magnetLayout(skipId, ord) {
+  const rk = id => { const k = ord ? ord.indexOf(id) : -1; return k < 0 ? 1e9 : k; };
+  const list = D.items.filter(i => i.track === 'V1').sort(ord ? ((a, b) => rk(a.id) - rk(b.id) || a.start - b.start) : ((a, b) => (a.start + a.dur / 2) - (b.start + b.dur / 2))); let t = 0, prev = null;
   for (const it of list) {
     const ov = prev && it.transIn && it.transIn.ext && it.transIn.prevId === prev.id ? Math.min(it.transIn.ext, prev.dur * .9) : 0;
     const st = Math.max(0, t - ov);
@@ -3725,8 +3743,9 @@ function magnetDrag(it, raw) {
   if (k == null || k > n) { k = 0; while (k < n && c > mid(k)) k++; }
   else { // swap with a neighbour once the clip has travelled more than half of that neighbour's length past its slot (independent of the dragged clip's own length)
     const sl = j => j === 0 ? 0 : pe[j - 1];
-    while (k > 0 && sl(k) - raw > (pe[k - 1] - ps[k - 1]) / 2 + H) k--;
-    while (k < n && raw - sl(k) > (pe[k] - ps[k]) / 2 + H) k++;
+    const MINH = 28 / TL.pps;   // v1.70: even a very short neighbour needs a deliberate drag (>= 28 px) before the clips swap places
+    while (k > 0 && sl(k) - raw > Math.max(MINH, (pe[k - 1] - ps[k - 1]) / 2) + H) k--;
+    while (k < n && raw - sl(k) > Math.max(MINH, (pe[k] - ps[k]) / 2) + H) k++;
   }
   if (MG.on && k !== MG.k) mgBuzz(10);
   MG.k = k; MG.on = true;

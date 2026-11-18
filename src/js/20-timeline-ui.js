@@ -149,12 +149,18 @@ function initTimelineEvents() {
     if (e.button !== 0) return;
     const lmb = e.target.closest('.tlm'); if (lmb) { e.preventDefault(); e.stopPropagation(); if (!lmb.disabled) layerMove(lmb.closest('.trow').dataset.track, lmb.dataset.lm); return; }
     const tkb = e.target.closest('.tic'); if (tkb) { e.preventDefault(); e.stopPropagation(); trToggle(tkb.closest('.trow').dataset.track, tkb.dataset.tk); return; }
-    const jn = e.target.closest('.junc'); if (jn) { select(jn.dataset.id); showTab('trans'); return; }
+    const jn = e.target.closest('.junc'); let forceMode = null, jClip = null;
+    if (jn) {   // v1.70: the round "+" at a join sits right on top of the trim handles — when one of the two clips is selected, grabbing it trims that clip's edge instead of opening the Transition tab
+      const jB = getItem(jn.dataset.id), jl = jB ? itemsOn(jB.track).filter(i => i.type === 'video' || i.type === 'image') : [], jk = jl.indexOf(jB), jA = jk > 0 ? jl[jk - 1] : null;
+      const tgt = SEL && jB ? (SEL === jB.id ? jB : (jA && SEL === jA.id ? jA : null)) : null;
+      if (tgt) { forceMode = tgt === jB ? 'tl' : 'tr'; jClip = document.querySelector('.clip[data-id="' + tgt.id + '"]'); }
+      if (!jClip) { select(jn.dataset.id); showTab('trans'); return; }
+    }
     const lwh = e.target.closest('.lwh'); if (lwh) { e.preventDefault(); e.stopPropagation(); labelWDrag(e); return; }
     const trh = e.target.closest('.trh'); if (trh) { e.preventDefault(); rowResizeStart(e, trh.closest('.trow')); return; }
     const vlu = e.target.closest('.vl u'); if (vlu) { e.preventDefault(); e.stopPropagation(); volDragStart(e, vlu.closest('.clip')); return; }
     const fhe = e.target.closest('.fh'); if (fhe) { e.preventDefault(); e.stopPropagation(); fadeDragStart(e, fhe.closest('.clip'), fhe.dataset.side); return; }
-    const clipEl = e.target.closest('.clip');
+    const clipEl = jClip || e.target.closest('.clip');
     const mkEl = e.target.closest('.mk'); if (mkEl) { const mm = (D.markers || []).find(x => x.id === mkEl.dataset.id); if (mm) { pause(); seek(mm.t); } return; }
     const rulerEl = e.target.closest('#ruler');
     if (rulerEl && !e.target.closest('.corner')) { scrubStart(e); return; }
@@ -163,12 +169,15 @@ function initTimelineEvents() {
       return;
     }
     const it = getItem(clipEl.dataset.id); if (!it) return;
-    select(it.id);
-    const mode = e.target.classList.contains('th') ? (e.target.classList.contains('l') ? 'tl' : 'tr') : 'move';
+    const cr = clipEl.getBoundingClientRect(), ez = Math.min(12, cr.width * .28);
+    select(it.id);   // (select re-renders the timeline, so the clip's rectangle is measured before it)
+    // v1.70: the edge zone is measured from the mouse position (up to 12 px, at most 28% of a narrow clip) so grabbing "near the edge" always trims instead of moving the clip
+    const mode = forceMode || (e.target.classList.contains('th') ? (e.target.classList.contains('l') ? 'tl' : 'tr') : (e.clientX - cr.left <= ez ? 'tl' : (cr.right - e.clientX <= ez ? 'tr' : 'move')));
+    const ord0 = D.items.filter(i => i.track === 'V1').sort((a, b) => a.start - b.start).map(i => i.id);   // clip order of the main row before this drag
     const o = { start: it.start, dur: it.dur, in: it.in || 0, track: it.track }; const x0 = e.clientX; const pts = snapPoints(it.id); const tol = snapTol() / TL.pps; let moved = false;
     const m = MEDIA.get(it.mediaId); const sp = it.speed || 1;
     const move = ev => {
-      const dt = (ev.clientX - x0) / TL.pps; if (Math.abs(ev.clientX - x0) > 2) moved = true; if (!moved && mode === 'move' && Math.abs(ev.clientY - e.clientY) < 3) return;
+      const dt = (ev.clientX - x0) / TL.pps; if (Math.abs(ev.clientX - x0) > (mode === 'move' ? 6 : 2)) moved = true; if (!moved && mode === 'move' && Math.abs(ev.clientY - e.clientY) < 6) return;   // v1.70: a click (or a wobbly tap) no longer starts a move
       if (mode === 'move') {
         let s = Math.max(0, o.start + dt); const s1 = snapVal(s, pts, tol), s2 = snapVal(s + o.dur, pts, tol) - o.dur; s = Math.abs(s1 - s) <= Math.abs(s2 - s) ? s1 : s2; it.start = Math.max(0, s);
         const rawS = Math.max(0, o.start + dt);
@@ -193,12 +202,16 @@ function initTimelineEvents() {
         if (it.type === 'audio' && m && !it.loop) d = Math.min(d, m.duration - o.in);
         it.dur = d;
       }
-      if (TLS.magnet && (it.track === 'V1' || o.track === 'V1')) magnetLayout(null);
+      if (TLS.magnet && (it.track === 'V1' || o.track === 'V1')) magnetLayout(null, ord0);
       renderTimeline(); dirty(); emit('inspect-refresh');
       // like CapCut: the player follows the edge you are dragging (trim) or keeps showing the frame under the playhead while the clip moves
       if (mode === 'tl') seek(it.start + .02); else if (mode === 'tr') seek(Math.max(it.start, it.start + it.dur - .04)); else seek(PB.t);
     };
-    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); if (MG.on) { if (it.track === 'V1') it.start = MG.slot; mgReset(); } if (moved) { commit('edit'); } };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); if (MG.on) { if (it.track === 'V1') it.start = MG.slot; mgReset(); }
+      if (moved) {
+        commit('edit');
+        if (mode === 'move' && it.track === 'V1') { const ord1 = D.items.filter(i => i.track === 'V1').sort((a, b) => a.start - b.start).map(i => i.id); if (ord1.join() !== ord0.join()) toast(T('ย้ายลำดับคลิปแล้ว — ถ้าไม่ได้ตั้งใจ กด Ctrl+Z เพื่อย้อนกลับ'), 6000); }
+      } };
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
     e.preventDefault();
   });

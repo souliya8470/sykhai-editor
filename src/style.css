@@ -100,7 +100,7 @@ button.vt.tpk canvas{background:#000}button.vt.tpk[draggable=true]{cursor:grab}
 .clip.audio .cl{top:1px}
 .clip.video .cl,.clip.image .cl{left:0;right:0;top:0;padding:2px 8px 8px;background:linear-gradient(rgba(0,0,0,.6),rgba(0,0,0,0))}
 .clip .cl i{font-style:normal;opacity:.75;margin-left:8px;font-size:10px}
-.clip .th{position:absolute;top:0;bottom:0;width:8px;cursor:ew-resize;background:rgba(255,255,255,.0);z-index:3}.clip .th.l{left:0}.clip .th.r{right:0}
+.clip .th{position:absolute;top:0;bottom:0;width:min(12px,28%);cursor:ew-resize;background:rgba(255,255,255,.0);z-index:3}.clip .th.l{left:0}.clip .th.r{right:0}
 .clip:hover .th,.clip.sel .th{background:rgba(255,255,255,.35)}
 .clip .trb{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,rgba(255,255,255,.55),rgba(255,255,255,0));font-style:normal;font-size:10px;color:#000;padding:2px 3px;pointer-events:none}
 .clip .spd{position:absolute;right:10px;bottom:2px;font-size:10px;background:rgba(0,0,0,.6);padding:0 4px;border-radius:4px;font-style:normal}
@@ -407,7 +407,8 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
 #playhead i::before{left:-5px;top:0;border:5px solid transparent;border-top:8px solid #fff;filter:drop-shadow(0 0 .5px rgba(0,0,0,.6))}
 .clip{border-width:0 1px 0 0;border-color:rgba(0,0,0,.45)}
 .clip.sel{outline:1px solid #fff;outline-offset:-1px;border-color:#fff}
-.clip .th{width:7px}
+.clip .th{width:min(12px,28%)}
+.clip.sel .th.l{border-left:3px solid #fff;border-radius:5px 0 0 5px}.clip.sel .th.r{border-right:3px solid #fff;border-radius:0 5px 5px 0}
 .clip:hover .th,.clip.sel .th{background:rgba(255,255,255,.28)}
 .clip .vl{border-top-width:1px}
 .trow{border-bottom-color:#22252b}

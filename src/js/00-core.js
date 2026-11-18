@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.69
-// APP_VERSION_PREV : 1.68
-// APP_VERSION_PREV_OLDER : 1.67
+// APP_VERSION  : 1.70
+// APP_VERSION_PREV : 1.69
+// APP_VERSION_PREV_OLDER : 1.68
+// 1.70 : Safer timeline editing — clips no longer swap places by accident. (1) A click or a wobbly tap on a clip never starts a move (6 px of real drag needed). (2) The trim zone is measured from the mouse: the outer 12 px of a clip (28% on a narrow one) always trims, and the white bracket handles are bigger on the selected clip. (3) Trimming or stretching an edge keeps the clip order fixed (the main row used to re-sort by clip centres, which could swap clips when a clip was stretched past its neighbour). (4) On the main row a clip must be dragged at least 28 px past a neighbour before they swap, however short the neighbour is. (5) After a drop that changed the order, a toast says so and reminds Ctrl+Z.
 // 1.69 : Timeline zoom is anchored on the playhead (the red line) like CapCut — the slider, the +/- buttons and Ctrl/⌘ + scroll/pinch all zoom around it, so the line stays where it is on screen instead of the view jumping to another place; if the line is off-screen it is brought back into view.
 // 1.68 : The green "server has a newer version" bar now belongs to the project it was raised for — it hides by itself when another project is opened (e.g. after "AI cut it all" builds a new project), instead of staying on screen and pointing at the old one.
 // 1.67 : "AI cut it all" now picks the BEST TAKE across many clips — it groups lines that were spoken more than once (retakes, also across different clips), scores every transcript segment (clean start/end from the audio, fillers, stutters, cut-off recordings), builds each scene from whole sentences, never uses two takes of the same line, orders hook -> problem -> product -> how-to -> proof -> CTA, and always opens on the start of a complete hook sentence. Scene cards show the take score, warnings and the takes that were not used. Tick-box "เลือกเทคที่ดีที่สุด" (default on).
@@ -75,7 +76,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.69';
+const APP_VERSION = '1.70';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];

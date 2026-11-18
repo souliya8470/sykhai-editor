@@ -6,8 +6,10 @@ try { Object.assign(TLS, JSON.parse(localStorage.getItem('sk_tls') || '{}')); } 
 const snapTol = () => TLS.snap ? 9 : 0;
 // magnetic main track (Video 1, like CapCut): clips are always glued end to end — no gaps, no overlaps (a transition keeps its own small overlap).
 // skipId = the clip being dragged: it floats under the mouse, the others close up around the slot it would take.
-function magnetLayout(skipId) {
-  const list = D.items.filter(i => i.track === 'V1').sort((a, b) => (a.start + a.dur / 2) - (b.start + b.dur / 2)); let t = 0, prev = null;
+// ord (optional) = the clip ids in the order they had when the drag/trim started: trimming or stretching an edge can then never swap clips
+function magnetLayout(skipId, ord) {
+  const rk = id => { const k = ord ? ord.indexOf(id) : -1; return k < 0 ? 1e9 : k; };
+  const list = D.items.filter(i => i.track === 'V1').sort(ord ? ((a, b) => rk(a.id) - rk(b.id) || a.start - b.start) : ((a, b) => (a.start + a.dur / 2) - (b.start + b.dur / 2))); let t = 0, prev = null;
   for (const it of list) {
     const ov = prev && it.transIn && it.transIn.ext && it.transIn.prevId === prev.id ? Math.min(it.transIn.ext, prev.dur * .9) : 0;
     const st = Math.max(0, t - ov);
@@ -33,8 +35,9 @@ function magnetDrag(it, raw) {
   if (k == null || k > n) { k = 0; while (k < n && c > mid(k)) k++; }
   else { // swap with a neighbour once the clip has travelled more than half of that neighbour's length past its slot (independent of the dragged clip's own length)
     const sl = j => j === 0 ? 0 : pe[j - 1];
-    while (k > 0 && sl(k) - raw > (pe[k - 1] - ps[k - 1]) / 2 + H) k--;
-    while (k < n && raw - sl(k) > (pe[k] - ps[k]) / 2 + H) k++;
+    const MINH = 28 / TL.pps;   // v1.70: even a very short neighbour needs a deliberate drag (>= 28 px) before the clips swap places
+    while (k > 0 && sl(k) - raw > Math.max(MINH, (pe[k - 1] - ps[k - 1]) / 2) + H) k--;
+    while (k < n && raw - sl(k) > Math.max(MINH, (pe[k] - ps[k]) / 2) + H) k++;
   }
   if (MG.on && k !== MG.k) mgBuzz(10);
   MG.k = k; MG.on = true;

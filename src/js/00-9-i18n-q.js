@@ -31,4 +31,5 @@ I18N_ROWS.push(
   ['ปรับให้จบที่ท้ายประโยค', 'Adjusted to end at a sentence end', 'ປັບໃຫ້ຈົບທີ່ທ້າຍປະໂຫຍກ'],
   ['เทคซ้ำกับฉากก่อนหน้า', 'Same line as an earlier scene', 'ເທກຊ້ຳກັບສາກກ່ອນໜ້າ'],
   ['ฉากเปิดไม่มีเสียงพูด — ตรวจว่าเปิดเรื่องพอไหม', 'The opening scene has no speech — check that it works as a hook', 'ສາກເປີດບໍ່ມີສຽງເວົ້າ — ກວດວ່າເປີດເລື່ອງພໍບໍ'],
+  ['ย้ายลำดับคลิปแล้ว — ถ้าไม่ได้ตั้งใจ กด Ctrl+Z เพื่อย้อนกลับ', 'Clip order changed — press Ctrl+Z if that was not intended', 'ຍ້າຍລຳດັບຄລິບແລ້ວ — ຖ້າບໍ່ໄດ້ຕັ້ງໃຈ ກົດ Ctrl+Z ເພື່ອຍ້ອນກັບ'],
 );
