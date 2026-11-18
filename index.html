@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.74</title>
+<title>Sykhai Editor v1.75</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -2226,9 +2226,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.74
-// APP_VERSION_PREV : 1.73
-// APP_VERSION_PREV_OLDER : 1.72
+// APP_VERSION  : 1.75
+// APP_VERSION_PREV : 1.74
+// APP_VERSION_PREV_OLDER : 1.73
+// 1.75 : Up to 40 layers (was 12): picture layers V1-V3 and text layers T1-T37; layers beyond the first six appear only when used (plus one empty spare on top). Tested with 30 items stacked at the same moment.
 // 1.74 : More layers, and no more piling up on one layer. Moving or stretching an item (text, caption, picture...) so that it overlaps another item on the same layer now gives it a layer of its own — the nearest free layer above (then below), with a toast that says which. Six spare text layers (7-12) were added: they appear only when used, plus one empty spare on top, so the timeline stays tidy. Older projects keep their layer order. Adding text/stickers when every text layer is busy now also finds any free layer instead of stacking.
 // 1.73 : Timeline like CapCut — (1) 0:00 is no longer glued to the edge of the row-name column: there is a 52 px empty strip before it, so the start of the timeline is easy to click and to hit with the playhead; (2) a "Cover" tile in that strip on the main row (Video 1) shows the chosen cover (or the first frame) and opens the cover picker when clicked. The row-name column keeps its old width (stored width is unchanged).
 // 1.72 : Two sync bugs. (1) The big videos were sent to the shop server AGAIN on every project open/save (the top bar kept showing "☁ clip 27%" for minutes): the editor only asked the server which files it already has when the server had not answered yet, so it believed it had nothing. It now asks first (and refreshes every 20 s), skips every file that is already there with the same size, and re-checks right before each upload. (2) The green "server has a newer version" bar did not go away after choosing a button (its flex style overrode the hidden flag) — it now really hides.
@@ -2304,7 +2305,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.74';
+const APP_VERSION = '1.75';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -2343,11 +2344,11 @@ const TRACKS = [
   { id: 'T1', kind: 'text', label: 'ข้อความ 1' },
   { id: 'T2', kind: 'text', label: 'ข้อความ 2' },
   { id: 'T3', kind: 'text', label: 'ข้อความ 3' },
-  { id: 'T4', kind: 'text', label: 'ข้อความ 4' }, { id: 'T5', kind: 'text', label: 'ข้อความ 5' }, { id: 'T6', kind: 'text', label: 'ข้อความ 6' },   // v1.74: spare layers — an item that would overlap another on its lane moves up to a free one
-  { id: 'T7', kind: 'text', label: 'ข้อความ 7' }, { id: 'T8', kind: 'text', label: 'ข้อความ 8' }, { id: 'T9', kind: 'text', label: 'ข้อความ 9' },
   { id: 'A1', kind: 'audio', label: 'เพลง' },
   { id: 'A2', kind: 'audio', label: 'เสียงเอฟเฟกต์' },
 ];
+const MAX_LAYERS = 40;   // v1.75: picture layers V1-V3 + T1..T37
+for (let n = 4; n <= MAX_LAYERS - 3; n++) TRACKS.splice(TRACKS.findIndex(t => t.id === 'A1'), 0, { id: 'T' + n, kind: 'text', label: 'ข้อความ ' + n });
 const TRACK_KIND = Object.fromEntries(TRACKS.map(t => [t.id, t.kind]));
 // free layers: every picture lane (V1-V3, T1-T3) takes ANY visual clip (video, image, text, sticker); only sound lanes are separate
 const LANE = id => TRACK_KIND[id] === 'audio' ? 'audio' : 'visual';
@@ -2357,7 +2358,7 @@ function trToggle(id, k) {
   if (k === 'lock' && st.lock && SEL) { const it = getItem(SEL); if (it && it.track === id) select(null); }
   commit('track'); if (typeof DIRTY !== 'undefined') DIRTY = true; renderTimeline();
 }
-const RENDER_ORDER = ['V1', 'V2', 'V3', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9'];   // default stack, bottom -> top
+const RENDER_ORDER = TRACKS.filter(t => t.kind !== 'audio').map(t => t.id);   // default stack, bottom -> top
 const BASE_LANES = 6;   // the first six layers are always shown; T4..T9 show only when used (plus one empty spare on top)
 // layer stack of the open project, bottom -> top. The timeline shows it top-down (top lane = top layer, like CapCut / Photoshop).
 function layerOrder() {   // v1.74: older projects saved a 6-layer order — the new spare layers are appended on top
