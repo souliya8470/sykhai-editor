@@ -160,7 +160,7 @@ module.exports = function initJobs(ctx) {
         return { id: d.id, url: d.public_url, size: fs.statSync(file).size, note };
       }
       if (up.status === 413 || /exceed|too large|maximum allowed size/i.test(up.text)) {
-        if (attempt === 0) { job.msg = 'ไฟล์ใหญ่เกินที่ Supabase รับ — กำลังบีบให้เล็กลง'; saveJob(job); f = shrink(file, meta.done.duration_sec || 60, 45e6); note = 'บีบไฟล์ให้เล็กลง (Supabase จำกัดขนาด) — ไฟล์เต็มคุณภาพอยู่ในเซิร์ฟเวอร์ร้าน'; log('shrunk', job.id, size, '->', fs.statSync(f).size); continue; }
+        if (attempt === 0) { job.msg = 'ไฟล์ใหญ่เกินที่ Supabase รับ — กำลังบีบให้เล็กลง'; saveJob(job); f = shrink(file, meta.done.duration_sec || 60, 45e6); note = 'ບີບໄຟລ໌ໃຫ້ນ້ອຍລົງ (Supabase ຈຳກັດຂະໜາດ) — ໄຟລ໌ຄຸນນະພາບເຕັມຢູ່ໃນເຊີບເວີຂອງຮ້ານ'; log('shrunk', job.id, size, '->', fs.statSync(f).size); continue; }
         throw new Error('ไฟล์ยังใหญ่เกินที่ Supabase รับ (เพิ่ม Upload file size limit ใน Supabase → Storage → Settings)');
       }
       throw new Error('อัปโหลดเข้า Marketing Studio ไม่สำเร็จ HTTP ' + up.status + ' ' + up.text.slice(0, 120));
@@ -193,7 +193,7 @@ module.exports = function initJobs(ctx) {
     const file = path.join(DIRS.out, res.file);
     upd(job, { state: 'uploading', progress: 100, msg: 'ส่งออกเสร็จ กำลังส่งเข้า Marketing Studio…', out: { file: res.file, size: res.size, dur: res.dur, w: res.w, h: res.h, fast: res.fast } });
     try {
-      const ms = await sendToMS(job, file, { file_name: res.file, title: job.name || res.title, note: '', done: { product_id: job.product && job.product.id || null, product_name: job.product && job.product.name || null, title: job.name || res.title, file_name: res.file, width: res.w, height: res.h, duration_sec: res.dur, project_id: job.pid, job_id: job.id, uploaded_by: job.by ? job.by + ' (ผ่านโปรแกรมตัดต่อ)' : 'Sykhai Editor', thumb: res.thumb || '' } });
+      const ms = await sendToMS(job, file, { file_name: res.file, title: job.name || res.title, note: '', done: { product_id: job.product && job.product.id || null, product_name: job.product && job.product.name || null, title: job.name || res.title, file_name: res.file, width: res.w, height: res.h, duration_sec: res.dur, project_id: job.pid, job_id: job.id, uploaded_by: job.by || 'Sykhai Editor', thumb: res.thumb || '' } });
       upd(job, { state: 'done', progress: 100, msg: ms.note || '', ms, finished: Date.now() });
       log('job', job.id, 'done', res.file);
     } catch (e) { log('job', job.id, 'upload failed', e.message); upd(job, { state: 'failed', msg: 'ส่งออกเสร็จแล้ว (ไฟล์อยู่ในโฟลเดอร์ out) แต่ส่งเข้า Marketing Studio ไม่สำเร็จ: ' + e.message, finished: Date.now() }); }
