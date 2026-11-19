@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.78</title>
+<title>Sykhai Editor v1.79</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -426,11 +426,17 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
 #ruler .rt span{border-left:1px solid #555b68;height:14px;top:3px;font-size:10px;line-height:11px;padding-left:3px;pointer-events:none}
 #dropMark.at{border-left:1px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.4);opacity:.95}
 #tlbar button.wide{width:auto;padding:0 9px;gap:5px;font-size:12px}
-#dlgCover{min-width:360px}
-#dlgCover .cvwrap{display:flex;justify-content:center;margin:10px 0;background:#0b0c0f;border-radius:8px;padding:8px}
-#dlgCover canvas{max-height:46vh;max-width:100%;border-radius:4px}
-#dlgCover .cvrow{display:flex;align-items:center;gap:8px;margin:6px 0 10px}#dlgCover .cvrow input{flex:1}
-#dlgCover #cvTime{font-variant-numeric:tabular-nums;color:var(--mu);font-size:12px;min-width:84px;text-align:right}
+#dlgCover{width:min(94vw,860px);max-width:none;min-width:0}
+#dlgCover .cvwrap{display:flex;justify-content:center;margin:8px 0;background:#0b0c0f;border-radius:8px;padding:8px}
+#dlgCover canvas#cvPrev{height:min(58vh,640px);width:auto;max-width:100%;border-radius:4px}
+#dlgCover .cvrow{display:flex;align-items:center;gap:8px;margin:8px 0 4px}
+#dlgCover .cvrow>button{height:64px;width:34px;font-size:22px;padding:0;flex:none}
+#dlgCover .cvstrip{position:relative;flex:1;height:64px;border-radius:6px;overflow:visible;background:#0b0c0f;cursor:ew-resize;touch-action:none;outline:none}
+#dlgCover .cvstrip canvas{display:block;width:100%;height:100%;border-radius:6px;opacity:.9}
+#dlgCover .cvstrip i{position:absolute;top:-6px;bottom:-6px;width:4px;margin-left:-2px;background:#fff;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.5);pointer-events:none}
+#dlgCover .cvstrip:focus-visible{box-shadow:0 0 0 2px var(--ac,#2dd4a7)}
+#dlgCover .cvrow2{display:flex;align-items:center;gap:12px;margin:2px 0 8px}
+#dlgCover #cvTime{font-variant-numeric:tabular-nums;color:var(--tx);font-size:13px;font-weight:600;min-width:96px}
 .trow.slim .tlabel{padding:3px 6px;display:flex;align-items:center}.trow.slim .tic-row,.trow.slim .trh{display:none}.trow.slim .tn{font-size:10px}
 #ruler .corner{position:sticky}#ruler .corner .lwh{position:absolute;right:-3px;top:0;bottom:-2000px;width:7px;cursor:col-resize;z-index:12}
 #ruler .corner .lwh:hover,body.resizing #ruler .corner .lwh{background:rgba(255,255,255,.25)}
@@ -657,11 +663,10 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
 </dialog>
 <dialog id="dlgCover">
   <h3>เลือกรูปหน้าปก</h3>
-  <div class="hint">เลื่อนแถบเพื่อเลือกช่วงเวลาที่อยากใช้เป็นรูปหน้าปก</div>
-  <div class="cvwrap"><canvas id="cvPrev" width="270" height="480"></canvas></div>
-  <div class="cvrow"><button id="cvPrevF" title="เฟรมก่อนหน้า">‹</button><input id="cvT" type="range" min="0" max="1" step="0.01" value="0"><button id="cvNextF" title="เฟรมถัดไป">›</button><span id="cvTime" translate="no">00:00:00:00</span></div>
+  <div class="cvwrap"><canvas id="cvPrev" width="360" height="640"></canvas></div>
+  <div class="cvrow"><button id="cvPrevF" title="เฟรมก่อนหน้า">‹</button><div id="cvStrip" class="cvstrip" tabindex="0" title="ลากเพื่อเลือกช่วงเวลา"><canvas id="cvFilm"></canvas><i id="cvHandle"></i></div><button id="cvNextF" title="เฟรมถัดไป">›</button></div>
+  <div class="cvrow2"><span id="cvTime" translate="no">00:00:00:00</span><span class="hint">ลากบนแถบภาพ หรือกดปุ่ม ← → ทีละเฟรม (Shift = ทีละ 10 เฟรม) แล้วกด "ตั้งเป็นหน้าปก"</span></div>
   <div class="row"><button id="cvHead">ใช้ตำแหน่งหัวอ่าน</button><span class="sp"></span><button id="cvDel">เอาหน้าปกออก</button><button id="cvDl">ดาวน์โหลดรูปปก (JPG)</button></div>
-  <div class="hint">หน้าปกถูกบันทึกพร้อมโปรเจกต์ และดาวน์โหลดเป็น JPG คู่กับวิดีโอตอนส่งออก</div>
   <div class="row"><span class="sp"></span><button id="cvClose">ปิดหน้าต่างนี้</button><button id="cvSet" class="primary">ตั้งเป็นหน้าปก</button></div>
 </dialog>
 <dialog id="dlgAi">
@@ -2222,6 +2227,8 @@ I18N_ROWS.push(
   ['เปิด: ข้อความ/เอฟเฟกต์ตามคลิปหลักเมื่อหด-ยืดคลิปในชั้น 1', 'On: text/effects follow the main clip when you trim or stretch Layer 1 clips', 'ເປີດ: ຂໍ້ຄວາມ/ເອັບເຟັກຕາມຄລິບຫຼັກເມື່ອຫຍໍ້-ຍືດຄລິບໃນຊັ້ນ 1'],
   ['ปิด: ข้อความ/เอฟเฟกต์อยู่ที่เวลาเดิม ไม่ตามเมื่อหด-ยืดคลิป', 'Off: text/effects stay at their old time when clips are trimmed or stretched', 'ປິດ: ຂໍ້ຄວາມ/ເອັບເຟັກຢູ່ທີ່ເວລາເດີມ ບໍ່ຕາມເມື່ອຫຍໍ້-ຍືດຄລິບ'],
   ['ตามคลิปหลัก — เมื่อหด/ยืดคลิปในชั้น 1 ข้อความ เอฟเฟกต์ และเสียงในชั้นอื่นจะเลื่อนตามช่วงเสียงที่ผูกอยู่', 'Follow main clip — when you trim or stretch a Layer 1 clip, text, effects and sounds on other layers move with the speech they belong to', 'ຕາມຄລິບຫຼັກ — ເມື່ອຫຍໍ້/ຍືດຄລິບໃນຊັ້ນ 1 ຂໍ້ຄວາມ ເອັບເຟັກ ແລະສຽງໃນຊັ້ນອື່ນຈະເລື່ອນຕາມຊ່ວງສຽງທີ່ຜູກຢູ່'],
+  ['ลากเพื่อเลือกช่วงเวลา', 'Drag to choose the time', 'ລາກເພື່ອເລືອກຊ່ວງເວລາ'],
+  ['ลากบนแถบภาพ หรือกดปุ่ม ← → ทีละเฟรม (Shift = ทีละ 10 เฟรม) แล้วกด "ตั้งเป็นหน้าปก"', 'Drag on the strip or press ← → one frame at a time (Shift = 10 frames), then press "Set as cover"', 'ລາກເທິງແຖບພາບ ຫຼືກົດປຸ່ມ ← → ເທື່ອລະເຟຣມ (Shift = ເທື່ອລະ 10 ເຟຣມ) ແລ້ວກົດ "ຕັ້ງເປັນໜ້າປົກ"'],
   ['ชั้นใหม่', 'New layer', 'ຊັ້ນໃໝ່'],
   ['ซ้อนกับอันอื่นในชั้นเดียวกัน — ย้ายไปชั้น', 'Overlapped another item on the same layer — moved to layer', 'ຊ້ອນກັບອັນອື່ນໃນຊັ້ນດຽວກັນ — ຍ້າຍໄປຊັ້ນ'],
   ['ให้แล้ว', 'for you', 'ໃຫ້ແລ້ວ'],
@@ -2233,9 +2240,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.78
-// APP_VERSION_PREV : 1.77
-// APP_VERSION_PREV_OLDER : 1.76
+// APP_VERSION  : 1.79
+// APP_VERSION_PREV : 1.78
+// APP_VERSION_PREV_OLDER : 1.77
+// 1.79 : Cover picker like CapCut's. A big preview (up to 640 px tall) and, under it, a strip of real frames across the whole video: drag on the strip, hold the ‹ › buttons or press the ← → keys (Shift = 10 frames, Home/End = first/last) to choose the exact frame. The frames fill in one by one so the strip works at once. The playhead goes back to where it was when the window closes.
 // 1.78 : Playhead as a real guide line. While you drag the end/start of a layer (or move it) the playhead no longer jumps along with the edge and stays put where you left it, the edge is pulled to it with a stronger magnet (14 px), and the line turns yellow when the edge is exactly on it. Before, the playhead followed the first dragged edge, so the next layer snapped to the wrong place and the ends never lined up. The player still shows the frame at the dragged edge while you drag.
 // 1.77 : Text, captions, stickers, overlay pictures and sound effects now FOLLOW the main row. When a Video-1 clip is trimmed or stretched (drag an edge, the W/Q trim buttons, or the junction handle) everything on the other rows that belongs to that clip's speech moves with it (each time is mapped through the clip it was in: source time -> new timeline time), and everything after the clip moves by the same amount — so cutting out dead air no longer leaves the captions behind. Music (A1) stays put. A chain-link button next to the magnet turns this on/off (default on).
 // 1.76 : Only the layers that hold something are shown (plus Video 1 and ONE thin "＋ new layer" strip on top to drop onto) — no more rows of empty layers. A new layer appears by itself when you drop something on the strip or when items would overlap; a layer that becomes empty disappears.
@@ -2315,7 +2323,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.78';
+const APP_VERSION = '1.79';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -7661,26 +7669,43 @@ async function coverStill(t, W, H) {          // full composite of the project a
   }
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const ctx = cv.getContext('2d', { alpha: false }); renderFrame(ctx, W, H, tt); return cv;
 }
-const CV = { t: 0, busy: false, again: false };
+const CV = { t: 0, busy: false, again: false, film: 0, keep: 0 };
 async function coverPreview() {
   if (CV.busy) { CV.again = true; return; } CV.busy = true;
   try {
     do {
       CV.again = false; const t = CV.t; const cv = $('#cvPrev'); const asp = (D.w || 1080) / (D.h || 1920);
-      const h = 440, w = Math.round(h * asp); cv.width = w; cv.height = h;
+      const h = 640, w = Math.round(h * asp); if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
       const st = await coverStill(t, w, h); if (CV.t === t) cv.getContext('2d').drawImage(st, 0, 0); else CV.again = true;
     } while (CV.again);
   } finally { CV.busy = false; }
 }
-function coverSetT(t, fromSlider) {
-  CV.t = clamp(t, 0, Math.max(0, durEnd() - 0.001)); const s = $('#cvT'); if (!fromSlider) s.value = CV.t;
-  $('#cvTime').textContent = tcFmt(CV.t); PB.t = CV.t; seek(CV.t); coverPreview();
+function coverSetT(t) {
+  const end = Math.max(0.05, durEnd() - 0.001);
+  CV.t = clamp(t, 0, end); $('#cvTime').textContent = tcFmt(CV.t);
+  const st = $('#cvStrip'); $('#cvHandle').style.left = (CV.t / end * st.clientWidth) + 'px'; coverPreview();
+}
+async function coverFilm(token) {          // v1.79: real frames along the whole project, filled in one by one so the strip is usable straight away
+  const st = $('#cvStrip'), cv = $('#cvFilm'); const FW = st.clientWidth, FH = st.clientHeight, asp = (D.w || 1080) / (D.h || 1920);
+  cv.width = FW * 2; cv.height = FH * 2; const ctx = cv.getContext('2d'); ctx.fillStyle = '#15171c'; ctx.fillRect(0, 0, cv.width, cv.height);
+  const tw = FH * asp, n = Math.max(2, Math.ceil(FW / tw)), end = Math.max(0.05, durEnd() - 0.001);
+  for (let i = 0; i < n; i++) {
+    if (CV.film !== token) return;
+    while (CV.busy) { await sleep(60); if (CV.film !== token) return; }
+    CV.busy = true; let img = null;
+    try { img = await coverStill(((i + .5) / n) * end, Math.round(tw * 2), FH * 2); } catch (e) { }
+    finally { CV.busy = false; }
+    if (CV.film !== token) return;
+    if (img) ctx.drawImage(img, i * (FW / n) * 2, 0, (FW / n) * 2, FH * 2);
+    if (CV.again) coverPreview();
+  }
+  coverSetT(CV.t);
 }
 function coverOpen() {
   if (!D.items.length) { toast('ยังไม่มีอะไรในไทม์ไลน์'); return; }
-  const s = $('#cvT'); s.max = Math.max(0.1, durEnd() - 0.001); s.step = 1 / ((D.fps) || 30);
-  $('#cvDel').style.display = D.cover ? '' : 'none';
-  $('#dlgCover').showModal(); coverSetT(D.cover ? D.cover.t : PB.t);
+  CV.keep = PB.t; $('#cvDel').style.display = D.cover ? '' : 'none';
+  const dlg = $('#dlgCover'); dlg.showModal(); const token = ++CV.film;
+  coverSetT(D.cover && D.cover.t != null ? D.cover.t : PB.t); coverFilm(token);
 }
 async function coverDownload(quiet) {
   if (!D.cover) return; const W = D.w || 1080, H = D.h || 1920; const keep = PB.t;
@@ -7690,13 +7715,27 @@ async function coverDownload(quiet) {
   if (!quiet) toast('ดาวน์โหลดรูปปกแล้ว ✔');
 }
 function coverInit() {
-  $('#cvT').oninput = e => coverSetT(parseFloat(e.target.value), true);
-  $('#cvPrevF').onclick = () => coverSetT(CV.t - 1 / ((D.fps) || 30));
-  $('#cvNextF').onclick = () => coverSetT(CV.t + 1 / ((D.fps) || 30));
-  $('#cvHead').onclick = () => coverSetT(PB.t);
+  const fr = 1 / ((D && D.fps) || 30), end = () => Math.max(0.05, durEnd() - 0.001);
+  const strip = $('#cvStrip');
+  const fromX = e => { const r = strip.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * end(); };
+  strip.onpointerdown = e => { e.preventDefault(); strip.setPointerCapture(e.pointerId); strip.focus(); coverSetT(fromX(e)); strip.onpointermove = ev => coverSetT(fromX(ev)); strip.onpointerup = strip.onpointercancel = () => { strip.onpointermove = null; }; };
+  const step = n => coverSetT(CV.t + n * ((D && D.fps) ? 1 / D.fps : fr));
+  const hold = (btn, dir) => {     // press and hold = keeps stepping
+    let tm = null, iv = null; const stop = () => { clearTimeout(tm); clearInterval(iv); };
+    btn.onpointerdown = e => { e.preventDefault(); step(dir); tm = setTimeout(() => { iv = setInterval(() => step(dir), 70); }, 350); };
+    btn.onpointerup = btn.onpointerleave = btn.onpointercancel = stop;
+  };
+  hold($('#cvPrevF'), -1); hold($('#cvNextF'), 1);
+  $('#dlgCover').addEventListener('keydown', e => {
+    const k = e.key; if (k !== 'ArrowLeft' && k !== 'ArrowRight' && k !== 'Home' && k !== 'End') return;
+    e.preventDefault(); if (k === 'Home') coverSetT(0); else if (k === 'End') coverSetT(end()); else step((k === 'ArrowLeft' ? -1 : 1) * (e.shiftKey ? 10 : 1));
+  });
+  $('#dlgCover').addEventListener('close', () => { CV.film++; PB.t = CV.keep; seek(CV.keep); });   // put the playhead back where it was
+  $('#cvHead').onclick = () => coverSetT(CV.keep);
   $('#cvClose').onclick = () => $('#dlgCover').close();
   $('#cvSet').onclick = async () => {
-    const cv = $('#cvPrev'); const th = document.createElement('canvas'); const asp = (D.w || 1080) / (D.h || 1920); th.height = 300; th.width = Math.round(300 * asp);
+    const th = document.createElement('canvas'); const asp = (D.w || 1080) / (D.h || 1920); th.height = 300; th.width = Math.round(300 * asp);
+    CV.film++; while (CV.busy) await sleep(40);
     const st = await coverStill(CV.t, th.width, th.height); th.getContext('2d').drawImage(st, 0, 0);
     D.cover = { t: CV.t, thumb: th.toDataURL('image/jpeg', .8) }; commit('cover');
     $('#dlgCover').close(); toast('ตั้งหน้าปกแล้ว ✔');

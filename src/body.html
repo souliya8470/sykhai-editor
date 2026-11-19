@@ -151,11 +151,10 @@
 </dialog>
 <dialog id="dlgCover">
   <h3>เลือกรูปหน้าปก</h3>
-  <div class="hint">เลื่อนแถบเพื่อเลือกช่วงเวลาที่อยากใช้เป็นรูปหน้าปก</div>
-  <div class="cvwrap"><canvas id="cvPrev" width="270" height="480"></canvas></div>
-  <div class="cvrow"><button id="cvPrevF" title="เฟรมก่อนหน้า">‹</button><input id="cvT" type="range" min="0" max="1" step="0.01" value="0"><button id="cvNextF" title="เฟรมถัดไป">›</button><span id="cvTime" translate="no">00:00:00:00</span></div>
+  <div class="cvwrap"><canvas id="cvPrev" width="360" height="640"></canvas></div>
+  <div class="cvrow"><button id="cvPrevF" title="เฟรมก่อนหน้า">‹</button><div id="cvStrip" class="cvstrip" tabindex="0" title="ลากเพื่อเลือกช่วงเวลา"><canvas id="cvFilm"></canvas><i id="cvHandle"></i></div><button id="cvNextF" title="เฟรมถัดไป">›</button></div>
+  <div class="cvrow2"><span id="cvTime" translate="no">00:00:00:00</span><span class="hint">ลากบนแถบภาพ หรือกดปุ่ม ← → ทีละเฟรม (Shift = ทีละ 10 เฟรม) แล้วกด "ตั้งเป็นหน้าปก"</span></div>
   <div class="row"><button id="cvHead">ใช้ตำแหน่งหัวอ่าน</button><span class="sp"></span><button id="cvDel">เอาหน้าปกออก</button><button id="cvDl">ดาวน์โหลดรูปปก (JPG)</button></div>
-  <div class="hint">หน้าปกถูกบันทึกพร้อมโปรเจกต์ และดาวน์โหลดเป็น JPG คู่กับวิดีโอตอนส่งออก</div>
   <div class="row"><span class="sp"></span><button id="cvClose">ปิดหน้าต่างนี้</button><button id="cvSet" class="primary">ตั้งเป็นหน้าปก</button></div>
 </dialog>
 <dialog id="dlgAi">

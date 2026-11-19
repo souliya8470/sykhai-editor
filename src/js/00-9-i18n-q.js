@@ -34,6 +34,8 @@ I18N_ROWS.push(
   ['เปิด: ข้อความ/เอฟเฟกต์ตามคลิปหลักเมื่อหด-ยืดคลิปในชั้น 1', 'On: text/effects follow the main clip when you trim or stretch Layer 1 clips', 'ເປີດ: ຂໍ້ຄວາມ/ເອັບເຟັກຕາມຄລິບຫຼັກເມື່ອຫຍໍ້-ຍືດຄລິບໃນຊັ້ນ 1'],
   ['ปิด: ข้อความ/เอฟเฟกต์อยู่ที่เวลาเดิม ไม่ตามเมื่อหด-ยืดคลิป', 'Off: text/effects stay at their old time when clips are trimmed or stretched', 'ປິດ: ຂໍ້ຄວາມ/ເອັບເຟັກຢູ່ທີ່ເວລາເດີມ ບໍ່ຕາມເມື່ອຫຍໍ້-ຍືດຄລິບ'],
   ['ตามคลิปหลัก — เมื่อหด/ยืดคลิปในชั้น 1 ข้อความ เอฟเฟกต์ และเสียงในชั้นอื่นจะเลื่อนตามช่วงเสียงที่ผูกอยู่', 'Follow main clip — when you trim or stretch a Layer 1 clip, text, effects and sounds on other layers move with the speech they belong to', 'ຕາມຄລິບຫຼັກ — ເມື່ອຫຍໍ້/ຍືດຄລິບໃນຊັ້ນ 1 ຂໍ້ຄວາມ ເອັບເຟັກ ແລະສຽງໃນຊັ້ນອື່ນຈະເລື່ອນຕາມຊ່ວງສຽງທີ່ຜູກຢູ່'],
+  ['ลากเพื่อเลือกช่วงเวลา', 'Drag to choose the time', 'ລາກເພື່ອເລືອກຊ່ວງເວລາ'],
+  ['ลากบนแถบภาพ หรือกดปุ่ม ← → ทีละเฟรม (Shift = ทีละ 10 เฟรม) แล้วกด "ตั้งเป็นหน้าปก"', 'Drag on the strip or press ← → one frame at a time (Shift = 10 frames), then press "Set as cover"', 'ລາກເທິງແຖບພາບ ຫຼືກົດປຸ່ມ ← → ເທື່ອລະເຟຣມ (Shift = ເທື່ອລະ 10 ເຟຣມ) ແລ້ວກົດ "ຕັ້ງເປັນໜ້າປົກ"'],
   ['ชั้นใหม่', 'New layer', 'ຊັ້ນໃໝ່'],
   ['ซ้อนกับอันอื่นในชั้นเดียวกัน — ย้ายไปชั้น', 'Overlapped another item on the same layer — moved to layer', 'ຊ້ອນກັບອັນອື່ນໃນຊັ້ນດຽວກັນ — ຍ້າຍໄປຊັ້ນ'],
   ['ให้แล้ว', 'for you', 'ໃຫ້ແລ້ວ'],

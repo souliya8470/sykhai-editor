@@ -419,11 +419,17 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
 #ruler .rt span{border-left:1px solid #555b68;height:14px;top:3px;font-size:10px;line-height:11px;padding-left:3px;pointer-events:none}
 #dropMark.at{border-left:1px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.4);opacity:.95}
 #tlbar button.wide{width:auto;padding:0 9px;gap:5px;font-size:12px}
-#dlgCover{min-width:360px}
-#dlgCover .cvwrap{display:flex;justify-content:center;margin:10px 0;background:#0b0c0f;border-radius:8px;padding:8px}
-#dlgCover canvas{max-height:46vh;max-width:100%;border-radius:4px}
-#dlgCover .cvrow{display:flex;align-items:center;gap:8px;margin:6px 0 10px}#dlgCover .cvrow input{flex:1}
-#dlgCover #cvTime{font-variant-numeric:tabular-nums;color:var(--mu);font-size:12px;min-width:84px;text-align:right}
+#dlgCover{width:min(94vw,860px);max-width:none;min-width:0}
+#dlgCover .cvwrap{display:flex;justify-content:center;margin:8px 0;background:#0b0c0f;border-radius:8px;padding:8px}
+#dlgCover canvas#cvPrev{height:min(58vh,640px);width:auto;max-width:100%;border-radius:4px}
+#dlgCover .cvrow{display:flex;align-items:center;gap:8px;margin:8px 0 4px}
+#dlgCover .cvrow>button{height:64px;width:34px;font-size:22px;padding:0;flex:none}
+#dlgCover .cvstrip{position:relative;flex:1;height:64px;border-radius:6px;overflow:visible;background:#0b0c0f;cursor:ew-resize;touch-action:none;outline:none}
+#dlgCover .cvstrip canvas{display:block;width:100%;height:100%;border-radius:6px;opacity:.9}
+#dlgCover .cvstrip i{position:absolute;top:-6px;bottom:-6px;width:4px;margin-left:-2px;background:#fff;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.5);pointer-events:none}
+#dlgCover .cvstrip:focus-visible{box-shadow:0 0 0 2px var(--ac,#2dd4a7)}
+#dlgCover .cvrow2{display:flex;align-items:center;gap:12px;margin:2px 0 8px}
+#dlgCover #cvTime{font-variant-numeric:tabular-nums;color:var(--tx);font-size:13px;font-weight:600;min-width:96px}
 .trow.slim .tlabel{padding:3px 6px;display:flex;align-items:center}.trow.slim .tic-row,.trow.slim .trh{display:none}.trow.slim .tn{font-size:10px}
 #ruler .corner{position:sticky}#ruler .corner .lwh{position:absolute;right:-3px;top:0;bottom:-2000px;width:7px;cursor:col-resize;z-index:12}
 #ruler .corner .lwh:hover,body.resizing #ruler .corner .lwh{background:rgba(255,255,255,.25)}

@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.78
-// APP_VERSION_PREV : 1.77
-// APP_VERSION_PREV_OLDER : 1.76
+// APP_VERSION  : 1.79
+// APP_VERSION_PREV : 1.78
+// APP_VERSION_PREV_OLDER : 1.77
+// 1.79 : Cover picker like CapCut's. A big preview (up to 640 px tall) and, under it, a strip of real frames across the whole video: drag on the strip, hold the ‹ › buttons or press the ← → keys (Shift = 10 frames, Home/End = first/last) to choose the exact frame. The frames fill in one by one so the strip works at once. The playhead goes back to where it was when the window closes.
 // 1.78 : Playhead as a real guide line. While you drag the end/start of a layer (or move it) the playhead no longer jumps along with the edge and stays put where you left it, the edge is pulled to it with a stronger magnet (14 px), and the line turns yellow when the edge is exactly on it. Before, the playhead followed the first dragged edge, so the next layer snapped to the wrong place and the ends never lined up. The player still shows the frame at the dragged edge while you drag.
 // 1.77 : Text, captions, stickers, overlay pictures and sound effects now FOLLOW the main row. When a Video-1 clip is trimmed or stretched (drag an edge, the W/Q trim buttons, or the junction handle) everything on the other rows that belongs to that clip's speech moves with it (each time is mapped through the clip it was in: source time -> new timeline time), and everything after the clip moves by the same amount — so cutting out dead air no longer leaves the captions behind. Music (A1) stays put. A chain-link button next to the magnet turns this on/off (default on).
 // 1.76 : Only the layers that hold something are shown (plus Video 1 and ONE thin "＋ new layer" strip on top to drop onto) — no more rows of empty layers. A new layer appears by itself when you drop something on the strip or when items would overlap; a layer that becomes empty disappears.
@@ -84,7 +85,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.78';
+const APP_VERSION = '1.79';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
