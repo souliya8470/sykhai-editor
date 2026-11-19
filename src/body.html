@@ -12,6 +12,7 @@
     <button id="btnSaveNow" class="primary" title="บันทึกทันที (โปรเจกต์บันทึกอัตโนมัติอยู่แล้ว)">✔ บันทึก</button>
     <button id="btnSave" title="โหลดไฟล์โปรเจกต์ (.json) เก็บสำรอง — โปรเจกต์บันทึกอัตโนมัติอยู่แล้ว">💾 สำรองไฟล์</button>
     <button id="btnOpen" title="นำเข้าไฟล์โปรเจกต์ (.json)">📂 นำเข้า</button>
+    <button id="btnApprove" class="primary" title="อนุมัติวิดีโอนี้ — เซิร์ฟเวอร์ที่ร้านจะส่งออกเอง แล้วส่งเข้า Marketing Studio ให้แอดมิน">✅ อนุมัติ</button>
     <button id="btnExport" class="primary">⬇ ส่งออก MP4</button>
     <span class="ver" id="verTag"></span>
   </header>
@@ -112,6 +113,15 @@
   <div id="srvCopyWarn" class="hint small" hidden></div><input id="srvLinkBox" readonly hidden>
   <div class="hint small">คีย์เก็บในเครื่องนี้เท่านั้น (localStorage ของเบราว์เซอร์) ไม่ถูกส่งไปที่อื่นนอกจากเรียกใช้ API ของ Anthropic/Google โดยตรง</div>
   <div class="row"><span class="sp"></span><button id="setCancel">ปิด</button><button id="setSave" class="primary">บันทึก</button></div>
+</dialog>
+<dialog id="dlgApprove">
+  <h3>✅ อนุมัติวิดีโอ</h3>
+  <div class="hint">โปรเจกต์: <b id="apName" translate="no"></b><br>กดอนุมัติแล้ว เซิร์ฟเวอร์ที่ร้านจะส่งออก MP4 เอง (ไม่ต้องเปิดแท็บค้างไว้) แล้วส่งเข้า Marketing Studio หน้า “🎬 วิดีโอสำเร็จ” ให้แอดมินคนอื่นดาวน์โหลดไปใช้ — ส่งออกเองจากปุ่ม “ส่งออก MP4” ยังทำได้เหมือนเดิม</div>
+  <div class="fld"><label>สินค้า</label><select id="apProd"></select></div>
+  <div class="fld"><label>ชื่อผู้อนุมัติ</label><input id="apBy" type="text" maxlength="40" placeholder="เช่น Tar"></div>
+  <div id="apMsg" class="hint"></div>
+  <div id="apList"></div>
+  <div class="row"><span class="sp"></span><button id="apClose">ปิด</button><button id="apGo" class="primary">✅ อนุมัติและส่งออก</button></div>
 </dialog>
 <dialog id="dlgExport">
   <h3>ส่งออกวิดีโอ MP4</h3>

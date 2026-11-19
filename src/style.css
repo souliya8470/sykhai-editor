@@ -500,3 +500,6 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
 .cvtile:hover{border-color:#7be0c3}.cvtile.set{border-color:#2dd4a7}
 
 #playhead.snap i{background:#ffd23c!important;box-shadow:0 0 7px 1px #ffd23c!important}
+
+#dlgApprove{width:min(94vw,520px)} #dlgApprove .fld{display:flex;gap:8px;align-items:center;margin:8px 0} #dlgApprove .fld label{min-width:96px} #dlgApprove .fld select,#dlgApprove .fld input{flex:1}
+#apList{margin:10px 0;max-height:220px;overflow:auto} .apRow{padding:6px 8px;border:1px solid #ffffff22;border-radius:8px;margin:4px 0;font-size:13px} .apMeta{opacity:.7;font-size:12px} .apMsg{color:#ffb4a8;font-size:12px;margin-top:2px;word-break:break-word} .apRow button{margin-left:8px}

@@ -189,5 +189,5 @@ async function runExportFast(opts) {
     console.warn('fast export failed → real-time', failed); toast('ส่งออกแบบเร็วไม่สำเร็จ (' + (failed.message || failed) + ') — ใช้แบบเรียลไทม์แทน', 5000);
     return undefined;
   }
-  return exportDeliver(blob, { ext: 'mp4', mime: 'video/mp4', W, H, total, opts, msg, bar });
+  return exportDeliver(blob, { ext: 'mp4', mime: 'video/mp4', W, H, total, opts, msg, bar, fast: true });
 }

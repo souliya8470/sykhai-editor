@@ -151,7 +151,7 @@ async function init() {
     else if (e.key === 'Home') { pause(); seek(0); }
   });
   initSplitters(); initToolbar(); if (typeof coverInit === 'function') coverInit(); scrInit(); taInit(); capInit(); tpkInit(); tbInit();
-  initHome(); await showHome(); await srvApplyLink(); if (srvOn()) srvPing().then(ok => ok && srvLoadSizes()).then(() => trcSync(true)).then(() => srvAdoptProxies()).then(() => srvInboxAuto()).then(() => srvInboxWatch()).catch(() => { });
+  initHome(); try { approveInit(); } catch (e) { console.warn(e); } await showHome(); await srvApplyLink(); if (srvOn() && JOBMODE) srvPing().catch(() => { }); else if (srvOn()) srvPing().then(ok => ok && srvLoadSizes()).then(() => trcSync(true)).then(() => srvAdoptProxies()).then(() => srvInboxAuto()).then(() => srvInboxWatch()).catch(() => { });
   tick();
   window.__ready = true;
 }

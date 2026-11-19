@@ -76,7 +76,7 @@ async function runExport(opts) {
 // shared tail of both export paths: name the file, download it, cover picture, copy to the shop server
 async function exportDeliver(blob, o) {
   const { ext, mime, W, H, total, opts, msg, bar } = o;
-  EXP.last = { size: blob.size, mime, ext, w: W, h: H, dur: total };
+  EXP.last = { size: blob.size, mime, ext, w: W, h: H, dur: total, fast: !!o.fast };
   // v1.61: VELARIS jobs are exported as vl-<jobId>_v001, v002 ... (one number per export, never overwrites an older round); other projects keep their own name
   let outBase = (D.name || 'video'); if (!opts.noDownload && D.vl) { D.vlRound = (D.vlRound || 0) + 1; outBase = 'vl-' + D.vl + '_v' + String(D.vlRound).padStart(3, '0'); emit('doc', 'vlround'); }
   if (!opts.noDownload) {

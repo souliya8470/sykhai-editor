@@ -93,6 +93,7 @@ async function openById(id) {
   const still = [...new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => mediaNameFromId(i.mediaId)))];
   if (still.length) toast('ไฟล์เหล่านี้หายจากเครื่องนี้ ต้องนำเข้าใหม่: ' + still.join(', '), 7000);
   else { srvQueueMedia([...new Set(D.items.map(i => i.mediaId).filter(Boolean))]); srvAdoptProxies(); }
+  try { window.dispatchEvent(new Event('sk-project-open')); } catch (e) { }
 }
 async function homeAction(id, a) {
   const rec = await projGet(id); if (!rec) return renderHome();

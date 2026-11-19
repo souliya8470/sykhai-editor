@@ -196,6 +196,9 @@ const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers
 const send = (res, code, body, extra) => { const b = body == null ? '' : (typeof body === 'string' || Buffer.isBuffer(body) ? body : JSON.stringify(body)); res.writeHead(code, Object.assign({ 'Content-Type': typeof body === 'object' && !Buffer.isBuffer(body) ? 'application/json' : 'text/plain; charset=utf-8' }, cors, extra)); res.end(b); };
 const readJson = (req, limit = 80e6) => new Promise((res, rej) => { const c = []; let n = 0; req.on('data', d => { n += d.length; if (n > limit) { rej(new Error('too large')); req.destroy(); } else c.push(d); }); req.on('end', () => { try { res(JSON.parse(Buffer.concat(c).toString('utf8'))); } catch (e) { rej(e); } }); req.on('error', rej); });
 const readMeta = f => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return null; } };
+// v1.66 — approve → auto export jobs (see jobs.js next to this file; if it is missing the rest of the server still works)
+let JOBS_API = null;
+try { JOBS_API = require('./jobs.js')({ ROOT, PORT, TOKEN, DIRS, PX, safeName, dir: path.dirname(process.argv[1] ? path.resolve(process.argv[1]) : __filename) }); } catch (e) { console.log('jobs.js ไม่ทำงาน: ' + (e && e.message || e)); }
 
 function serveFile(req, res, file, name, type) {
   let st; try { st = fs.statSync(file); } catch (e) { return send(res, 404, 'not found'); }
@@ -362,6 +365,7 @@ const server = http.createServer(async (req, res) => {
     if (kind === 'ping' && vl) return send(res, 200, { ok: true, v: 2, restricted: true });
     if (kind === 'ping') { let free = null, total = null; try { const s = fs.statfsSync(ROOT); free = s.bavail * s.bsize; total = s.blocks * s.bsize; } catch (e) { } return send(res, 200, { ok: true, v: 2, root: ROOT, free, total, proxy: !!PX.ff }); }
     if (kind === 'proxies') return send(res, 200, pxStatus());
+    if (!vl && JOBS_API && (kind === 'jobs' || kind === 'products')) { if (await JOBS_API.handle(req, res, u, parts, send, readJson)) return; }
     if (kind === 'media') {
       if (!id) { const out = fs.readdirSync(DIRS.media).filter(f => f.endsWith('.json')).map(f => readMeta(path.join(DIRS.media, f))).filter(Boolean); return send(res, 200, out); }
       const key = sha(id), meta = readMeta(path.join(DIRS.media, key + '.json'));
@@ -423,10 +427,11 @@ const server = http.createServer(async (req, res) => {
   } catch (e) { console.error(e); try { send(res, 500, String(e.message || e)); } catch (_) { } }
 });
 // auto-restart when this file is replaced by a newer version (start.bat starts it again within 5 s)
+try { fs.watchFile(path.join(__dirname, 'jobs.js'), { interval: 5000 }, (cur, prev) => { if (cur.mtimeMs !== prev.mtimeMs) { console.log('jobs.js เปลี่ยนแล้ว — รีสตาร์ทตัวเอง'); setTimeout(() => process.exit(0), 1500); } }); } catch (e) { }
 try { fs.watchFile(__filename, { interval: 5000 }, (cur, prev) => { if (cur.mtimeMs !== prev.mtimeMs) { console.log('server.js เปลี่ยนแล้ว — รีสตาร์ทตัวเอง'); setTimeout(() => process.exit(0), 1500); } }); } catch (e) { }
 server.requestTimeout = 0; server.headersTimeout = 60000;
 server.listen(PORT, HOST, () => {
-  refreshApp(true); initProxy(); VP.start();
+  refreshApp(true); initProxy(); VP.start(); try { JOBS_API && JOBS_API.start(); } catch (e) { console.log('jobs start: ' + e.message); }
   console.log(`Sykhai file server READY (port ${PORT}), files in ${ROOT}`);
   const ips = Object.values(require('os').networkInterfaces()).flat().filter(i => i && i.family === 'IPv4' && !i.internal).map(i => i.address);
   console.log('OPEN THE EDITOR AT (on any computer in the shop):'); ips.forEach(ip => console.log('   http://' + ip + ':' + PORT));

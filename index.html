@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.81</title>
+<title>Sykhai Editor v1.82</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -508,6 +508,9 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
 
 #playhead.snap i{background:#ffd23c!important;box-shadow:0 0 7px 1px #ffd23c!important}
 
+#dlgApprove{width:min(94vw,520px)} #dlgApprove .fld{display:flex;gap:8px;align-items:center;margin:8px 0} #dlgApprove .fld label{min-width:96px} #dlgApprove .fld select,#dlgApprove .fld input{flex:1}
+#apList{margin:10px 0;max-height:220px;overflow:auto} .apRow{padding:6px 8px;border:1px solid #ffffff22;border-radius:8px;margin:4px 0;font-size:13px} .apMeta{opacity:.7;font-size:12px} .apMsg{color:#ffb4a8;font-size:12px;margin-top:2px;word-break:break-word} .apRow button{margin-left:8px}
+
 </style></head>
 <body>
 <div id="app">
@@ -524,6 +527,7 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
     <button id="btnSaveNow" class="primary" title="บันทึกทันที (โปรเจกต์บันทึกอัตโนมัติอยู่แล้ว)">✔ บันทึก</button>
     <button id="btnSave" title="โหลดไฟล์โปรเจกต์ (.json) เก็บสำรอง — โปรเจกต์บันทึกอัตโนมัติอยู่แล้ว">💾 สำรองไฟล์</button>
     <button id="btnOpen" title="นำเข้าไฟล์โปรเจกต์ (.json)">📂 นำเข้า</button>
+    <button id="btnApprove" class="primary" title="อนุมัติวิดีโอนี้ — เซิร์ฟเวอร์ที่ร้านจะส่งออกเอง แล้วส่งเข้า Marketing Studio ให้แอดมิน">✅ อนุมัติ</button>
     <button id="btnExport" class="primary">⬇ ส่งออก MP4</button>
     <span class="ver" id="verTag"></span>
   </header>
@@ -624,6 +628,15 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
   <div id="srvCopyWarn" class="hint small" hidden></div><input id="srvLinkBox" readonly hidden>
   <div class="hint small">คีย์เก็บในเครื่องนี้เท่านั้น (localStorage ของเบราว์เซอร์) ไม่ถูกส่งไปที่อื่นนอกจากเรียกใช้ API ของ Anthropic/Google โดยตรง</div>
   <div class="row"><span class="sp"></span><button id="setCancel">ปิด</button><button id="setSave" class="primary">บันทึก</button></div>
+</dialog>
+<dialog id="dlgApprove">
+  <h3>✅ อนุมัติวิดีโอ</h3>
+  <div class="hint">โปรเจกต์: <b id="apName" translate="no"></b><br>กดอนุมัติแล้ว เซิร์ฟเวอร์ที่ร้านจะส่งออก MP4 เอง (ไม่ต้องเปิดแท็บค้างไว้) แล้วส่งเข้า Marketing Studio หน้า “🎬 วิดีโอสำเร็จ” ให้แอดมินคนอื่นดาวน์โหลดไปใช้ — ส่งออกเองจากปุ่ม “ส่งออก MP4” ยังทำได้เหมือนเดิม</div>
+  <div class="fld"><label>สินค้า</label><select id="apProd"></select></div>
+  <div class="fld"><label>ชื่อผู้อนุมัติ</label><input id="apBy" type="text" maxlength="40" placeholder="เช่น Tar"></div>
+  <div id="apMsg" class="hint"></div>
+  <div id="apList"></div>
+  <div class="row"><span class="sp"></span><button id="apClose">ปิด</button><button id="apGo" class="primary">✅ อนุมัติและส่งออก</button></div>
 </dialog>
 <dialog id="dlgExport">
   <h3>ส่งออกวิดีโอ MP4</h3>
@@ -980,7 +993,34 @@ I18N_ROWS.push(
   ['ไฟล์ (ชื่อ/ขนาดเดิม)', 'files (same name / size)', 'ໄຟລ໌ (ຊື່/ຂະໜາດເດີມ)'],
   ['เปิดโปรเจกต์แล้ว', 'Project opened', 'ເປີດໂປຣເຈັກແລ້ວ'],
   ['กู้คืนไฟล์ที่นำเข้าไว้', 'Restored imported files:', 'ກູ້ຄືນໄຟລ໌ທີ່ນຳເຂົ້າໄວ້'],
-  ['โปรเจกต์เดิม', 'Previous project', 'ໂປຣເຈັກເດີມ']
+  ['โปรเจกต์เดิม', 'Previous project', 'ໂປຣເຈັກເດີມ'],
+  ['✅ อนุมัติ', '✅ Approve', '✅ ອະນຸມັດ'],
+  ['✅ อนุมัติแล้ว', '✅ Approved', '✅ ອະນຸມັດແລ້ວ'],
+  ['⚠ อนุมัติ (ล่าสุดล้มเหลว)', '⚠ Approve (last one failed)', '⚠ ອະນຸມັດ (ຄັ້ງຫຼ້າສຸດບໍ່ສຳເລັດ)'],
+  ['อนุมัติวิดีโอนี้ — เซิร์ฟเวอร์ที่ร้านจะส่งออกเอง แล้วส่งเข้า Marketing Studio ให้แอดมิน', 'Approve this video — the shop server exports it by itself and sends it to Marketing Studio for the admins', 'ອະນຸມັດວິດີໂອນີ້ — ເຊີບເວີຂອງຮ້ານຈະສົ່ງອອກເອງ ແລ້ວສົ່ງເຂົ້າ Marketing Studio ໃຫ້ແອດມິນ'],
+  ['✅ อนุมัติวิดีโอ', '✅ Approve video', '✅ ອະນຸມັດວິດີໂອ'],
+  ['โปรเจกต์:', 'Project:', 'ໂປຣເຈັກ:'],
+  ['กดอนุมัติแล้ว เซิร์ฟเวอร์ที่ร้านจะส่งออก MP4 เอง (ไม่ต้องเปิดแท็บค้างไว้) แล้วส่งเข้า Marketing Studio หน้า “🎬 วิดีโอสำเร็จ” ให้แอดมินคนอื่นดาวน์โหลดไปใช้ — ส่งออกเองจากปุ่ม “ส่งออก MP4” ยังทำได้เหมือนเดิม', 'After you approve, the shop server exports the MP4 by itself (no need to keep a tab open) and sends it to Marketing Studio, page “🎬 Finished videos”, for the other admins to download — exporting yourself with the “Export MP4” button still works as before', 'ຫຼັງກົດອະນຸມັດ ເຊີບເວີຂອງຮ້ານຈະສົ່ງອອກ MP4 ເອງ (ບໍ່ຕ້ອງເປີດແທັບຄ້າງໄວ້) ແລ້ວສົ່ງເຂົ້າ Marketing Studio ໜ້າ “🎬 ວິດີໂອສຳເລັດ” ໃຫ້ແອດມິນຄົນອື່ນດາວໂຫຼດໄປໃຊ້ — ການສົ່ງອອກເອງດ້ວຍປຸ່ມ “ສົ່ງອອກ MP4” ກໍຍັງເຮັດໄດ້ຄືເກົ່າ'],
+  ['ชื่อผู้อนุมัติ', 'Approved by', 'ຊື່ຜູ້ອະນຸມັດ'],
+  ['เช่น Tar', 'e.g. Tar', 'ເຊັ່ນ Tar'],
+  ['✅ อนุมัติและส่งออก', '✅ Approve and export', '✅ ອະນຸມັດ ແລະ ສົ່ງອອກ'],
+  ['— ไม่ระบุสินค้า —', '— No product —', '— ບໍ່ລະບຸສິນຄ້າ —'],
+  ['กำลังโหลดรายชื่อสินค้า…', 'Loading the product list…', 'ກຳລັງໂຫຼດລາຍຊື່ສິນຄ້າ…'],
+  ['⏳ รอคิว', '⏳ Waiting in queue', '⏳ ລໍຖ້າຄິວ'],
+  ['⚙ กำลังส่งออก', '⚙ Exporting', '⚙ ກຳລັງສົ່ງອອກ'],
+  ['☁ กำลังส่งเข้า Marketing Studio', '☁ Sending to Marketing Studio', '☁ ກຳລັງສົ່ງເຂົ້າ Marketing Studio'],
+  ['✅ เสร็จแล้ว — เข้า Marketing Studio แล้ว', '✅ Done — it is in Marketing Studio', '✅ ສຳເລັດແລ້ວ — ເຂົ້າ Marketing Studio ແລ້ວ'],
+  ['❌ ไม่สำเร็จ', '❌ Failed', '❌ ບໍ່ສຳເລັດ'],
+  ['⏹ ยกเลิกแล้ว', '⏹ Cancelled', '⏹ ຍົກເລີກແລ້ວ'],
+  ['ยังไม่เคยอนุมัติโปรเจกต์นี้', 'This project has not been approved yet', 'ຍັງບໍ່ເຄີຍອະນຸມັດໂປຣເຈັກນີ້'],
+  ['เปิดไฟล์', 'Open file', 'ເປີດໄຟລ໌'],
+  ['ยกเลิก', 'Cancel', 'ຍົກເລີກ'],
+  ['✅ ส่งให้เซิร์ฟเวอร์แล้ว — ปิดหน้าต่างนี้ได้เลย ระบบส่งออกและส่งเข้า Marketing Studio เอง', '✅ Sent to the server — you can close this window. It exports and sends to Marketing Studio by itself', '✅ ສົ່ງໃຫ້ເຊີບເວີແລ້ວ — ປິດໜ້າຕ່າງນີ້ໄດ້ເລີຍ ລະບົບຈະສົ່ງອອກ ແລະ ສົ່ງເຂົ້າ Marketing Studio ເອງ'],
+  ['โปรเจกต์นี้มีงานรออยู่แล้ว', 'This project already has a job waiting', 'ໂປຣເຈັກນີ້ມີວຽກລໍຖ້າຢູ່ແລ້ວ'],
+  ['✅ อนุมัติแล้ว — เซิร์ฟเวอร์กำลังส่งออกให้', '✅ Approved — the server is exporting it', '✅ ອະນຸມັດແລ້ວ — ເຊີບເວີກຳລັງສົ່ງອອກໃຫ້'],
+  ['มีงานของโปรเจกต์นี้รออยู่แล้ว', 'This project already has a job waiting', 'ໂປຣເຈັກນີ້ມີວຽກລໍຖ້າຢູ່ແລ້ວ'],
+  ['กำลังบันทึกโปรเจกต์ขึ้นเซิร์ฟเวอร์…', 'Saving the project to the server…', 'ກຳລັງບັນທຶກໂປຣເຈັກຂຶ້ນເຊີບເວີ…'],
+  ['กำลังเช็กว่าคลิปทั้งหมดอยู่บนเซิร์ฟเวอร์แล้วหรือยัง…', 'Checking that all clips are already on the server…', 'ກຳລັງກວດວ່າຄລິບທັງໝົດຢູ່ເທິງເຊີບເວີແລ້ວຫຼືຍັງ…']
 );
 
 // ---- 00-2-i18n-b.js ----
@@ -2248,9 +2288,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.81
-// APP_VERSION_PREV : 1.80
-// APP_VERSION_PREV_OLDER : 1.79
+// APP_VERSION  : 1.82
+// APP_VERSION_PREV : 1.81
+// APP_VERSION_PREV_OLDER : 1.80
+// 1.82 : ✅ APPROVE button. When a video is OK, press ✅ อนุมัติ in the project: the project and its clips are saved to the shop server, the server opens a hidden Chrome of its own, exports the video there (fast export, no one has to keep a tab open), and sends the MP4 into Marketing Studio (edited_product_videos) so the other admins can use it. Manual export stays as before. Status (queued / exporting / sent / failed) shows on the button and in its dialog; a job can be cancelled.
 // 1.81 : FAST EXPORT that works in the background. Export no longer plays the timeline and films it (that needs the tab in front); for each frame it seeks the clips to the exact time, draws it and sends it to the H.264 encoder (WebCodecs), and the sound is mixed offline (same volume / fades / ducking / voice effects) and encoded as AAC, then both go into an MP4 (mp4-muxer bundled). You can switch tabs or windows while it runs, and it is faster than real time. If the browser can't do it (no AAC / H.264 encoder, or audible clips with changed speed) it falls back to the old real-time way (with the v1.80 pause). Set localStorage sk_fastexp=0 to force the old way.
 // 1.80 : Export no longer freezes when you leave the tab. Found in a real export (v5.5, 58 s): 48 s of it was ONE frozen picture, and the 0.13 s cover lasted 4 s — Chrome stops animation frames and slows timers to once a second in a tab that is hidden, covered or minimised, and the real-time capture recorded exactly that. Now the capture pauses (recorder + sound) the moment the tab is not visible, the title shows ⏸, and it carries on from the same second when you come back; it also waits for the tab to be visible before it starts.
 // 1.79 : Cover picker like CapCut's. A big preview (up to 640 px tall) and, under it, a strip of real frames across the whole video: drag on the strip, hold the ‹ › buttons or press the ← → keys (Shift = 10 frames, Home/End = first/last) to choose the exact frame. The frames fill in one by one so the strip works at once. The playhead goes back to where it was when the window closes.
@@ -2333,7 +2374,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.81';
+const APP_VERSION = '1.82';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -6101,6 +6142,7 @@ async function openById(id) {
   const still = [...new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => mediaNameFromId(i.mediaId)))];
   if (still.length) toast('ไฟล์เหล่านี้หายจากเครื่องนี้ ต้องนำเข้าใหม่: ' + still.join(', '), 7000);
   else { srvQueueMedia([...new Set(D.items.map(i => i.mediaId).filter(Boolean))]); srvAdoptProxies(); }
+  try { window.dispatchEvent(new Event('sk-project-open')); } catch (e) { }
 }
 async function homeAction(id, a) {
   const rec = await projGet(id); if (!rec) return renderHome();
@@ -7734,7 +7776,7 @@ async function runExport(opts) {
 // shared tail of both export paths: name the file, download it, cover picture, copy to the shop server
 async function exportDeliver(blob, o) {
   const { ext, mime, W, H, total, opts, msg, bar } = o;
-  EXP.last = { size: blob.size, mime, ext, w: W, h: H, dur: total };
+  EXP.last = { size: blob.size, mime, ext, w: W, h: H, dur: total, fast: !!o.fast };
   // v1.61: VELARIS jobs are exported as vl-<jobId>_v001, v002 ... (one number per export, never overwrites an older round); other projects keep their own name
   let outBase = (D.name || 'video'); if (!opts.noDownload && D.vl) { D.vlRound = (D.vlRound || 0) + 1; outBase = 'vl-' + D.vl + '_v' + String(D.vlRound).padStart(3, '0'); emit('doc', 'vlround'); }
   if (!opts.noDownload) {
@@ -7938,7 +7980,7 @@ async function runExportFast(opts) {
     console.warn('fast export failed → real-time', failed); toast('ส่งออกแบบเร็วไม่สำเร็จ (' + (failed.message || failed) + ') — ใช้แบบเรียลไทม์แทน', 5000);
     return undefined;
   }
-  return exportDeliver(blob, { ext: 'mp4', mime: 'video/mp4', W, H, total, opts, msg, bar });
+  return exportDeliver(blob, { ext: 'mp4', mime: 'video/mp4', W, H, total, opts, msg, bar, fast: true });
 }
 
 // ---- 58-fonts.js ----
@@ -10503,11 +10545,128 @@ async function init() {
     else if (e.key === 'Home') { pause(); seek(0); }
   });
   initSplitters(); initToolbar(); if (typeof coverInit === 'function') coverInit(); scrInit(); taInit(); capInit(); tpkInit(); tbInit();
-  initHome(); await showHome(); await srvApplyLink(); if (srvOn()) srvPing().then(ok => ok && srvLoadSizes()).then(() => trcSync(true)).then(() => srvAdoptProxies()).then(() => srvInboxAuto()).then(() => srvInboxWatch()).catch(() => { });
+  initHome(); try { approveInit(); } catch (e) { console.warn(e); } await showHome(); await srvApplyLink(); if (srvOn() && JOBMODE) srvPing().catch(() => { }); else if (srvOn()) srvPing().then(ok => ok && srvLoadSizes()).then(() => trcSync(true)).then(() => srvAdoptProxies()).then(() => srvInboxAuto()).then(() => srvInboxWatch()).catch(() => { });
   tick();
   window.__ready = true;
 }
 window.addEventListener('DOMContentLoaded', init);
+
+// ---- 72-jobs.js ----
+// ============================================================
+//  v1.82  APPROVE → the shop server exports the video by itself → copy goes to Marketing Studio
+//  Two halves:
+//   1) approve dialog (this computer): saves the project + its clips to the shop server, then asks the server to make a job.
+//   2) jobRun() (only used by the server's own hidden Chrome, JOBMODE): opens that project from the server and exports it.
+// ============================================================
+const JOBMODE = (() => { try { return localStorage.getItem('sk_job') === '1'; } catch (e) { return false; } })();
+const JOBST = { list: [], timer: 0, products: null, by: '' };
+const jobStateTxt = j => ({ queued: '⏳ รอคิว', running: '⚙ กำลังส่งออก', uploading: '☁ กำลังส่งเข้า Marketing Studio', done: '✅ เสร็จแล้ว — เข้า Marketing Studio แล้ว', failed: '❌ ไม่สำเร็จ', cancelled: '⏹ ยกเลิกแล้ว' }[j.state] || j.state);
+const jobActive = j => j && (j.state === 'queued' || j.state === 'running' || j.state === 'uploading');
+
+async function jobsLoad() {
+  if (!srvOn() || !D || !D.pid) { JOBST.list = []; return []; }
+  try { const r = await srvFetch('/jobs?pid=' + srvId(D.pid)); if (r.ok) JOBST.list = await r.json(); } catch (e) { }
+  return JOBST.list;
+}
+function approveBadge() {
+  const b = $('#btnApprove'); if (!b) return;
+  const j = (JOBST.list || [])[0];
+  if (!j) { b.textContent = '✅ อนุมัติ'; b.title = 'อนุมัติวิดีโอนี้ — เซิร์ฟเวอร์ที่ร้านจะส่งออกเอง แล้วส่งเข้า Marketing Studio ให้แอดมิน'; return; }
+  const p = j.state === 'running' && j.progress ? ' ' + Math.round(j.progress) + '%' : '';
+  b.textContent = j.state === 'done' ? '✅ อนุมัติแล้ว' : j.state === 'failed' ? '⚠ อนุมัติ (ล่าสุดล้มเหลว)' : jobActive(j) ? '⏳ ' + jobStateTxt(j).replace(/^\S+\s/, '') + p : '✅ อนุมัติ';
+  b.title = jobStateTxt(j) + (j.msg ? ' — ' + j.msg : '');
+}
+function approveRender() {
+  const box = $('#apList'); if (!box) return;
+  const L = JOBST.list || [];
+  box.innerHTML = L.length ? L.slice(0, 6).map(j => {
+    const when = new Date(j.created).toLocaleString('th-TH', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    const p = j.state === 'running' && j.progress ? ` ${Math.round(j.progress)}%` : '';
+    const link = j.state === 'done' && j.ms && j.ms.url ? ` <a href="${esc(j.ms.url)}" target="_blank" rel="noopener">เปิดไฟล์</a>` : '';
+    const cancel = jobActive(j) ? ` <button data-cancel="${esc(j.id)}">ยกเลิก</button>` : '';
+    return `<div class="apRow"><b>${esc(jobStateTxt(j))}${p}</b> <span class="apMeta">${when}${j.product ? ' · ' + esc(j.product.name || '') : ''}</span>${j.msg && j.state !== 'done' ? `<div class="apMsg">${esc(j.msg)}</div>` : ''}${link}${cancel}</div>`;
+  }).join('') : '<div class="apMeta">ยังไม่เคยอนุมัติโปรเจกต์นี้</div>';
+  box.querySelectorAll('[data-cancel]').forEach(b => b.onclick = async () => { try { await srvFetch('/jobs/' + srvId(b.dataset.cancel), { method: 'DELETE' }); } catch (e) { } await jobsLoad(); approveRender(); approveBadge(); });
+}
+function jobsPollStart() {
+  clearTimeout(JOBST.timer);
+  const tick = async () => {
+    await jobsLoad(); approveBadge(); if ($('#dlgApprove') && $('#dlgApprove').open) approveRender();
+    if ((JOBST.list || []).some(jobActive)) JOBST.timer = setTimeout(tick, 4000);   // only while a job of THIS project is running
+  };
+  tick();
+}
+async function approveOpen() {
+  if (!srvOn()) { toast('ต้องเชื่อมต่อเซิร์ฟเวอร์ร้านก่อน (⚙ ตั้งค่า → เซิร์ฟเวอร์เก็บไฟล์)', 6000); return; }
+  if (!D || !D.pid || !D.items.length) { toast('ยังไม่มีอะไรในไทม์ไลน์'); return; }
+  const dlg = $('#dlgApprove'); $('#apName').textContent = D.name || 'โปรเจกต์';
+  try { JOBST.by = localStorage.getItem('sk_by') || ''; } catch (e) { }
+  $('#apBy').value = JOBST.by;
+  const sel = $('#apProd'); let saved = ''; try { saved = localStorage.getItem('sk_prod_' + D.pid) || ''; } catch (e) { }
+  if (!JOBST.products) {
+    sel.innerHTML = '<option value="">กำลังโหลดรายชื่อสินค้า…</option>';
+    try { const r = await srvFetch('/products'); const j = r.ok ? await r.json() : null; JOBST.products = (j && j.products) || []; if (j && j.error) toast('โหลดรายชื่อสินค้าไม่ได้: ' + j.error, 5000); } catch (e) { JOBST.products = []; }
+  }
+  sel.innerHTML = '<option value="">— ไม่ระบุสินค้า —</option>' + JOBST.products.map(p => `<option value="${esc(p.id)}" ${p.id === saved ? 'selected' : ''}>${esc(p.name)}</option>`).join('');
+  $('#apMsg').textContent = ''; $('#apGo').disabled = false;
+  await jobsLoad(); approveRender(); if (!dlg.open) dlg.showModal(); jobsPollStart();
+}
+async function approveGo() {
+  const msg = $('#apMsg'), go = $('#apGo'); go.disabled = true;
+  try {
+    const by = ($('#apBy').value || '').trim(); try { localStorage.setItem('sk_by', by); } catch (e) { }
+    const pid = $('#apProd').value, pname = pid ? ($('#apProd').selectedOptions[0].textContent || '') : '';
+    try { localStorage.setItem('sk_prod_' + D.pid, pid); } catch (e) { }
+    msg.textContent = 'กำลังบันทึกโปรเจกต์ขึ้นเซิร์ฟเวอร์…';
+    const rec = projRec(D); await projPut(rec); PS.sig.set(D.pid, JSON.stringify(D));
+    if (!(await srvPushProject(rec))) { msg.textContent = '⚠ ส่งโปรเจกต์ขึ้นเซิร์ฟเวอร์ไม่สำเร็จ (อาจมีเวอร์ชันใหม่กว่าบนเซิร์ฟเวอร์ — ดูแถบสีเขียวด้านบน)'; go.disabled = false; return; }
+    msg.textContent = 'กำลังเช็กว่าคลิปทั้งหมดอยู่บนเซิร์ฟเวอร์แล้วหรือยัง…';
+    await srvEnsureSizes(true);
+    const ids = [...new Set(D.items.map(i => i.mediaId).filter(x => x && !String(x).startsWith('__') && !String(x).startsWith('sfx-')))];
+    const need = ids.filter(id => { const m = MEDIA.get(id); return m && m.file && !m.builtin && !m.hidden && !m.proxyOnly && SRV.sizes.get(id) !== m.file.size; });
+    if (need.length) { srvQueueMedia(need); msg.textContent = `⏳ กำลังอัปโหลดคลิป ${need.length} ไฟล์ขึ้นเซิร์ฟเวอร์ (ดูไอคอน ☁ ด้านบน) — พออัปโหลดเสร็จ กดอนุมัติอีกครั้ง`; go.disabled = false; return; }
+    const r = await srvFetch('/jobs', { method: 'POST', body: JSON.stringify({ pid: D.pid, name: D.name, by, product: pid ? { id: pid, name: pname } : null, updated: rec.updated }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+    msg.textContent = j.already ? 'โปรเจกต์นี้มีงานรออยู่แล้ว' : '✅ ส่งให้เซิร์ฟเวอร์แล้ว — ปิดหน้าต่างนี้ได้เลย ระบบส่งออกและส่งเข้า Marketing Studio เอง';
+    toast(j.already ? 'มีงานของโปรเจกต์นี้รออยู่แล้ว' : '✅ อนุมัติแล้ว — เซิร์ฟเวอร์กำลังส่งออกให้', 5000);
+    await jobsLoad(); approveRender(); approveBadge(); jobsPollStart();
+  } catch (e) { msg.textContent = '⚠ ' + (e.message || e); }
+  go.disabled = false;
+}
+function approveInit() {
+  const b = $('#btnApprove'); if (!b) return;
+  b.onclick = approveOpen; $('#apGo').onclick = approveGo; $('#apClose').onclick = () => $('#dlgApprove').close();
+  document.addEventListener('keydown', () => { }, { passive: true });
+}
+if (!JOBMODE) window.addEventListener('sk-project-open', () => { jobsLoad().then(approveBadge); jobsPollStart(); });
+
+// ---------- server side: runs inside the server's hidden Chrome ----------
+async function jobRun(pid, opts) {
+  opts = opts || {};
+  const r0 = await srvFetch('/projects/' + srvId(pid)); if (!r0.ok) throw new Error('ไม่พบโปรเจกต์บนเซิร์ฟเวอร์ (HTTP ' + r0.status + ')');
+  const rec = await r0.json(); await projPut(rec); SRV.upd.set(pid, rec.updated);
+  await openById(pid);
+  const miss = srvMissingIds(); if (miss.length) throw new Error('ขาดไฟล์คลิปบนเซิร์ฟเวอร์ ' + miss.length + ' ไฟล์: ' + miss.map(mediaNameFromId).join(', '));
+  for (const it of D.items) { if (it.type === 'video') { const m = MEDIA.get(it.mediaId); if (!m || !(m.duration > 0)) throw new Error('อ่านคลิปไม่ได้: ' + (m ? m.name : it.mediaId)); } }
+  window.__jobProg = () => ({ p: parseFloat(($('#expBar') || {}).style && $('#expBar').style.width) || 0, msg: ($('#expMsg') || {}).textContent || '' });
+  const blob = await runExport({ noDownload: true, coverFirst: !!D.cover });
+  if (!blob || !blob.size) throw new Error('ส่งออกไม่สำเร็จ');
+  const ext = (EXP.last && EXP.last.ext) || 'mp4';
+  const d = new Date(), z = n => String(n).padStart(2, '0');
+  const base = (D.name || 'video').replace(/[\\\/:*?"<>|\x00-\x1f]/g, '_').slice(0, 90) + ' ' + d.getFullYear() + z(d.getMonth() + 1) + z(d.getDate()) + '-' + z(d.getHours()) + z(d.getMinutes());
+  const file = base + '.' + ext;
+  await xhrPut('/out/' + srvId(file), blob, { 'x-type': blob.type || 'video/mp4' }, p => { window.__jobUp = p; });
+  return { file, size: blob.size, dur: EXP.last.dur, w: EXP.last.w, h: EXP.last.h, title: D.name || 'video', thumb: (D.cover && D.cover.thumb) || projThumb(D) || '', fast: !!(EXP.last && EXP.last.fast) };
+}
+// what this browser can do (the server reads it into jobs-selftest.json so problems are visible without opening the machine)
+async function jobSelfTest() {
+  const o = { ua: navigator.userAgent, webcodecs: !!(window.VideoEncoder && window.AudioEncoder), muxer: typeof Mp4Muxer !== 'undefined' };
+  try { const s = await fxSupport(1080, 1920, 8e6); o.fast = !!s; o.fastCodecs = s || null; } catch (e) { o.fast = false; o.err = String(e); }
+  const v = document.createElement('video'); o.canPlay = { h264: v.canPlayType('video/mp4; codecs="avc1.640028"'), hevc: v.canPlayType('video/mp4; codecs="hvc1.1.6.L120.B0"'), hevc2: v.canPlayType('video/mp4; codecs="hev1.1.6.L120.B0"') };
+  try { o.hevcDecode = window.VideoDecoder ? (await VideoDecoder.isConfigSupported({ codec: 'hvc1.1.6.L120.B0' })).supported : null; } catch (e) { o.hevcDecode = null; }
+  o.version = APP_VERSION; return o;
+}
 
 </script>
 </body></html>
