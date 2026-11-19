@@ -15,11 +15,15 @@ async function waitReady(t, ms) {
   }
   return false;
 }
+// v1.80: Chrome stops animation frames (and slows timers to 1/s) in a tab that is hidden, covered by another window or minimised — a real-time capture then records one frozen picture
+// (a Mac export had 48 of 58 seconds frozen, and the 0.13 s cover lasted 4 s). So the capture now PAUSES while the tab is not visible and carries on when you come back.
+const visWait = async () => { while (document.hidden) await new Promise(r => { const f = () => { document.removeEventListener('visibilitychange', f); r(); }; document.addEventListener('visibilitychange', f); }); };
 async function runExport(opts) {
   opts = opts || {}; if (EXP.running) return null;
   const bar = $('#expBar'), msg = $('#expMsg');
   if (!D.items.length) { toast('ยังไม่มีอะไรในไทม์ไลน์'); return null; }
-  EXP.running = true; EXP.cancel = false; pause(); ensureAudio(); await AC.resume(); try { await lfPreloadDoc(); } catch (e) { }
+  EXP.running = true; EXP.cancel = false; pause(); ensureAudio(); await AC.resume();
+  if (document.hidden) { const m0 = $('#expMsg'); if (m0) m0.textContent = '⏸ กลับมาที่แท็บนี้เพื่อเริ่มส่งออก…'; await visWait(); } try { await lfPreloadDoc(); } catch (e) { }
   const W = opts.w || D.w || 1080, H = opts.h || D.h || 1920, FPS = 30, total = durEnd();
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const ctx = cv.getContext('2d', { alpha: false });
   const mime = pickMime(); const ext = mime.startsWith('video/mp4') ? 'mp4' : 'webm';
@@ -37,13 +41,23 @@ async function runExport(opts) {
     PB.t = 0; syncMedia(true); await waitReady(0, 8000);
   }
   renderFrame(ctx, W, H, 0);
-  rec.start(1000);
-  if (coverImg) { for (let k = 0; k < 5; k++) { ctx.drawImage(coverImg, 0, 0, W, H); await sleep(27); } renderFrame(ctx, W, H, 0); }
-  PB.playing = true; const start = performance.now();
+  await visWait(); rec.start(1000);
+  if (coverImg) { for (let k = 0; k < 5; k++) { await visWait(); ctx.drawImage(coverImg, 0, 0, W, H); await sleep(27); } renderFrame(ctx, W, H, 0); }
+  PB.playing = true; const start = performance.now(); let pausedMs = 0, pausedAt = 0; const title0 = document.title;
+  const onVis = () => {
+    if (document.hidden) {     // stop the recorder and the sound; remember when
+      if (pausedAt) return; pausedAt = performance.now(); try { rec.pause(); } catch (e) { } PB.playing = false;
+      for (const r of POOL.values()) { try { r.el.pause(); } catch (e) { } } for (const r of APOOL.values()) { try { r.el.pause(); } catch (e) { } }
+    } else if (pausedAt) {     // back: skip the paused time, seek everything to where we stopped and go on
+      pausedMs += performance.now() - pausedAt; pausedAt = 0; document.title = title0; PB.playing = true; syncMedia(true); try { rec.resume(); } catch (e) { }
+    }
+  };
+  document.addEventListener('visibilitychange', onVis);
   await new Promise(resolve => {
     const loop = () => {
       if (EXP.cancel) return resolve();
-      const t = (performance.now() - start) / 1000; PB.t = Math.min(t, total);
+      if (pausedAt) { if (msg) msg.textContent = '⏸ หยุดอัดชั่วคราว — กลับมาที่แท็บนี้เพื่อทำต่อ (' + fmt(PB.t) + ' / ' + fmt(total) + ')'; document.title = '⏸ ส่งออกหยุดชั่วคราว'; requestAnimationFrame(loop); return; }
+      const t = (performance.now() - start - pausedMs) / 1000; PB.t = Math.min(t, total);
       syncMedia(false); renderFrame(ctx, W, H, PB.t);
       if (bar) bar.style.width = (100 * PB.t / total).toFixed(1) + '%'; if (msg) msg.textContent = `กำลังบันทึก… ${fmt(PB.t)} / ${fmt(total)}`;
       if (t >= total + 0.25) return resolve();
@@ -51,6 +65,7 @@ async function runExport(opts) {
     };
     requestAnimationFrame(loop);
   });
+  document.removeEventListener('visibilitychange', onVis); document.title = title0; if (pausedAt) { try { rec.resume(); } catch (e) { } }
   PB.playing = false; for (const r of POOL.values()) { try { r.el.pause(); } catch (e) { } } for (const r of APOOL.values()) { try { r.el.pause(); } catch (e) { } }
   try { rec.stop(); } catch (e) { } await done;
   PB.exporting = false; MONITOR.gain.value = 1; EXP.running = false; try { undoOrig(); } catch (e) { } seek(0);

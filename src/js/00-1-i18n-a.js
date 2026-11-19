@@ -89,6 +89,10 @@ I18N_ROWS.push(
   // ---- export dialog ----
   ['ส่งออกวิดีโอ MP4', 'Export MP4 video', 'ສົ່ງອອກວິດີໂອ MP4'],
   ['1080×1920 · 30fps · ไม่มีลายน้ำ — ระบบเล่นไทม์ไลน์แบบเรียลไทม์เพื่อบันทึก (คลิปยาว 60 วิ = ใช้เวลา ~60 วิ)', '1080×1920 · 30fps · no watermark — the timeline is played in real time to record it (a 60 s video takes ~60 s)', '1080×1920 · 30fps · ບໍ່ມີລາຍນ້ຳ — ລະບົບຫຼິ້ນໄທມ໌ໄລນ໌ແບບເຣຍລທາຍເພື່ອບັນທຶກ (ຄລິບຍາວ 60 ວິນາທີ = ໃຊ້ເວລາ ~60 ວິນາທີ)'],
+  ['ห้ามปิดแท็บขณะส่งออก', 'Do not close the tab while exporting', 'ຫ້າມປິດແທັບຂະນະສົ່ງອອກ'],
+  ['(ถ้าสลับไปแท็บอื่น ระบบจะหยุดอัดให้เอง กลับมาแล้วทำต่อ)', '(if you switch to another tab the recording pauses by itself and continues when you come back)', '(ຖ້າສະຫຼັບໄປແທັບອື່ນ ລະບົບຈະຢຸດອັດໃຫ້ເອງ ກັບມາແລ້ວເຮັດຕໍ່)'],
+  ['⏸ หยุดอัดชั่วคราว — กลับมาที่แท็บนี้เพื่อทำต่อ', '⏸ Paused — come back to this tab to continue', '⏸ ຢຸດອັດຊົ່ວຄາວ — ກັບມາທີ່ແທັບນີ້ເພື່ອເຮັດຕໍ່'],
+  ['⏸ กลับมาที่แท็บนี้เพื่อเริ่มส่งออก…', '⏸ Come back to this tab to start exporting…', '⏸ ກັບມາທີ່ແທັບນີ້ເພື່ອເລີ່ມສົ່ງອອກ…'],
   ['ห้ามปิด/สลับแท็บขณะส่งออก', 'Do not close or switch tabs while exporting', 'ຫ້າມປິດ/ສະຫຼັບແທັບຂະນະສົ່ງອອກ'],
   ['คุณภาพ', 'Quality', 'ຄຸນນະພາບ'],
   ['สูง (12 Mbps)', 'High (12 Mbps)', 'ສູງ (12 Mbps)'],

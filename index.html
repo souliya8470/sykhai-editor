@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.79</title>
+<title>Sykhai Editor v1.80</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -627,7 +627,7 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
 </dialog>
 <dialog id="dlgExport">
   <h3>ส่งออกวิดีโอ MP4</h3>
-  <div class="hint"><span id="expRes" translate="no">1080×1920</span> · 30fps · ไม่มีลายน้ำ — ระบบเล่นไทม์ไลน์แบบเรียลไทม์เพื่อบันทึก (คลิปยาว 60 วิ = ใช้เวลา ~60 วิ) <b>ห้ามปิด/สลับแท็บขณะส่งออก</b></div>
+  <div class="hint"><span id="expRes" translate="no">1080×1920</span> · 30fps · ไม่มีลายน้ำ — ระบบเล่นไทม์ไลน์แบบเรียลไทม์เพื่อบันทึก (คลิปยาว 60 วิ = ใช้เวลา ~60 วิ) <b>ห้ามปิดแท็บขณะส่งออก</b> (ถ้าสลับไปแท็บอื่น ระบบจะหยุดอัดให้เอง กลับมาแล้วทำต่อ)</div>
   <div class="fld"><label>คุณภาพ</label><select id="expQ"><option value="12000000">สูง (12 Mbps)</option><option value="8000000" selected>มาตรฐาน (8 Mbps)</option><option value="5000000">ประหยัด (5 Mbps)</option></select></div>
   <div class="fld" id="expCoverRow" style="display:none"><label><input type="checkbox" id="expCover" checked> ใส่หน้าปกเป็นเฟรมแรกของวิดีโอ (สั้นมาก ~0.13 วิ) เพื่อให้ Facebook / TikTok ใช้เป็น thumbnail</label></div>
   <div class="progress"><div id="expBar"></div></div><div id="expMsg" class="hint"></div>
@@ -856,6 +856,10 @@ I18N_ROWS.push(
   // ---- export dialog ----
   ['ส่งออกวิดีโอ MP4', 'Export MP4 video', 'ສົ່ງອອກວິດີໂອ MP4'],
   ['1080×1920 · 30fps · ไม่มีลายน้ำ — ระบบเล่นไทม์ไลน์แบบเรียลไทม์เพื่อบันทึก (คลิปยาว 60 วิ = ใช้เวลา ~60 วิ)', '1080×1920 · 30fps · no watermark — the timeline is played in real time to record it (a 60 s video takes ~60 s)', '1080×1920 · 30fps · ບໍ່ມີລາຍນ້ຳ — ລະບົບຫຼິ້ນໄທມ໌ໄລນ໌ແບບເຣຍລທາຍເພື່ອບັນທຶກ (ຄລິບຍາວ 60 ວິນາທີ = ໃຊ້ເວລາ ~60 ວິນາທີ)'],
+  ['ห้ามปิดแท็บขณะส่งออก', 'Do not close the tab while exporting', 'ຫ້າມປິດແທັບຂະນະສົ່ງອອກ'],
+  ['(ถ้าสลับไปแท็บอื่น ระบบจะหยุดอัดให้เอง กลับมาแล้วทำต่อ)', '(if you switch to another tab the recording pauses by itself and continues when you come back)', '(ຖ້າສະຫຼັບໄປແທັບອື່ນ ລະບົບຈະຢຸດອັດໃຫ້ເອງ ກັບມາແລ້ວເຮັດຕໍ່)'],
+  ['⏸ หยุดอัดชั่วคราว — กลับมาที่แท็บนี้เพื่อทำต่อ', '⏸ Paused — come back to this tab to continue', '⏸ ຢຸດອັດຊົ່ວຄາວ — ກັບມາທີ່ແທັບນີ້ເພື່ອເຮັດຕໍ່'],
+  ['⏸ กลับมาที่แท็บนี้เพื่อเริ่มส่งออก…', '⏸ Come back to this tab to start exporting…', '⏸ ກັບມາທີ່ແທັບນີ້ເພື່ອເລີ່ມສົ່ງອອກ…'],
   ['ห้ามปิด/สลับแท็บขณะส่งออก', 'Do not close or switch tabs while exporting', 'ຫ້າມປິດ/ສະຫຼັບແທັບຂະນະສົ່ງອອກ'],
   ['คุณภาพ', 'Quality', 'ຄຸນນະພາບ'],
   ['สูง (12 Mbps)', 'High (12 Mbps)', 'ສູງ (12 Mbps)'],
@@ -2240,9 +2244,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.79
-// APP_VERSION_PREV : 1.78
-// APP_VERSION_PREV_OLDER : 1.77
+// APP_VERSION  : 1.80
+// APP_VERSION_PREV : 1.79
+// APP_VERSION_PREV_OLDER : 1.78
+// 1.80 : Export no longer freezes when you leave the tab. Found in a real export (v5.5, 58 s): 48 s of it was ONE frozen picture, and the 0.13 s cover lasted 4 s — Chrome stops animation frames and slows timers to once a second in a tab that is hidden, covered or minimised, and the real-time capture recorded exactly that. Now the capture pauses (recorder + sound) the moment the tab is not visible, the title shows ⏸, and it carries on from the same second when you come back; it also waits for the tab to be visible before it starts.
 // 1.79 : Cover picker like CapCut's. A big preview (up to 640 px tall) and, under it, a strip of real frames across the whole video: drag on the strip, hold the ‹ › buttons or press the ← → keys (Shift = 10 frames, Home/End = first/last) to choose the exact frame. The frames fill in one by one so the strip works at once. The playhead goes back to where it was when the window closes.
 // 1.78 : Playhead as a real guide line. While you drag the end/start of a layer (or move it) the playhead no longer jumps along with the edge and stays put where you left it, the edge is pulled to it with a stronger magnet (14 px), and the line turns yellow when the edge is exactly on it. Before, the playhead followed the first dragged edge, so the next layer snapped to the wrong place and the ends never lined up. The player still shows the frame at the dragged edge while you drag.
 // 1.77 : Text, captions, stickers, overlay pictures and sound effects now FOLLOW the main row. When a Video-1 clip is trimmed or stretched (drag an edge, the W/Q trim buttons, or the junction handle) everything on the other rows that belongs to that clip's speech moves with it (each time is mapped through the clip it was in: source time -> new timeline time), and everything after the clip moves by the same amount — so cutting out dead air no longer leaves the captions behind. Music (A1) stays put. A chain-link button next to the magnet turns this on/off (default on).
@@ -2323,7 +2328,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.79';
+const APP_VERSION = '1.80';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -5757,11 +5762,15 @@ async function waitReady(t, ms) {
   }
   return false;
 }
+// v1.80: Chrome stops animation frames (and slows timers to 1/s) in a tab that is hidden, covered by another window or minimised — a real-time capture then records one frozen picture
+// (a Mac export had 48 of 58 seconds frozen, and the 0.13 s cover lasted 4 s). So the capture now PAUSES while the tab is not visible and carries on when you come back.
+const visWait = async () => { while (document.hidden) await new Promise(r => { const f = () => { document.removeEventListener('visibilitychange', f); r(); }; document.addEventListener('visibilitychange', f); }); };
 async function runExport(opts) {
   opts = opts || {}; if (EXP.running) return null;
   const bar = $('#expBar'), msg = $('#expMsg');
   if (!D.items.length) { toast('ยังไม่มีอะไรในไทม์ไลน์'); return null; }
-  EXP.running = true; EXP.cancel = false; pause(); ensureAudio(); await AC.resume(); try { await lfPreloadDoc(); } catch (e) { }
+  EXP.running = true; EXP.cancel = false; pause(); ensureAudio(); await AC.resume();
+  if (document.hidden) { const m0 = $('#expMsg'); if (m0) m0.textContent = '⏸ กลับมาที่แท็บนี้เพื่อเริ่มส่งออก…'; await visWait(); } try { await lfPreloadDoc(); } catch (e) { }
   const W = opts.w || D.w || 1080, H = opts.h || D.h || 1920, FPS = 30, total = durEnd();
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const ctx = cv.getContext('2d', { alpha: false });
   const mime = pickMime(); const ext = mime.startsWith('video/mp4') ? 'mp4' : 'webm';
@@ -5779,13 +5788,23 @@ async function runExport(opts) {
     PB.t = 0; syncMedia(true); await waitReady(0, 8000);
   }
   renderFrame(ctx, W, H, 0);
-  rec.start(1000);
-  if (coverImg) { for (let k = 0; k < 5; k++) { ctx.drawImage(coverImg, 0, 0, W, H); await sleep(27); } renderFrame(ctx, W, H, 0); }
-  PB.playing = true; const start = performance.now();
+  await visWait(); rec.start(1000);
+  if (coverImg) { for (let k = 0; k < 5; k++) { await visWait(); ctx.drawImage(coverImg, 0, 0, W, H); await sleep(27); } renderFrame(ctx, W, H, 0); }
+  PB.playing = true; const start = performance.now(); let pausedMs = 0, pausedAt = 0; const title0 = document.title;
+  const onVis = () => {
+    if (document.hidden) {     // stop the recorder and the sound; remember when
+      if (pausedAt) return; pausedAt = performance.now(); try { rec.pause(); } catch (e) { } PB.playing = false;
+      for (const r of POOL.values()) { try { r.el.pause(); } catch (e) { } } for (const r of APOOL.values()) { try { r.el.pause(); } catch (e) { } }
+    } else if (pausedAt) {     // back: skip the paused time, seek everything to where we stopped and go on
+      pausedMs += performance.now() - pausedAt; pausedAt = 0; document.title = title0; PB.playing = true; syncMedia(true); try { rec.resume(); } catch (e) { }
+    }
+  };
+  document.addEventListener('visibilitychange', onVis);
   await new Promise(resolve => {
     const loop = () => {
       if (EXP.cancel) return resolve();
-      const t = (performance.now() - start) / 1000; PB.t = Math.min(t, total);
+      if (pausedAt) { if (msg) msg.textContent = '⏸ หยุดอัดชั่วคราว — กลับมาที่แท็บนี้เพื่อทำต่อ (' + fmt(PB.t) + ' / ' + fmt(total) + ')'; document.title = '⏸ ส่งออกหยุดชั่วคราว'; requestAnimationFrame(loop); return; }
+      const t = (performance.now() - start - pausedMs) / 1000; PB.t = Math.min(t, total);
       syncMedia(false); renderFrame(ctx, W, H, PB.t);
       if (bar) bar.style.width = (100 * PB.t / total).toFixed(1) + '%'; if (msg) msg.textContent = `กำลังบันทึก… ${fmt(PB.t)} / ${fmt(total)}`;
       if (t >= total + 0.25) return resolve();
@@ -5793,6 +5812,7 @@ async function runExport(opts) {
     };
     requestAnimationFrame(loop);
   });
+  document.removeEventListener('visibilitychange', onVis); document.title = title0; if (pausedAt) { try { rec.resume(); } catch (e) { } }
   PB.playing = false; for (const r of POOL.values()) { try { r.el.pause(); } catch (e) { } } for (const r of APOOL.values()) { try { r.el.pause(); } catch (e) { } }
   try { rec.stop(); } catch (e) { } await done;
   PB.exporting = false; MONITOR.gain.value = 1; EXP.running = false; try { undoOrig(); } catch (e) { } seek(0);
