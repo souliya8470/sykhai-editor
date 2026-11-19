@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.80
-// APP_VERSION_PREV : 1.79
-// APP_VERSION_PREV_OLDER : 1.78
+// APP_VERSION  : 1.81
+// APP_VERSION_PREV : 1.80
+// APP_VERSION_PREV_OLDER : 1.79
+// 1.81 : FAST EXPORT that works in the background. Export no longer plays the timeline and films it (that needs the tab in front); for each frame it seeks the clips to the exact time, draws it and sends it to the H.264 encoder (WebCodecs), and the sound is mixed offline (same volume / fades / ducking / voice effects) and encoded as AAC, then both go into an MP4 (mp4-muxer bundled). You can switch tabs or windows while it runs, and it is faster than real time. If the browser can't do it (no AAC / H.264 encoder, or audible clips with changed speed) it falls back to the old real-time way (with the v1.80 pause). Set localStorage sk_fastexp=0 to force the old way.
 // 1.80 : Export no longer freezes when you leave the tab. Found in a real export (v5.5, 58 s): 48 s of it was ONE frozen picture, and the 0.13 s cover lasted 4 s — Chrome stops animation frames and slows timers to once a second in a tab that is hidden, covered or minimised, and the real-time capture recorded exactly that. Now the capture pauses (recorder + sound) the moment the tab is not visible, the title shows ⏸, and it carries on from the same second when you come back; it also waits for the tab to be visible before it starts.
 // 1.79 : Cover picker like CapCut's. A big preview (up to 640 px tall) and, under it, a strip of real frames across the whole video: drag on the strip, hold the ‹ › buttons or press the ← → keys (Shift = 10 frames, Home/End = first/last) to choose the exact frame. The frames fill in one by one so the strip works at once. The playhead goes back to where it was when the window closes.
 // 1.78 : Playhead as a real guide line. While you drag the end/start of a layer (or move it) the playhead no longer jumps along with the edge and stays put where you left it, the edge is pulled to it with a stronger magnet (14 px), and the line turns yellow when the edge is exactly on it. Before, the playhead followed the first dragged edge, so the next layer snapped to the wrong place and the ends never lined up. The player still shows the frame at the dragged edge while you drag.
@@ -86,7 +87,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.80';
+const APP_VERSION = '1.81';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];

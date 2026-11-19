@@ -22,6 +22,7 @@ async function runExport(opts) {
   opts = opts || {}; if (EXP.running) return null;
   const bar = $('#expBar'), msg = $('#expMsg');
   if (!D.items.length) { toast('ยังไม่มีอะไรในไทม์ไลน์'); return null; }
+  if (!opts.realtime && typeof runExportFast === 'function') { const fr = await runExportFast(opts); if (fr !== undefined) return fr; }   // v1.81: fast offline export; undefined = not possible here → real-time capture below
   EXP.running = true; EXP.cancel = false; pause(); ensureAudio(); await AC.resume();
   if (document.hidden) { const m0 = $('#expMsg'); if (m0) m0.textContent = '⏸ กลับมาที่แท็บนี้เพื่อเริ่มส่งออก…'; await visWait(); } try { await lfPreloadDoc(); } catch (e) { }
   const W = opts.w || D.w || 1080, H = opts.h || D.h || 1920, FPS = 30, total = durEnd();
@@ -70,7 +71,11 @@ async function runExport(opts) {
   try { rec.stop(); } catch (e) { } await done;
   PB.exporting = false; MONITOR.gain.value = 1; EXP.running = false; try { undoOrig(); } catch (e) { } seek(0);
   if (EXP.cancel) { msg.textContent = 'ยกเลิกแล้ว'; return null; }
-  const blob = new Blob(chunks, { type: ext === 'mp4' ? 'video/mp4' : 'video/webm' });
+  return exportDeliver(new Blob(chunks, { type: ext === 'mp4' ? 'video/mp4' : 'video/webm' }), { ext, mime, W, H, total, opts, msg, bar });
+}
+// shared tail of both export paths: name the file, download it, cover picture, copy to the shop server
+async function exportDeliver(blob, o) {
+  const { ext, mime, W, H, total, opts, msg, bar } = o;
   EXP.last = { size: blob.size, mime, ext, w: W, h: H, dur: total };
   // v1.61: VELARIS jobs are exported as vl-<jobId>_v001, v002 ... (one number per export, never overwrites an older round); other projects keep their own name
   let outBase = (D.name || 'video'); if (!opts.noDownload && D.vl) { D.vlRound = (D.vlRound || 0) + 1; outBase = 'vl-' + D.vl + '_v' + String(D.vlRound).padStart(3, '0'); emit('doc', 'vlround'); }

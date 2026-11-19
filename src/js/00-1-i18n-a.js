@@ -89,6 +89,10 @@ I18N_ROWS.push(
   // ---- export dialog ----
   ['ส่งออกวิดีโอ MP4', 'Export MP4 video', 'ສົ່ງອອກວິດີໂອ MP4'],
   ['1080×1920 · 30fps · ไม่มีลายน้ำ — ระบบเล่นไทม์ไลน์แบบเรียลไทม์เพื่อบันทึก (คลิปยาว 60 วิ = ใช้เวลา ~60 วิ)', '1080×1920 · 30fps · no watermark — the timeline is played in real time to record it (a 60 s video takes ~60 s)', '1080×1920 · 30fps · ບໍ່ມີລາຍນ້ຳ — ລະບົບຫຼິ້ນໄທມ໌ໄລນ໌ແບບເຣຍລທາຍເພື່ອບັນທຶກ (ຄລິບຍາວ 60 ວິນາທີ = ໃຊ້ເວລາ ~60 ວິນາທີ)'],
+  ['ส่งออกแบบเร็ว ทำงานเบื้องหลังได้ สลับแท็บ/ไปทำอย่างอื่นได้', 'Fast export that runs in the background — you can switch tabs or do other things', 'ສົ່ງອອກແບບໄວ ເຮັດວຽກພື້ນຫຼັງໄດ້ ສະຫຼັບແທັບ/ໄປເຮັດຢ່າງອື່ນໄດ້'],
+  ['แต่ห้ามปิดแท็บนี้', 'but do not close this tab', 'ແຕ່ຫ້າມປິດແທັບນີ້'],
+  ['(ถ้าเบราว์เซอร์ไม่รองรับ จะใช้แบบอัดเรียลไทม์แทน: คลิป 60 วิ = ~60 วิ และถ้าสลับแท็บจะหยุดอัดชั่วคราว)', '(if the browser cannot do that, real-time recording is used instead: a 60 s clip takes ~60 s and pauses when you switch tabs)', '(ຖ້າບຣາວເຊີບໍ່ຮອງຮັບ ຈະໃຊ້ແບບອັດເຣຍລໄທມ໌ແທນ: ຄລິບ 60 ວິ = ~60 ວິ ແລະ ຖ້າສະຫຼັບແທັບຈະຢຸດອັດຊົ່ວຄາວ)'],
+  ['ส่งออกแบบเร็วไม่สำเร็จ', 'Fast export did not work', 'ສົ່ງອອກແບບໄວບໍ່ສຳເລັດ'],
   ['ห้ามปิดแท็บขณะส่งออก', 'Do not close the tab while exporting', 'ຫ້າມປິດແທັບຂະນະສົ່ງອອກ'],
   ['(ถ้าสลับไปแท็บอื่น ระบบจะหยุดอัดให้เอง กลับมาแล้วทำต่อ)', '(if you switch to another tab the recording pauses by itself and continues when you come back)', '(ຖ້າສະຫຼັບໄປແທັບອື່ນ ລະບົບຈະຢຸດອັດໃຫ້ເອງ ກັບມາແລ້ວເຮັດຕໍ່)'],
   ['⏸ หยุดอัดชั่วคราว — กลับมาที่แท็บนี้เพื่อทำต่อ', '⏸ Paused — come back to this tab to continue', '⏸ ຢຸດອັດຊົ່ວຄາວ — ກັບມາທີ່ແທັບນີ້ເພື່ອເຮັດຕໍ່'],
