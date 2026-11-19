@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.77</title>
+<title>Sykhai Editor v1.78</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -499,6 +499,8 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
 .cvtile i{position:absolute;inset:0;background-size:cover;background-position:center}
 .cvtile b{position:relative;font-size:9.5px;font-weight:700;color:#fff;background:rgba(0,0,0,.55);width:100%;text-align:center;padding:1px 0;line-height:1.2}
 .cvtile:hover{border-color:#7be0c3}.cvtile.set{border-color:#2dd4a7}
+
+#playhead.snap i{background:#ffd23c!important;box-shadow:0 0 7px 1px #ffd23c!important}
 
 </style></head>
 <body>
@@ -2231,9 +2233,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.77
-// APP_VERSION_PREV : 1.76
-// APP_VERSION_PREV_OLDER : 1.75
+// APP_VERSION  : 1.78
+// APP_VERSION_PREV : 1.77
+// APP_VERSION_PREV_OLDER : 1.76
+// 1.78 : Playhead as a real guide line. While you drag the end/start of a layer (or move it) the playhead no longer jumps along with the edge and stays put where you left it, the edge is pulled to it with a stronger magnet (14 px), and the line turns yellow when the edge is exactly on it. Before, the playhead followed the first dragged edge, so the next layer snapped to the wrong place and the ends never lined up. The player still shows the frame at the dragged edge while you drag.
 // 1.77 : Text, captions, stickers, overlay pictures and sound effects now FOLLOW the main row. When a Video-1 clip is trimmed or stretched (drag an edge, the W/Q trim buttons, or the junction handle) everything on the other rows that belongs to that clip's speech moves with it (each time is mapped through the clip it was in: source time -> new timeline time), and everything after the clip moves by the same amount — so cutting out dead air no longer leaves the captions behind. Music (A1) stays put. A chain-link button next to the magnet turns this on/off (default on).
 // 1.76 : Only the layers that hold something are shown (plus Video 1 and ONE thin "＋ new layer" strip on top to drop onto) — no more rows of empty layers. A new layer appears by itself when you drop something on the strip or when items would overlap; a layer that becomes empty disappears.
 // 1.75 : Up to 40 layers (was 12): picture layers V1-V3 and text layers T1-T37; layers beyond the first six appear only when used (plus one empty spare on top). Tested with 30 items stacked at the same moment.
@@ -2312,7 +2315,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.77';
+const APP_VERSION = '1.78';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -3441,7 +3444,7 @@ function drawWave(cv, it, m) {
   }
 }
 function updatePlayhead() {
-  const ph = $('#playhead'); if (!ph) return; const x = PB.t * TL.pps; ph.style.transform = `translate3d(${TL.labelW + x}px,0,0)`;
+  const ph = $('#playhead'); if (!ph) return; const x = (TL.phLock != null ? TL.phLock : PB.t) * TL.pps; ph.style.transform = `translate3d(${TL.labelW + x}px,0,0)`;
   const body = $('#tlbody');
   if (PB.playing) {   // follow smoothly: once the playhead reaches ~40% of the view it stays there and the timeline scrolls under it
     const vis = body.clientWidth - TL.labelW, sx = body.scrollLeft;
@@ -3517,11 +3520,13 @@ function initTimelineEvents() {
     const fsn0 = (forceMode || mode !== 'move') && followOn() && it.track === 'V1' ? followSnap() : null;   // v1.77: overlays follow trims of main-row clips
     const ord0 = D.items.filter(i => i.track === 'V1').sort((a, b) => a.start - b.start).map(i => i.id);   // clip order of the main row before this drag
     const o = { start: it.start, dur: it.dur, in: it.in || 0, track: it.track }; const x0 = e.clientX; const pts = snapPoints(it.id); const tol = snapTol() / TL.pps; let moved = false;
+    const ph0 = PB.t, sv = v => (TLS.snap && Math.abs(v - ph0) < 14 / TL.pps) ? ph0 : snapVal(v, pts, tol);   // v1.78: the playhead is a fixed guide (stronger magnet), it no longer follows the dragged edge
+    const phSnap = on => { const h = $('#playhead'); if (h) h.classList.toggle('snap', !!on); };
     const m = MEDIA.get(it.mediaId); const sp = it.speed || 1;
     const move = ev => {
       const dt = (ev.clientX - x0) / TL.pps; if (Math.abs(ev.clientX - x0) > (mode === 'move' ? 6 : 2)) moved = true; if (!moved && mode === 'move' && Math.abs(ev.clientY - e.clientY) < 6) return;   // v1.70: a click (or a wobbly tap) no longer starts a move
       if (mode === 'move') {
-        let s = Math.max(0, o.start + dt); const s1 = snapVal(s, pts, tol), s2 = snapVal(s + o.dur, pts, tol) - o.dur; s = Math.abs(s1 - s) <= Math.abs(s2 - s) ? s1 : s2; it.start = Math.max(0, s);
+        let s = Math.max(0, o.start + dt); const s1 = sv(s), s2 = sv(s + o.dur) - o.dur; s = Math.abs(s1 - s) <= Math.abs(s2 - s) ? s1 : s2; it.start = Math.max(0, s);
         const rawS = Math.max(0, o.start + dt);
         const rowEl = document.elementFromPoint(ev.clientX, ev.clientY); const row = rowEl && rowEl.closest ? rowEl.closest('.trow') : null;
         if (row && LANE(row.dataset.track) === LANE(o.track)) it.track = row.dataset.track;
@@ -3533,24 +3538,25 @@ function initTimelineEvents() {
         }
         if (MG.on) mgReset();
       } else if (mode === 'tl') {
-        let s = snapVal(o.start + dt, pts, tol); let d = s - o.start;
+        let s = sv(o.start + dt); let d = s - o.start;
         if (it.type === 'video' || it.type === 'audio') d = Math.max(d, -(o.in / sp));
         d = Math.min(d, o.dur - 0.1); d = Math.max(d, -o.start);
         it.start = o.start + d; it.dur = o.dur - d; if (it.type === 'video' || it.type === 'audio') it.in = o.in + d * sp;
         if (it.kf) { /* keyframes stay relative to start */ }
       } else {
-        let e2 = snapVal(o.start + o.dur + dt, pts, tol); let d = e2 - o.start; d = Math.max(0.1, d);
+        let e2 = sv(o.start + o.dur + dt); let d = e2 - o.start; d = Math.max(0.1, d);
         if ((it.type === 'video') && m) d = Math.min(d, (m.duration - o.in) / sp);
         if (it.type === 'audio' && m && !it.loop) d = Math.min(d, m.duration - o.in);
         it.dur = d;
       }
       if (TLS.magnet && (it.track === 'V1' || o.track === 'V1')) magnetLayout(null, ord0);
       if (fsn0 && mode !== 'move') followApply(fsn0);
-      renderTimeline(); dirty(); emit('inspect-refresh');
+      TL.phLock = ph0;
+      renderTimeline(); phSnap(Math.abs((mode === 'tl' ? it.start : it.start + it.dur) - ph0) < 1e-6 || (mode === 'move' && (Math.abs(it.start - ph0) < 1e-6 || Math.abs(it.start + it.dur - ph0) < 1e-6))); dirty(); emit('inspect-refresh');
       // like CapCut: the player follows the edge you are dragging (trim) or keeps showing the frame under the playhead while the clip moves
       if (mode === 'tl') seek(it.start + .02); else if (mode === 'tr') seek(Math.max(it.start, it.start + it.dur - .04)); else seek(PB.t);
     };
-    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); if (MG.on) { if (it.track === 'V1') it.start = MG.slot; mgReset(); }
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); if (TL.phLock != null) { TL.phLock = null; phSnap(false); seek(ph0); } if (MG.on) { if (it.track === 'V1') it.start = MG.slot; mgReset(); }
       if (moved) {
         if (resolveOverlap(it)) { const nm = visLayers().indexOf(it.track) + 1; renderTimeline(); toast(T('ซ้อนกับอันอื่นในชั้นเดียวกัน — ย้ายไปชั้น') + ' ' + nm + ' ' + T('ให้แล้ว'), 4500); }
         commit('edit');

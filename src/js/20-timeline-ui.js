@@ -107,7 +107,7 @@ function drawWave(cv, it, m) {
   }
 }
 function updatePlayhead() {
-  const ph = $('#playhead'); if (!ph) return; const x = PB.t * TL.pps; ph.style.transform = `translate3d(${TL.labelW + x}px,0,0)`;
+  const ph = $('#playhead'); if (!ph) return; const x = (TL.phLock != null ? TL.phLock : PB.t) * TL.pps; ph.style.transform = `translate3d(${TL.labelW + x}px,0,0)`;
   const body = $('#tlbody');
   if (PB.playing) {   // follow smoothly: once the playhead reaches ~40% of the view it stays there and the timeline scrolls under it
     const vis = body.clientWidth - TL.labelW, sx = body.scrollLeft;
@@ -183,11 +183,13 @@ function initTimelineEvents() {
     const fsn0 = (forceMode || mode !== 'move') && followOn() && it.track === 'V1' ? followSnap() : null;   // v1.77: overlays follow trims of main-row clips
     const ord0 = D.items.filter(i => i.track === 'V1').sort((a, b) => a.start - b.start).map(i => i.id);   // clip order of the main row before this drag
     const o = { start: it.start, dur: it.dur, in: it.in || 0, track: it.track }; const x0 = e.clientX; const pts = snapPoints(it.id); const tol = snapTol() / TL.pps; let moved = false;
+    const ph0 = PB.t, sv = v => (TLS.snap && Math.abs(v - ph0) < 14 / TL.pps) ? ph0 : snapVal(v, pts, tol);   // v1.78: the playhead is a fixed guide (stronger magnet), it no longer follows the dragged edge
+    const phSnap = on => { const h = $('#playhead'); if (h) h.classList.toggle('snap', !!on); };
     const m = MEDIA.get(it.mediaId); const sp = it.speed || 1;
     const move = ev => {
       const dt = (ev.clientX - x0) / TL.pps; if (Math.abs(ev.clientX - x0) > (mode === 'move' ? 6 : 2)) moved = true; if (!moved && mode === 'move' && Math.abs(ev.clientY - e.clientY) < 6) return;   // v1.70: a click (or a wobbly tap) no longer starts a move
       if (mode === 'move') {
-        let s = Math.max(0, o.start + dt); const s1 = snapVal(s, pts, tol), s2 = snapVal(s + o.dur, pts, tol) - o.dur; s = Math.abs(s1 - s) <= Math.abs(s2 - s) ? s1 : s2; it.start = Math.max(0, s);
+        let s = Math.max(0, o.start + dt); const s1 = sv(s), s2 = sv(s + o.dur) - o.dur; s = Math.abs(s1 - s) <= Math.abs(s2 - s) ? s1 : s2; it.start = Math.max(0, s);
         const rawS = Math.max(0, o.start + dt);
         const rowEl = document.elementFromPoint(ev.clientX, ev.clientY); const row = rowEl && rowEl.closest ? rowEl.closest('.trow') : null;
         if (row && LANE(row.dataset.track) === LANE(o.track)) it.track = row.dataset.track;
@@ -199,24 +201,25 @@ function initTimelineEvents() {
         }
         if (MG.on) mgReset();
       } else if (mode === 'tl') {
-        let s = snapVal(o.start + dt, pts, tol); let d = s - o.start;
+        let s = sv(o.start + dt); let d = s - o.start;
         if (it.type === 'video' || it.type === 'audio') d = Math.max(d, -(o.in / sp));
         d = Math.min(d, o.dur - 0.1); d = Math.max(d, -o.start);
         it.start = o.start + d; it.dur = o.dur - d; if (it.type === 'video' || it.type === 'audio') it.in = o.in + d * sp;
         if (it.kf) { /* keyframes stay relative to start */ }
       } else {
-        let e2 = snapVal(o.start + o.dur + dt, pts, tol); let d = e2 - o.start; d = Math.max(0.1, d);
+        let e2 = sv(o.start + o.dur + dt); let d = e2 - o.start; d = Math.max(0.1, d);
         if ((it.type === 'video') && m) d = Math.min(d, (m.duration - o.in) / sp);
         if (it.type === 'audio' && m && !it.loop) d = Math.min(d, m.duration - o.in);
         it.dur = d;
       }
       if (TLS.magnet && (it.track === 'V1' || o.track === 'V1')) magnetLayout(null, ord0);
       if (fsn0 && mode !== 'move') followApply(fsn0);
-      renderTimeline(); dirty(); emit('inspect-refresh');
+      TL.phLock = ph0;
+      renderTimeline(); phSnap(Math.abs((mode === 'tl' ? it.start : it.start + it.dur) - ph0) < 1e-6 || (mode === 'move' && (Math.abs(it.start - ph0) < 1e-6 || Math.abs(it.start + it.dur - ph0) < 1e-6))); dirty(); emit('inspect-refresh');
       // like CapCut: the player follows the edge you are dragging (trim) or keeps showing the frame under the playhead while the clip moves
       if (mode === 'tl') seek(it.start + .02); else if (mode === 'tr') seek(Math.max(it.start, it.start + it.dur - .04)); else seek(PB.t);
     };
-    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); if (MG.on) { if (it.track === 'V1') it.start = MG.slot; mgReset(); }
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); if (TL.phLock != null) { TL.phLock = null; phSnap(false); seek(ph0); } if (MG.on) { if (it.track === 'V1') it.start = MG.slot; mgReset(); }
       if (moved) {
         if (resolveOverlap(it)) { const nm = visLayers().indexOf(it.track) + 1; renderTimeline(); toast(T('ซ้อนกับอันอื่นในชั้นเดียวกัน — ย้ายไปชั้น') + ' ' + nm + ' ' + T('ให้แล้ว'), 4500); }
         commit('edit');

@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.77
-// APP_VERSION_PREV : 1.76
-// APP_VERSION_PREV_OLDER : 1.75
+// APP_VERSION  : 1.78
+// APP_VERSION_PREV : 1.77
+// APP_VERSION_PREV_OLDER : 1.76
+// 1.78 : Playhead as a real guide line. While you drag the end/start of a layer (or move it) the playhead no longer jumps along with the edge and stays put where you left it, the edge is pulled to it with a stronger magnet (14 px), and the line turns yellow when the edge is exactly on it. Before, the playhead followed the first dragged edge, so the next layer snapped to the wrong place and the ends never lined up. The player still shows the frame at the dragged edge while you drag.
 // 1.77 : Text, captions, stickers, overlay pictures and sound effects now FOLLOW the main row. When a Video-1 clip is trimmed or stretched (drag an edge, the W/Q trim buttons, or the junction handle) everything on the other rows that belongs to that clip's speech moves with it (each time is mapped through the clip it was in: source time -> new timeline time), and everything after the clip moves by the same amount — so cutting out dead air no longer leaves the captions behind. Music (A1) stays put. A chain-link button next to the magnet turns this on/off (default on).
 // 1.76 : Only the layers that hold something are shown (plus Video 1 and ONE thin "＋ new layer" strip on top to drop onto) — no more rows of empty layers. A new layer appears by itself when you drop something on the strip or when items would overlap; a layer that becomes empty disappears.
 // 1.75 : Up to 40 layers (was 12): picture layers V1-V3 and text layers T1-T37; layers beyond the first six appear only when used (plus one empty spare on top). Tested with 30 items stacked at the same moment.
@@ -83,7 +84,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.77';
+const APP_VERSION = '1.78';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
