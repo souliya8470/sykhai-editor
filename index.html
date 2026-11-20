@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.82</title>
+<title>Sykhai Editor v1.83</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -2288,9 +2288,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.82
-// APP_VERSION_PREV : 1.81
-// APP_VERSION_PREV_OLDER : 1.80
+// APP_VERSION  : 1.83
+// APP_VERSION_PREV : 1.82
+// APP_VERSION_PREV_OLDER : 1.81
+// 1.83 : iPhone stutter diagnosis (Tar's screen recording 2026-11-20: from the 3rd clip on the picture advances only ~5-12 f/s although render is 30/s and decode/proxy are fine: 540x960 H.264, keyframe every 1 s). Phone readout now shows per-clip decoded f/s (old counter read 0/negative at every clip change), drift, readyState, seconds buffered ahead, PAUSED + last play() rejection, and play()/seek calls per second, so the next recording shows WHY the clip is not running. No behaviour change.
 // 1.82 : ✅ APPROVE button. When a video is OK, press ✅ อนุมัติ in the project: the project and its clips are saved to the shop server, the server opens a hidden Chrome of its own, exports the video there (fast export, no one has to keep a tab open), and sends the MP4 into Marketing Studio (edited_product_videos) so the other admins can use it. Manual export stays as before. Status (queued / exporting / sent / failed) shows on the button and in its dialog; a job can be cancelled.
 // 1.81 : FAST EXPORT that works in the background. Export no longer plays the timeline and films it (that needs the tab in front); for each frame it seeks the clips to the exact time, draws it and sends it to the H.264 encoder (WebCodecs), and the sound is mixed offline (same volume / fades / ducking / voice effects) and encoded as AAC, then both go into an MP4 (mp4-muxer bundled). You can switch tabs or windows while it runs, and it is faster than real time. If the browser can't do it (no AAC / H.264 encoder, or audible clips with changed speed) it falls back to the old real-time way (with the v1.80 pause). Set localStorage sk_fastexp=0 to force the old way.
 // 1.80 : Export no longer freezes when you leave the tab. Found in a real export (v5.5, 58 s): 48 s of it was ONE frozen picture, and the 0.13 s cover lasted 4 s — Chrome stops animation frames and slows timers to once a second in a tab that is hidden, covered or minimised, and the real-time capture recorded exactly that. Now the capture pauses (recorder + sound) the moment the tab is not visible, the title shows ⏸, and it carries on from the same second when you come back; it also waits for the tab to be visible before it starts.
@@ -2374,7 +2375,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.82';
+const APP_VERSION = '1.83';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -7572,7 +7573,7 @@ function syncMedia(force) {
     if (ONE_AUDIO && PB.playing && !PB.exporting) { const mu = it.id !== primary; if (el.muted !== mu) el.muted = mu; } else if (el.muted) el.muted = false;
     if (PB.playing) {
       if (el.paused && target <= maxT && now - (r.lastPlay || 0) > 350) { r.lastPlay = now; PD.plays = (PD.plays || 0) + 1; el.play().catch(e => { r.playErr = e && e.name; }); }
-      if (Math.abs(el.currentTime - tt) > 0.35 && now - (r.lastSeek || 0) > 1200) { r.lastSeek = now; try { el.currentTime = tt; } catch (e) { } }
+      if (Math.abs(el.currentTime - tt) > 0.35 && now - (r.lastSeek || 0) > 1200) { r.lastSeek = now; PD.seeks = (PD.seeks || 0) + 1; try { el.currentTime = tt; } catch (e) { } }
     } else {
       if (!el.paused) el.pause();
       if (force || Math.abs(el.currentTime - tt) > 0.03) { if (el.seeking && !PB.exporting) r.want = tt; else { r.want = null; try { el.currentTime = tt; } catch (e) { } } }
@@ -7625,10 +7626,21 @@ function perfCompact(now) {
   const e = $('#verTag2'); if (!e) return;
   if (!PB.playing || PB.exporting) { if (PD.cOn) { PD.cOn = false; e.textContent = verText(); } return; }
   if (now - (PD.cShow || 0) < 600) return; const dt = (now - (PD.cShow || now)) / 1000 || 1; PD.cShow = now; PD.cOn = true;
-  let v = '', k = 0, n = 0, pa = 0, mu = 0;
-  for (const [id, r] of POOL) { const it = getItem(id); if (!it || !(PB.t >= it.start - 0.05 && PB.t < it.start + it.dur)) continue; const el = r.el; n++; if (el.paused) pa++; if (el.muted) mu++; if (!k) { k = 1; if (!el._rv && el.requestVideoFrameCallback) { el._rv = 1; el._rvn = 0; const f = () => { el._rvn++; el.requestVideoFrameCallback(f); }; el.requestVideoFrameCallback(f); } const pv = PD.cLast || 0; v = ((el._rvn || 0) - pv) / dt; PD.cLast = el._rvn || 0; const it2 = it; v = Math.round(v) + 'f ' + (el.currentTime - clamp(PB.t - it2.start + (it2.in || 0), 0, 1e6)).toFixed(1); } }
+  // v1.83: per-element frame counter (the old single counter read 0 / negative every time the active clip changed) + the state that explains a stall:
+  // P = element paused, rs = readyState, ahead = seconds buffered after the playhead, err = last play() rejection, pl/sk = play() and seek calls per second
+  let v = '', n = 0, pa = 0, mu = 0, st = '';
+  for (const [id, r] of POOL) {
+    const it = getItem(id); if (!it || !(PB.t >= it.start - 0.05 && PB.t < it.start + it.dur)) continue; const el = r.el; n++; if (el.paused) pa++; if (el.muted) mu++;
+    if (!el._rv && el.requestVideoFrameCallback) { el._rv = 1; el._rvn = 0; const f = () => { el._rvn++; el.requestVideoFrameCallback(f); }; el.requestVideoFrameCallback(f); }
+    if (n === 1) {
+      const c = el._rvn || 0, same = PD.cEl === el; v = same ? Math.round((c - (PD.cLast || 0)) / dt) + 'f' : '–'; PD.cEl = el; PD.cLast = c;
+      const want = clamp(PB.t - it.start + (it.in || 0), 0, 1e6); let ahead = 0; try { const b = el.buffered; for (let q = 0; q < b.length; q++) if (el.currentTime >= b.start(q) - 0.05 && el.currentTime <= b.end(q) + 0.05) ahead = b.end(q) - el.currentTime; } catch (e) { }
+      st = `${v} ${(el.currentTime - want).toFixed(1)} rs${el.readyState} a${ahead.toFixed(0)}${el.paused ? ' PAUSED' : ''}${r.playErr ? ' ' + r.playErr : ''}`;
+    }
+  }
+  const pl = Math.round((PD.plays || 0) / dt), sk = Math.round((PD.seeks || 0) / dt); PD.plays = 0; PD.seeks = 0;
   const rr = Math.round((PD.rn - (PD._rn0 || 0)) / dt); PD._rn0 = PD.rn;
-  e.textContent = `r${rr}/s ${PERF.ema.toFixed(0)}ms s${PD.sync.toFixed(0)} t${PD.tot.toFixed(0)} v${v} L${n}${pa ? ' P' + pa : ''}${mu ? ' M' + mu : ''} q${Math.round(PERF.q * 100)}${proxyTag()}`;
+  e.textContent = `r${rr}/s ${PERF.ema.toFixed(0)}ms s${PD.sync.toFixed(0)} t${PD.tot.toFixed(0)} v${st} L${n}${pa ? ' P' + pa : ''}${mu ? ' M' + mu : ''} pl${pl} sk${sk} q${Math.round(PERF.q * 100)}${proxyTag()}`;
 }
 function perfOverlay(now) {
   if (!PERF.hud) { if (PHONE_HUD()) perfCompact(now); if (PD.el) { PD.el.remove(); PD.el = null; } return; }

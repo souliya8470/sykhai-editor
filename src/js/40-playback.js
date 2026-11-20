@@ -253,7 +253,7 @@ function syncMedia(force) {
     if (ONE_AUDIO && PB.playing && !PB.exporting) { const mu = it.id !== primary; if (el.muted !== mu) el.muted = mu; } else if (el.muted) el.muted = false;
     if (PB.playing) {
       if (el.paused && target <= maxT && now - (r.lastPlay || 0) > 350) { r.lastPlay = now; PD.plays = (PD.plays || 0) + 1; el.play().catch(e => { r.playErr = e && e.name; }); }
-      if (Math.abs(el.currentTime - tt) > 0.35 && now - (r.lastSeek || 0) > 1200) { r.lastSeek = now; try { el.currentTime = tt; } catch (e) { } }
+      if (Math.abs(el.currentTime - tt) > 0.35 && now - (r.lastSeek || 0) > 1200) { r.lastSeek = now; PD.seeks = (PD.seeks || 0) + 1; try { el.currentTime = tt; } catch (e) { } }
     } else {
       if (!el.paused) el.pause();
       if (force || Math.abs(el.currentTime - tt) > 0.03) { if (el.seeking && !PB.exporting) r.want = tt; else { r.want = null; try { el.currentTime = tt; } catch (e) { } } }
@@ -306,10 +306,21 @@ function perfCompact(now) {
   const e = $('#verTag2'); if (!e) return;
   if (!PB.playing || PB.exporting) { if (PD.cOn) { PD.cOn = false; e.textContent = verText(); } return; }
   if (now - (PD.cShow || 0) < 600) return; const dt = (now - (PD.cShow || now)) / 1000 || 1; PD.cShow = now; PD.cOn = true;
-  let v = '', k = 0, n = 0, pa = 0, mu = 0;
-  for (const [id, r] of POOL) { const it = getItem(id); if (!it || !(PB.t >= it.start - 0.05 && PB.t < it.start + it.dur)) continue; const el = r.el; n++; if (el.paused) pa++; if (el.muted) mu++; if (!k) { k = 1; if (!el._rv && el.requestVideoFrameCallback) { el._rv = 1; el._rvn = 0; const f = () => { el._rvn++; el.requestVideoFrameCallback(f); }; el.requestVideoFrameCallback(f); } const pv = PD.cLast || 0; v = ((el._rvn || 0) - pv) / dt; PD.cLast = el._rvn || 0; const it2 = it; v = Math.round(v) + 'f ' + (el.currentTime - clamp(PB.t - it2.start + (it2.in || 0), 0, 1e6)).toFixed(1); } }
+  // v1.83: per-element frame counter (the old single counter read 0 / negative every time the active clip changed) + the state that explains a stall:
+  // P = element paused, rs = readyState, ahead = seconds buffered after the playhead, err = last play() rejection, pl/sk = play() and seek calls per second
+  let v = '', n = 0, pa = 0, mu = 0, st = '';
+  for (const [id, r] of POOL) {
+    const it = getItem(id); if (!it || !(PB.t >= it.start - 0.05 && PB.t < it.start + it.dur)) continue; const el = r.el; n++; if (el.paused) pa++; if (el.muted) mu++;
+    if (!el._rv && el.requestVideoFrameCallback) { el._rv = 1; el._rvn = 0; const f = () => { el._rvn++; el.requestVideoFrameCallback(f); }; el.requestVideoFrameCallback(f); }
+    if (n === 1) {
+      const c = el._rvn || 0, same = PD.cEl === el; v = same ? Math.round((c - (PD.cLast || 0)) / dt) + 'f' : '–'; PD.cEl = el; PD.cLast = c;
+      const want = clamp(PB.t - it.start + (it.in || 0), 0, 1e6); let ahead = 0; try { const b = el.buffered; for (let q = 0; q < b.length; q++) if (el.currentTime >= b.start(q) - 0.05 && el.currentTime <= b.end(q) + 0.05) ahead = b.end(q) - el.currentTime; } catch (e) { }
+      st = `${v} ${(el.currentTime - want).toFixed(1)} rs${el.readyState} a${ahead.toFixed(0)}${el.paused ? ' PAUSED' : ''}${r.playErr ? ' ' + r.playErr : ''}`;
+    }
+  }
+  const pl = Math.round((PD.plays || 0) / dt), sk = Math.round((PD.seeks || 0) / dt); PD.plays = 0; PD.seeks = 0;
   const rr = Math.round((PD.rn - (PD._rn0 || 0)) / dt); PD._rn0 = PD.rn;
-  e.textContent = `r${rr}/s ${PERF.ema.toFixed(0)}ms s${PD.sync.toFixed(0)} t${PD.tot.toFixed(0)} v${v} L${n}${pa ? ' P' + pa : ''}${mu ? ' M' + mu : ''} q${Math.round(PERF.q * 100)}${proxyTag()}`;
+  e.textContent = `r${rr}/s ${PERF.ema.toFixed(0)}ms s${PD.sync.toFixed(0)} t${PD.tot.toFixed(0)} v${st} L${n}${pa ? ' P' + pa : ''}${mu ? ' M' + mu : ''} pl${pl} sk${sk} q${Math.round(PERF.q * 100)}${proxyTag()}`;
 }
 function perfOverlay(now) {
   if (!PERF.hud) { if (PHONE_HUD()) perfCompact(now); if (PD.el) { PD.el.remove(); PD.el = null; } return; }
