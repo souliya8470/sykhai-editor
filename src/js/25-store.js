@@ -97,7 +97,7 @@ function projRec(doc) {
 async function projSaveNow() {
   clearTimeout(PS.timer); PS.timer = 0;
   if (!D || !D.pid || HOME.open) return;
-  if (!D.items.length && !PS.known.has(D.pid)) return;
+  if (!D.items.length && !(D.bin && D.bin.length) && !PS.known.has(D.pid)) return;   // v1.86: a project that has only imported clips (nothing on the timeline yet, e.g. waiting for the AI) is saved too — before, a refresh made it vanish
   const sig = JSON.stringify(D); if (PS.sig.get(D.pid) === sig) return true;   // v1.65: nothing changed since open/last save -> keep the old time stamp, push nothing (else just opening a project could overwrite a newer copy made elsewhere)
   const rec = projRec(D); const ok = await projPut(rec); if (ok) { PS.sig.set(D.pid, sig); if (typeof srvSync === 'function') srvSync(rec); } return ok;
 }

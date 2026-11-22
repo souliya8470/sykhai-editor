@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.85
-// APP_VERSION_PREV : 1.84
-// APP_VERSION_PREV_OLDER : 1.83
+// APP_VERSION  : 1.86
+// APP_VERSION_PREV : 1.85
+// APP_VERSION_PREV_OLDER : 1.84
+// 1.86 : HOTFIX — a new project with imported clips but nothing on the timeline yet (Tar 2026-11-22: 6 clips imported, AI "cut it all" dialog open, then a page refresh) was never saved, so it disappeared from Home after a refresh (the project was only written when the timeline had a clip). Now a project is saved as soon as it has clips in its media bin. The clips themselves were never lost: they stay under "older files".
 // 1.85 : spelling safety (Tar 2026-11-22: AI wrote "L-Citrulline" instead of L-CYSTEINE — the speech-to-text had misheard it and the old text stayed in the browser). (1) a corrected transcript on the shop server now replaces the older copy kept in this browser. (2) new glossary in settings (correct product / ingredient names, or "wrong => right" pairs): every Claude prompt gets the correct spellings, and the pairs are applied to every transcript the editor reads, so subtitles and key words are right too. Default list: VELARIS LC, L-CYSTEINE, PM 2.5.
 // 1.84 : opening the Home page quietly pulls projects that exist only on the shop server (made by Claude or on another device) — before, they showed only after pressing 🔄 sync (Tar did not see the keyword-only v5.5 copy). Pull only, at most once a minute, no push, no media.
 // 1.83 : iPhone stutter diagnosis (Tar's screen recording 2026-11-20: from the 3rd clip on the picture advances only ~5-12 f/s although render is 30/s and decode/proxy are fine: 540x960 H.264, keyframe every 1 s). Phone readout now shows per-clip decoded f/s (old counter read 0/negative at every clip change), drift, readyState, seconds buffered ahead, PAUSED + last play() rejection, and play()/seek calls per second, so the next recording shows WHY the clip is not running. No behaviour change.
@@ -91,7 +92,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.85';
+const APP_VERSION = '1.86';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
