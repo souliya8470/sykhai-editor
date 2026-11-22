@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.88
-// APP_VERSION_PREV : 1.87
-// APP_VERSION_PREV_OLDER : 1.86
+// APP_VERSION  : 1.89
+// APP_VERSION_PREV : 1.88
+// APP_VERSION_PREV_OLDER : 1.87
+// 1.89 : new projects get numbered names like CapCut (Project 1, Project 2 ... in the UI language; next number = highest existing + 1) instead of every one being called New project; rename any time.
 // 1.88 : clips that are only imported into a project (media bin, not on the timeline yet) are now sent to the shop server and pulled by other devices (Tar 2026-11-22: the phone showed only 6 of ~25 clips in older files — the other clips existed only in the Mac browser because only timeline clips were ever uploaded). Home sync also queues the bin clips of projects saved earlier.
 // 1.87 : the older-files picker takes many files at once (Tar 2026-11-22): click toggles a file, Shift+click selects a range, Cmd/Ctrl+A selects all, Enter or the add-selected button adds them all to the project, Esc closes, select-all / select-none button.
 // 1.86 : HOTFIX — a new project with imported clips but nothing on the timeline yet (Tar 2026-11-22: 6 clips imported, AI "cut it all" dialog open, then a page refresh) was never saved, so it disappeared from Home after a refresh (the project was only written when the timeline had a clip). Now a project is saved as soon as it has clips in its media bin. The clips themselves were never lost: they stay under "older files".
@@ -94,7 +95,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.88';
+const APP_VERSION = '1.89';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];

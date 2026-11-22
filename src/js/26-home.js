@@ -79,7 +79,9 @@ function resetDoc(doc) {
 }
 async function newProject() {
   pause(); await projSaveNow();
-  resetDoc(newDoc()); hideHome();
+  const nd = newDoc();   // v1.89: numbered names like CapCut — Project 1, Project 2 … (rename any time)
+  try { const re = /^(โปรเจกต์|Project|ໂປຣເຈັກ) (\d+)$/; let mx = 0; for (const r of await projAll()) { const m = re.exec(String(r.name || '').trim()); if (m) mx = Math.max(mx, +m[2]); } nd.name = T('โปรเจกต์') + ' ' + (mx + 1); } catch (e) { }
+  resetDoc(nd); hideHome();
 }
 async function openById(id) {
   const rec = await projGet(id); if (!rec) { toast('ไม่พบโปรเจกต์'); return renderHome(); }
