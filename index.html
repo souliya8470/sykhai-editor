@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.87</title>
+<title>Sykhai Editor v1.88</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -2299,9 +2299,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.87
-// APP_VERSION_PREV : 1.86
-// APP_VERSION_PREV_OLDER : 1.85
+// APP_VERSION  : 1.88
+// APP_VERSION_PREV : 1.87
+// APP_VERSION_PREV_OLDER : 1.86
+// 1.88 : clips that are only imported into a project (media bin, not on the timeline yet) are now sent to the shop server and pulled by other devices (Tar 2026-11-22: the phone showed only 6 of ~25 clips in older files — the other clips existed only in the Mac browser because only timeline clips were ever uploaded). Home sync also queues the bin clips of projects saved earlier.
 // 1.87 : the older-files picker takes many files at once (Tar 2026-11-22): click toggles a file, Shift+click selects a range, Cmd/Ctrl+A selects all, Enter or the add-selected button adds them all to the project, Esc closes, select-all / select-none button.
 // 1.86 : HOTFIX — a new project with imported clips but nothing on the timeline yet (Tar 2026-11-22: 6 clips imported, AI "cut it all" dialog open, then a page refresh) was never saved, so it disappeared from Home after a refresh (the project was only written when the timeline had a clip). Now a project is saved as soon as it has clips in its media bin. The clips themselves were never lost: they stay under "older files".
 // 1.85 : spelling safety (Tar 2026-11-22: AI wrote "L-Citrulline" instead of L-CYSTEINE — the speech-to-text had misheard it and the old text stayed in the browser). (1) a corrected transcript on the shop server now replaces the older copy kept in this browser. (2) new glossary in settings (correct product / ingredient names, or "wrong => right" pairs): every Claude prompt gets the correct spellings, and the pairs are applied to every transcript the editor reads, so subtitles and key words are right too. Default list: VELARIS LC, L-CYSTEINE, PM 2.5.
@@ -2390,7 +2391,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.87';
+const APP_VERSION = '1.88';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -6067,7 +6068,7 @@ function projRec(doc) {
   return {
     id: doc.pid, name: doc.name || 'โปรเจกต์', doc: JSON.stringify(doc), thumb: projThumb(doc), n: items.length,
     dur: items.reduce((m, i) => Math.max(m, i.start + i.dur), 0),
-    mids: [...new Set(items.map(i => i.mediaId).filter(x => x && !String(x).startsWith('sfx-')))],
+    mids: [...new Set([...items.map(i => i.mediaId), ...(doc.bin || [])].filter(x => x && !String(x).startsWith('sfx-')))],   // v1.88: clips only imported into the project (not on the timeline yet) count too, so they are sent to the shop server and other devices can get them
     created: doc.created || Date.now(), updated: Math.max(Date.now(), (PS.min.get(doc.pid) || 0) + 1),   // min: after "keep this computer's version" the new stamp must beat the server copy even if the two clocks differ
   };
 }
@@ -6175,11 +6176,11 @@ async function openById(id) {
   D = doc; await ensureSfx();
   resetDoc(D); hideHome(); if (typeof srvCheckNewer === 'function') setTimeout(srvCheckNewer, 0); PS.sig.set(D.pid, JSON.stringify(D)); if (typeof SRV !== 'undefined') { SRV.upd.set(D.pid, rec.updated || 0); SRV.stale.delete(D.pid); }
   const miss = [...new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => mediaNameFromId(i.mediaId)))];
-  const missIds = [...new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => i.mediaId))];
+  const missIds = srvMissingIds();   // v1.88: includes clips that are only in the media bin
   if (missIds.length && srvOn()) await srvPullMissing();
   const still = [...new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => mediaNameFromId(i.mediaId)))];
   if (still.length) toast('ไฟล์เหล่านี้หายจากเครื่องนี้ ต้องนำเข้าใหม่: ' + still.join(', '), 7000);
-  else { srvQueueMedia([...new Set(D.items.map(i => i.mediaId).filter(Boolean))]); srvAdoptProxies(); }
+  else { srvQueueMedia([...new Set([...D.items.map(i => i.mediaId), ...(D.bin || [])].filter(Boolean))]); srvAdoptProxies(); }
   try { window.dispatchEvent(new Event('sk-project-open')); } catch (e) { }
 }
 async function homeAction(id, a) {
@@ -6404,6 +6405,7 @@ async function srvPullNew() {
   if (down) { toast('ดึงโปรเจกต์ใหม่จากเซิร์ฟเวอร์ ' + down + ' โปรเจกต์', 4000); if (HOME.open) renderHome(); }
   return down;
 }
+function recMids(r) { const out = new Set(r.mids || []); try { for (const id of (JSON.parse(r.doc).bin || [])) if (id && !String(id).startsWith('sfx-')) out.add(id); } catch (e) { } return [...out]; }   // v1.88: older saved projects have no bin clips in mids
 async function srvSyncAll() {          // manual button on Home
   if (!srvOn()) { toast('ยังไม่ได้ตั้งค่าเซิร์ฟเวอร์ — เปิด ⚙ ตั้งค่า'); return; }
   toast('กำลังซิงค์กับเซิร์ฟเวอร์…', 8000);
@@ -6413,7 +6415,7 @@ async function srvSyncAll() {          // manual button on Home
   const local = await projAll(); const lm = new Map(local.map(r => [r.id, r])), rm = new Map(remote.map(r => [r.id, r]));
   let down = 0, up = 0;
   for (const r of remote) { const l = lm.get(r.id); if (!l || l.updated < r.updated) { try { const full = await (await srvFetch('/projects/' + srvId(r.id))).json(); if (await projPut(full)) { down++; SRV.upd.set(full.id, full.updated); } } catch (e) { } } }
-  for (const l of local) { const r = rm.get(l.id); if (!r || r.updated > 0 && r.updated < l.updated) { if (await srvPushProject(l)) up++; } srvQueueMedia(l.mids || []); }
+  for (const l of local) { const r = rm.get(l.id); if (!r || r.updated > 0 && r.updated < l.updated) { if (await srvPushProject(l)) up++; } srvQueueMedia(recMids(l)); }
   toast(`ซิงค์แล้ว — ดึงลงเครื่อง ${down} โปรเจกต์ · ส่งขึ้นเซิร์ฟเวอร์ ${up} โปรเจกต์` + (SRV.q.length ? ` · กำลังส่งไฟล์วิดีโอ ${SRV.q.length} ไฟล์` : ''), 6000);
   renderHome();
 }
@@ -6443,7 +6445,7 @@ async function srvFetchMissing(ids) {
   srvPullUpdate();
   return n;
 }
-function srvMissingIds() { return [...new Set((D ? D.items : []).filter(i => i.mediaId && !String(i.mediaId).startsWith('__') && !MEDIA.has(i.mediaId)).map(i => i.mediaId))]; }
+function srvMissingIds() { return [...new Set([...(D ? D.items : []).map(i => i.mediaId), ...(D && D.bin || [])].filter(id => id && !String(id).startsWith('__') && !String(id).startsWith('sfx-') && !MEDIA.has(id)))]; }   // v1.88: + clips in the project's media bin
 async function srvPullMissing() {                  // the visible “pull files from server” button + used when a project is opened
   const ids = srvMissingIds(); if (!ids.length) { srvPullUpdate(); return 0; }
   const n = await srvFetchMissing(ids);

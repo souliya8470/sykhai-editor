@@ -90,7 +90,7 @@ function projRec(doc) {
   return {
     id: doc.pid, name: doc.name || 'โปรเจกต์', doc: JSON.stringify(doc), thumb: projThumb(doc), n: items.length,
     dur: items.reduce((m, i) => Math.max(m, i.start + i.dur), 0),
-    mids: [...new Set(items.map(i => i.mediaId).filter(x => x && !String(x).startsWith('sfx-')))],
+    mids: [...new Set([...items.map(i => i.mediaId), ...(doc.bin || [])].filter(x => x && !String(x).startsWith('sfx-')))],   // v1.88: clips only imported into the project (not on the timeline yet) count too, so they are sent to the shop server and other devices can get them
     created: doc.created || Date.now(), updated: Math.max(Date.now(), (PS.min.get(doc.pid) || 0) + 1),   // min: after "keep this computer's version" the new stamp must beat the server copy even if the two clocks differ
   };
 }

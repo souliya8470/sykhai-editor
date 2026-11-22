@@ -177,6 +177,7 @@ async function srvPullNew() {
   if (down) { toast('ดึงโปรเจกต์ใหม่จากเซิร์ฟเวอร์ ' + down + ' โปรเจกต์', 4000); if (HOME.open) renderHome(); }
   return down;
 }
+function recMids(r) { const out = new Set(r.mids || []); try { for (const id of (JSON.parse(r.doc).bin || [])) if (id && !String(id).startsWith('sfx-')) out.add(id); } catch (e) { } return [...out]; }   // v1.88: older saved projects have no bin clips in mids
 async function srvSyncAll() {          // manual button on Home
   if (!srvOn()) { toast('ยังไม่ได้ตั้งค่าเซิร์ฟเวอร์ — เปิด ⚙ ตั้งค่า'); return; }
   toast('กำลังซิงค์กับเซิร์ฟเวอร์…', 8000);
@@ -186,7 +187,7 @@ async function srvSyncAll() {          // manual button on Home
   const local = await projAll(); const lm = new Map(local.map(r => [r.id, r])), rm = new Map(remote.map(r => [r.id, r]));
   let down = 0, up = 0;
   for (const r of remote) { const l = lm.get(r.id); if (!l || l.updated < r.updated) { try { const full = await (await srvFetch('/projects/' + srvId(r.id))).json(); if (await projPut(full)) { down++; SRV.upd.set(full.id, full.updated); } } catch (e) { } } }
-  for (const l of local) { const r = rm.get(l.id); if (!r || r.updated > 0 && r.updated < l.updated) { if (await srvPushProject(l)) up++; } srvQueueMedia(l.mids || []); }
+  for (const l of local) { const r = rm.get(l.id); if (!r || r.updated > 0 && r.updated < l.updated) { if (await srvPushProject(l)) up++; } srvQueueMedia(recMids(l)); }
   toast(`ซิงค์แล้ว — ดึงลงเครื่อง ${down} โปรเจกต์ · ส่งขึ้นเซิร์ฟเวอร์ ${up} โปรเจกต์` + (SRV.q.length ? ` · กำลังส่งไฟล์วิดีโอ ${SRV.q.length} ไฟล์` : ''), 6000);
   renderHome();
 }
@@ -216,7 +217,7 @@ async function srvFetchMissing(ids) {
   srvPullUpdate();
   return n;
 }
-function srvMissingIds() { return [...new Set((D ? D.items : []).filter(i => i.mediaId && !String(i.mediaId).startsWith('__') && !MEDIA.has(i.mediaId)).map(i => i.mediaId))]; }
+function srvMissingIds() { return [...new Set([...(D ? D.items : []).map(i => i.mediaId), ...(D && D.bin || [])].filter(id => id && !String(id).startsWith('__') && !String(id).startsWith('sfx-') && !MEDIA.has(id)))]; }   // v1.88: + clips in the project's media bin
 async function srvPullMissing() {                  // the visible “pull files from server” button + used when a project is opened
   const ids = srvMissingIds(); if (!ids.length) { srvPullUpdate(); return 0; }
   const n = await srvFetchMissing(ids);

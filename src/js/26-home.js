@@ -89,11 +89,11 @@ async function openById(id) {
   D = doc; await ensureSfx();
   resetDoc(D); hideHome(); if (typeof srvCheckNewer === 'function') setTimeout(srvCheckNewer, 0); PS.sig.set(D.pid, JSON.stringify(D)); if (typeof SRV !== 'undefined') { SRV.upd.set(D.pid, rec.updated || 0); SRV.stale.delete(D.pid); }
   const miss = [...new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => mediaNameFromId(i.mediaId)))];
-  const missIds = [...new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => i.mediaId))];
+  const missIds = srvMissingIds();   // v1.88: includes clips that are only in the media bin
   if (missIds.length && srvOn()) await srvPullMissing();
   const still = [...new Set(D.items.filter(i => i.mediaId && !MEDIA.has(i.mediaId)).map(i => mediaNameFromId(i.mediaId)))];
   if (still.length) toast('ไฟล์เหล่านี้หายจากเครื่องนี้ ต้องนำเข้าใหม่: ' + still.join(', '), 7000);
-  else { srvQueueMedia([...new Set(D.items.map(i => i.mediaId).filter(Boolean))]); srvAdoptProxies(); }
+  else { srvQueueMedia([...new Set([...D.items.map(i => i.mediaId), ...(D.bin || [])].filter(Boolean))]); srvAdoptProxies(); }
   try { window.dispatchEvent(new Event('sk-project-open')); } catch (e) { }
 }
 async function homeAction(id, a) {
