@@ -307,24 +307,45 @@ function cmdCloseGaps(track) {
 let MF = 'all';
 // "older files" picker: media imported into other projects, re-add to this one or delete for good
 function openOldMedia() {
-  const old = document.getElementById('oldMedia'); if (old) old.remove();
+  const old = document.getElementById('oldMedia'); if (old) old.remove(); if (window._omKey) document.removeEventListener('keydown', window._omKey, true);
   const ov = document.createElement('div'); ov.id = 'oldMedia';
-  ov.innerHTML = `<div class="omb"><div class="omh"><b>📂 <span>ไฟล์เก่า</span></b><span class="mini"><span>ไฟล์ที่เคยนำเข้าในโปรเจกต์อื่น — กดเพื่อเพิ่มเข้าโปรเจกต์นี้</span></span><button class="omx">✕</button></div><div class="omg"></div></div>`;
+  ov.innerHTML = `<div class="omb"><div class="omh"><b>📂 <span>ไฟล์เก่า</span></b><span class="mini"><span>กดเลือกได้หลายไฟล์ (Shift = ช่วง) · ⌘A / Ctrl+A เลือกทั้งหมด · Enter เพิ่มที่เลือก</span></span><button class="omall"><span>เลือกทั้งหมด</span></button><button class="omgo" disabled>+ <span>เพิ่มที่เลือก</span> (<b>0</b>)</button><button class="omx">✕</button></div><div class="omg"></div></div>`;
   document.body.appendChild(ov);
-  const g = ov.querySelector('.omg');
+  const g = ov.querySelector('.omg'), goBtn = ov.querySelector('.omgo'), allBtn = ov.querySelector('.omall');
+  const sel = new Set(); let order = [], anchor = -1;   // v1.87: multi-select — click toggles, Shift+click = range, Cmd/Ctrl+A = all, Enter = add the selected
+  const close = () => { ov.remove(); document.removeEventListener('keydown', onKey, true); window._omKey = null; };
+  const paint = () => { g.querySelectorAll('.mi').forEach(d => d.classList.toggle('sel', sel.has(d.dataset.id))); goBtn.querySelector('b').textContent = sel.size; goBtn.disabled = !sel.size; allBtn.firstElementChild.textContent = T(sel.size && sel.size === order.length ? 'ไม่เลือกเลย' : 'เลือกทั้งหมด'); };
+  const addSel = () => { if (!sel.size) return; const n = sel.size; for (const id of [...sel]) binAdd(id); sel.clear(); renderMediaBin(); draw(); toast(T('เพิ่มเข้าโปรเจกต์แล้ว') + ' ' + n + ' ' + T('ไฟล์')); };
+  const toggleAll = () => { if (sel.size === order.length) sel.clear(); else order.forEach(id => sel.add(id)); paint(); };
+  const onKey = e => {
+    if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    if ((e.metaKey || e.ctrlKey) && (e.key === 'a' || e.key === 'A')) { e.preventDefault(); e.stopPropagation(); order.forEach(id => sel.add(id)); paint(); }
+    else if (e.key === 'Enter' && sel.size) { e.preventDefault(); e.stopPropagation(); addSel(); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); }
+  };
+  window._omKey = onKey; document.addEventListener('keydown', onKey, true);
   const draw = () => {
     const bs = binSet(); const arr = [...MEDIA.values()].filter(m => !m.hidden && !m.ref && !m.builtin && !bs.has(m.id)).sort((a, b) => (a.name < b.name ? -1 : 1));
+    order = arr.map(m => m.id); for (const id of [...sel]) if (!order.includes(id)) sel.delete(id); anchor = -1;
     g.innerHTML = arr.length ? '' : '<div class="empty"><span>ไม่มีไฟล์เก่าแล้ว</span></div>';
     for (const m of arr) {
-      const d = document.createElement('div'); d.className = 'mi';
+      const d = document.createElement('div'); d.className = 'mi'; d.dataset.id = m.id;
       d.innerHTML = `<div class="mth" style="${m.thumb ? `background-image:url(${m.thumb})` : ''}">${m.type === 'audio' ? '♪' : ''}<span class="dur">${m.type === 'image' ? 'ภาพ' : fmt(m.duration)}</span></div><div class="mn" translate="no" title="${esc(m.name)}">${esc(m.name)}</div><div class="mb"><button data-act="add">+ <span>เพิ่มเข้าโปรเจกต์</span></button><button data-act="del" title="ลบถาวร">🗑</button></div>`;
-      d.querySelector('[data-act="add"]').onclick = () => { binAdd(m.id); renderMediaBin(); draw(); };
-      d.querySelector('[data-act="del"]').onclick = () => { if (!confirm(T('ลบไฟล์นี้ถาวร? (โปรเจกต์อื่นที่ใช้ไฟล์นี้จะหาไฟล์ไม่เจอ)'))) return; MEDIA.delete(m.id); dbDel(m.id); renderMediaBin(); draw(); };
+      d.querySelector('[data-act="add"]').onclick = e => { e.stopPropagation(); sel.delete(m.id); binAdd(m.id); renderMediaBin(); draw(); };
+      d.querySelector('[data-act="del"]').onclick = e => { e.stopPropagation(); if (!confirm(T('ลบไฟล์นี้ถาวร? (โปรเจกต์อื่นที่ใช้ไฟล์นี้จะหาไฟล์ไม่เจอ)'))) return; MEDIA.delete(m.id); sel.delete(m.id); dbDel(m.id); renderMediaBin(); draw(); };
+      d.onclick = e => {
+        const i = order.indexOf(m.id);
+        if (e.shiftKey && anchor >= 0) { const [x, y] = anchor < i ? [anchor, i] : [i, anchor]; for (let k = x; k <= y; k++) sel.add(order[k]); }
+        else { if (sel.has(m.id)) sel.delete(m.id); else sel.add(m.id); anchor = i; }
+        paint();
+      };
       g.appendChild(d);
     }
     if (!arr.length) { renderMediaBin(); }
+    paint();
   };
-  ov.onclick = e => { if (e.target === ov || e.target.closest('.omx')) ov.remove(); };
+  goBtn.onclick = addSel; allBtn.onclick = toggleAll;
+  ov.onclick = e => { if (e.target === ov || e.target.closest('.omx')) close(); };
   draw();
 }
 function renderMediaBin() {

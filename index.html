@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.86</title>
+<title>Sykhai Editor v1.87</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -380,6 +380,11 @@ button.tic.on{color:#ff9f43}
 #oldMedia .omh{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line,#444)}
 #oldMedia .omh .mini{flex:1;opacity:.7}
 #oldMedia .omx{background:transparent;border:0;color:inherit;font-size:16px;cursor:pointer}
+#oldMedia .omall,#oldMedia .omgo{font-size:12px;padding:5px 10px;border-radius:8px;border:1px solid var(--line,#444);background:transparent;color:inherit;cursor:pointer;white-space:nowrap}
+#oldMedia .omgo{background:var(--ac,#34e0a1);color:#06130e;border-color:transparent;font-weight:700}
+#oldMedia .omgo:disabled{opacity:.35;cursor:default}
+#oldMedia .mi{cursor:pointer;user-select:none;border-radius:10px}
+#oldMedia .mi.sel{outline:2px solid var(--ac,#34e0a1);outline-offset:1px;background:rgba(52,224,161,.14)}
 #oldMedia .omg{padding:12px;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
 .refopen{display:flex;align-items:center;gap:6px;margin-top:22px;padding:12px 16px;border-radius:12px;border:1px solid var(--line,#444);background:var(--panel2,#1f2a27);color:inherit;font-size:14px;cursor:pointer;flex-wrap:wrap;text-align:left}
 .refopen b{background:var(--ac,#34e0a1);color:#06130e;border-radius:10px;padding:1px 8px;font-size:12px}
@@ -1813,6 +1818,11 @@ I18N_ROWS.push(
   ['ลดชั้นนี้ลงล่าง', 'Send this layer down', 'ລົດຊັ້ນນີ້ລົງລຸ່ມ'],
   ['ไฟล์เก่า', 'Older files', 'ໄຟລ໌ເກົ່າ'],
   ['ไฟล์ที่เคยนำเข้าในโปรเจกต์อื่น — กดเพื่อเพิ่มเข้าโปรเจกต์นี้', 'Files imported in other projects — tap to add to this one', 'ໄຟລ໌ທີ່ເຄີຍນຳເຂົ້າໃນໂປຣເຈັກອື່ນ — ກົດເພື່ອເພີ່ມເຂົ້າໂປຣເຈັກນີ້'],
+  ['กดเลือกได้หลายไฟล์ (Shift = ช่วง) · ⌘A / Ctrl+A เลือกทั้งหมด · Enter เพิ่มที่เลือก', 'Click to select several (Shift = range) · ⌘A / Ctrl+A select all · Enter adds the selected', 'ກົດເລືອກໄດ້ຫຼາຍໄຟລ໌ (Shift = ຊ່ວງ) · ⌘A / Ctrl+A ເລືອກທັງໝົດ · Enter ເພີ່ມທີ່ເລືອກ'],
+  ['เลือกทั้งหมด', 'Select all', 'ເລືອກທັງໝົດ'],
+  ['ไม่เลือกเลย', 'Select none', 'ບໍ່ເລືອກເລີຍ'],
+  ['เพิ่มที่เลือก', 'Add selected', 'ເພີ່ມທີ່ເລືອກ'],
+  ['เพิ่มเข้าโปรเจกต์แล้ว', 'Added to the project', 'ເພີ່ມເຂົ້າໂປຣເຈັກແລ້ວ'],
   ['ไม่มีไฟล์เก่าแล้ว', 'No older files', 'ບໍ່ມີໄຟລ໌ເກົ່າແລ້ວ'],
   ['เพิ่มเข้าโปรเจกต์', 'Add to project', 'ເພີ່ມເຂົ້າໂປຣເຈັກ'],
   ['เอาออกจากโปรเจกต์นี้', 'Remove from this project', 'ເອົາອອກຈາກໂປຣເຈັກນີ້'],
@@ -2289,9 +2299,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.86
-// APP_VERSION_PREV : 1.85
-// APP_VERSION_PREV_OLDER : 1.84
+// APP_VERSION  : 1.87
+// APP_VERSION_PREV : 1.86
+// APP_VERSION_PREV_OLDER : 1.85
+// 1.87 : the older-files picker takes many files at once (Tar 2026-11-22): click toggles a file, Shift+click selects a range, Cmd/Ctrl+A selects all, Enter or the add-selected button adds them all to the project, Esc closes, select-all / select-none button.
 // 1.86 : HOTFIX — a new project with imported clips but nothing on the timeline yet (Tar 2026-11-22: 6 clips imported, AI "cut it all" dialog open, then a page refresh) was never saved, so it disappeared from Home after a refresh (the project was only written when the timeline had a clip). Now a project is saved as soon as it has clips in its media bin. The clips themselves were never lost: they stay under "older files".
 // 1.85 : spelling safety (Tar 2026-11-22: AI wrote "L-Citrulline" instead of L-CYSTEINE — the speech-to-text had misheard it and the old text stayed in the browser). (1) a corrected transcript on the shop server now replaces the older copy kept in this browser. (2) new glossary in settings (correct product / ingredient names, or "wrong => right" pairs): every Claude prompt gets the correct spellings, and the pairs are applied to every transcript the editor reads, so subtitles and key words are right too. Default list: VELARIS LC, L-CYSTEINE, PM 2.5.
 // 1.84 : opening the Home page quietly pulls projects that exist only on the shop server (made by Claude or on another device) — before, they showed only after pressing 🔄 sync (Tar did not see the keyword-only v5.5 copy). Pull only, at most once a minute, no push, no media.
@@ -2379,7 +2390,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.86';
+const APP_VERSION = '1.87';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -5614,24 +5625,45 @@ function cmdCloseGaps(track) {
 let MF = 'all';
 // "older files" picker: media imported into other projects, re-add to this one or delete for good
 function openOldMedia() {
-  const old = document.getElementById('oldMedia'); if (old) old.remove();
+  const old = document.getElementById('oldMedia'); if (old) old.remove(); if (window._omKey) document.removeEventListener('keydown', window._omKey, true);
   const ov = document.createElement('div'); ov.id = 'oldMedia';
-  ov.innerHTML = `<div class="omb"><div class="omh"><b>📂 <span>ไฟล์เก่า</span></b><span class="mini"><span>ไฟล์ที่เคยนำเข้าในโปรเจกต์อื่น — กดเพื่อเพิ่มเข้าโปรเจกต์นี้</span></span><button class="omx">✕</button></div><div class="omg"></div></div>`;
+  ov.innerHTML = `<div class="omb"><div class="omh"><b>📂 <span>ไฟล์เก่า</span></b><span class="mini"><span>กดเลือกได้หลายไฟล์ (Shift = ช่วง) · ⌘A / Ctrl+A เลือกทั้งหมด · Enter เพิ่มที่เลือก</span></span><button class="omall"><span>เลือกทั้งหมด</span></button><button class="omgo" disabled>+ <span>เพิ่มที่เลือก</span> (<b>0</b>)</button><button class="omx">✕</button></div><div class="omg"></div></div>`;
   document.body.appendChild(ov);
-  const g = ov.querySelector('.omg');
+  const g = ov.querySelector('.omg'), goBtn = ov.querySelector('.omgo'), allBtn = ov.querySelector('.omall');
+  const sel = new Set(); let order = [], anchor = -1;   // v1.87: multi-select — click toggles, Shift+click = range, Cmd/Ctrl+A = all, Enter = add the selected
+  const close = () => { ov.remove(); document.removeEventListener('keydown', onKey, true); window._omKey = null; };
+  const paint = () => { g.querySelectorAll('.mi').forEach(d => d.classList.toggle('sel', sel.has(d.dataset.id))); goBtn.querySelector('b').textContent = sel.size; goBtn.disabled = !sel.size; allBtn.firstElementChild.textContent = T(sel.size && sel.size === order.length ? 'ไม่เลือกเลย' : 'เลือกทั้งหมด'); };
+  const addSel = () => { if (!sel.size) return; const n = sel.size; for (const id of [...sel]) binAdd(id); sel.clear(); renderMediaBin(); draw(); toast(T('เพิ่มเข้าโปรเจกต์แล้ว') + ' ' + n + ' ' + T('ไฟล์')); };
+  const toggleAll = () => { if (sel.size === order.length) sel.clear(); else order.forEach(id => sel.add(id)); paint(); };
+  const onKey = e => {
+    if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    if ((e.metaKey || e.ctrlKey) && (e.key === 'a' || e.key === 'A')) { e.preventDefault(); e.stopPropagation(); order.forEach(id => sel.add(id)); paint(); }
+    else if (e.key === 'Enter' && sel.size) { e.preventDefault(); e.stopPropagation(); addSel(); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); }
+  };
+  window._omKey = onKey; document.addEventListener('keydown', onKey, true);
   const draw = () => {
     const bs = binSet(); const arr = [...MEDIA.values()].filter(m => !m.hidden && !m.ref && !m.builtin && !bs.has(m.id)).sort((a, b) => (a.name < b.name ? -1 : 1));
+    order = arr.map(m => m.id); for (const id of [...sel]) if (!order.includes(id)) sel.delete(id); anchor = -1;
     g.innerHTML = arr.length ? '' : '<div class="empty"><span>ไม่มีไฟล์เก่าแล้ว</span></div>';
     for (const m of arr) {
-      const d = document.createElement('div'); d.className = 'mi';
+      const d = document.createElement('div'); d.className = 'mi'; d.dataset.id = m.id;
       d.innerHTML = `<div class="mth" style="${m.thumb ? `background-image:url(${m.thumb})` : ''}">${m.type === 'audio' ? '♪' : ''}<span class="dur">${m.type === 'image' ? 'ภาพ' : fmt(m.duration)}</span></div><div class="mn" translate="no" title="${esc(m.name)}">${esc(m.name)}</div><div class="mb"><button data-act="add">+ <span>เพิ่มเข้าโปรเจกต์</span></button><button data-act="del" title="ลบถาวร">🗑</button></div>`;
-      d.querySelector('[data-act="add"]').onclick = () => { binAdd(m.id); renderMediaBin(); draw(); };
-      d.querySelector('[data-act="del"]').onclick = () => { if (!confirm(T('ลบไฟล์นี้ถาวร? (โปรเจกต์อื่นที่ใช้ไฟล์นี้จะหาไฟล์ไม่เจอ)'))) return; MEDIA.delete(m.id); dbDel(m.id); renderMediaBin(); draw(); };
+      d.querySelector('[data-act="add"]').onclick = e => { e.stopPropagation(); sel.delete(m.id); binAdd(m.id); renderMediaBin(); draw(); };
+      d.querySelector('[data-act="del"]').onclick = e => { e.stopPropagation(); if (!confirm(T('ลบไฟล์นี้ถาวร? (โปรเจกต์อื่นที่ใช้ไฟล์นี้จะหาไฟล์ไม่เจอ)'))) return; MEDIA.delete(m.id); sel.delete(m.id); dbDel(m.id); renderMediaBin(); draw(); };
+      d.onclick = e => {
+        const i = order.indexOf(m.id);
+        if (e.shiftKey && anchor >= 0) { const [x, y] = anchor < i ? [anchor, i] : [i, anchor]; for (let k = x; k <= y; k++) sel.add(order[k]); }
+        else { if (sel.has(m.id)) sel.delete(m.id); else sel.add(m.id); anchor = i; }
+        paint();
+      };
       g.appendChild(d);
     }
     if (!arr.length) { renderMediaBin(); }
+    paint();
   };
-  ov.onclick = e => { if (e.target === ov || e.target.closest('.omx')) ov.remove(); };
+  goBtn.onclick = addSel; allBtn.onclick = toggleAll;
+  ov.onclick = e => { if (e.target === ov || e.target.closest('.omx')) close(); };
   draw();
 }
 function renderMediaBin() {

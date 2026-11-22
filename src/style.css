@@ -373,6 +373,11 @@ button.tic.on{color:#ff9f43}
 #oldMedia .omh{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line,#444)}
 #oldMedia .omh .mini{flex:1;opacity:.7}
 #oldMedia .omx{background:transparent;border:0;color:inherit;font-size:16px;cursor:pointer}
+#oldMedia .omall,#oldMedia .omgo{font-size:12px;padding:5px 10px;border-radius:8px;border:1px solid var(--line,#444);background:transparent;color:inherit;cursor:pointer;white-space:nowrap}
+#oldMedia .omgo{background:var(--ac,#34e0a1);color:#06130e;border-color:transparent;font-weight:700}
+#oldMedia .omgo:disabled{opacity:.35;cursor:default}
+#oldMedia .mi{cursor:pointer;user-select:none;border-radius:10px}
+#oldMedia .mi.sel{outline:2px solid var(--ac,#34e0a1);outline-offset:1px;background:rgba(52,224,161,.14)}
 #oldMedia .omg{padding:12px;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
 .refopen{display:flex;align-items:center;gap:6px;margin-top:22px;padding:12px 16px;border-radius:12px;border:1px solid var(--line,#444);background:var(--panel2,#1f2a27);color:inherit;font-size:14px;cursor:pointer;flex-wrap:wrap;text-align:left}
 .refopen b{background:var(--ac,#34e0a1);color:#06130e;border-radius:10px;padding:1px 8px;font-size:12px}
