@@ -166,6 +166,17 @@ async function srvSync(rec) {          // called after every local autosave
   if (await srvPushProject(rec)) srvQueueMedia(rec.mids || []);
 }
 async function srvDeleteProject(id) { if (srvOn()) { try { await srvFetch('/projects/' + srvId(id), { method: 'DELETE' }); } catch (e) { } } }
+// v1.84: opening Home quietly pulls projects that exist only on the server (made by Claude / another device). Pull only — never pushes, never touches media; at most once a minute
+let _pullAt = 0, _pullBusy = false;
+async function srvPullNew() {
+  if (!srvOn() || _pullBusy || Date.now() - _pullAt < 60000) return 0; _pullBusy = true; _pullAt = Date.now(); let down = 0;
+  try {
+    const remote = await (await srvFetch('/projects')).json(); const lm = new Map((await projAll()).map(r => [r.id, r]));
+    for (const r of remote) { const l = lm.get(r.id); if (!l || l.updated < r.updated) { try { const full = await (await srvFetch('/projects/' + srvId(r.id))).json(); if (await projPut(full)) { down++; SRV.upd.set(full.id, full.updated); } } catch (e) { } } }
+  } catch (e) { } finally { _pullBusy = false; }
+  if (down) { toast('ดึงโปรเจกต์ใหม่จากเซิร์ฟเวอร์ ' + down + ' โปรเจกต์', 4000); if (HOME.open) renderHome(); }
+  return down;
+}
 async function srvSyncAll() {          // manual button on Home
   if (!srvOn()) { toast('ยังไม่ได้ตั้งค่าเซิร์ฟเวอร์ — เปิด ⚙ ตั้งค่า'); return; }
   toast('กำลังซิงค์กับเซิร์ฟเวอร์…', 8000);

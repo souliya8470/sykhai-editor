@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.83
-// APP_VERSION_PREV : 1.82
-// APP_VERSION_PREV_OLDER : 1.81
+// APP_VERSION  : 1.84
+// APP_VERSION_PREV : 1.83
+// APP_VERSION_PREV_OLDER : 1.82
+// 1.84 : opening the Home page quietly pulls projects that exist only on the shop server (made by Claude or on another device) — before, they showed only after pressing 🔄 sync (Tar did not see the keyword-only v5.5 copy). Pull only, at most once a minute, no push, no media.
 // 1.83 : iPhone stutter diagnosis (Tar's screen recording 2026-11-20: from the 3rd clip on the picture advances only ~5-12 f/s although render is 30/s and decode/proxy are fine: 540x960 H.264, keyframe every 1 s). Phone readout now shows per-clip decoded f/s (old counter read 0/negative at every clip change), drift, readyState, seconds buffered ahead, PAUSED + last play() rejection, and play()/seek calls per second, so the next recording shows WHY the clip is not running. No behaviour change.
 // 1.82 : ✅ APPROVE button. When a video is OK, press ✅ อนุมัติ in the project: the project and its clips are saved to the shop server, the server opens a hidden Chrome of its own, exports the video there (fast export, no one has to keep a tab open), and sends the MP4 into Marketing Studio (edited_product_videos) so the other admins can use it. Manual export stays as before. Status (queued / exporting / sent / failed) shows on the button and in its dialog; a job can be cancelled.
 // 1.81 : FAST EXPORT that works in the background. Export no longer plays the timeline and films it (that needs the tab in front); for each frame it seeks the clips to the exact time, draws it and sends it to the H.264 encoder (WebCodecs), and the sound is mixed offline (same volume / fades / ducking / voice effects) and encoded as AAC, then both go into an MP4 (mp4-muxer bundled). You can switch tabs or windows while it runs, and it is faster than real time. If the browser can't do it (no AAC / H.264 encoder, or audible clips with changed speed) it falls back to the old real-time way (with the v1.80 pause). Set localStorage sk_fastexp=0 to force the old way.
@@ -89,7 +90,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.83';
+const APP_VERSION = '1.84';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];

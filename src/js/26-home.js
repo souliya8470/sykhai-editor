@@ -9,6 +9,7 @@ async function showHome() {
   HOME.open = true; $('#home').hidden = false; setRefPage(false);
   $('#hmBack').hidden = !HOME.started; $('#hmSync').hidden = !srvOn();
   await renderHome();
+  if (typeof srvPullNew === 'function') srvPullNew();   // v1.84
 }
 // live status of the server-side TikTok downloader, shown on the library page (refreshed every 8 s while the page is open)
 let _refStatT = null;
