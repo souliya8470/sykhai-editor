@@ -69,11 +69,12 @@ async function trcSyncRun() {
   const remote = new Map(list.map(x => [x.key, x]));
   for (const x of list) {            // server -> here: records or variants this browser does not have yet
     const loc = TRC.get(x.key); const have = loc ? Object.keys(loc.tr) : [];
-    if (!(x.v || []).some(v => !have.includes(v))) continue;
+    const newer = loc && (x.savedAt || 0) > (loc.savedAt || 0) + 1000;   // v1.85: a corrected copy on the server (newer) replaces the old text kept in this browser
+    if (!newer && !(x.v || []).some(v => !have.includes(v))) continue;
     try {
       const rr = await srvFetch('/tr/' + encodeURIComponent(x.key)); if (!rr.ok) continue; const rec = await rr.json(); if (!rec || !rec.key || !rec.tr) continue;
       let cur = TRC.get(rec.key); if (!cur) { cur = { key: rec.key, name: rec.name, size: rec.size, duration: rec.duration, savedAt: rec.savedAt || Date.now(), tr: {} }; TRC.set(cur.key, cur); }
-      for (const [k, v] of Object.entries(rec.tr)) if (!cur.tr[k] && v && v.segs) { cur.tr[k] = v; TRC_SAVED.add(v); }
+      for (const [k, v] of Object.entries(rec.tr)) if ((!cur.tr[k] || ((rec.savedAt || 0) > (cur.savedAt || 0) + 1000)) && v && v.segs) { cur.tr[k] = v; TRC_SAVED.add(v); }
       cur.savedAt = Math.max(cur.savedAt || 0, rec.savedAt || 0); await trcPut(cur); res.pulled++;
     } catch (e) { console.warn('trc pull', e); }
   }

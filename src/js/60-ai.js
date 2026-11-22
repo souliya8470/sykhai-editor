@@ -26,8 +26,28 @@ function updateCostBadge() {
 function costGuard(est) { const s = costState(), cap = loadCap(); if (s.usd + est > cap) { toast(`งบ AI เดือนนี้ครบเพดาน $${cap} แล้ว (ใช้ไป $${s.usd.toFixed(2)}) — ปรับเพดานได้ที่ ตั้งค่า`, 5000); return false; } return true; }
 
 // ---------- API calls ----------
+// v1.85 — glossary of correct product / ingredient spellings. One line = a correct term ("L-CYSTEINE") or "wrong, wrong2 => right".
+//  - every AI prompt gets the correct terms (the speech-to-text often mishears foreign words)
+//  - the "wrong => right" pairs are also applied to every transcript the editor reads, so subtitles and key words use the right spelling
+const GLOSS_DEFAULT = 'VELARIS LC\nL-CYSTEINE\nL-Citrulline, L-Citruline, L-Citrulin, L-Cystine => L-CYSTEINE\nPM 2.5';
+const loadGlossText = () => { const v = localStorage.getItem('sk_gloss'); return v === null ? GLOSS_DEFAULT : v; };
+let _glossMemo = null;
+function glossParse() {
+  const src = loadGlossText(); if (_glossMemo && _glossMemo.src === src) return _glossMemo.v;
+  const terms = [], pairs = [];
+  src.split('\n').map(x => x.trim()).filter(Boolean).forEach(l => {
+    const i = l.indexOf('=>'); if (i < 0) { terms.push(l); return; }
+    const right = l.slice(i + 2).trim(); if (!right) return; terms.push(right);
+    l.slice(0, i).split(',').map(x => x.trim()).filter(Boolean).forEach(w => pairs.push([new RegExp(w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), right]));
+  });
+  const v = { terms: [...new Set(terms)], pairs }; _glossMemo = { src, v }; return v;
+}
+function glossFix(text) { if (!text) return text; let t = text; for (const [re, r] of glossParse().pairs) t = t.replace(re, r); return t; }
+function glossTr(t) { if (t && t.segs) for (const sg of t.segs) if (sg && sg.text) sg.text = glossFix(sg.text); return t; }
+function glossPrompt() { const g = glossParse(); return g.terms.length ? '\n\nCORRECT SPELLINGS of this shop\'s product and ingredient names. The speech-to-text transcript may spell them wrongly (it mishears foreign words) — always write them exactly like this in everything you produce, and never invent other ingredient names:\n' + g.terms.join('\n') : ''; }
 const loadStyle = () => (localStorage.getItem('sk_style') || '').trim().slice(0, 8000);
 async function claude({ system, content, max_tokens = 3000, label = 'claude', estUsd = 0.05, useStyle = false }) {
+  system += glossPrompt();
   const st = useStyle ? loadStyle() : ''; if (st) { system += '\n\nThe shop owner\'s own editing style guide follows (collected from his brainstorming with another AI; may be Thai/Lao/English). Follow it wherever it applies to this task, but never break the JSON/output format required above:\n<style_guide>\n' + st + '\n</style_guide>'; estUsd += st.length / 3 * 3 / 1e6 + 0.002; }
   const key = loadKeys().claude; if (!key) throw new Error('ยังไม่ได้ใส่ Claude API key (กดปุ่ม ⚙ ตั้งค่า)');
   if (!costGuard(estUsd)) throw new Error('งบ AI ครบเพดาน');
@@ -106,9 +126,9 @@ function findSilences(m, a, b, minSil = .45, pad = .12) {
 // ---------- transcript store ----------
 function getTr(id) {   // v1.48: falls back to the permanent transcript cache (same file name) before anything is sent to Gemini again
   let t = D.tr && D.tr[id]; const m = MEDIA.get(id);
-  if (t) { if (m && !TRC_SAVED.has(t)) { if (trcFind(m, t.lang, t.engine) !== t) trcSave(m, t); else TRC_SAVED.add(t); } return t; }
+  if (t) { glossTr(t); if (m && !TRC_SAVED.has(t)) { if (trcFind(m, t.lang, t.engine) !== t) trcSave(m, t); else TRC_SAVED.add(t); } return t; }
   const lg = ($('#aiLang') || {}).value || 'lo'; t = m && trcAny(m, lg); if (!t) return t;
-  D.tr = D.tr || {}; D.tr[id] = t; return t;
+  D.tr = D.tr || {}; D.tr[id] = glossTr(t); return t;
 }
 function setTr(id, tr) { D.tr = D.tr || {}; D.tr[id] = tr; const m = MEDIA.get(id); if (m && trcFind(m, tr.lang, tr.engine) !== tr) trcSave(m, tr); commit('tr'); }
 const trText = tr => tr.segs.map((s, i) => `${i}: ${s.text}`).join('\n');

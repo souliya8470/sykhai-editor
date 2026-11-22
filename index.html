@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.84</title>
+<title>Sykhai Editor v1.85</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -618,6 +618,7 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
   <div class="fld col"><label>Anthropic API key (Claude — ใช้เลือกประโยคเด่น / แปล / ทำ 3-4 แบบ)</label><input id="keyClaude" type="password" placeholder="sk-ant-..." autocomplete="off"></div>
   <div class="fld col"><label>Gemini API key (Google AI Studio — ใช้ถอดเสียงภาษาลาว)</label><input id="keyGemini" type="password" placeholder="AIza..." autocomplete="off"></div>
   <div class="fld col"><label>คู่มือสไตล์การตัดต่อของคุณ (วางข้อความที่สรุปจากการคุยกับ ChatGPT — AI ในโปรแกรมจะทำตามตอนเลือกประโยคเด่น และทำ 3-4 แบบ)</label><textarea id="styleGuide" rows="6" placeholder="เช่น: โทนวิดีโอ จังหวะการตัด ประเภทฮุคแรก คำที่ควร/ไม่ควรใช้ ลำดับเล่าเรื่อง ..."></textarea></div>
+  <div class="fld col"><label>พจนานุกรมชื่อสินค้า / ส่วนผสม (บรรทัดละ 1 คำ เขียนให้ถูก · ถ้าคำถูกมักถูกถอดผิด เขียนว่า ผิด1, ผิด2 =&gt; ถูก เช่น L-Citrulline =&gt; L-CYSTEINE · AI และซับไตเติลจะใช้คำที่ถูกเสมอ)</label><textarea id="glossTxt" rows="5" placeholder="VELARIS LC&#10;L-CYSTEINE"></textarea></div>
   <div class="fld"><label>เพดานงบ AI ต่อเดือน (USD)</label><input id="capUsd" type="number" min="1" step="1" value="50" class="num"></div>
   <hr>
   <div class="fld col"><label>เซิร์ฟเวอร์เก็บไฟล์ที่ร้าน — ที่อยู่ (เว้นว่าง = ไม่ใช้)</label><input id="srvUrl" placeholder="https://ชื่อเครื่อง.xxxx.ts.net:8787  หรือ  http://192.168.1.10:8787" autocomplete="off"></div>
@@ -2288,9 +2289,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.84
-// APP_VERSION_PREV : 1.83
-// APP_VERSION_PREV_OLDER : 1.82
+// APP_VERSION  : 1.85
+// APP_VERSION_PREV : 1.84
+// APP_VERSION_PREV_OLDER : 1.83
+// 1.85 : spelling safety (Tar 2026-11-22: AI wrote "L-Citrulline" instead of L-CYSTEINE — the speech-to-text had misheard it and the old text stayed in the browser). (1) a corrected transcript on the shop server now replaces the older copy kept in this browser. (2) new glossary in settings (correct product / ingredient names, or "wrong => right" pairs): every Claude prompt gets the correct spellings, and the pairs are applied to every transcript the editor reads, so subtitles and key words are right too. Default list: VELARIS LC, L-CYSTEINE, PM 2.5.
 // 1.84 : opening the Home page quietly pulls projects that exist only on the shop server (made by Claude or on another device) — before, they showed only after pressing 🔄 sync (Tar did not see the keyword-only v5.5 copy). Pull only, at most once a minute, no push, no media.
 // 1.83 : iPhone stutter diagnosis (Tar's screen recording 2026-11-20: from the 3rd clip on the picture advances only ~5-12 f/s although render is 30/s and decode/proxy are fine: 540x960 H.264, keyframe every 1 s). Phone readout now shows per-clip decoded f/s (old counter read 0/negative at every clip change), drift, readyState, seconds buffered ahead, PAUSED + last play() rejection, and play()/seek calls per second, so the next recording shows WHY the clip is not running. No behaviour change.
 // 1.82 : ✅ APPROVE button. When a video is OK, press ✅ อนุมัติ in the project: the project and its clips are saved to the shop server, the server opens a hidden Chrome of its own, exports the video there (fast export, no one has to keep a tab open), and sends the MP4 into Marketing Studio (edited_product_videos) so the other admins can use it. Manual export stays as before. Status (queued / exporting / sent / failed) shows on the button and in its dialog; a job can be cancelled.
@@ -2376,7 +2378,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.84';
+const APP_VERSION = '1.85';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -8179,11 +8181,12 @@ async function trcSyncRun() {
   const remote = new Map(list.map(x => [x.key, x]));
   for (const x of list) {            // server -> here: records or variants this browser does not have yet
     const loc = TRC.get(x.key); const have = loc ? Object.keys(loc.tr) : [];
-    if (!(x.v || []).some(v => !have.includes(v))) continue;
+    const newer = loc && (x.savedAt || 0) > (loc.savedAt || 0) + 1000;   // v1.85: a corrected copy on the server (newer) replaces the old text kept in this browser
+    if (!newer && !(x.v || []).some(v => !have.includes(v))) continue;
     try {
       const rr = await srvFetch('/tr/' + encodeURIComponent(x.key)); if (!rr.ok) continue; const rec = await rr.json(); if (!rec || !rec.key || !rec.tr) continue;
       let cur = TRC.get(rec.key); if (!cur) { cur = { key: rec.key, name: rec.name, size: rec.size, duration: rec.duration, savedAt: rec.savedAt || Date.now(), tr: {} }; TRC.set(cur.key, cur); }
-      for (const [k, v] of Object.entries(rec.tr)) if (!cur.tr[k] && v && v.segs) { cur.tr[k] = v; TRC_SAVED.add(v); }
+      for (const [k, v] of Object.entries(rec.tr)) if ((!cur.tr[k] || ((rec.savedAt || 0) > (cur.savedAt || 0) + 1000)) && v && v.segs) { cur.tr[k] = v; TRC_SAVED.add(v); }
       cur.savedAt = Math.max(cur.savedAt || 0, rec.savedAt || 0); await trcPut(cur); res.pulled++;
     } catch (e) { console.warn('trc pull', e); }
   }
@@ -8245,8 +8248,28 @@ function updateCostBadge() {
 function costGuard(est) { const s = costState(), cap = loadCap(); if (s.usd + est > cap) { toast(`งบ AI เดือนนี้ครบเพดาน $${cap} แล้ว (ใช้ไป $${s.usd.toFixed(2)}) — ปรับเพดานได้ที่ ตั้งค่า`, 5000); return false; } return true; }
 
 // ---------- API calls ----------
+// v1.85 — glossary of correct product / ingredient spellings. One line = a correct term ("L-CYSTEINE") or "wrong, wrong2 => right".
+//  - every AI prompt gets the correct terms (the speech-to-text often mishears foreign words)
+//  - the "wrong => right" pairs are also applied to every transcript the editor reads, so subtitles and key words use the right spelling
+const GLOSS_DEFAULT = 'VELARIS LC\nL-CYSTEINE\nL-Citrulline, L-Citruline, L-Citrulin, L-Cystine => L-CYSTEINE\nPM 2.5';
+const loadGlossText = () => { const v = localStorage.getItem('sk_gloss'); return v === null ? GLOSS_DEFAULT : v; };
+let _glossMemo = null;
+function glossParse() {
+  const src = loadGlossText(); if (_glossMemo && _glossMemo.src === src) return _glossMemo.v;
+  const terms = [], pairs = [];
+  src.split('\n').map(x => x.trim()).filter(Boolean).forEach(l => {
+    const i = l.indexOf('=>'); if (i < 0) { terms.push(l); return; }
+    const right = l.slice(i + 2).trim(); if (!right) return; terms.push(right);
+    l.slice(0, i).split(',').map(x => x.trim()).filter(Boolean).forEach(w => pairs.push([new RegExp(w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), right]));
+  });
+  const v = { terms: [...new Set(terms)], pairs }; _glossMemo = { src, v }; return v;
+}
+function glossFix(text) { if (!text) return text; let t = text; for (const [re, r] of glossParse().pairs) t = t.replace(re, r); return t; }
+function glossTr(t) { if (t && t.segs) for (const sg of t.segs) if (sg && sg.text) sg.text = glossFix(sg.text); return t; }
+function glossPrompt() { const g = glossParse(); return g.terms.length ? '\n\nCORRECT SPELLINGS of this shop\'s product and ingredient names. The speech-to-text transcript may spell them wrongly (it mishears foreign words) — always write them exactly like this in everything you produce, and never invent other ingredient names:\n' + g.terms.join('\n') : ''; }
 const loadStyle = () => (localStorage.getItem('sk_style') || '').trim().slice(0, 8000);
 async function claude({ system, content, max_tokens = 3000, label = 'claude', estUsd = 0.05, useStyle = false }) {
+  system += glossPrompt();
   const st = useStyle ? loadStyle() : ''; if (st) { system += '\n\nThe shop owner\'s own editing style guide follows (collected from his brainstorming with another AI; may be Thai/Lao/English). Follow it wherever it applies to this task, but never break the JSON/output format required above:\n<style_guide>\n' + st + '\n</style_guide>'; estUsd += st.length / 3 * 3 / 1e6 + 0.002; }
   const key = loadKeys().claude; if (!key) throw new Error('ยังไม่ได้ใส่ Claude API key (กดปุ่ม ⚙ ตั้งค่า)');
   if (!costGuard(estUsd)) throw new Error('งบ AI ครบเพดาน');
@@ -8325,9 +8348,9 @@ function findSilences(m, a, b, minSil = .45, pad = .12) {
 // ---------- transcript store ----------
 function getTr(id) {   // v1.48: falls back to the permanent transcript cache (same file name) before anything is sent to Gemini again
   let t = D.tr && D.tr[id]; const m = MEDIA.get(id);
-  if (t) { if (m && !TRC_SAVED.has(t)) { if (trcFind(m, t.lang, t.engine) !== t) trcSave(m, t); else TRC_SAVED.add(t); } return t; }
+  if (t) { glossTr(t); if (m && !TRC_SAVED.has(t)) { if (trcFind(m, t.lang, t.engine) !== t) trcSave(m, t); else TRC_SAVED.add(t); } return t; }
   const lg = ($('#aiLang') || {}).value || 'lo'; t = m && trcAny(m, lg); if (!t) return t;
-  D.tr = D.tr || {}; D.tr[id] = t; return t;
+  D.tr = D.tr || {}; D.tr[id] = glossTr(t); return t;
 }
 function setTr(id, tr) { D.tr = D.tr || {}; D.tr[id] = tr; const m = MEDIA.get(id); if (m && trcFind(m, tr.lang, tr.engine) !== tr) trcSave(m, tr); commit('tr'); }
 const trText = tr => tr.segs.map((s, i) => `${i}: ${s.text}`).join('\n');
@@ -10522,7 +10545,7 @@ async function init() {
   $('#btnOpen').onclick = () => { const i = document.createElement('input'); i.type = 'file'; i.accept = '.json'; i.onchange = () => i.files[0] && openProject(i.files[0]); i.click(); };
   $('#projName').oninput = e => { D.name = e.target.value; }; $('#projName').onchange = () => commit('rename');
   // settings
-  $('#btnSettings').onclick = () => { const k = loadKeys(); $('#keyClaude').value = k.claude || ''; $('#keyGemini').value = k.gemini || ''; $('#capUsd').value = loadCap(); $('#styleGuide').value = localStorage.getItem('sk_style') || ''; const sc = srvCfg(); $('#srvUrl').value = sc.url || ''; $('#srvUrl').disabled = SRV_SELF; $('#srvToken').value = sc.token || ''; $('#srvTestMsg').textContent = ''; $('#srvPullMode').value = srvPullMode(); $('#dlgSettings').showModal(); };
+  $('#btnSettings').onclick = () => { const k = loadKeys(); $('#keyClaude').value = k.claude || ''; $('#keyGemini').value = k.gemini || ''; $('#capUsd').value = loadCap(); $('#styleGuide').value = localStorage.getItem('sk_style') || ''; $('#glossTxt').value = loadGlossText(); const sc = srvCfg(); $('#srvUrl').value = sc.url || ''; $('#srvUrl').disabled = SRV_SELF; $('#srvToken').value = sc.token || ''; $('#srvTestMsg').textContent = ''; $('#srvPullMode').value = srvPullMode(); $('#dlgSettings').showModal(); };
   $('#srvCopyLink').onclick = async () => {
     try { localStorage.setItem('sk_srv', JSON.stringify({ url: $('#srvUrl').value.trim(), token: $('#srvToken').value.trim() })); } catch (e) { }
     const ok = $('#srvCopyOk'), warn = $('#srvCopyWarn'), box = $('#srvLinkBox'); warn.hidden = true; box.hidden = true; ok.hidden = true; clearTimeout(ok._t);
@@ -10535,7 +10558,7 @@ async function init() {
   $('#srvPull').onclick = srvPullMissing;
   $('#srvTest').onclick = async () => { localStorage.setItem('sk_srv', JSON.stringify({ url: $('#srvUrl').value.trim(), token: $('#srvToken').value.trim() })); $('#srvTestMsg').textContent = 'กำลังทดสอบ…'; const ok = await srvPing(); $('#srvTestMsg').textContent = ok ? `✔ เชื่อมต่อได้ · พื้นที่ว่าง ${SRV.info.free != null ? (SRV.info.free / 1e9).toFixed(0) + ' GB' : '-'}` : '✖ ' + SRV.err; };
   $('#setCancel').onclick = () => $('#dlgSettings').close();
-  $('#setSave').onclick = () => { saveKeys({ claude: $('#keyClaude').value.trim(), gemini: $('#keyGemini').value.trim() }); localStorage.setItem('sk_cap', String(parseFloat($('#capUsd').value) || 50)); localStorage.setItem('sk_style', $('#styleGuide').value); localStorage.setItem('sk_srv', JSON.stringify({ url: $('#srvUrl').value.trim(), token: $('#srvToken').value.trim() })); localStorage.setItem('sk_pull', $('#srvPullMode').value); srvPing().then(ok => ok && srvLoadSizes()); updateCostBadge(); $('#dlgSettings').close(); toast('บันทึกการตั้งค่าแล้ว'); };
+  $('#setSave').onclick = () => { saveKeys({ claude: $('#keyClaude').value.trim(), gemini: $('#keyGemini').value.trim() }); localStorage.setItem('sk_cap', String(parseFloat($('#capUsd').value) || 50)); localStorage.setItem('sk_style', $('#styleGuide').value); localStorage.setItem('sk_gloss', $('#glossTxt').value); localStorage.setItem('sk_srv', JSON.stringify({ url: $('#srvUrl').value.trim(), token: $('#srvToken').value.trim() })); localStorage.setItem('sk_pull', $('#srvPullMode').value); srvPing().then(ok => ok && srvLoadSizes()); updateCostBadge(); $('#dlgSettings').close(); toast('บันทึกการตั้งค่าแล้ว'); };
   // export
   $('#btnExport').onclick = () => { $('#expBar').style.width = '0'; $('#expMsg').textContent = ''; $('#expGo').disabled = false; $('#expCoverRow').style.display = D.cover ? '' : 'none'; $('#dlgExport').showModal(); };
   $('#expCancel').onclick = () => { if (EXP.running) EXP.cancel = true; $('#dlgExport').close(); };
