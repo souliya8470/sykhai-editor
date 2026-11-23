@@ -218,6 +218,17 @@ async function srvFetchMissing(ids) {
   return n;
 }
 function srvMissingIds() { return [...new Set([...(D ? D.items : []).map(i => i.mediaId), ...(D && D.bin || [])].filter(id => id && !String(id).startsWith('__') && !String(id).startsWith('sfx-') && !MEDIA.has(id)))]; }   // v1.88: + clips in the project's media bin
+// v1.92: while a project is open, quietly fetch clips that finished uploading from the other device (and while Home is open, look for new projects)
+async function srvAutoPull() {
+  try {
+    if (!srvOn() || document.hidden) return;
+    if (typeof HOME !== 'undefined' && HOME.open) { if (typeof srvPullNew === 'function') await srvPullNew(); return; }
+    if (_fmBusy || !D) return; const ids = srvMissingIds(); if (!ids.length) return;
+    await srvLoadSizes(); const ready = ids.filter(id => SRV.sizes.has(id)); if (!ready.length) return;
+    await srvFetchMissing(ready); if (typeof renderMediaBin === 'function') { renderMediaBin(); renderTimeline(); }
+  } catch (e) { }
+}
+setInterval(srvAutoPull, 20000);
 async function srvPullMissing() {                  // the visible “pull files from server” button + used when a project is opened
   const ids = srvMissingIds(); if (!ids.length) { srvPullUpdate(); return 0; }
   const n = await srvFetchMissing(ids);

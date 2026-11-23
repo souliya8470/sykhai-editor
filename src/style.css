@@ -373,6 +373,10 @@ button.tic.on{color:#ff9f43}
 #oldMedia .omh{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line,#444)}
 #oldMedia .omh .mini{flex:1;opacity:.7}
 #oldMedia .omx{background:transparent;border:0;color:inherit;font-size:16px;cursor:pointer}
+#mediaList .mi.ph{opacity:.7;cursor:default}
+#mediaList .mi.ph .phi{font-size:26px;opacity:.8}
+#mediaList .mi.ph .mth{display:flex;align-items:center;justify-content:center;background:#222}
+#mediaList .mi.ph .phs{font-size:11px;opacity:.75;padding:2px 4px}
 #oldMedia .omall,#oldMedia .omgo{font-size:12px;padding:5px 10px;border-radius:8px;border:1px solid var(--line,#444);background:transparent;color:inherit;cursor:pointer;white-space:nowrap}
 #oldMedia .omgo{background:var(--ac,#34e0a1);color:#06130e;border-color:transparent;font-weight:700}
 #oldMedia .omgo:disabled{opacity:.35;cursor:default}

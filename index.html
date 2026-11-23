@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.91</title>
-<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=1.91"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=1.91"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=1.91">
+<title>Sykhai Editor v1.92</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=1.92"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=1.92"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=1.92">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -381,6 +381,10 @@ button.tic.on{color:#ff9f43}
 #oldMedia .omh{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line,#444)}
 #oldMedia .omh .mini{flex:1;opacity:.7}
 #oldMedia .omx{background:transparent;border:0;color:inherit;font-size:16px;cursor:pointer}
+#mediaList .mi.ph{opacity:.7;cursor:default}
+#mediaList .mi.ph .phi{font-size:26px;opacity:.8}
+#mediaList .mi.ph .mth{display:flex;align-items:center;justify-content:center;background:#222}
+#mediaList .mi.ph .phs{font-size:11px;opacity:.75;padding:2px 4px}
 #oldMedia .omall,#oldMedia .omgo{font-size:12px;padding:5px 10px;border-radius:8px;border:1px solid var(--line,#444);background:transparent;color:inherit;cursor:pointer;white-space:nowrap}
 #oldMedia .omgo{background:var(--ac,#34e0a1);color:#06130e;border-color:transparent;font-weight:700}
 #oldMedia .omgo:disabled{opacity:.35;cursor:default}
@@ -1819,6 +1823,7 @@ I18N_ROWS.push(
   ['ลดชั้นนี้ลงล่าง', 'Send this layer down', 'ລົດຊັ້ນນີ້ລົງລຸ່ມ'],
   ['ไฟล์เก่า', 'Older files', 'ໄຟລ໌ເກົ່າ'],
   ['ไฟล์ที่เคยนำเข้าในโปรเจกต์อื่น — กดเพื่อเพิ่มเข้าโปรเจกต์นี้', 'Files imported in other projects — tap to add to this one', 'ໄຟລ໌ທີ່ເຄີຍນຳເຂົ້າໃນໂປຣເຈັກອື່ນ — ກົດເພື່ອເພີ່ມເຂົ້າໂປຣເຈັກນີ້'],
+  ['รอไฟล์จากเซิร์ฟเวอร์', 'Waiting for the file from the server', 'ລໍຖ້າໄຟລ໌ຈາກເຊີບເວີ'],
   ['กดเลือกได้หลายไฟล์ (Shift = ช่วง) · ⌘A / Ctrl+A เลือกทั้งหมด · Enter เพิ่มที่เลือก', 'Click to select several (Shift = range) · ⌘A / Ctrl+A select all · Enter adds the selected', 'ກົດເລືອກໄດ້ຫຼາຍໄຟລ໌ (Shift = ຊ່ວງ) · ⌘A / Ctrl+A ເລືອກທັງໝົດ · Enter ເພີ່ມທີ່ເລືອກ'],
   ['เลือกทั้งหมด', 'Select all', 'ເລືອກທັງໝົດ'],
   ['ไม่เลือกเลย', 'Select none', 'ບໍ່ເລືອກເລີຍ'],
@@ -2300,9 +2305,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.91
-// APP_VERSION_PREV : 1.90
-// APP_VERSION_PREV_OLDER : 1.89
+// APP_VERSION  : 1.92
+// APP_VERSION_PREV : 1.91
+// APP_VERSION_PREV_OLDER : 1.90
+// 1.92 : CapCut-like multi-device (Tar 2026-11-23): a project's clips that are not on this device yet (still uploading from the other device) now show in the media list as cloud placeholders instead of being invisible; every 20 s the editor quietly pulls clips that finished uploading, and while Home is open it also looks for new projects from the server.
 // 1.91 : favicon scissors now lie horizontally (handles left, blades right) like the logo in the app header; icon links carry ?v=version so Chrome reloads them.
 // 1.90 : browser tab icon (favicon) + iPhone home-screen icon = the editor's scissors logo in the green rounded square, instead of the default globe (Tar 2026-11-23). Files: favicon.svg, favicon-32.png, apple-touch-icon.png in the repo root.
 // 1.89 : new projects get numbered names like CapCut (Project 1, Project 2 ... in the UI language; next number = highest existing + 1) instead of every one being called New project; rename any time.
@@ -2395,7 +2401,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.91';
+const APP_VERSION = '1.92';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -5690,6 +5696,15 @@ function renderMediaBin() {
     d.querySelector('[data-act="del"]').onclick = () => { if (!D.items.some(i => i.mediaId === m.id) && !m.builtin) { binDel(m.id); renderMediaBin(); toast('เอาออกจากโปรเจกต์นี้แล้ว (ไฟล์ยังอยู่ใน “ไฟล์เก่า”)'); return; } if (D.items.some(i => i.mediaId === m.id) && !confirm(T('ไฟล์นี้ถูกใช้ในไทม์ไลน์ — ลบคลิปที่ใช้ไฟล์นี้ด้วย?'))) return; D.items = D.items.filter(i => i.mediaId !== m.id); MEDIA.delete(m.id); dbDel(m.id); commit('media'); renderMediaBin(); };
     box.appendChild(d);
   }
+  // v1.92: clips that belong to this project but are not on this device yet (still uploading from the other device) show as placeholders
+  if (MF === 'all') for (const id of (D.bin || [])) {
+    if (!id || MEDIA.has(id) || String(id).startsWith('sfx-') || String(id).startsWith('__')) continue;
+    const d = document.createElement('div'); d.className = 'mi ph'; d.dataset.id = id; const nm = mediaNameFromId(id);
+    d.innerHTML = `<div class="mth"><span class="phi">☁</span></div><div class="mn" translate="no" title="${esc(nm)}">${esc(nm)}</div><div class="mb"><button data-act="pull">⬇ <span>ดึงไฟล์</span></button></div><div class="phs"><span>รอไฟล์จากเซิร์ฟเวอร์</span></div>`;
+    d.querySelector('[data-act="pull"]').onclick = () => { if (typeof srvPullMissing === 'function') srvPullMissing(); };
+    box.appendChild(d);
+  }
+  if (box.querySelector('.empty') && box.querySelector('.ph')) box.querySelector('.empty').remove();
 }
 
 async function importFiles(files, opts) {
@@ -6452,6 +6467,17 @@ async function srvFetchMissing(ids) {
   return n;
 }
 function srvMissingIds() { return [...new Set([...(D ? D.items : []).map(i => i.mediaId), ...(D && D.bin || [])].filter(id => id && !String(id).startsWith('__') && !String(id).startsWith('sfx-') && !MEDIA.has(id)))]; }   // v1.88: + clips in the project's media bin
+// v1.92: while a project is open, quietly fetch clips that finished uploading from the other device (and while Home is open, look for new projects)
+async function srvAutoPull() {
+  try {
+    if (!srvOn() || document.hidden) return;
+    if (typeof HOME !== 'undefined' && HOME.open) { if (typeof srvPullNew === 'function') await srvPullNew(); return; }
+    if (_fmBusy || !D) return; const ids = srvMissingIds(); if (!ids.length) return;
+    await srvLoadSizes(); const ready = ids.filter(id => SRV.sizes.has(id)); if (!ready.length) return;
+    await srvFetchMissing(ready); if (typeof renderMediaBin === 'function') { renderMediaBin(); renderTimeline(); }
+  } catch (e) { }
+}
+setInterval(srvAutoPull, 20000);
 async function srvPullMissing() {                  // the visible “pull files from server” button + used when a project is opened
   const ids = srvMissingIds(); if (!ids.length) { srvPullUpdate(); return 0; }
   const n = await srvFetchMissing(ids);

@@ -367,6 +367,15 @@ function renderMediaBin() {
     d.querySelector('[data-act="del"]').onclick = () => { if (!D.items.some(i => i.mediaId === m.id) && !m.builtin) { binDel(m.id); renderMediaBin(); toast('เอาออกจากโปรเจกต์นี้แล้ว (ไฟล์ยังอยู่ใน “ไฟล์เก่า”)'); return; } if (D.items.some(i => i.mediaId === m.id) && !confirm(T('ไฟล์นี้ถูกใช้ในไทม์ไลน์ — ลบคลิปที่ใช้ไฟล์นี้ด้วย?'))) return; D.items = D.items.filter(i => i.mediaId !== m.id); MEDIA.delete(m.id); dbDel(m.id); commit('media'); renderMediaBin(); };
     box.appendChild(d);
   }
+  // v1.92: clips that belong to this project but are not on this device yet (still uploading from the other device) show as placeholders
+  if (MF === 'all') for (const id of (D.bin || [])) {
+    if (!id || MEDIA.has(id) || String(id).startsWith('sfx-') || String(id).startsWith('__')) continue;
+    const d = document.createElement('div'); d.className = 'mi ph'; d.dataset.id = id; const nm = mediaNameFromId(id);
+    d.innerHTML = `<div class="mth"><span class="phi">☁</span></div><div class="mn" translate="no" title="${esc(nm)}">${esc(nm)}</div><div class="mb"><button data-act="pull">⬇ <span>ดึงไฟล์</span></button></div><div class="phs"><span>รอไฟล์จากเซิร์ฟเวอร์</span></div>`;
+    d.querySelector('[data-act="pull"]').onclick = () => { if (typeof srvPullMissing === 'function') srvPullMissing(); };
+    box.appendChild(d);
+  }
+  if (box.querySelector('.empty') && box.querySelector('.ph')) box.querySelector('.empty').remove();
 }
 
 async function importFiles(files, opts) {
