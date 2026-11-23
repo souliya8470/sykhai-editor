@@ -8,6 +8,30 @@ const PRICE = { claudeIn: 2, claudeOut: 10, gemIn: 1.5, gemOut: 9 };   // USD pe
 const FOOTER_TEXT = 'ຜົນທີ່ໄດ້ຮັບຂຶ້ນຢູ່ກັບແຕ່ລະບຸກຄົນ';
 
 // ---------- keys / cost ----------
+// ---- v1.98: Facebook Reels/Stories safe zone (top 14% / bottom 35% / sides 6% of a 9:16 frame are covered by Facebook's own buttons) + where the person's head is,
+//      so headline/subtitle text goes into the free bands above the head and below the chin. Values are settings, the head position is found by AI per clip and remembered.
+const SAFE_DEFAULT = { top: 14, bottom: 35, side: 6 };
+function loadSafe() {
+  let o = {}; try { o = JSON.parse(localStorage.getItem('sk_safe') || '{}') || {}; } catch (e) { }
+  const g = k => { const v = parseFloat(o[k]); return Number.isFinite(v) ? clamp(v, 0, 45) / 100 : SAFE_DEFAULT[k] / 100; };
+  return { top: g('top'), bottom: g('bottom'), side: g('side') };
+}
+function loadFaces() { try { return JSON.parse(localStorage.getItem('sk_face') || '{}') || {}; } catch (e) { return {}; } }
+function saveFaces(o) { const k = Object.keys(o); if (k.length > 400) k.slice(0, k.length - 400).forEach(x => delete o[x]); try { localStorage.setItem('sk_face', JSON.stringify(o)); } catch (e) { } }
+function safeSlots(faces) {   // faces = [{t,b}] (head top / chin as a fraction of the frame height) -> where the headline and the subtitle line go
+  const S = loadSafe(), T = S.top + .01, B = 1 - S.bottom - .01, med = a => a.slice().sort((x, y) => x - y)[a.length >> 1];
+  const ft = faces.length ? med(faces.map(f => f.t)) : .22, fb = faces.length ? med(faces.map(f => f.b)) : .5;
+  const A = [T, Math.max(T, ft - .02)], Bd = [Math.min(B, fb + .02), B], hA = A[1] - A[0], hB = Math.max(0, Bd[1] - Bd[0]), mid = r => (r[0] + r[1]) / 2;
+  const HH = .095, HS = .055; let head, sub, scale = 1;
+  if (hB >= HH && hA >= HS) { head = mid(Bd); sub = mid(A); }
+  else if (hB >= HH + HS) { head = Bd[0] + HH / 2; sub = Bd[0] + HH + HS / 2; }
+  else if (hA >= HH && hB >= HS) { head = mid(A); sub = mid(Bd); }
+  else if (hA >= HH + HS) { head = A[0] + HH / 2; sub = A[0] + HH + HS / 2; }
+  else {   // cramped (face fills the frame): use the larger free band, or the whole safe band if both are tiny — text over a face beats text hidden under Facebook's buttons
+    let R = hB >= hA ? Bd : A, h = Math.max(hA, hB); if (h < .07) { R = [T, B]; h = B - T; } scale = clamp(h / (HH + HS), .6, .85);
+    head = R[0] + HH * scale / 2; sub = R[0] + HH * scale + HS * scale / 2; const over = sub + HS * scale / 2 - B; if (over > 0) { head -= over; sub -= over; } }
+  return { head: +head.toFixed(3), sub: +sub.toFixed(3), scale, maxW: clamp(1 - 2 * (S.side + .01), .5, .95), ft, fb };
+}
 function loadKeys() { try { return JSON.parse(localStorage.getItem('sk_keys') || '{}'); } catch (e) { return {}; } }
 function saveKeys(k) { localStorage.setItem('sk_keys', JSON.stringify(k)); }
 function loadCap() { return parseFloat(localStorage.getItem('sk_cap') || '50'); }
@@ -454,7 +478,7 @@ function buildVariantDoc(v, opts) {
       if (p && s.transition && s.transition !== 'none') { const d = .35, pm = MEDIA.get(p.mediaId); if (p.in + (p.dur + d) <= pm.duration - .05 && dur > d * 2) { p.dur += d; it.transIn = { type: s.transition, dur: d, ext: d, prevId: p.id }; } }
       starts.push(t); D.items.push(it); t += dur;
     });
-    (v.overlays || []).forEach(o => { const si = clamp(o.seg | 0, 0, v.segs.length - 1); const seg = v.segs[si]; const dur = Math.min(3.6, Math.max(1.6, seg.b - seg.a)); const tx = mkText(opts.style || 'hl', (o.line1 || '') + (o.line2 ? '\n' + o.line2 : ''), starts[si] + .1, Math.min(dur, t - starts[si])); tx.track = freeTrack('text', tx.start, tx.dur, 'T1'); tx.reveal = o.line2 ? .35 : 0; D.items.push(tx); });
+    (v.overlays || []).forEach(o => { const si = clamp(o.seg | 0, 0, v.segs.length - 1); const seg = v.segs[si]; const dur = Math.min(3.6, Math.max(1.6, seg.b - seg.a)); const tx = mkText(opts.style || 'hl', (o.line1 || '') + (o.line2 ? '\n' + o.line2 : ''), starts[si] + .1, Math.min(dur, t - starts[si])); tx.track = freeTrack('text', tx.start, tx.dur, 'T1'); tx.reveal = o.line2 ? .35 : 0; if (opts.headAy != null) tx.ay = opts.headAy; if (opts.scale && opts.scale !== 1) tx.size = Math.round(tx.size * opts.scale); if (opts.maxW) tx.maxW = opts.maxW; D.items.push(tx); });
     if (opts.footer) { const f = mkText('footer', opts.footer, 0, t, { track: 'T3', anim: { in: 'fade', out: 'none', d: .4 } }); D.items.push(f); }
     const mus = [...MEDIA.values()].find(m => m.type === 'audio' && !m.builtin); if (mus && opts.music) { const a = mkAudio('A1', mus.id, 0, t); a.dur = t; D.items.push(a); }
   } finally { D = prev; } return doc;

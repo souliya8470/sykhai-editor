@@ -124,12 +124,12 @@ async function translateLines(lines, to) {
   }
   return out;
 }
-function makeSubItems(mediaId, chunks, styleId) {   // adds text items to the CURRENT doc
+function makeSubItems(mediaId, chunks, styleId, extra) {   // adds text items to the CURRENT doc
   let n = 0;
   for (const c of chunks) {
     const txt = String(c.text || '').trim(); if (!txt) continue;
     for (const [s, e] of srcPieces(mediaId, c.a, c.b)) {
-      if (e - s < .3) continue; const dur = Math.max(.4, e - s); const it = mkText(styleId, txt, s, dur, { sub: 1, subOf: mediaId, anim: { in: 'none', out: 'none', d: 0 }, reveal: 0 });
+      if (e - s < .3) continue; const dur = Math.max(.4, e - s); const it = mkText(styleId, txt, s, dur, Object.assign({ sub: 1, subOf: mediaId, anim: { in: 'none', out: 'none', d: 0 }, reveal: 0 }, extra || {}));
       it.track = freeTrack('text', it.start, it.dur, 'T2'); addItem(it); n++;
     }
   }
@@ -179,15 +179,15 @@ const KIT_MODES = [['none', 'ไม่มีซับ'], ['full', 'ซับเ�
 const kitModesHtml = () => `<div class="fld col kmodes"><label>ซับในวิดีโอ (ติ๊กได้หลายแบบ — ได้วิดีโอแยกให้ทุกแบบ)</label><div class="chk">${KIT_MODES.map(([k, t]) => `<label><input type="checkbox" data-mode="${k}" ${KIT.modes.includes(k) ? 'checked' : ''}> ${t}</label>`).join(' ')}</div></div>`;
 const kitModesGet = root => KIT_MODES.map(m => m[0]).filter(k => { const el = root.querySelector(`[data-mode="${k}"]`); return el && el.checked; });
 const kitModeName = k => T((KIT_MODES.find(m => m[0] === k) || KIT_MODES[1])[1]);
-function kitKeySubs(m, tr, kw) {   // keyword-only captions in the v5.5 look: bold white text, key phrase yellow, yellow underline that fades out (adds to the CURRENT doc)
+function kitKeySubs(m, tr, kw, sl) {   // keyword-only captions in the v5.5 look: bold white text, key phrase yellow, yellow underline that fades out (adds to the CURRENT doc)
   const blocks = capBlocks(tr, 6, { rows: 1, minDur: 0, kw }); const L = [];
   for (const c of blocks) { const pcs = srcPieces(m.id, c.a, c.b); if (!pcs.length) continue; const [a, b] = pcs[0]; if (b - a < .25) continue; L.push({ c, s: a, dur: Math.max(1.2, b - a) }); }
   L.sort((x, y) => x.s - y.s); L.forEach((q, i) => { const nx = L[i + 1]; if (nx) q.dur = Math.max(.4, Math.min(q.dur, nx.s - q.s - .03)); });
   for (const q of L) {
     const ph = q.c.text.replace(/\n/g, ' ').trim(); if (!ph) continue;
-    const it = mkText('sub', '*' + ph + '*', q.s, q.dur, { sub: 1, subOf: m.id, size: 74, weight: 900, ay: .83, anim: { in: 'none', out: 'none', d: 0 }, reveal: 0, maxW: .9 }); it.color = '#ffffff'; it.color2 = '#FFD84A';
+    const it = mkText('sub', '*' + ph + '*', q.s, q.dur, { sub: 1, subOf: m.id, size: Math.round(74 * sl.scale), weight: 900, ay: sl.sub, anim: { in: 'none', out: 'none', d: 0 }, reveal: 0, maxW: sl.maxW }); it.color = '#ffffff'; it.color2 = '#FFD84A';
     it.track = freeTrack('text', q.s, q.dur, 'T2'); addItem(it);
-    const ud = Math.max(.3, q.dur - .12), us = mkSticker('underline', q.s + .08, ud, { size: Math.max(80, Math.round(34 * [...ph.replace(/\s/g, '')].length)), color: '#FFD84A', ay: .875, anim: { in: 'none', out: 'fade', d: .15 } });
+    const ud = Math.max(.3, q.dur - .12), us = mkSticker('underline', q.s + .08, ud, { size: Math.max(80, Math.round(34 * [...ph.replace(/\s/g, '')].length)), color: '#FFD84A', ay: +(sl.sub + .045 * sl.scale).toFixed(3), anim: { in: 'none', out: 'fade', d: .15 } });
     us.track = freeTrack('text', us.start, ud, 'T3'); addItem(us);
   }
 }
@@ -262,6 +262,17 @@ function aiKittiUI() {
     };
   });
 }
+async function kitFindFaces(clips) {   // v1.98: where is the person's head in each clip (cached per file, so asked only once)
+  const cache = loadFaces(), todo = clips.filter(c => !cache[c.m.id] && c.frames && c.frames.length);
+  if (todo.length) {
+    const content = [{ type: 'text', text: 'Each clip below is a vertical video shown as 3 sample frames. For EACH clip give the vertical position of the main person\'s head: "top" = top of the hair, "bottom" = the chin, both as a fraction of the frame height (0 = top edge, 1 = bottom edge), covering the head in ALL three frames (smallest top, largest bottom). If nobody is visible use null for both. Return ONLY JSON: [{"clip":"c1","top":0.2,"bottom":0.45}]' }];
+    todo.forEach(c => { content.push({ type: 'text', text: '--- CLIP ' + c.id }); c.frames.forEach(f => content.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: f.b64 } })); });
+    const arr = parseJsonLoose(await claude({ system: 'You locate the main person\'s head in video frames. Reply with JSON only.', content, max_tokens: 1500, label: 'หาตำแหน่งหน้าคน', estUsd: .05 }));
+    (Array.isArray(arr) ? arr : []).forEach(r => { const c = todo.find(x => x.id === r.clip), t = +r.top, b = +r.bottom; if (c && Number.isFinite(t) && Number.isFinite(b) && b > t && t >= 0 && b <= 1) cache[c.m.id] = { t: +t.toFixed(3), b: +b.toFixed(3), v: 1 }; });
+    saveFaces(cache);
+  }
+  clips.forEach(c => { c.face = cache[c.m.id] || null; });
+}
 async function kitAnalyze(ids) {
   if (AI.busy) return; AI.busy = true;
   try {
@@ -273,6 +284,7 @@ async function kitAnalyze(ids) {
       for (const q of [.15, .5, .85]) { const c = await grabFrame(m, m.duration * q, 288); const a = analyzePixels(c); frames.push({ b64: c.toDataURL('image/jpeg', .6).split(',')[1], a }); }
       KIT.clips.push({ id: 'c' + (KIT.clips.length + 1), m, tr, frames, sharp: Math.round(frames.reduce((s, f) => s + f.a.sharp, 0) / 3), bright: +(frames.reduce((s, f) => s + f.a.mean, 0) / 3).toFixed(2) });
     }
+    aiProg('AI กำลังหาตำแหน่งหน้าคนในคลิป…', 68); try { await kitFindFaces(KIT.clips); } catch (e) { console.warn(e); }
     KIT.groups = []; KIT.segIdx = new Map(); if (KIT.takes) { aiProg('กำลังเทียบเทคซ้ำข้ามคลิป…', 70); kitPrepTakes(); }
     aiProg('AI กำลังคิดแนวเรื่อง…', 75);
     const content = [{ type: 'text', text: `You plan short vertical (9:16) videos for a Lao online shop (cosmetics/supplements) from the raw clips below. ${KIT.brief ? 'Owner brief: ' + KIT.brief + '\n' : ''}Target length about ${KIT.target} seconds each.` }, ...kitClipBlocks(),
@@ -393,10 +405,11 @@ async function kitBuild() {
       for (const mode of modes) {
         await prog(`กำลังสร้างวิดีโอ ${docs.length + 1}/${total}: ${b.concept.name} · ${kitModeName(mode)}`, 60 + 25 * docs.length / total);
         const v = { name: b.concept.name, segs: sc.map(s => ({ m: s.m, a: s.a, b: s.b, transition: 'none' })), overlays: sc.map((s, i) => s.line1 || s.line2 ? { seg: i, line1: s.line1, line2: s.line2 } : null).filter(Boolean) };
-        const doc = buildVariantDoc(v, { style: 'hl', footer: KIT.footer ? FOOTER_TEXT : '', music: KIT.music }); doc.name = b.concept.name + (modes.length > 1 ? ' · ' + kitModeName(mode) : ''); doc.desc = kitModeName(mode) + ' — ' + b.concept.name;
+        const sl = safeSlots(sc.map(x => x.c.face).filter(Boolean));   // v1.98: text goes into the free bands (not under Facebook's buttons, not over the face)
+        const doc = buildVariantDoc(v, { style: 'hl', footer: KIT.footer ? FOOTER_TEXT : '', music: KIT.music, headAy: sl.head, scale: sl.scale, maxW: sl.maxW }); doc.name = b.concept.name + (modes.length > 1 ? ' · ' + kitModeName(mode) : ''); doc.desc = kitModeName(mode) + ' — ' + b.concept.name;
         const mids = [...new Set(sc.map(s => s.m.id))];
-        if (mode === 'full') withDoc(doc, () => { for (const mid of mids) { const tr = getTr(mid); if (tr) makeSubItems(mid, subChunks(tr, 24), 'sub'); } });
-        else if (mode === 'key') withDoc(doc, () => { for (const mid of mids) { const tr = getTr(mid), kw = kws.get(mid); if (tr && kw) kitKeySubs(MEDIA.get(mid), tr, kw); } });
+        if (mode === 'full') withDoc(doc, () => { for (const mid of mids) { const tr = getTr(mid); if (tr) makeSubItems(mid, subChunks(tr, 24), 'sub', { ay: sl.sub, maxW: sl.maxW, size: Math.round(52 * sl.scale) }); } });
+        else if (mode === 'key') withDoc(doc, () => { for (const mid of mids) { const tr = getTr(mid), kw = kws.get(mid); if (tr && kw) kitKeySubs(MEDIA.get(mid), tr, kw, sl); } });
         docs.push(doc);
       }
     }

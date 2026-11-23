@@ -220,4 +220,10 @@ I18N_ROWS.push(
   ['วิ', 's', 'ວິ'],
   ['ขั้นตอนนี้นานกว่าปกติ แต่ยังทำงานอยู่ (ไม่ได้ค้าง)', 'This step is taking longer than usual but it is still working (not stuck)', 'ຂັ້ນຕອນນີ້ດົນກວ່າປົກກະຕິ ແຕ່ຍັງເຮັດວຽກຢູ່ (ບໍ່ໄດ້ຄ້າງ)'],
   ['✓ ผ่านทุกฉากที่เหลือ', '✓ Approve all remaining scenes', '✓ ຜ່ານທຸກສາກທີ່ເຫຼືອ'],
+  ['🛡 โซนแดง', '🛡 Red zones', '🛡 ໂຊນແດງ'],
+  ['โชว์โซนที่ปุ่มของ Facebook บัง (แดง)', 'Show the areas Facebook\'s buttons cover (red)', 'ສະແດງໂຊນທີ່ປຸ່ມຂອງ Facebook ບັງ (ແດງ)'],
+  ['โซนที่ปุ่มของ Facebook บัง', 'Covered by Facebook buttons', 'ໂຊນທີ່ປຸ່ມຂອງ Facebook ບັງ'],
+  ['โซนปลอดภัย Facebook Reels/Stories (% ของจอ ที่ปุ่มของ Facebook บัง · ข้อความหลักและซับจะอยู่นอกโซนนี้)', 'Facebook Reels/Stories safe zone (% of the screen covered by Facebook\'s buttons · headline text and subtitles stay outside it)', 'ໂຊນປອດໄພ Facebook Reels/Stories (% ຂອງຈໍ ທີ່ປຸ່ມຂອງ Facebook ບັງ · ຂໍ້ຄວາມຫຼັກແລະຊັບຈະຢູ່ນອກໂຊນນີ້)'],
+  ['ข้าง', 'Side', 'ຂ້າງ'],
+  ['AI กำลังหาตำแหน่งหน้าคนในคลิป…', 'AI is finding where the person\'s head is in each clip…', 'AI ກຳລັງຫາຕຳແໜ່ງໜ້າຄົນໃນຄລິບ…'],
 );

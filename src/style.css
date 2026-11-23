@@ -44,7 +44,7 @@ main{display:grid;grid-template-columns:var(--lw,300px) minmax(0,1fr) var(--rw,3
 .arow{display:flex;gap:5px;align-items:center;margin:4px 0}.arow span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}.arow button{font-size:11px;padding:3px 7px}
 #center{display:flex;flex-direction:column;align-items:center;min-width:0;min-height:0;padding:8px;gap:8px;background:#0c0d10}
 #stage{position:relative;flex:1;min-height:0;aspect-ratio:9/16;max-width:100%;background:#000;box-shadow:0 4px 30px rgba(0,0,0,.6)}
-#stage canvas{position:absolute;inset:0;width:100%;height:100%}
+#stage canvas{position:absolute;inset:0;width:100%;height:100%}#safeOv{position:absolute;inset:0;pointer-events:none;z-index:5}#safeOv i{position:absolute;background:rgba(255,40,60,.32);border:1px dashed rgba(255,120,130,.9);box-sizing:border-box}#safeOv b{position:absolute;left:50%;transform:translateX(-50%);font-size:10px;font-weight:600;color:#fff;text-shadow:0 0 3px #000}#safeBtn.on{background:#c0203a;color:#fff}
 #ov{cursor:default}
 /* v1.57 floating text toolbar + text look pack */
 #tbar{position:fixed;z-index:60;width:max-content;max-width:calc(100vw - 8px)}#tbar[hidden]{display:none}
