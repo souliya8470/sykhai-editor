@@ -7,17 +7,27 @@ const dirty = () => { DIRTY = true; };
 // ---------- video element pool ----------
 const POOL = new Map();           // itemId -> {el, last, gain}
 const POOL_MAX = 7;
+// v2.00 iPhone: Safari only lets a <video> play() without a finger tap if THAT element was already started by a tap once. A brand-new element made
+// 12 s into the preview was refused (NotAllowedError → black picture). So on iOS we keep every released element (with its WebAudio node) in SPARE
+// and re-use it for the next clip; play() primes the first few elements inside the tap (unlockVideos in 40-playback.js).
+const SPARE = [];
+const poolMax = () => (typeof ONE_AUDIO !== 'undefined' && ONE_AUDIO) ? 5 : POOL_MAX;
 function poolGet(it, create = true) {
   let r = POOL.get(it.id);
   if (r) { r.last = performance.now(); return r.el; }
   if (!create) return null;
   const m = MEDIA.get(it.mediaId); if (!m) return null;
-  if (POOL.size >= POOL_MAX) poolEvict();
-  const el = document.createElement('video');
+  if (POOL.size >= poolMax()) poolEvict();
+  const sp = (typeof ONE_AUDIO !== 'undefined' && ONE_AUDIO) ? SPARE.pop() : null;
+  if (sp) {   // re-use an element Safari already allowed to play
+    const el = sp.el; el._iid = it.id; el.muted = true; el.src = m.purl || m.url;
+    const r2 = { el, last: performance.now(), gain: sp.gain, itemId: it.id }; POOL.set(it.id, r2); return el;
+  }
+  const el = document.createElement('video'); el._iid = it.id;
   el.playsInline = true; el.preload = 'auto'; el.crossOrigin = 'anonymous'; el.src = m.purl || m.url;
   el.addEventListener('seeked', dirty); el.addEventListener('loadeddata', dirty); el.addEventListener('canplay', dirty);
   // scrubbing: a new seek while one is still running cancels it, so a fast drag over a 4K clip never showed a frame. Keep ONE seek in flight, remember the latest wish, and jump there when the frame lands (live preview like CapCut)
-  el.addEventListener('seeked', () => { const rr = POOL.get(it.id); if (rr && rr.want != null && !PB.playing) { const w = rr.want; rr.want = null; if (Math.abs(el.currentTime - w) > 0.02) { try { el.currentTime = w; } catch (e) { } } } });
+  el.addEventListener('seeked', () => { const rr = POOL.get(el._iid); if (rr && rr.want != null && !PB.playing) { const w = rr.want; rr.want = null; if (Math.abs(el.currentTime - w) > 0.02) { try { el.currentTime = w; } catch (e) { } } } });
   const gain = (typeof connectEl === 'function') ? connectEl(el) : null;
   r = { el, last: performance.now(), gain, itemId: it.id };
   POOL.set(it.id, r);
@@ -32,6 +42,10 @@ function poolEvict() {
 function poolRelease(id) {
   const r = POOL.get(id); if (!r) return;
   try { r.el.pause(); r.el.removeAttribute('src'); r.el.load(); } catch (e) { }
+  if (typeof ONE_AUDIO !== 'undefined' && ONE_AUDIO && r.gain && r.gain._src && SPARE.length < 6) {   // iOS: keep the element for the next clip (see SPARE)
+    try { for (const n of (r.vnodes || [])) { try { n.disconnect(); n.stop && n.stop(); } catch (e) { } } r.gain._src.disconnect(); r.gain._src.connect(r.gain); setGain(r.gain, 0); } catch (e) { }
+    SPARE.push({ el: r.el, gain: r.gain }); POOL.delete(id); return;
+  }
   try { if (r.gain) { r.gain.disconnect(); } if (r.srcNode) r.srcNode.disconnect(); } catch (e) { }
   POOL.delete(id);
 }

@@ -111,8 +111,18 @@ function prerollReady() {   // every video that is on screen at the playhead (or
   }
   return true;
 }
+// v2.00 iPhone: inside the finger tap, start (muted) and stop the first few video elements so Safari marks them as "allowed to play" for the rest of the preview
+function unlockVideos() {
+  if (!ONE_AUDIO || PB.exporting) return;
+  const list = D.items.filter(it => it.type === 'video' && !it.hidden && it.start + it.dur > PB.t).sort((a, b) => a.start - b.start).slice(0, 5);
+  for (const it of list) {
+    const el = poolGet(it); if (!el || el._unl) continue; el._unl = 1;
+    try { el.muted = true; const p = el.play(); if (p && p.catch) p.catch(() => { }); el.pause(); } catch (e) { }
+  }
+}
 function play() {
   if (PB.playing || PB.starting) return; ensureAudio(); if (AC.state !== 'running') AC.resume();
+  try { unlockVideos(); } catch (e) { }
   if (PB.t >= durEnd() - 0.05) PB.t = 0;
   if (PB.exporting) return playGo();
   // pre-roll: get the first frames of all layers decoded and positioned BEFORE the clock starts, otherwise the phone spends the first
@@ -250,9 +260,9 @@ function syncMedia(force) {
     const target = timelineToSrc(it, t);
     const m = MEDIA.get(it.mediaId); const maxT = (m && m.duration) ? Math.max(0, m.duration - 0.04) : target;
     const tt = Math.min(target, maxT);
-    if (ONE_AUDIO && PB.playing && !PB.exporting) { const mu = it.id !== primary; if (el.muted !== mu) el.muted = mu; } else if (el.muted) el.muted = false;
+    if (ONE_AUDIO && PB.playing && !PB.exporting) { const mu = it.id !== primary || !!r.forceMute; if (el.muted !== mu) el.muted = mu; } else if (el.muted && !r.forceMute) el.muted = false;
     if (PB.playing) {
-      if (el.paused && target <= maxT && now - (r.lastPlay || 0) > 350) { r.lastPlay = now; PD.plays = (PD.plays || 0) + 1; el.play().catch(e => { r.playErr = e && e.name; }); }
+      if (el.paused && target <= maxT && now - (r.lastPlay || 0) > 350) { r.lastPlay = now; PD.plays = (PD.plays || 0) + 1; el.play().catch(e => { r.playErr = e && e.name; if (e && e.name === 'NotAllowedError' && !r.forceMute) { r.forceMute = 1; el.muted = true; } }); }
       if (Math.abs(el.currentTime - tt) > 0.35 && now - (r.lastSeek || 0) > 1200) { r.lastSeek = now; PD.seeks = (PD.seeks || 0) + 1; try { el.currentTime = tt; } catch (e) { } }
     } else {
       if (!el.paused) el.pause();
