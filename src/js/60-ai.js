@@ -10,12 +10,17 @@ const FOOTER_TEXT = 'ຜົນທີ່ໄດ້ຮັບຂຶ້ນຢູ່�
 // ---------- keys / cost ----------
 // ---- v1.98: Facebook Reels/Stories safe zone (top 14% / bottom 35% / sides 6% of a 9:16 frame are covered by Facebook's own buttons) + where the person's head is,
 //      so headline/subtitle text goes into the free bands above the head and below the chin. Values are settings, the head position is found by AI per clip and remembered.
-const SAFE_DEFAULT = { top: 14, bottom: 35, side: 6 };
+// v1.99: two presets measured from a real Facebook Reel on an iPhone (Tar's screen recording): normal posts only lose ~15% at the bottom (caption) and ~10% at the right (like/share column);
+//        ads also carry a CTA bar, so Meta's guide says 35% at the bottom.
+const SAFE_PRESETS = { post: { top: 14, bottom: 15, side: 10 }, ad: { top: 14, bottom: 35, side: 6 } };
+const SAFE_DEFAULT = SAFE_PRESETS.ad;
 function loadSafe() {
   let o = {}; try { o = JSON.parse(localStorage.getItem('sk_safe') || '{}') || {}; } catch (e) { }
-  const g = k => { const v = parseFloat(o[k]); return Number.isFinite(v) ? clamp(v, 0, 45) / 100 : SAFE_DEFAULT[k] / 100; };
-  return { top: g('top'), bottom: g('bottom'), side: g('side') };
+  const src = SAFE_PRESETS[o.mode] || o;
+  const g = k => { const v = parseFloat(src[k]); return Number.isFinite(v) ? clamp(v, 0, 45) / 100 : SAFE_DEFAULT[k] / 100; };
+  return { top: g('top'), bottom: g('bottom'), side: g('side'), mode: SAFE_PRESETS[o.mode] ? o.mode : (o.mode === 'custom' ? 'custom' : 'ad') };
 }
+function saveSafeMode(mode) { localStorage.setItem('sk_safe', JSON.stringify(Object.assign({ mode }, SAFE_PRESETS[mode]))); }
 function loadFaces() { try { return JSON.parse(localStorage.getItem('sk_face') || '{}') || {}; } catch (e) { return {}; } }
 function saveFaces(o) { const k = Object.keys(o); if (k.length > 400) k.slice(0, k.length - 400).forEach(x => delete o[x]); try { localStorage.setItem('sk_face', JSON.stringify(o)); } catch (e) { } }
 function safeSlots(faces) {   // faces = [{t,b}] (head top / chin as a fraction of the frame height) -> where the headline and the subtitle line go

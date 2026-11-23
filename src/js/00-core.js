@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.98
-// APP_VERSION_PREV : 1.97
-// APP_VERSION_PREV_OLDER : 1.96
+// APP_VERSION  : 1.99
+// APP_VERSION_PREV : 1.98
+// APP_VERSION_PREV_OLDER : 1.97
+// 1.99 : safe-zone presets (Tar 2026-11-23, after sending a screen recording of a real Facebook Reel): 'normal post (Reels)' top 14 / bottom 15 / side 10 — measured on the recording: caption starts at ~87% of the video height, like/share column occupies the right ~10% — and 'ad' top 14 / bottom 35 / side 6 (Meta ad guide, has the CTA bar). Pick it in Settings (or 'custom' numbers) and, right before building, on the AI storyboard page ('where the video will be posted'); the red-zone preview button follows it. Default stays 'ad' (the stricter one).
 // 1.98 : Facebook safe zone + keep faces clear (Tar 2026-11-23): Facebook Reels/Stories cover the top 14%, bottom 35% and sides 6% of a 9:16 video with its own buttons/caption. Settings now hold these three numbers; AI cut-it-all asks Claude once per clip where the person's head is (top of hair to chin, remembered per file in sk_face) and puts the headline and the subtitle line into the free bands above the head / below the chin, inside the safe zone, narrower so they stay off the side margins (cramped framing shrinks the text). Applies to the headline, full subtitles and keyword subtitles+underline; the small footer disclaimer is left alone on purpose. New '🛡 red zones' button over the preview shows the covered areas.
 // 1.97 : fix false green bar 'the server has a newer version of this project — Project 1' right after AI built videos (Tar 2026-11-23): the 'is the server copy newer' check was started for the old project, the answer arrived after the timeline had switched to the new video, and was compared against the NEW project's id. The check now remembers which project it asked about and drops the answer if the open project changed.
 // 1.96 : AI cut-it-all (Tar 2026-11-23: pressed 'Create clip' and nothing happened): the button was silently locked while scenes were still un-reviewed. Now it never looks dead — clicking it with scenes left says how many, scrolls to the first un-reviewed scene and flashes it; new button 'approve all remaining scenes'; while building, the dialog shows each step (key phrases, video i/N, saving) with a running seconds clock and a 'still working, not stuck' note after 40 s on one step; the 🎤 line of a scene no longer lists a neighbouring sentence that overlaps the scene by only a few hundredths of a second (it made the dropped 249,000 price sentence look as if it was still inside the last scene); a second click while busy says so instead of doing nothing.
@@ -104,7 +105,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.98';
+const APP_VERSION = '1.99';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
