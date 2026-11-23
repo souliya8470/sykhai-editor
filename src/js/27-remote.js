@@ -423,8 +423,10 @@ async function srvCheckNewer() {
   { const bar = document.getElementById('srvNewer'); if (bar && !bar.hidden && D && bar.dataset.pid !== D.pid) { bar.hidden = true; bar.style.display = 'none'; } }   // v1.68: the bar belongs to the project it was raised for — hide it when another project is open
   if (!srvOn() || SRV.chk || HOME.open || !D || !D.pid) return; SRV.chk = true;
   try {
-    const r = await srvFetch('/projects/' + srvId(D.pid)); if (!r.ok) return; const s = await r.json();
-    if (s && s.updated > (SRV.upd.get(D.pid) || 0)) { SRV.stale.add(D.pid); srvNewerBar(true, s.name); const bar = document.getElementById('srvNewer'); if (bar) bar.dataset.pid = D.pid; }
+    const pid = D.pid;   // v1.97: the project can change while the answer is on its way (AI made new videos) — judge the one that was asked about
+    const r = await srvFetch('/projects/' + srvId(pid)); if (!r.ok) return; const s = await r.json();
+    if (!D || D.pid !== pid) return;
+    if (s && s.updated > (SRV.upd.get(pid) || 0)) { SRV.stale.add(pid); srvNewerBar(true, s.name); const bar = document.getElementById('srvNewer'); if (bar) bar.dataset.pid = pid; }
   } catch (e) { } finally { SRV.chk = false; }
 }
 async function srvLoadNewer() {

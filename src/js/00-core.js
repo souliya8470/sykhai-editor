@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.96
-// APP_VERSION_PREV : 1.95
-// APP_VERSION_PREV_OLDER : 1.94
+// APP_VERSION  : 1.97
+// APP_VERSION_PREV : 1.96
+// APP_VERSION_PREV_OLDER : 1.95
+// 1.97 : fix false green bar 'the server has a newer version of this project — Project 1' right after AI built videos (Tar 2026-11-23): the 'is the server copy newer' check was started for the old project, the answer arrived after the timeline had switched to the new video, and was compared against the NEW project's id. The check now remembers which project it asked about and drops the answer if the open project changed.
 // 1.96 : AI cut-it-all (Tar 2026-11-23: pressed 'Create clip' and nothing happened): the button was silently locked while scenes were still un-reviewed. Now it never looks dead — clicking it with scenes left says how many, scrolls to the first un-reviewed scene and flashes it; new button 'approve all remaining scenes'; while building, the dialog shows each step (key phrases, video i/N, saving) with a running seconds clock and a 'still working, not stuck' note after 40 s on one step; the 🎤 line of a scene no longer lists a neighbouring sentence that overlaps the scene by only a few hundredths of a second (it made the dropped 249,000 price sentence look as if it was still inside the last scene); a second click while busy says so instead of doing nothing.
 // 1.95 : AI cut-it-all — subtitle modes (Tar 2026-11-23): tick any of 'no subtitles' / 'full subtitles' / 'keyword subtitles' (v5.5 look: bold white, key phrase yellow, yellow underline) on the settings page and on the storyboard page; each ticked mode builds its own finished video (separate project) named '<concept> · <mode>' with the mode also saved in doc.desc, so 2-3 versions come from one storyboard without starting a new project. Keyword phrases come from Gemini once per clip (cached with the transcript).
 // 1.94 : AI cut-it-all (Tar 2026-11-23): ◀ Back buttons — storyboard page → concepts page → settings page (settings, brief and clip choice are remembered; 'use previous result' skips straight forward at no AI cost); the storyboard page now also has the subtitle / footer text / music tick boxes so they can be changed right before building without re-running the AI.
@@ -102,7 +103,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.96';
+const APP_VERSION = '1.97';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
