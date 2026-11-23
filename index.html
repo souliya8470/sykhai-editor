@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.95</title>
-<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=1.95"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=1.95"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=1.95">
+<title>Sykhai Editor v1.96</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=1.96"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=1.96"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=1.96">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -132,7 +132,7 @@ dialog h3{margin:0 0 10px}
 .vcard.pick{border-color:var(--ac)}.vcard .vt{flex:1}
 .kclips{max-height:150px;overflow:auto;border:1px solid var(--ln);border-radius:8px;padding:4px 8px;margin:6px 0}.kcl{display:flex;gap:6px;align-items:center;padding:2px 0;font-size:12px}
 .ksheet{display:flex;gap:6px;overflow-x:auto;padding:4px 0;margin:4px 0}.ksheet .kc{flex:none;width:96px;font-size:10px;color:var(--mu)}.ksheet img{width:96px;height:64px;object-fit:cover;border-radius:4px;display:block}.ksheet .kn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.kscene{display:flex;gap:8px;border:1px solid var(--ln);border-radius:8px;padding:6px;margin:5px 0;background:var(--p1)}.kscene.ok{border-color:#fff}.kscene.drop{opacity:.4}
+.kscene{display:flex;gap:8px;border:1px solid var(--ln);border-radius:8px;padding:6px;margin:5px 0;background:var(--p1)}.kscene.ok{border-color:#fff}.kscene.drop{opacity:.4}.kscene.flash{border-color:#e8a33d;box-shadow:0 0 0 2px #e8a33d}#kBuild.dim{opacity:.55}
 .kscene img{width:64px;height:96px;object-fit:cover;border-radius:4px;flex:none;background:#000}.kscene .kb{flex:1;min-width:0}.kscene textarea{width:100%;box-sizing:border-box;font-size:12px}.kscene .kt{font-size:11px;color:var(--mu);margin:2px 0}
 .kscene .krow{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}.kscene .krev{display:none;margin-top:4px;gap:5px}.kscene .krev.on{display:flex}.kscene .krev input{flex:1}
 
@@ -2026,6 +2026,9 @@ I18N_ROWS.push(
   ['เลือกซับอย่างน้อย 1 แบบ', 'Pick at least 1 subtitle option', 'ເລືອກຊັບຢ່າງໜ້ອຍ 1 ແບບ'],
   ['จำนวนวิดีโอที่จะได้', 'Videos you will get', 'ຈຳນວນວິດີໂອທີ່ຈະໄດ້'],
   ['กำลังเลือกคำสำคัญ', 'Picking key phrases', 'ກຳລັງເລືອກຄຳສຳຄັນ'],
+  ['วิ', 's', 'ວິ'],
+  ['ขั้นตอนนี้นานกว่าปกติ แต่ยังทำงานอยู่ (ไม่ได้ค้าง)', 'This step is taking longer than usual but it is still working (not stuck)', 'ຂັ້ນຕອນນີ້ດົນກວ່າປົກກະຕິ ແຕ່ຍັງເຮັດວຽກຢູ່ (ບໍ່ໄດ້ຄ້າງ)'],
+  ['✓ ผ่านทุกฉากที่เหลือ', '✓ Approve all remaining scenes', '✓ ຜ່ານທຸກສາກທີ່ເຫຼືອ'],
 );
 
 // ---- 00-9-i18n-j.js ----
@@ -2315,9 +2318,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.95
-// APP_VERSION_PREV : 1.94
-// APP_VERSION_PREV_OLDER : 1.93
+// APP_VERSION  : 1.96
+// APP_VERSION_PREV : 1.95
+// APP_VERSION_PREV_OLDER : 1.94
+// 1.96 : AI cut-it-all (Tar 2026-11-23: pressed 'Create clip' and nothing happened): the button was silently locked while scenes were still un-reviewed. Now it never looks dead — clicking it with scenes left says how many, scrolls to the first un-reviewed scene and flashes it; new button 'approve all remaining scenes'; while building, the dialog shows each step (key phrases, video i/N, saving) with a running seconds clock and a 'still working, not stuck' note after 40 s on one step; the 🎤 line of a scene no longer lists a neighbouring sentence that overlaps the scene by only a few hundredths of a second (it made the dropped 249,000 price sentence look as if it was still inside the last scene); a second click while busy says so instead of doing nothing.
 // 1.95 : AI cut-it-all — subtitle modes (Tar 2026-11-23): tick any of 'no subtitles' / 'full subtitles' / 'keyword subtitles' (v5.5 look: bold white, key phrase yellow, yellow underline) on the settings page and on the storyboard page; each ticked mode builds its own finished video (separate project) named '<concept> · <mode>' with the mode also saved in doc.desc, so 2-3 versions come from one storyboard without starting a new project. Keyword phrases come from Gemini once per clip (cached with the transcript).
 // 1.94 : AI cut-it-all (Tar 2026-11-23): ◀ Back buttons — storyboard page → concepts page → settings page (settings, brief and clip choice are remembered; 'use previous result' skips straight forward at no AI cost); the storyboard page now also has the subtitle / footer text / music tick boxes so they can be changed right before building without re-running the AI.
 // 1.93 : fix (Tar 2026-11-23: transcribing IMG_5483 stopped with "Expected ',' or ']' after array element in JSON") — the JSON reader for AI/Gemini answers now repairs the usual slips: missing commas between items, trailing commas, unescaped quotes inside a text value, and an answer cut off in the middle (keeps every complete item).
@@ -2414,7 +2418,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.95';
+const APP_VERSION = '1.96';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -9138,7 +9142,7 @@ async function kitMakeBoards(sel) {
   } catch (e) { aiErr(e); }
 }
 function kitSceneHtml(sc) {
-  const segs = sc.c.tr ? sc.c.tr.segs.filter(s => s.b > sc.a && s.a < sc.b).map(s => s.text).join(' ') : '';
+  const segs = sc.c.tr ? sc.c.tr.segs.filter(s => Math.min(s.b, sc.b) - Math.max(s.a, sc.a) > .25).map(s => s.text).join(' ') : '';
   return `<img src="${sc.thumb || ''}" alt=""><div class="kb"><div><span class="chip">${esc(sc.role || 'scene')}</span> <span class="mini" translate="no">${esc(sc.m.name)} · ${fmt(sc.a)}–${fmt(sc.b)} (${(sc.b - sc.a).toFixed(1)}s)</span>${sc.score ? ` <span class="mini">· ${T('เทคนี้คะแนน')} ${sc.score}${sc.grp ? ' · ' + T('มีเทคซ้ำ') : ''}</span>` : ''}</div>${sc.warn ? `<div class="kt" style="color:#e8a33d">⚠ ${esc(T(sc.warn))}</div>` : ''}${segs ? `<div class="kt" translate="no">🎤 ${esc(segs)}</div>` : ''}${sc.why ? `<div class="kt" translate="no">${esc(sc.why)}</div>` : ''}
     <textarea data-k="txt" rows="2" placeholder="(ไม่มีข้อความบนจอ)">${esc(sc.line1 + (sc.line2 ? '\n' + sc.line2 : ''))}</textarea>
     <div class="krow"><button data-k="ok" class="primary">✓ ผ่าน</button><button data-k="rev">✎ แก้</button><button data-k="drop">✕ ตัดฉากนี้ทิ้ง</button></div>
@@ -9148,10 +9152,10 @@ function kitShowBoards() {
   if (!KIT.boards.length || !KIT.boards.some(b => b.scenes.length)) return aiDlg('Storyboard', '<div class="hint">AI ไม่ได้ส่งฉากที่ใช้ได้กลับมา ลองใหม่อีกครั้ง</div>');
   const hasMus = [...MEDIA.values()].some(m => m.type === 'audio' && !m.builtin);
   const html = KIT.boards.map((b, bi) => `<div class="aicard"><h4 translate="no">${bi + 1}. ${esc(b.concept.name)}</h4><div class="mini" translate="no">${esc(b.concept.pitch)}</div><div data-board="${bi}">${b.scenes.map((s, si) => `<div class="kscene" data-s="${si}">${kitSceneHtml(s)}</div>`).join('')}</div>${b.dropped && b.dropped.length ? `<details class="mini"><summary>${T('เทคที่ไม่ได้ใช้')} (${b.dropped.length})</summary>${b.dropped.map(d => `<div translate="no">✕ ${esc(d.q.c.m.name)} ${fmt(d.q.a)}–${fmt(d.q.b)} · ${esc(d.q.text)}${d.reason ? ' — ' + esc(d.reason) : ''}</div>`).join('')}</details>` : ''}<div class="row"><span class="sp"></span><button data-allok="${bi}">ผ่านทั้งหมดของแนวนี้</button></div></div>`).join('');
-  aiDlg('ตรวจ storyboard ทีละฉาก', `<div class="hint">กด ✓ ผ่าน ฉากที่ใช้ได้ · ไม่ผ่านให้กด ✎ แก้ แล้วพิมพ์บอก · ผ่านครบทุกฉากแล้วจึงสร้างคลิปได้</div>${html}${kitModesHtml()}<div id="kCount" class="hint"></div><div class="fld chk"><label><input type="checkbox" id="kFoot2"> ใส่ข้อความท้ายจอ</label></div>${hasMus ? '<div class="fld chk"><label><input type="checkbox" id="kMus2"> ใส่เพลงพื้นหลังที่นำเข้าไว้</label></div>' : ''}<div id="kSum" class="hint"></div><div class="row"><button id="kBack">◀ กลับ</button><span class="sp"></span><button class="primary" id="kBuild" disabled>สร้างคลิป</button></div>`, root => {
+  aiDlg('ตรวจ storyboard ทีละฉาก', `<div class="hint">กด ✓ ผ่าน ฉากที่ใช้ได้ · ไม่ผ่านให้กด ✎ แก้ แล้วพิมพ์บอก · ผ่านครบทุกฉากแล้วจึงสร้างคลิปได้</div>${html}${kitModesHtml()}<div id="kCount" class="hint"></div><div class="fld chk"><label><input type="checkbox" id="kFoot2"> ใส่ข้อความท้ายจอ</label></div>${hasMus ? '<div class="fld chk"><label><input type="checkbox" id="kMus2"> ใส่เพลงพื้นหลังที่นำเข้าไว้</label></div>' : ''}<div id="kSum" class="hint"></div><div class="row"><button id="kBack">◀ กลับ</button><button id="kAllOk">✓ ผ่านทุกฉากที่เหลือ</button><span class="sp"></span><button class="primary" id="kBuild">สร้างคลิป</button></div>`, root => {
     $('#kFoot2', root).checked = KIT.footer; if ($('#kMus2', root)) $('#kMus2', root).checked = KIT.music;
     $('#kBack', root).onclick = () => kitShowConcepts();
-    const upd = () => { const pend = KIT.boards.reduce((a, b) => a + b.scenes.filter(s => s.status === 'pending').length, 0), kept = KIT.boards.reduce((a, b) => a + b.scenes.filter(s => s.status !== 'drop').length, 0); $('#kCount', root).textContent = T('จำนวนวิดีโอที่จะได้') + ': ' + KIT.boards.filter(b => b.scenes.some(s => s.status !== 'drop')).length * KIT.modes.length; $('#kSum', root).textContent = pend ? `ยังไม่ได้ตรวจ ${pend} ฉาก` : (kept ? 'ผ่านครบแล้ว — กดสร้างคลิปได้' : 'ตัดทุกฉากทิ้งหมดแล้ว'); $('#kBuild', root).disabled = !!pend || !kept; };
+    const upd = () => { const pend = KIT.boards.reduce((a, b) => a + b.scenes.filter(s => s.status === 'pending').length, 0), kept = KIT.boards.reduce((a, b) => a + b.scenes.filter(s => s.status !== 'drop').length, 0); $('#kCount', root).textContent = T('จำนวนวิดีโอที่จะได้') + ': ' + KIT.boards.filter(b => b.scenes.some(s => s.status !== 'drop')).length * KIT.modes.length; $('#kSum', root).textContent = pend ? `ยังไม่ได้ตรวจ ${pend} ฉาก — กด ✓ ผ่าน ให้ครบก่อนจึงสร้างคลิปได้` : (kept ? 'ผ่านครบแล้ว — กดสร้างคลิปได้' : 'ตัดทุกฉากทิ้งหมดแล้ว'); $('#kSum', root).style.color = pend ? '#e8a33d' : ''; $('#kBuild', root).classList.toggle('dim', !!pend || !kept); };
     const paint = (el, sc) => { el.className = 'kscene' + (sc.status === 'ok' ? ' ok' : sc.status === 'drop' ? ' drop' : ''); };
     root.querySelectorAll('.kscene').forEach(el => { const sc = KIT.boards[+el.parentElement.dataset.board].scenes[+el.dataset.s]; paint(el, sc); });
     root.onclick = async e => {
@@ -9167,7 +9171,14 @@ function kitShowBoards() {
       }
     };
     root.onchange = e => { if (e.target.dataset.mode) { let md = kitModesGet(root); if (!md.length) { e.target.checked = true; md = kitModesGet(root); toast('เลือกซับอย่างน้อย 1 แบบ'); } KIT.modes = md; upd(); } else if (e.target.id === 'kFoot2') KIT.footer = e.target.checked; else if (e.target.id === 'kMus2') KIT.music = e.target.checked; else if (e.target.matches('[data-k=txt]')) { const el = e.target.closest('.kscene'), sc = KIT.boards[+el.parentElement.dataset.board].scenes[+el.dataset.s]; const v = e.target.value.split('\n'); sc.line1 = (v[0] || '').trim(); sc.line2 = v.slice(1).join(' ').trim(); } };
-    $('#kBuild', root).onclick = kitBuild; upd();
+    $('#kAllOk', root).onclick = () => { KIT.boards.forEach((b, bi) => { b.scenes.forEach(s => { if (s.status === 'pending') s.status = 'ok'; }); root.querySelectorAll(`[data-board="${bi}"] .kscene`).forEach((el, i) => paint(el, b.scenes[i])); }); upd(); };
+    $('#kBuild', root).onclick = () => {   // v1.95: a click always answers — says what is missing instead of doing nothing
+      const all = KIT.boards.flatMap(b => b.scenes), pend = all.filter(s => s.status === 'pending').length, kept = all.filter(s => s.status !== 'drop').length;
+      if (pend) { const el = [...root.querySelectorAll('.kscene')].find(e => KIT.boards[+e.parentElement.dataset.board].scenes[+e.dataset.s].status === 'pending'); toast(`ยังเหลือ ${pend} ฉากที่ยังไม่ได้ตรวจ — กด ✓ ผ่าน (หรือ ✕ ตัด) ให้ครบก่อน`, 5000); if (el) { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 1800); } return; }
+      if (!kept) return toast('ตัดทุกฉากทิ้งหมดแล้ว — ไม่มีฉากให้สร้างคลิป', 4000);
+      kitBuild();
+    };
+    upd();
   });
 }
 async function kitRevise(bi, sc, note) {
@@ -9180,16 +9191,21 @@ async function kitRevise(bi, sc, note) {
   Object.assign(sc, ns, { id: sc.id, status: 'pending' });
 }
 async function kitBuild() {
-  if (AI.busy) return; AI.busy = true;
+  if (AI.busy) return toast('AI ยังทำงานอยู่ รอให้เสร็จก่อน', 4000); AI.busy = true;
+  const T0 = Date.now(); let S0 = T0, msg = '', pct = 30, tick = 0;   // v1.95: visible progress with a running clock, so the owner can tell 'working' from 'stuck'
+  const show = () => aiProg(msg + ` · ${Math.round((Date.now() - T0) / 1000)} ${T('วิ')}` + (Date.now() - S0 > 40000 ? ' — ' + T('ขั้นตอนนี้นานกว่าปกติ แต่ยังทำงานอยู่ (ไม่ได้ค้าง)') : ''), pct);
+  const prog = async (m, p) => { msg = m; pct = p; S0 = Date.now(); show(); await new Promise(r => setTimeout(r, 30)); };
   try {
-    aiProg('กำลังสร้างคลิป…', 30); const docs = []; const modes = KIT.modes.length ? KIT.modes : ['full'], kws = new Map();
+    await prog('กำลังสร้างคลิป…', 30); tick = setInterval(show, 1000); const docs = []; const modes = KIT.modes.length ? KIT.modes : ['full'], kws = new Map();
     if (modes.includes('key')) {   // keyword subtitles: Gemini picks the key phrases of each clip once (kept with the transcript)
       const mids = [...new Set(KIT.boards.flatMap(b => b.scenes.filter(s => s.status !== 'drop').map(s => s.m.id)))];
-      for (let i = 0; i < mids.length; i++) { const tr = getTr(mids[i]); if (!tr) continue; aiProg(`กำลังเลือกคำสำคัญ ${i + 1}/${mids.length}`, 32 + 25 * i / mids.length); try { kws.set(mids[i], await capKeywords(tr)); } catch (e) { if (/งบ|API key/.test(e.message)) throw e; console.warn(e); } }
+      for (let i = 0; i < mids.length; i++) { const tr = getTr(mids[i]); if (!tr) continue; await prog(`กำลังเลือกคำสำคัญ ${i + 1}/${mids.length}`, 32 + 25 * i / mids.length); try { kws.set(mids[i], await capKeywords(tr)); } catch (e) { if (/งบ|API key/.test(e.message)) throw e; console.warn(e); } }
     }
+    const total = KIT.boards.filter(b => b.scenes.some(s => s.status !== 'drop')).length * modes.length;
     for (const b of KIT.boards) {
       const sc = b.scenes.filter(s => s.status !== 'drop'); if (!sc.length) continue;
       for (const mode of modes) {
+        await prog(`กำลังสร้างวิดีโอ ${docs.length + 1}/${total}: ${b.concept.name} · ${kitModeName(mode)}`, 60 + 25 * docs.length / total);
         const v = { name: b.concept.name, segs: sc.map(s => ({ m: s.m, a: s.a, b: s.b, transition: 'none' })), overlays: sc.map((s, i) => s.line1 || s.line2 ? { seg: i, line1: s.line1, line2: s.line2 } : null).filter(Boolean) };
         const doc = buildVariantDoc(v, { style: 'hl', footer: KIT.footer ? FOOTER_TEXT : '', music: KIT.music }); doc.name = b.concept.name + (modes.length > 1 ? ' · ' + kitModeName(mode) : ''); doc.desc = kitModeName(mode) + ' — ' + b.concept.name;
         const mids = [...new Set(sc.map(s => s.m.id))];
@@ -9199,11 +9215,11 @@ async function kitBuild() {
       }
     }
     if (!docs.length) { AI.busy = false; return aiDlg('สร้างคลิป', '<div class="hint">ไม่มีฉากให้สร้างคลิป</div>'); }
-    await projSaveNow();
+    await prog('กำลังบันทึกโปรเจกต์…', 90); await projSaveNow();
     for (const d of docs.slice(1)) { const rec = projRec(d); await projPut(rec); if (typeof srvSync === 'function') srvSync(rec); }
-    D = docs[0]; SEL = null; if (typeof srvCheckNewer === 'function') srvCheckNewer(); commit('kitti'); emit('sel'); seek(0); AI.busy = false; $('#dlgAi').close();
+    clearInterval(tick); D = docs[0]; SEL = null; if (typeof srvCheckNewer === 'function') srvCheckNewer(); commit('kitti'); emit('sel'); seek(0); AI.busy = false; $('#dlgAi').close();
     toast(docs.length > 1 ? `สร้างแล้ว ${docs.length} คลิป — คลิปแรกอยู่ในไทม์ไลน์ ที่เหลืออยู่ในหน้าโปรเจกต์` : 'สร้างคลิปแล้ว — ✂ แก้ต่อได้เลย', 5000);
-  } catch (e) { aiErr(e); }
+  } catch (e) { clearInterval(tick); aiErr(e); }
 }
 
 // ---- 63-food.js ----

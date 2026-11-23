@@ -217,4 +217,7 @@ I18N_ROWS.push(
   ['เลือกซับอย่างน้อย 1 แบบ', 'Pick at least 1 subtitle option', 'ເລືອກຊັບຢ່າງໜ້ອຍ 1 ແບບ'],
   ['จำนวนวิดีโอที่จะได้', 'Videos you will get', 'ຈຳນວນວິດີໂອທີ່ຈະໄດ້'],
   ['กำลังเลือกคำสำคัญ', 'Picking key phrases', 'ກຳລັງເລືອກຄຳສຳຄັນ'],
+  ['วิ', 's', 'ວິ'],
+  ['ขั้นตอนนี้นานกว่าปกติ แต่ยังทำงานอยู่ (ไม่ได้ค้าง)', 'This step is taking longer than usual but it is still working (not stuck)', 'ຂັ້ນຕອນນີ້ດົນກວ່າປົກກະຕິ ແຕ່ຍັງເຮັດວຽກຢູ່ (ບໍ່ໄດ້ຄ້າງ)'],
+  ['✓ ผ่านทุกฉากที่เหลือ', '✓ Approve all remaining scenes', '✓ ຜ່ານທຸກສາກທີ່ເຫຼືອ'],
 );
