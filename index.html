@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.92</title>
-<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=1.92"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=1.92"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=1.92">
+<title>Sykhai Editor v1.93</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=1.93"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=1.93"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=1.93">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -2305,9 +2305,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.92
-// APP_VERSION_PREV : 1.91
-// APP_VERSION_PREV_OLDER : 1.90
+// APP_VERSION  : 1.93
+// APP_VERSION_PREV : 1.92
+// APP_VERSION_PREV_OLDER : 1.91
+// 1.93 : fix (Tar 2026-11-23: transcribing IMG_5483 stopped with "Expected ',' or ']' after array element in JSON") — the JSON reader for AI/Gemini answers now repairs the usual slips: missing commas between items, trailing commas, unescaped quotes inside a text value, and an answer cut off in the middle (keeps every complete item).
 // 1.92 : CapCut-like multi-device (Tar 2026-11-23): a project's clips that are not on this device yet (still uploading from the other device) now show in the media list as cloud placeholders instead of being invisible; every 20 s the editor quietly pulls clips that finished uploading, and while Home is open it also looks for new projects from the server.
 // 1.91 : favicon scissors now lie horizontally (handles left, blades right) like the logo in the app header; icon links carry ?v=version so Chrome reloads them.
 // 1.90 : browser tab icon (favicon) + iPhone home-screen icon = the editor's scissors logo in the green rounded square, instead of the default globe (Tar 2026-11-23). Files: favicon.svg, favicon-32.png, apple-touch-icon.png in the repo root.
@@ -2401,7 +2402,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.92';
+const APP_VERSION = '1.93';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -8379,7 +8380,22 @@ async function gemini(parts, { json = true, label = 'gemini', model: forced = nu
 }
 function parseJsonLoose(s) {
   s = String(s).trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
-  try { return JSON.parse(s); } catch (e) { const i = s.search(/[\[{]/); const j = Math.max(s.lastIndexOf('}'), s.lastIndexOf(']')); if (i >= 0 && j > i) return JSON.parse(s.slice(i, j + 1)); throw new Error('AI ตอบกลับในรูปแบบที่อ่านไม่ได้'); }
+  try { return JSON.parse(s); } catch (e) { }
+  const i = s.search(/[\[{]/); if (i < 0) throw new Error('AI ตอบกลับในรูปแบบที่อ่านไม่ได้');
+  let t = s.slice(i);
+  const tries = [t, t.slice(0, Math.max(t.lastIndexOf('}'), t.lastIndexOf(']')) + 1)];
+  const qfix = x => x.replace(/("(?:text|name|pitch|hook|line|say|note)"\s*:\s*")([\s\S]*?)("\s*(?:,\s*"[A-Za-z_]+"\s*:|}))/g, (m, p1, v, p3) => p1 + v.replace(/(?<!\\)"/g, '\\"') + p3);   // unescaped quotes inside a text value
+  const basic = x => x.replace(/}\s*{/g, '},{').replace(/]\s*\[/g, '],[').replace(/,\s*([}\]])/g, '$1');   // v1.93: repair common Gemini slips — missing commas between objects, trailing commas
+  for (const f of [basic, x => basic(qfix(x))]) for (const x of tries) { try { return JSON.parse(f(x)); } catch (e) { } }
+  // truncated / broken tail: cut back to the last complete item and close the open brackets
+  const body = t.replace(/}\s*{/g, '},{').replace(/,\s*([}\]])/g, '$1');
+  const ends = []; { let inS = false, esc = false; for (let k = 0; k < body.length; k++) { const c = body[k]; if (inS) { if (esc) esc = false; else if (c === '\\') esc = true; else if (c === '"') inS = false; } else if (c === '"') inS = true; else if (c === '}' || c === ']') ends.push(k); } }
+  for (let n = ends.length - 1, tried = 0; n >= 0 && tried < 60; n--, tried++) {
+    const head = body.slice(0, ends[n] + 1); const st = []; let inS = false, esc = false;
+    for (const c of head) { if (inS) { if (esc) esc = false; else if (c === '\\') esc = true; else if (c === '"') inS = false; } else if (c === '"') inS = true; else if (c === '{') st.push('}'); else if (c === '[') st.push(']'); else if (c === '}' || c === ']') st.pop(); }
+    try { return JSON.parse(head + st.reverse().join('')); } catch (e) { }
+  }
+  throw new Error('AI ตอบกลับในรูปแบบที่อ่านไม่ได้');
 }
 const toSec = v => { if (typeof v === 'number') return v; v = String(v).trim(); if (v.includes(':')) return v.split(':').reduce((a, x) => a * 60 + parseFloat(x), 0); return parseFloat(v) || 0; };
 

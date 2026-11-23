@@ -90,7 +90,22 @@ async function gemini(parts, { json = true, label = 'gemini', model: forced = nu
 }
 function parseJsonLoose(s) {
   s = String(s).trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
-  try { return JSON.parse(s); } catch (e) { const i = s.search(/[\[{]/); const j = Math.max(s.lastIndexOf('}'), s.lastIndexOf(']')); if (i >= 0 && j > i) return JSON.parse(s.slice(i, j + 1)); throw new Error('AI ตอบกลับในรูปแบบที่อ่านไม่ได้'); }
+  try { return JSON.parse(s); } catch (e) { }
+  const i = s.search(/[\[{]/); if (i < 0) throw new Error('AI ตอบกลับในรูปแบบที่อ่านไม่ได้');
+  let t = s.slice(i);
+  const tries = [t, t.slice(0, Math.max(t.lastIndexOf('}'), t.lastIndexOf(']')) + 1)];
+  const qfix = x => x.replace(/("(?:text|name|pitch|hook|line|say|note)"\s*:\s*")([\s\S]*?)("\s*(?:,\s*"[A-Za-z_]+"\s*:|}))/g, (m, p1, v, p3) => p1 + v.replace(/(?<!\\)"/g, '\\"') + p3);   // unescaped quotes inside a text value
+  const basic = x => x.replace(/}\s*{/g, '},{').replace(/]\s*\[/g, '],[').replace(/,\s*([}\]])/g, '$1');   // v1.93: repair common Gemini slips — missing commas between objects, trailing commas
+  for (const f of [basic, x => basic(qfix(x))]) for (const x of tries) { try { return JSON.parse(f(x)); } catch (e) { } }
+  // truncated / broken tail: cut back to the last complete item and close the open brackets
+  const body = t.replace(/}\s*{/g, '},{').replace(/,\s*([}\]])/g, '$1');
+  const ends = []; { let inS = false, esc = false; for (let k = 0; k < body.length; k++) { const c = body[k]; if (inS) { if (esc) esc = false; else if (c === '\\') esc = true; else if (c === '"') inS = false; } else if (c === '"') inS = true; else if (c === '}' || c === ']') ends.push(k); } }
+  for (let n = ends.length - 1, tried = 0; n >= 0 && tried < 60; n--, tried++) {
+    const head = body.slice(0, ends[n] + 1); const st = []; let inS = false, esc = false;
+    for (const c of head) { if (inS) { if (esc) esc = false; else if (c === '\\') esc = true; else if (c === '"') inS = false; } else if (c === '"') inS = true; else if (c === '{') st.push('}'); else if (c === '[') st.push(']'); else if (c === '}' || c === ']') st.pop(); }
+    try { return JSON.parse(head + st.reverse().join('')); } catch (e) { }
+  }
+  throw new Error('AI ตอบกลับในรูปแบบที่อ่านไม่ได้');
 }
 const toSec = v => { if (typeof v === 'number') return v; v = String(v).trim(); if (v.includes(':')) return v.split(':').reduce((a, x) => a * 60 + parseFloat(x), 0); return parseFloat(v) || 0; };
 
