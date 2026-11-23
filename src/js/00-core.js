@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.93
-// APP_VERSION_PREV : 1.92
-// APP_VERSION_PREV_OLDER : 1.91
+// APP_VERSION  : 1.94
+// APP_VERSION_PREV : 1.93
+// APP_VERSION_PREV_OLDER : 1.92
+// 1.94 : AI cut-it-all (Tar 2026-11-23): ◀ Back buttons — storyboard page → concepts page → settings page (settings, brief and clip choice are remembered; 'use previous result' skips straight forward at no AI cost); the storyboard page now also has the subtitle / footer text / music tick boxes so they can be changed right before building without re-running the AI.
 // 1.93 : fix (Tar 2026-11-23: transcribing IMG_5483 stopped with "Expected ',' or ']' after array element in JSON") — the JSON reader for AI/Gemini answers now repairs the usual slips: missing commas between items, trailing commas, unescaped quotes inside a text value, and an answer cut off in the middle (keeps every complete item).
 // 1.92 : CapCut-like multi-device (Tar 2026-11-23): a project's clips that are not on this device yet (still uploading from the other device) now show in the media list as cloud placeholders instead of being invisible; every 20 s the editor quietly pulls clips that finished uploading, and while Home is open it also looks for new projects from the server.
 // 1.91 : favicon scissors now lie horizontally (handles left, blades right) like the logo in the app header; icon links carry ?v=version so Chrome reloads them.
@@ -99,7 +100,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.93';
+const APP_VERSION = '1.94';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];

@@ -207,4 +207,7 @@ I18N_ROWS.push(
   ['แบบโบราณ', 'Traditional', 'ແບບບູຮານ'],
   ['ตกแต่ง', 'Decorative', 'ຕົກແຕ່ງ'],
   ['สเตนซิล', 'Stencil', 'ສະເຕັນຊິວ'],
+  ['◀ กลับ', '◀ Back', '◀ ກັບຄືນ'],
+  ['▶ ใช้ผลเดิม (ไม่เสียเงิน)', '▶ Use previous result (free)', '▶ ໃຊ້ຜົນເດີມ (ບໍ່ເສຍເງິນ)'],
+  ['▶ ไป storyboard เดิม (ไม่เสียเงิน)', '▶ Go to previous storyboard (free)', '▶ ໄປ storyboard ເດີມ (ບໍ່ເສຍເງິນ)'],
 );

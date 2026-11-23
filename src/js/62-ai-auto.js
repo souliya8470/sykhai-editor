@@ -173,7 +173,7 @@ function subsPreview(m, chunks, style, rep) {
 // ============================================================
 //  C) "cut it all for me" — concepts -> storyboard -> approve -> timeline
 // ============================================================
-const KIT = { clips: [], concepts: [], boards: [], brief: '', target: 30, subs: true, footer: true, music: true, takes: true, groups: [], segIdx: new Map() };
+const KIT = { clips: [], sel: [], concepts: [], boards: [], brief: '', target: 30, subs: true, footer: true, music: true, takes: true, groups: [], segIdx: new Map() };
 // ---- v1.67: take analysis (retakes across clips) ----
 const takeNorm = s => stripP(s).replace(/[0-9๐-๙໐-໙]/g, '').toLowerCase();
 function takeSim(x, y) {   // Dice coefficient on character bigrams (works for Lao/Thai without word breaks)
@@ -231,11 +231,16 @@ function aiKittiUI() {
     <div class="fld chk"><label><input type="checkbox" id="kSubs" checked> ใส่ซับจากเสียงพูด</label></div>
     <div class="fld chk"><label><input type="checkbox" id="kFoot" checked> ใส่ข้อความท้ายจอ</label></div>
     ${hasMus ? '<div class="fld chk"><label><input type="checkbox" id="kMus" checked> ใส่เพลงพื้นหลังที่นำเข้าไว้</label></div>' : ''}
-    <div class="row"><span class="sp"></span><button class="primary" id="kGo">ให้ AI ดูคลิป</button></div>`, root => {
+    <div class="row">${KIT.concepts.length ? '<button id="kSkip">▶ ใช้ผลเดิม (ไม่เสียเงิน)</button>' : ''}<span class="sp"></span><button class="primary" id="kGo">ให้ AI ดูคลิป</button></div>`, root => {
+    if (KIT.sel.length) {   // v1.94: coming back to this page keeps what was chosen before
+      root.querySelectorAll('[data-m]').forEach(x => { x.checked = KIT.sel.includes(x.dataset.m); });
+      $('#kBrief', root).value = KIT.brief || ''; $('#kLen', root).value = String(KIT.target); $('#kTake', root).checked = KIT.takes; $('#kSubs', root).checked = KIT.subs; $('#kFoot', root).checked = KIT.footer; if ($('#kMus', root)) $('#kMus', root).checked = KIT.music;
+    }
+    if ($('#kSkip', root)) $('#kSkip', root).onclick = () => KIT.boards.length ? kitShowBoards() : kitShowConcepts();
     $('#kGo', root).onclick = () => {
       const ids = [...root.querySelectorAll('[data-m]')].filter(x => x.checked).map(x => x.dataset.m); if (!ids.length) return toast('เลือกคลิปก่อน');
       Object.assign(KIT, { brief: $('#kBrief', root).value.trim(), target: +$('#kLen', root).value, takes: $('#kTake', root).checked, subs: $('#kSubs', root).checked, footer: $('#kFoot', root).checked, music: !!($('#kMus', root) && $('#kMus', root).checked) });
-      kitAnalyze(ids.slice(0, 24));
+      KIT.sel = ids.slice(0, 24); kitAnalyze(KIT.sel);
     };
   });
 }
@@ -263,7 +268,8 @@ function kitShowConcepts() {
   if (!KIT.concepts.length) return aiDlg('แนวเรื่อง', '<div class="hint">AI ไม่ได้ส่งแนวเรื่องที่ใช้ได้กลับมา ลองใหม่อีกครั้ง</div>');
   const sheet = KIT.clips.map(c => `<div class="kc"><img src="data:image/jpeg;base64,${c.frames[1].b64}"><div class="kn" translate="no">${esc(c.m.name)}</div><div>${fmt(c.m.duration)}${c.tr ? ' · 🎤' : ''}</div></div>`).join('');
   const cards = KIT.concepts.map((c, i) => `<label class="vcard"><input type="checkbox" data-c="${i}" ${i === 0 ? 'checked' : ''}><div class="vt"><b translate="no">${i + 1}. ${esc(c.name)}</b><div class="hint" translate="no">${esc(c.pitch)}</div>${c.hook ? `<div class="mini" translate="no">🎣 ${esc(c.hook)}</div>` : ''}</div></label>`).join('');
-  aiDlg('เลือกแนวเรื่อง', `<div class="hint">AI ดูคลิปทั้งหมดแล้ว — เลือกได้มากกว่า 1 แนว แต่ละแนวจะเป็น 1 คลิป</div><div class="ksheet">${sheet}</div>${cards}<div class="row"><span class="sp"></span><button class="primary" id="kNext">ต่อ: สร้าง storyboard</button></div>`, root => {
+  aiDlg('เลือกแนวเรื่อง', `<div class="hint">AI ดูคลิปทั้งหมดแล้ว — เลือกได้มากกว่า 1 แนว แต่ละแนวจะเป็น 1 คลิป</div><div class="ksheet">${sheet}</div>${cards}<div class="row"><button id="kBack">◀ กลับ</button>${KIT.boards.length ? '<button id="kToBoards">▶ ไป storyboard เดิม (ไม่เสียเงิน)</button>' : ''}<span class="sp"></span><button class="primary" id="kNext">ต่อ: สร้าง storyboard</button></div>`, root => {
+    $('#kBack', root).onclick = () => aiKittiUI(); if ($('#kToBoards', root)) $('#kToBoards', root).onclick = () => kitShowBoards();
     $('#kNext', root).onclick = () => { const sel = [...root.querySelectorAll('[data-c]')].filter(x => x.checked).map(x => +x.dataset.c); if (!sel.length) return toast('เลือกอย่างน้อย 1 แนว'); kitMakeBoards(sel); };
   });
 }
@@ -312,8 +318,11 @@ function kitSceneHtml(sc) {
 }
 function kitShowBoards() {
   if (!KIT.boards.length || !KIT.boards.some(b => b.scenes.length)) return aiDlg('Storyboard', '<div class="hint">AI ไม่ได้ส่งฉากที่ใช้ได้กลับมา ลองใหม่อีกครั้ง</div>');
+  const hasMus = [...MEDIA.values()].some(m => m.type === 'audio' && !m.builtin);
   const html = KIT.boards.map((b, bi) => `<div class="aicard"><h4 translate="no">${bi + 1}. ${esc(b.concept.name)}</h4><div class="mini" translate="no">${esc(b.concept.pitch)}</div><div data-board="${bi}">${b.scenes.map((s, si) => `<div class="kscene" data-s="${si}">${kitSceneHtml(s)}</div>`).join('')}</div>${b.dropped && b.dropped.length ? `<details class="mini"><summary>${T('เทคที่ไม่ได้ใช้')} (${b.dropped.length})</summary>${b.dropped.map(d => `<div translate="no">✕ ${esc(d.q.c.m.name)} ${fmt(d.q.a)}–${fmt(d.q.b)} · ${esc(d.q.text)}${d.reason ? ' — ' + esc(d.reason) : ''}</div>`).join('')}</details>` : ''}<div class="row"><span class="sp"></span><button data-allok="${bi}">ผ่านทั้งหมดของแนวนี้</button></div></div>`).join('');
-  aiDlg('ตรวจ storyboard ทีละฉาก', `<div class="hint">กด ✓ ผ่าน ฉากที่ใช้ได้ · ไม่ผ่านให้กด ✎ แก้ แล้วพิมพ์บอก · ผ่านครบทุกฉากแล้วจึงสร้างคลิปได้</div>${html}<div id="kSum" class="hint"></div><div class="row"><span class="sp"></span><button class="primary" id="kBuild" disabled>สร้างคลิป</button></div>`, root => {
+  aiDlg('ตรวจ storyboard ทีละฉาก', `<div class="hint">กด ✓ ผ่าน ฉากที่ใช้ได้ · ไม่ผ่านให้กด ✎ แก้ แล้วพิมพ์บอก · ผ่านครบทุกฉากแล้วจึงสร้างคลิปได้</div>${html}<div class="fld chk"><label><input type="checkbox" id="kSubs2"> ใส่ซับจากเสียงพูด</label></div><div class="fld chk"><label><input type="checkbox" id="kFoot2"> ใส่ข้อความท้ายจอ</label></div>${hasMus ? '<div class="fld chk"><label><input type="checkbox" id="kMus2"> ใส่เพลงพื้นหลังที่นำเข้าไว้</label></div>' : ''}<div id="kSum" class="hint"></div><div class="row"><button id="kBack">◀ กลับ</button><span class="sp"></span><button class="primary" id="kBuild" disabled>สร้างคลิป</button></div>`, root => {
+    $('#kSubs2', root).checked = KIT.subs; $('#kFoot2', root).checked = KIT.footer; if ($('#kMus2', root)) $('#kMus2', root).checked = KIT.music;
+    $('#kBack', root).onclick = () => kitShowConcepts();
     const upd = () => { const pend = KIT.boards.reduce((a, b) => a + b.scenes.filter(s => s.status === 'pending').length, 0), kept = KIT.boards.reduce((a, b) => a + b.scenes.filter(s => s.status !== 'drop').length, 0); $('#kSum', root).textContent = pend ? `ยังไม่ได้ตรวจ ${pend} ฉาก` : (kept ? 'ผ่านครบแล้ว — กดสร้างคลิปได้' : 'ตัดทุกฉากทิ้งหมดแล้ว'); $('#kBuild', root).disabled = !!pend || !kept; };
     const paint = (el, sc) => { el.className = 'kscene' + (sc.status === 'ok' ? ' ok' : sc.status === 'drop' ? ' drop' : ''); };
     root.querySelectorAll('.kscene').forEach(el => { const sc = KIT.boards[+el.parentElement.dataset.board].scenes[+el.dataset.s]; paint(el, sc); });
@@ -329,7 +338,7 @@ function kitShowBoards() {
         try { await kitRevise(el.parentElement.dataset.board, sc, note); el.innerHTML = kitSceneHtml(sc); paint(el, sc); upd(); } catch (er) { toast(er.message, 5000); btn.disabled = false; btn.textContent = 'ส่ง'; } AI.busy = false;
       }
     };
-    root.onchange = e => { if (e.target.matches('[data-k=txt]')) { const el = e.target.closest('.kscene'), sc = KIT.boards[+el.parentElement.dataset.board].scenes[+el.dataset.s]; const v = e.target.value.split('\n'); sc.line1 = (v[0] || '').trim(); sc.line2 = v.slice(1).join(' ').trim(); } };
+    root.onchange = e => { if (e.target.id === 'kSubs2') KIT.subs = e.target.checked; else if (e.target.id === 'kFoot2') KIT.footer = e.target.checked; else if (e.target.id === 'kMus2') KIT.music = e.target.checked; else if (e.target.matches('[data-k=txt]')) { const el = e.target.closest('.kscene'), sc = KIT.boards[+el.parentElement.dataset.board].scenes[+el.dataset.s]; const v = e.target.value.split('\n'); sc.line1 = (v[0] || '').trim(); sc.line2 = v.slice(1).join(' ').trim(); } };
     $('#kBuild', root).onclick = kitBuild; upd();
   });
 }
