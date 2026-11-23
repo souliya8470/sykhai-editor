@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v1.90</title>
-<link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<title>Sykhai Editor v1.91</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=1.91"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=1.91"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=1.91">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -2300,9 +2300,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.90
-// APP_VERSION_PREV : 1.89
-// APP_VERSION_PREV_OLDER : 1.88
+// APP_VERSION  : 1.91
+// APP_VERSION_PREV : 1.90
+// APP_VERSION_PREV_OLDER : 1.89
+// 1.91 : favicon scissors now lie horizontally (handles left, blades right) like the logo in the app header; icon links carry ?v=version so Chrome reloads them.
 // 1.90 : browser tab icon (favicon) + iPhone home-screen icon = the editor's scissors logo in the green rounded square, instead of the default globe (Tar 2026-11-23). Files: favicon.svg, favicon-32.png, apple-touch-icon.png in the repo root.
 // 1.89 : new projects get numbered names like CapCut (Project 1, Project 2 ... in the UI language; next number = highest existing + 1) instead of every one being called New project; rename any time.
 // 1.88 : clips that are only imported into a project (media bin, not on the timeline yet) are now sent to the shop server and pulled by other devices (Tar 2026-11-22: the phone showed only 6 of ~25 clips in older files — the other clips existed only in the Mac browser because only timeline clips were ever uploaded). Home sync also queues the bin clips of projects saved earlier.
@@ -2394,7 +2395,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.90';
+const APP_VERSION = '1.91';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
