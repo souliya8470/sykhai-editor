@@ -173,7 +173,24 @@ function subsPreview(m, chunks, style, rep) {
 // ============================================================
 //  C) "cut it all for me" — concepts -> storyboard -> approve -> timeline
 // ============================================================
-const KIT = { clips: [], sel: [], concepts: [], boards: [], brief: '', target: 30, subs: true, footer: true, music: true, takes: true, groups: [], segIdx: new Map() };
+const KIT = { clips: [], sel: [], concepts: [], boards: [], brief: '', target: 30, modes: ['full'], footer: true, music: true, takes: true, groups: [], segIdx: new Map() };
+// v1.95: subtitle modes — tick several = one finished video per mode (full subtitles / keyword-only like v5.5 / none)
+const KIT_MODES = [['none', 'ไม่มีซับ'], ['full', 'ซับเต็ม'], ['key', 'ซับเน้นคีย์เวิร์ด']];
+const kitModesHtml = () => `<div class="fld col kmodes"><label>ซับในวิดีโอ (ติ๊กได้หลายแบบ — ได้วิดีโอแยกให้ทุกแบบ)</label><div class="chk">${KIT_MODES.map(([k, t]) => `<label><input type="checkbox" data-mode="${k}" ${KIT.modes.includes(k) ? 'checked' : ''}> ${t}</label>`).join(' ')}</div></div>`;
+const kitModesGet = root => KIT_MODES.map(m => m[0]).filter(k => { const el = root.querySelector(`[data-mode="${k}"]`); return el && el.checked; });
+const kitModeName = k => T((KIT_MODES.find(m => m[0] === k) || KIT_MODES[1])[1]);
+function kitKeySubs(m, tr, kw) {   // keyword-only captions in the v5.5 look: bold white text, key phrase yellow, yellow underline that fades out (adds to the CURRENT doc)
+  const blocks = capBlocks(tr, 6, { rows: 1, minDur: 0, kw }); const L = [];
+  for (const c of blocks) { const pcs = srcPieces(m.id, c.a, c.b); if (!pcs.length) continue; const [a, b] = pcs[0]; if (b - a < .25) continue; L.push({ c, s: a, dur: Math.max(1.2, b - a) }); }
+  L.sort((x, y) => x.s - y.s); L.forEach((q, i) => { const nx = L[i + 1]; if (nx) q.dur = Math.max(.4, Math.min(q.dur, nx.s - q.s - .03)); });
+  for (const q of L) {
+    const ph = q.c.text.replace(/\n/g, ' ').trim(); if (!ph) continue;
+    const it = mkText('sub', '*' + ph + '*', q.s, q.dur, { sub: 1, subOf: m.id, size: 74, weight: 900, ay: .83, anim: { in: 'none', out: 'none', d: 0 }, reveal: 0, maxW: .9 }); it.color = '#ffffff'; it.color2 = '#FFD84A';
+    it.track = freeTrack('text', q.s, q.dur, 'T2'); addItem(it);
+    const ud = Math.max(.3, q.dur - .12), us = mkSticker('underline', q.s + .08, ud, { size: Math.max(80, Math.round(34 * [...ph.replace(/\s/g, '')].length)), color: '#FFD84A', ay: .875, anim: { in: 'none', out: 'fade', d: .15 } });
+    us.track = freeTrack('text', us.start, ud, 'T3'); addItem(us);
+  }
+}
 // ---- v1.67: take analysis (retakes across clips) ----
 const takeNorm = s => stripP(s).replace(/[0-9๐-๙໐-໙]/g, '').toLowerCase();
 function takeSim(x, y) {   // Dice coefficient on character bigrams (works for Lao/Thai without word breaks)
@@ -228,18 +245,19 @@ function aiKittiUI() {
     <div class="fld col"><label>โจทย์ / สิ่งที่อยากได้ (ไม่ใส่ก็ได้)</label><textarea id="kBrief" rows="2" placeholder="เช่น ขายครีมกันแดด เน้นไม่เหนียว"></textarea></div>
     <div class="fld"><label>ความยาวที่ต้องการ</label><select id="kLen"><option value="15">ประมาณ 15 วินาที</option><option value="30" selected>ประมาณ 30 วินาที</option><option value="45">ประมาณ 45 วินาที</option><option value="60">ประมาณ 60 วินาที</option></select></div>
     <div class="fld chk"><label><input type="checkbox" id="kTake" checked> เลือกเทคที่ดีที่สุดจากเทคซ้ำ (ข้ามคลิป เริ่มที่ต้นประโยคเสมอ)</label></div>
-    <div class="fld chk"><label><input type="checkbox" id="kSubs" checked> ใส่ซับจากเสียงพูด</label></div>
+    ${kitModesHtml()}
     <div class="fld chk"><label><input type="checkbox" id="kFoot" checked> ใส่ข้อความท้ายจอ</label></div>
     ${hasMus ? '<div class="fld chk"><label><input type="checkbox" id="kMus" checked> ใส่เพลงพื้นหลังที่นำเข้าไว้</label></div>' : ''}
     <div class="row">${KIT.concepts.length ? '<button id="kSkip">▶ ใช้ผลเดิม (ไม่เสียเงิน)</button>' : ''}<span class="sp"></span><button class="primary" id="kGo">ให้ AI ดูคลิป</button></div>`, root => {
     if (KIT.sel.length) {   // v1.94: coming back to this page keeps what was chosen before
       root.querySelectorAll('[data-m]').forEach(x => { x.checked = KIT.sel.includes(x.dataset.m); });
-      $('#kBrief', root).value = KIT.brief || ''; $('#kLen', root).value = String(KIT.target); $('#kTake', root).checked = KIT.takes; $('#kSubs', root).checked = KIT.subs; $('#kFoot', root).checked = KIT.footer; if ($('#kMus', root)) $('#kMus', root).checked = KIT.music;
+      $('#kBrief', root).value = KIT.brief || ''; $('#kLen', root).value = String(KIT.target); $('#kTake', root).checked = KIT.takes; $('#kFoot', root).checked = KIT.footer; if ($('#kMus', root)) $('#kMus', root).checked = KIT.music;
     }
     if ($('#kSkip', root)) $('#kSkip', root).onclick = () => KIT.boards.length ? kitShowBoards() : kitShowConcepts();
     $('#kGo', root).onclick = () => {
       const ids = [...root.querySelectorAll('[data-m]')].filter(x => x.checked).map(x => x.dataset.m); if (!ids.length) return toast('เลือกคลิปก่อน');
-      Object.assign(KIT, { brief: $('#kBrief', root).value.trim(), target: +$('#kLen', root).value, takes: $('#kTake', root).checked, subs: $('#kSubs', root).checked, footer: $('#kFoot', root).checked, music: !!($('#kMus', root) && $('#kMus', root).checked) });
+      const modes = kitModesGet(root); if (!modes.length) return toast('เลือกซับอย่างน้อย 1 แบบ');
+      Object.assign(KIT, { brief: $('#kBrief', root).value.trim(), target: +$('#kLen', root).value, takes: $('#kTake', root).checked, modes, footer: $('#kFoot', root).checked, music: !!($('#kMus', root) && $('#kMus', root).checked) });
       KIT.sel = ids.slice(0, 24); kitAnalyze(KIT.sel);
     };
   });
@@ -320,10 +338,10 @@ function kitShowBoards() {
   if (!KIT.boards.length || !KIT.boards.some(b => b.scenes.length)) return aiDlg('Storyboard', '<div class="hint">AI ไม่ได้ส่งฉากที่ใช้ได้กลับมา ลองใหม่อีกครั้ง</div>');
   const hasMus = [...MEDIA.values()].some(m => m.type === 'audio' && !m.builtin);
   const html = KIT.boards.map((b, bi) => `<div class="aicard"><h4 translate="no">${bi + 1}. ${esc(b.concept.name)}</h4><div class="mini" translate="no">${esc(b.concept.pitch)}</div><div data-board="${bi}">${b.scenes.map((s, si) => `<div class="kscene" data-s="${si}">${kitSceneHtml(s)}</div>`).join('')}</div>${b.dropped && b.dropped.length ? `<details class="mini"><summary>${T('เทคที่ไม่ได้ใช้')} (${b.dropped.length})</summary>${b.dropped.map(d => `<div translate="no">✕ ${esc(d.q.c.m.name)} ${fmt(d.q.a)}–${fmt(d.q.b)} · ${esc(d.q.text)}${d.reason ? ' — ' + esc(d.reason) : ''}</div>`).join('')}</details>` : ''}<div class="row"><span class="sp"></span><button data-allok="${bi}">ผ่านทั้งหมดของแนวนี้</button></div></div>`).join('');
-  aiDlg('ตรวจ storyboard ทีละฉาก', `<div class="hint">กด ✓ ผ่าน ฉากที่ใช้ได้ · ไม่ผ่านให้กด ✎ แก้ แล้วพิมพ์บอก · ผ่านครบทุกฉากแล้วจึงสร้างคลิปได้</div>${html}<div class="fld chk"><label><input type="checkbox" id="kSubs2"> ใส่ซับจากเสียงพูด</label></div><div class="fld chk"><label><input type="checkbox" id="kFoot2"> ใส่ข้อความท้ายจอ</label></div>${hasMus ? '<div class="fld chk"><label><input type="checkbox" id="kMus2"> ใส่เพลงพื้นหลังที่นำเข้าไว้</label></div>' : ''}<div id="kSum" class="hint"></div><div class="row"><button id="kBack">◀ กลับ</button><span class="sp"></span><button class="primary" id="kBuild" disabled>สร้างคลิป</button></div>`, root => {
-    $('#kSubs2', root).checked = KIT.subs; $('#kFoot2', root).checked = KIT.footer; if ($('#kMus2', root)) $('#kMus2', root).checked = KIT.music;
+  aiDlg('ตรวจ storyboard ทีละฉาก', `<div class="hint">กด ✓ ผ่าน ฉากที่ใช้ได้ · ไม่ผ่านให้กด ✎ แก้ แล้วพิมพ์บอก · ผ่านครบทุกฉากแล้วจึงสร้างคลิปได้</div>${html}${kitModesHtml()}<div id="kCount" class="hint"></div><div class="fld chk"><label><input type="checkbox" id="kFoot2"> ใส่ข้อความท้ายจอ</label></div>${hasMus ? '<div class="fld chk"><label><input type="checkbox" id="kMus2"> ใส่เพลงพื้นหลังที่นำเข้าไว้</label></div>' : ''}<div id="kSum" class="hint"></div><div class="row"><button id="kBack">◀ กลับ</button><span class="sp"></span><button class="primary" id="kBuild" disabled>สร้างคลิป</button></div>`, root => {
+    $('#kFoot2', root).checked = KIT.footer; if ($('#kMus2', root)) $('#kMus2', root).checked = KIT.music;
     $('#kBack', root).onclick = () => kitShowConcepts();
-    const upd = () => { const pend = KIT.boards.reduce((a, b) => a + b.scenes.filter(s => s.status === 'pending').length, 0), kept = KIT.boards.reduce((a, b) => a + b.scenes.filter(s => s.status !== 'drop').length, 0); $('#kSum', root).textContent = pend ? `ยังไม่ได้ตรวจ ${pend} ฉาก` : (kept ? 'ผ่านครบแล้ว — กดสร้างคลิปได้' : 'ตัดทุกฉากทิ้งหมดแล้ว'); $('#kBuild', root).disabled = !!pend || !kept; };
+    const upd = () => { const pend = KIT.boards.reduce((a, b) => a + b.scenes.filter(s => s.status === 'pending').length, 0), kept = KIT.boards.reduce((a, b) => a + b.scenes.filter(s => s.status !== 'drop').length, 0); $('#kCount', root).textContent = T('จำนวนวิดีโอที่จะได้') + ': ' + KIT.boards.filter(b => b.scenes.some(s => s.status !== 'drop')).length * KIT.modes.length; $('#kSum', root).textContent = pend ? `ยังไม่ได้ตรวจ ${pend} ฉาก` : (kept ? 'ผ่านครบแล้ว — กดสร้างคลิปได้' : 'ตัดทุกฉากทิ้งหมดแล้ว'); $('#kBuild', root).disabled = !!pend || !kept; };
     const paint = (el, sc) => { el.className = 'kscene' + (sc.status === 'ok' ? ' ok' : sc.status === 'drop' ? ' drop' : ''); };
     root.querySelectorAll('.kscene').forEach(el => { const sc = KIT.boards[+el.parentElement.dataset.board].scenes[+el.dataset.s]; paint(el, sc); });
     root.onclick = async e => {
@@ -338,7 +356,7 @@ function kitShowBoards() {
         try { await kitRevise(el.parentElement.dataset.board, sc, note); el.innerHTML = kitSceneHtml(sc); paint(el, sc); upd(); } catch (er) { toast(er.message, 5000); btn.disabled = false; btn.textContent = 'ส่ง'; } AI.busy = false;
       }
     };
-    root.onchange = e => { if (e.target.id === 'kSubs2') KIT.subs = e.target.checked; else if (e.target.id === 'kFoot2') KIT.footer = e.target.checked; else if (e.target.id === 'kMus2') KIT.music = e.target.checked; else if (e.target.matches('[data-k=txt]')) { const el = e.target.closest('.kscene'), sc = KIT.boards[+el.parentElement.dataset.board].scenes[+el.dataset.s]; const v = e.target.value.split('\n'); sc.line1 = (v[0] || '').trim(); sc.line2 = v.slice(1).join(' ').trim(); } };
+    root.onchange = e => { if (e.target.dataset.mode) { let md = kitModesGet(root); if (!md.length) { e.target.checked = true; md = kitModesGet(root); toast('เลือกซับอย่างน้อย 1 แบบ'); } KIT.modes = md; upd(); } else if (e.target.id === 'kFoot2') KIT.footer = e.target.checked; else if (e.target.id === 'kMus2') KIT.music = e.target.checked; else if (e.target.matches('[data-k=txt]')) { const el = e.target.closest('.kscene'), sc = KIT.boards[+el.parentElement.dataset.board].scenes[+el.dataset.s]; const v = e.target.value.split('\n'); sc.line1 = (v[0] || '').trim(); sc.line2 = v.slice(1).join(' ').trim(); } };
     $('#kBuild', root).onclick = kitBuild; upd();
   });
 }
@@ -354,13 +372,21 @@ async function kitRevise(bi, sc, note) {
 async function kitBuild() {
   if (AI.busy) return; AI.busy = true;
   try {
-    aiProg('กำลังสร้างคลิป…', 30); const docs = [];
+    aiProg('กำลังสร้างคลิป…', 30); const docs = []; const modes = KIT.modes.length ? KIT.modes : ['full'], kws = new Map();
+    if (modes.includes('key')) {   // keyword subtitles: Gemini picks the key phrases of each clip once (kept with the transcript)
+      const mids = [...new Set(KIT.boards.flatMap(b => b.scenes.filter(s => s.status !== 'drop').map(s => s.m.id)))];
+      for (let i = 0; i < mids.length; i++) { const tr = getTr(mids[i]); if (!tr) continue; aiProg(`กำลังเลือกคำสำคัญ ${i + 1}/${mids.length}`, 32 + 25 * i / mids.length); try { kws.set(mids[i], await capKeywords(tr)); } catch (e) { if (/งบ|API key/.test(e.message)) throw e; console.warn(e); } }
+    }
     for (const b of KIT.boards) {
       const sc = b.scenes.filter(s => s.status !== 'drop'); if (!sc.length) continue;
-      const v = { name: b.concept.name, segs: sc.map(s => ({ m: s.m, a: s.a, b: s.b, transition: 'none' })), overlays: sc.map((s, i) => s.line1 || s.line2 ? { seg: i, line1: s.line1, line2: s.line2 } : null).filter(Boolean) };
-      const doc = buildVariantDoc(v, { style: 'hl', footer: KIT.footer ? FOOTER_TEXT : '', music: KIT.music }); doc.name = b.concept.name;
-      if (KIT.subs) withDoc(doc, () => { for (const mid of [...new Set(sc.map(s => s.m.id))]) { const tr = getTr(mid); if (tr) makeSubItems(mid, subChunks(tr, 24), 'sub'); } });
-      docs.push(doc);
+      for (const mode of modes) {
+        const v = { name: b.concept.name, segs: sc.map(s => ({ m: s.m, a: s.a, b: s.b, transition: 'none' })), overlays: sc.map((s, i) => s.line1 || s.line2 ? { seg: i, line1: s.line1, line2: s.line2 } : null).filter(Boolean) };
+        const doc = buildVariantDoc(v, { style: 'hl', footer: KIT.footer ? FOOTER_TEXT : '', music: KIT.music }); doc.name = b.concept.name + (modes.length > 1 ? ' · ' + kitModeName(mode) : ''); doc.desc = kitModeName(mode) + ' — ' + b.concept.name;
+        const mids = [...new Set(sc.map(s => s.m.id))];
+        if (mode === 'full') withDoc(doc, () => { for (const mid of mids) { const tr = getTr(mid); if (tr) makeSubItems(mid, subChunks(tr, 24), 'sub'); } });
+        else if (mode === 'key') withDoc(doc, () => { for (const mid of mids) { const tr = getTr(mid), kw = kws.get(mid); if (tr && kw) kitKeySubs(MEDIA.get(mid), tr, kw); } });
+        docs.push(doc);
+      }
     }
     if (!docs.length) { AI.busy = false; return aiDlg('สร้างคลิป', '<div class="hint">ไม่มีฉากให้สร้างคลิป</div>'); }
     await projSaveNow();

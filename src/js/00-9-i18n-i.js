@@ -210,4 +210,11 @@ I18N_ROWS.push(
   ['◀ กลับ', '◀ Back', '◀ ກັບຄືນ'],
   ['▶ ใช้ผลเดิม (ไม่เสียเงิน)', '▶ Use previous result (free)', '▶ ໃຊ້ຜົນເດີມ (ບໍ່ເສຍເງິນ)'],
   ['▶ ไป storyboard เดิม (ไม่เสียเงิน)', '▶ Go to previous storyboard (free)', '▶ ໄປ storyboard ເດີມ (ບໍ່ເສຍເງິນ)'],
+  ['ไม่มีซับ', 'No subtitles', 'ບໍ່ມີຊັບ'],
+  ['ซับเต็ม', 'Full subtitles', 'ຊັບເຕັມ'],
+  ['ซับเน้นคีย์เวิร์ด', 'Keyword subtitles', 'ຊັບເນັ້ນຄຳສຳຄັນ'],
+  ['ซับในวิดีโอ (ติ๊กได้หลายแบบ — ได้วิดีโอแยกให้ทุกแบบ)', 'Subtitles in the video (tick several — you get a separate video for each)', 'ຊັບໃນວິດີໂອ (ຕິກໄດ້ຫຼາຍແບບ — ໄດ້ວິດີໂອແຍກໃຫ້ທຸກແບບ)'],
+  ['เลือกซับอย่างน้อย 1 แบบ', 'Pick at least 1 subtitle option', 'ເລືອກຊັບຢ່າງໜ້ອຍ 1 ແບບ'],
+  ['จำนวนวิดีโอที่จะได้', 'Videos you will get', 'ຈຳນວນວິດີໂອທີ່ຈະໄດ້'],
+  ['กำลังเลือกคำสำคัญ', 'Picking key phrases', 'ກຳລັງເລືອກຄຳສຳຄັນ'],
 );

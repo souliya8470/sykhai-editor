@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 1.94
-// APP_VERSION_PREV : 1.93
-// APP_VERSION_PREV_OLDER : 1.92
+// APP_VERSION  : 1.95
+// APP_VERSION_PREV : 1.94
+// APP_VERSION_PREV_OLDER : 1.93
+// 1.95 : AI cut-it-all — subtitle modes (Tar 2026-11-23): tick any of 'no subtitles' / 'full subtitles' / 'keyword subtitles' (v5.5 look: bold white, key phrase yellow, yellow underline) on the settings page and on the storyboard page; each ticked mode builds its own finished video (separate project) named '<concept> · <mode>' with the mode also saved in doc.desc, so 2-3 versions come from one storyboard without starting a new project. Keyword phrases come from Gemini once per clip (cached with the transcript).
 // 1.94 : AI cut-it-all (Tar 2026-11-23): ◀ Back buttons — storyboard page → concepts page → settings page (settings, brief and clip choice are remembered; 'use previous result' skips straight forward at no AI cost); the storyboard page now also has the subtitle / footer text / music tick boxes so they can be changed right before building without re-running the AI.
 // 1.93 : fix (Tar 2026-11-23: transcribing IMG_5483 stopped with "Expected ',' or ']' after array element in JSON") — the JSON reader for AI/Gemini answers now repairs the usual slips: missing commas between items, trailing commas, unescaped quotes inside a text value, and an answer cut off in the middle (keeps every complete item).
 // 1.92 : CapCut-like multi-device (Tar 2026-11-23): a project's clips that are not on this device yet (still uploading from the other device) now show in the media list as cloud placeholders instead of being invisible; every 20 s the editor quietly pulls clips that finished uploading, and while Home is open it also looks for new projects from the server.
@@ -100,7 +101,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '1.94';
+const APP_VERSION = '1.95';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
