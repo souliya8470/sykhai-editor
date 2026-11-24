@@ -93,7 +93,10 @@ async function jobRun(pid, opts) {
   const r0 = await srvFetch('/projects/' + srvId(pid)); if (!r0.ok) throw new Error('ไม่พบโปรเจกต์บนเซิร์ฟเวอร์ (HTTP ' + r0.status + ')');
   const rec = await r0.json(); await projPut(rec); SRV.upd.set(pid, rec.updated);
   await openById(pid);
-  const miss = srvMissingIds(); if (miss.length) throw new Error('ขาดไฟล์คลิปบนเซิร์ฟเวอร์ ' + miss.length + ' ไฟล์: ' + miss.map(mediaNameFromId).join(', '));
+  // v2.01: the clips ARE on the shop server, but this hidden Chrome sometimes fails to open one while pulling it (Tar's approve 2026-11-24: 'missing 2 files' although both were on the server). Try again up to 3 times before giving up
+  let miss = srvMissingIds();
+  for (let k = 0; k < 3 && miss.length; k++) { if (k) await sleep(2500 * k); try { await srvPullMissing(); } catch (e) { console.warn('jobRun pull', e); } miss = srvMissingIds(); }
+  if (miss.length) throw new Error('เปิดคลิปจากเซิร์ฟเวอร์ไม่สำเร็จ (ลอง 3 รอบ) ' + miss.length + ' ไฟล์: ' + miss.map(mediaNameFromId).join(', '));
   for (const it of D.items) { if (it.type === 'video') { const m = MEDIA.get(it.mediaId); if (!m || !(m.duration > 0)) throw new Error('อ่านคลิปไม่ได้: ' + (m ? m.name : it.mediaId)); } }
   window.__jobProg = () => ({ p: parseFloat(($('#expBar') || {}).style && $('#expBar').style.width) || 0, msg: ($('#expMsg') || {}).textContent || '' });
   const blob = await runExport({ noDownload: true, coverFirst: !!D.cover });
