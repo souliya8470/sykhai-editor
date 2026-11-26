@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sykhai Editor v2.01</title>
-<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2.01"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=2.01"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2.01">
+<title>Sykhai Editor v2.02</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2.02"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=2.02"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2.02">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Yellowtail&family=Prompt:wght@400;600;700;800;900&family=Noto+Sans+Lao:wght@400;600;700;800&family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -2329,9 +2329,10 @@ I18N_ROWS.push(
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 2.01
-// APP_VERSION_PREV : 2.00
-// APP_VERSION_PREV_OLDER : 1.99
+// APP_VERSION  : 2.02
+// APP_VERSION_PREV : 2.01
+// APP_VERSION_PREV_OLDER : 2.00
+// 2.02 : emoji stickers look the same everywhere (Tar 2026-11-26: the ingredient icons — broccoli, tomato, ginger — were realistic in the editor on his MacBook but cartoon-like in the final video that went to Facebook). Cause: an emoji is a font character; the editor drew it with the device's font (Apple on the Mac) but the ✅ approve export runs in a hidden Chrome on the shop's WINDOWS server, which has no Apple font and used Segoe UI Emoji. Now the first time an emoji is drawn (and whenever the project is saved / approved) it is painted once into a PNG stored in the project (D.emj), and every device draws that PNG — including the server export — so the final video = the editor preview. Projects opened for the first time on the Windows server (never opened on a Mac since this version) still fall back to the font and print a console warning; open + approve them from the Mac once.
 // 2.01 : ✅ approve on the shop server failed with 'missing 2 clips: IMG_5477, IMG_5487' (Tar 2026-11-24) although both files are on the server (checked in D:\SykhaiEditor\media; server log: 'Error: load' while its hidden Chrome opened them). The pull is now retried 3 times before giving up, and the message says the clips could not be opened instead of 'missing'.
 // 2.00 : iPhone preview went black after ~12 s (Tar's screen recording 2026-11-23, HUD 'NotAllowedError PAUSED'): iOS Safari only lets a <video> start without a finger tap if that very element was started by a tap before; clips 3+ got brand-new elements outside the tap and were refused. Fix (iOS only): play() starts+stops the first 5 clip elements muted inside the tap (unlockVideos); released elements are kept in SPARE with their WebAudio node and re-used for later clips; if a clip is still refused it is played muted so the picture never goes black.
 // 1.99 : safe-zone presets (Tar 2026-11-23, after sending a screen recording of a real Facebook Reel): 'normal post (Reels)' top 14 / bottom 15 / side 10 — measured on the recording: caption starts at ~87% of the video height, like/share column occupies the right ~10% — and 'ad' top 14 / bottom 35 / side 6 (Meta ad guide, has the CTA bar). Pick it in Settings (or 'custom' numbers) and, right before building, on the AI storyboard page ('where the video will be posted'); the red-zone preview button follows it. Default stays 'ad' (the stricter one).
@@ -2434,7 +2435,7 @@ I18N_ROWS.push(
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '2.01';
+const APP_VERSION = '2.02';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -5157,6 +5158,33 @@ function drawText(ctx, it, t, W, H) {
 // ============================================================
 //  Stickers
 // ============================================================
+// ---------- v2.02: emoji stickers are frozen into pictures ----------
+// An emoji is a text character: every device draws it with its OWN font (Apple on the Mac, Segoe on the shop's Windows server = a different, cartoon look).
+// The first time an emoji is drawn on a normal device it is painted once into a PNG and stored in the project (D.emj[char]); from then on every
+// device — including the hidden Chrome of the shop server that makes the final MP4 — draws that PNG, so the video looks exactly like the editor preview.
+const EMJ_FONT = '"Apple Color Emoji","Noto Color Emoji","Segoe UI Emoji",sans-serif', EMJ_F = 400, EMJ_C = 600;
+const EMJ = { cv: new Map(), img: new Map() };
+function emjSource(ch) {
+  let c = EMJ.cv.get(ch); if (c) return c;
+  const url = D && D.emj && D.emj[ch];
+  if (url) {   // saved picture (made on another device or earlier): decode once; until it is ready the text fallback is used (export waits in emjReady)
+    let e = EMJ.img.get(url); if (!e) { e = { img: new Image(), ok: false }; e.p = new Promise(res => { e.img.onload = () => { e.ok = true; res(); try { dirty(); } catch (x) { } }; e.img.onerror = () => res(); }); e.img.src = url; EMJ.img.set(url, e); }
+    return e.ok ? e.img : null;
+  }
+  if (typeof JOBMODE !== 'undefined' && JOBMODE) { console.warn('emoji not frozen in this project, drawing with the server font:', ch); return null; }   // the shop server must never freeze it (it would freeze its own Windows look)
+  c = document.createElement('canvas'); c.width = c.height = EMJ_C; const x = c.getContext('2d');
+  x.font = EMJ_F + 'px ' + EMJ_FONT; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(ch, EMJ_C / 2, EMJ_C / 2);
+  EMJ.cv.set(ch, c);
+  try { if (D && D.items) { if (!D.emj) D.emj = {}; D.emj[ch] = c.toDataURL('image/png'); setTimeout(() => { try { projSaveSoon(); } catch (e) { } }, 0); } } catch (e) { }
+  return c;
+}
+// freeze every emoji sticker of the open project (also the ones not on screen right now) — called whenever the project is saved / sent to the server
+function emjBakeAll() { try { for (const it of (D && D.items) || []) if (it.type === 'sticker' && it.kind === 'emoji') emjSource(it.text || '🔥'); } catch (e) { } }
+// wait until every saved emoji picture of the project is decoded (called before an export)
+async function emjReady() {
+  const list = []; for (const it of (D && D.items) || []) if (it.type === 'sticker' && it.kind === 'emoji') list.push(it.text || '🔥');
+  for (const ch of new Set(list)) { emjSource(ch); const url = D.emj && D.emj[ch]; const e = url && EMJ.img.get(url); if (e && !e.ok) await Promise.race([e.p, new Promise(r => setTimeout(r, 4000))]); }
+}
 function drawSticker(ctx, it, t, W, H) {
   const lt = t - it.start; if (lt < 0) return;
   const ap = textAnimParams(it, lt, W, H);
@@ -5183,7 +5211,9 @@ function drawSticker(ctx, it, t, W, H) {
     case 'grid': { ctx.rotate(.12); ctx.fillStyle = col; ctx.fillRect(-r * .8, -r * .8, r * 1.6, r * 1.6); ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = S * .012; for (let i = -3; i <= 3; i++) { ctx.beginPath(); ctx.moveTo(-r * .8, i * r * .23); ctx.lineTo(r * .8, i * r * .23); ctx.moveTo(i * r * .23, -r * .8); ctx.lineTo(i * r * .23, r * .8); ctx.stroke(); } break; }
     case 'underline': { const q = EASE.out(clamp(lt / .4, 0, 1)); ctx.strokeStyle = col; ctx.lineWidth = S * .05; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(-r * 1.6, 0); ctx.quadraticCurveTo(0, S * .08, -r * 1.6 + r * 3.2 * q, -S * .02); ctx.stroke(); break; }
     case 'circle': { const q = EASE.out(clamp(lt / .5, 0, 1)); ctx.strokeStyle = col; ctx.lineWidth = S * .05; ctx.lineCap = 'round'; ctx.beginPath(); ctx.ellipse(0, 0, r * 1.2, r * .75, -.06, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * q); ctx.stroke(); break; }
-    case 'emoji': ctx.font = `${S}px "Apple Color Emoji","Noto Color Emoji","Segoe UI Emoji",sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(it.text || '🔥', 0, 0); break;
+    case 'emoji': { const ch = it.text || '🔥', src = emjSource(ch);   // v2.02: draw the FROZEN picture of the emoji (see emjSource) so every device / the shop server exports exactly what you saw
+      if (src) { const k = S / EMJ_F; ctx.drawImage(src, -EMJ_C / 2 * k, -EMJ_C / 2 * k, EMJ_C * k, EMJ_C * k); }
+      else { ctx.font = `${S}px ${EMJ_FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(ch, 0, 0); } break; }
   }
   ctx.restore();
 }
@@ -6130,6 +6160,7 @@ function projThumb(doc) {
   return '';
 }
 function projRec(doc) {
+  if (doc === D && typeof emjBakeAll === 'function') emjBakeAll();   // v2.02: freeze emoji stickers into pictures before the project is saved / sent to the shop server
   const items = doc.items || [];
   return {
     id: doc.pid, name: doc.name || 'โปรเจกต์', doc: JSON.stringify(doc), thumb: projThumb(doc), n: items.length,
@@ -7875,6 +7906,7 @@ async function runExport(opts) {
   opts = opts || {}; if (EXP.running) return null;
   const bar = $('#expBar'), msg = $('#expMsg');
   if (!D.items.length) { toast('ยังไม่มีอะไรในไทม์ไลน์'); return null; }
+  try { await emjReady(); } catch (e) { }   // v2.02: frozen emoji pictures must be decoded before the first frame
   if (!opts.realtime && typeof runExportFast === 'function') { const fr = await runExportFast(opts); if (fr !== undefined) return fr; }   // v1.81: fast offline export; undefined = not possible here → real-time capture below
   EXP.running = true; EXP.cancel = false; pause(); ensureAudio(); await AC.resume();
   if (document.hidden) { const m0 = $('#expMsg'); if (m0) m0.textContent = '⏸ กลับมาที่แท็บนี้เพื่อเริ่มส่งออก…'; await visWait(); } try { await lfPreloadDoc(); } catch (e) { }

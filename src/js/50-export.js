@@ -22,6 +22,7 @@ async function runExport(opts) {
   opts = opts || {}; if (EXP.running) return null;
   const bar = $('#expBar'), msg = $('#expMsg');
   if (!D.items.length) { toast('ยังไม่มีอะไรในไทม์ไลน์'); return null; }
+  try { await emjReady(); } catch (e) { }   // v2.02: frozen emoji pictures must be decoded before the first frame
   if (!opts.realtime && typeof runExportFast === 'function') { const fr = await runExportFast(opts); if (fr !== undefined) return fr; }   // v1.81: fast offline export; undefined = not possible here → real-time capture below
   EXP.running = true; EXP.cancel = false; pause(); ensureAudio(); await AC.resume();
   if (document.hidden) { const m0 = $('#expMsg'); if (m0) m0.textContent = '⏸ กลับมาที่แท็บนี้เพื่อเริ่มส่งออก…'; await visWait(); } try { await lfPreloadDoc(); } catch (e) { }

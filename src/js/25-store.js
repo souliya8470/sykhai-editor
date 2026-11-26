@@ -86,6 +86,7 @@ function projThumb(doc) {
   return '';
 }
 function projRec(doc) {
+  if (doc === D && typeof emjBakeAll === 'function') emjBakeAll();   // v2.02: freeze emoji stickers into pictures before the project is saved / sent to the shop server
   const items = doc.items || [];
   return {
     id: doc.pid, name: doc.name || 'โปรเจกต์', doc: JSON.stringify(doc), thumb: projThumb(doc), n: items.length,

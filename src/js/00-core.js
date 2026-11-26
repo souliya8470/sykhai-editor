@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 2.01
-// APP_VERSION_PREV : 2.00
-// APP_VERSION_PREV_OLDER : 1.99
+// APP_VERSION  : 2.02
+// APP_VERSION_PREV : 2.01
+// APP_VERSION_PREV_OLDER : 2.00
+// 2.02 : emoji stickers look the same everywhere (Tar 2026-11-26: the ingredient icons — broccoli, tomato, ginger — were realistic in the editor on his MacBook but cartoon-like in the final video that went to Facebook). Cause: an emoji is a font character; the editor drew it with the device's font (Apple on the Mac) but the ✅ approve export runs in a hidden Chrome on the shop's WINDOWS server, which has no Apple font and used Segoe UI Emoji. Now the first time an emoji is drawn (and whenever the project is saved / approved) it is painted once into a PNG stored in the project (D.emj), and every device draws that PNG — including the server export — so the final video = the editor preview. Projects opened for the first time on the Windows server (never opened on a Mac since this version) still fall back to the font and print a console warning; open + approve them from the Mac once.
 // 2.01 : ✅ approve on the shop server failed with 'missing 2 clips: IMG_5477, IMG_5487' (Tar 2026-11-24) although both files are on the server (checked in D:\SykhaiEditor\media; server log: 'Error: load' while its hidden Chrome opened them). The pull is now retried 3 times before giving up, and the message says the clips could not be opened instead of 'missing'.
 // 2.00 : iPhone preview went black after ~12 s (Tar's screen recording 2026-11-23, HUD 'NotAllowedError PAUSED'): iOS Safari only lets a <video> start without a finger tap if that very element was started by a tap before; clips 3+ got brand-new elements outside the tap and were refused. Fix (iOS only): play() starts+stops the first 5 clip elements muted inside the tap (unlockVideos); released elements are kept in SPARE with their WebAudio node and re-used for later clips; if a clip is still refused it is played muted so the picture never goes black.
 // 1.99 : safe-zone presets (Tar 2026-11-23, after sending a screen recording of a real Facebook Reel): 'normal post (Reels)' top 14 / bottom 15 / side 10 — measured on the recording: caption starts at ~87% of the video height, like/share column occupies the right ~10% — and 'ad' top 14 / bottom 35 / side 6 (Meta ad guide, has the CTA bar). Pick it in Settings (or 'custom' numbers) and, right before building, on the AI storyboard page ('where the video will be posted'); the red-zone preview button follows it. Default stays 'ad' (the stricter one).
@@ -107,7 +108,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '2.01';
+const APP_VERSION = '2.02';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];

@@ -573,6 +573,33 @@ function drawText(ctx, it, t, W, H) {
 // ============================================================
 //  Stickers
 // ============================================================
+// ---------- v2.02: emoji stickers are frozen into pictures ----------
+// An emoji is a text character: every device draws it with its OWN font (Apple on the Mac, Segoe on the shop's Windows server = a different, cartoon look).
+// The first time an emoji is drawn on a normal device it is painted once into a PNG and stored in the project (D.emj[char]); from then on every
+// device — including the hidden Chrome of the shop server that makes the final MP4 — draws that PNG, so the video looks exactly like the editor preview.
+const EMJ_FONT = '"Apple Color Emoji","Noto Color Emoji","Segoe UI Emoji",sans-serif', EMJ_F = 400, EMJ_C = 600;
+const EMJ = { cv: new Map(), img: new Map() };
+function emjSource(ch) {
+  let c = EMJ.cv.get(ch); if (c) return c;
+  const url = D && D.emj && D.emj[ch];
+  if (url) {   // saved picture (made on another device or earlier): decode once; until it is ready the text fallback is used (export waits in emjReady)
+    let e = EMJ.img.get(url); if (!e) { e = { img: new Image(), ok: false }; e.p = new Promise(res => { e.img.onload = () => { e.ok = true; res(); try { dirty(); } catch (x) { } }; e.img.onerror = () => res(); }); e.img.src = url; EMJ.img.set(url, e); }
+    return e.ok ? e.img : null;
+  }
+  if (typeof JOBMODE !== 'undefined' && JOBMODE) { console.warn('emoji not frozen in this project, drawing with the server font:', ch); return null; }   // the shop server must never freeze it (it would freeze its own Windows look)
+  c = document.createElement('canvas'); c.width = c.height = EMJ_C; const x = c.getContext('2d');
+  x.font = EMJ_F + 'px ' + EMJ_FONT; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(ch, EMJ_C / 2, EMJ_C / 2);
+  EMJ.cv.set(ch, c);
+  try { if (D && D.items) { if (!D.emj) D.emj = {}; D.emj[ch] = c.toDataURL('image/png'); setTimeout(() => { try { projSaveSoon(); } catch (e) { } }, 0); } } catch (e) { }
+  return c;
+}
+// freeze every emoji sticker of the open project (also the ones not on screen right now) — called whenever the project is saved / sent to the server
+function emjBakeAll() { try { for (const it of (D && D.items) || []) if (it.type === 'sticker' && it.kind === 'emoji') emjSource(it.text || '🔥'); } catch (e) { } }
+// wait until every saved emoji picture of the project is decoded (called before an export)
+async function emjReady() {
+  const list = []; for (const it of (D && D.items) || []) if (it.type === 'sticker' && it.kind === 'emoji') list.push(it.text || '🔥');
+  for (const ch of new Set(list)) { emjSource(ch); const url = D.emj && D.emj[ch]; const e = url && EMJ.img.get(url); if (e && !e.ok) await Promise.race([e.p, new Promise(r => setTimeout(r, 4000))]); }
+}
 function drawSticker(ctx, it, t, W, H) {
   const lt = t - it.start; if (lt < 0) return;
   const ap = textAnimParams(it, lt, W, H);
@@ -599,7 +626,9 @@ function drawSticker(ctx, it, t, W, H) {
     case 'grid': { ctx.rotate(.12); ctx.fillStyle = col; ctx.fillRect(-r * .8, -r * .8, r * 1.6, r * 1.6); ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = S * .012; for (let i = -3; i <= 3; i++) { ctx.beginPath(); ctx.moveTo(-r * .8, i * r * .23); ctx.lineTo(r * .8, i * r * .23); ctx.moveTo(i * r * .23, -r * .8); ctx.lineTo(i * r * .23, r * .8); ctx.stroke(); } break; }
     case 'underline': { const q = EASE.out(clamp(lt / .4, 0, 1)); ctx.strokeStyle = col; ctx.lineWidth = S * .05; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(-r * 1.6, 0); ctx.quadraticCurveTo(0, S * .08, -r * 1.6 + r * 3.2 * q, -S * .02); ctx.stroke(); break; }
     case 'circle': { const q = EASE.out(clamp(lt / .5, 0, 1)); ctx.strokeStyle = col; ctx.lineWidth = S * .05; ctx.lineCap = 'round'; ctx.beginPath(); ctx.ellipse(0, 0, r * 1.2, r * .75, -.06, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * q); ctx.stroke(); break; }
-    case 'emoji': ctx.font = `${S}px "Apple Color Emoji","Noto Color Emoji","Segoe UI Emoji",sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(it.text || '🔥', 0, 0); break;
+    case 'emoji': { const ch = it.text || '🔥', src = emjSource(ch);   // v2.02: draw the FROZEN picture of the emoji (see emjSource) so every device / the shop server exports exactly what you saw
+      if (src) { const k = S / EMJ_F; ctx.drawImage(src, -EMJ_C / 2 * k, -EMJ_C / 2 * k, EMJ_C * k, EMJ_C * k); }
+      else { ctx.font = `${S}px ${EMJ_FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(ch, 0, 0); } break; }
   }
   ctx.restore();
 }
