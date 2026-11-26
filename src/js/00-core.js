@@ -2,9 +2,10 @@
 // ============================================================
 //  Sykhai Editor — core: state, helpers, undo, factories
 // ============================================================
-// APP_VERSION  : 2.03
-// APP_VERSION_PREV : 2.02
-// APP_VERSION_PREV_OLDER : 2.01
+// APP_VERSION  : 2.04
+// APP_VERSION_PREV : 2.03
+// APP_VERSION_PREV_OLDER : 2.02
+// 2.04 : 🥦 ingredient pictures show only 1-3 pieces (Tar 2026-11-26: the Indian gooseberry came out as a whole branch with ~10 fruits — hard to read when small in the video). The AI description now asks for a small count, the image prompt forbids branches / bunches / piles, and the description in the dialog is editable (e.g. 'two whole gooseberries') before pressing ↻ make again.
 // 2.03 : 🥦 ส่วนผสม button (Tar 2026-11-26: 'AI finds what is said in the video, makes the real PNG pictures itself — no emoji, no manual download/upload'). AI reads the transcript -> list of ingredients with times -> a Gemini image model makes a realistic packshot on flat magenta -> keyed to a transparent PNG (cropped, soft edge) -> kept as library media 'ing|<key>' (re-used by later videos, no new AI cost) -> placed on V2 with pop-in/fade-out, optionally removing the emoji stickers in the same window. A dialog shows every picture first (make again / use my own PNG). The image-model names are tried in order (gemini-3.1-flash-image, gemini-3-pro-image, ...; localStorage sk_gimg goes first). NOT yet run against the real Gemini image API (written without access to it) — the keying + placing were tested offline.
 // 2.02 : emoji stickers look the same everywhere (Tar 2026-11-26: the ingredient icons — broccoli, tomato, ginger — were realistic in the editor on his MacBook but cartoon-like in the final video that went to Facebook). Cause: an emoji is a font character; the editor drew it with the device's font (Apple on the Mac) but the ✅ approve export runs in a hidden Chrome on the shop's WINDOWS server, which has no Apple font and used Segoe UI Emoji. Now the first time an emoji is drawn (and whenever the project is saved / approved) it is painted once into a PNG stored in the project (D.emj), and every device draws that PNG — including the server export — so the final video = the editor preview. Projects opened for the first time on the Windows server (never opened on a Mac since this version) still fall back to the font and print a console warning; open + approve them from the Mac once.
 // 2.01 : ✅ approve on the shop server failed with 'missing 2 clips: IMG_5477, IMG_5487' (Tar 2026-11-24) although both files are on the server (checked in D:\SykhaiEditor\media; server log: 'Error: load' while its hidden Chrome opened them). The pull is now retried 3 times before giving up, and the message says the clips could not be opened instead of 'missing'.
@@ -109,7 +110,7 @@
 // 1.02 : imported media persisted in IndexedDB (survives reload/new version), missing-file labels
 // 1.01 : animated hover previews for transitions/effects, drag transitions/effects onto timeline junctions/clips, junction (+) markers
 // 1.00 : first full build (timeline, transitions, effects, text, audio, AI hooks, export)
-const APP_VERSION = '2.03';
+const APP_VERSION = '2.04';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];

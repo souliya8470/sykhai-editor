@@ -33,7 +33,7 @@ function ingTranscriptLines() {
 async function ingDetect(lines) {
   const body = lines.slice(0, 220).map(l => `[${l.t0.toFixed(1)}-${l.t1.toFixed(1)}] ${l.text}`).join('\n');
   const sys = `You read the speech transcript of a short sales video (Lao or Thai, for a shop that sells supplements / cosmetics). Find the INGREDIENTS, foods, fruits, vegetables, herbs or plants the speaker names, i.e. things that can be shown as a real photo of that object. Ignore the product itself, brands, vitamins / chemicals that have no look (L-Cysteine, vitamin C ...), body parts, and abstract words.
-Return ONLY a JSON array (max 8 items, no repeats; if a thing is said several times keep the first mention): [{"key":"english-lowercase-slug","en":"English name","name":"name exactly as spoken","desc":"short English description of one photographable object, e.g. 'a fresh broccoli floret' / 'two fresh Indian gooseberries (amla) with leaves'","t0":start seconds,"t1":end seconds}]
+Return ONLY a JSON array (max 8 items, no repeats; if a thing is said several times keep the first mention): [{"key":"english-lowercase-slug","en":"English name","name":"name exactly as spoken","desc":"short English description of ONE small, simple photographable subject with an explicit small count (1 to 3 pieces), e.g. 'one fresh broccoli floret' / 'two whole fresh Indian gooseberries (amla) with two leaves' / 'three fresh tomatoes'. NEVER a branch, bunch, cluster, basket or pile","t0":start seconds,"t1":end seconds}]
 t0 / t1 are timeline seconds taken from the [t0-t1] stamps in front of the sentence where it is said (t1 = t0 + about 2.5 s is fine). If nothing qualifies return [].`;
   let txt;
   if (loadKeys().gemini) txt = await gemini([{ text: sys + '\n\nTRANSCRIPT:\n' + body }], { json: true, label: 'ingredients' });
@@ -70,7 +70,7 @@ function ingKeyCanvas(img, key) {
 async function ingGenerate(desc) {
   const key = loadKeys().gemini; if (!key) throw new Error('ยังไม่ได้ใส่ Gemini API key (กดปุ่ม ⚙ ตั้งค่า)');
   if (!costGuard(0.06)) throw new Error('งบ AI ครบเพดาน');
-  const prompt = `Photorealistic studio product photograph (packshot) of ${desc}. The whole object is fully inside the frame, centered, with a clear margin all around. Natural soft lighting, sharp focus, rich true-to-life colours and fine detail, like a premium food / health-supplement advertisement. IMPORTANT: the background is one perfectly flat, solid, pure magenta colour (#FF00FF) everywhere, no gradient, no floor, no cast shadow, no reflection, no text, no border.`;
+  const prompt = `Photorealistic studio product photograph (packshot) of ${desc}. Show ONLY the few pieces described (never more than 3 pieces; never a branch, bunch, cluster, pile or many items) so the picture stays simple and clear when small. The whole subject is fully inside the frame, centered, with a clear margin all around. Natural soft lighting, sharp focus, rich true-to-life colours and fine detail, like a premium food / health-supplement advertisement. IMPORTANT: the background is one perfectly flat, solid, pure magenta colour (#FF00FF) everywhere, no gradient, no floor, no cast shadow, no reflection, no text, no border.`;
   const first = (() => { try { return localStorage.getItem('sk_gimg') || ''; } catch (e) { return ''; } })();
   const models = [...new Set([first, ...ING_MODELS].filter(Boolean))]; let last = '';
   for (const m of models) {
@@ -115,7 +115,7 @@ function ingDlg() {
     if (b.dataset.ing === 'redo') ingFill(r, true);
     if (b.dataset.ing === 'own') { const f = document.createElement('input'); f.type = 'file'; f.accept = 'image/png,image/webp'; f.onchange = async () => { const file = f.files[0]; if (!file) return; r.state = 'busy'; ingRender(); try { await ingSaveMedia(r.key, r.en || r.key, file); r.state = 'ok'; } catch (e) { r.state = 'err'; r.err = String(e.message || e); } ingRender(); }; f.click(); }
   });
-  d.addEventListener('input', e => { const t = e.target; if (!t.dataset || t.dataset.ingf === undefined) return; const r = ING.rows[+t.dataset.i]; if (!r) return; if (t.dataset.ingf === 'use') r.use = t.checked; else r[t.dataset.ingf] = parseFloat(t.value) || 0; });
+  d.addEventListener('input', e => { const t = e.target; if (!t.dataset || t.dataset.ingf === undefined) return; const r = ING.rows[+t.dataset.i]; if (!r) return; if (t.dataset.ingf === 'use') r.use = t.checked; else if (t.dataset.ingf === 'desc') r.desc = t.value; else r[t.dataset.ingf] = parseFloat(t.value) || 0; });
   return d;
 }
 function ingRender() {
@@ -126,7 +126,7 @@ function ingRender() {
     return `<div style="display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid #2a2a2a">
       <input type="checkbox" data-ingf="use" data-i="${i}" ${r.use ? 'checked' : ''} ${m ? '' : 'disabled'}>${pic}
       <div style="flex:1;min-width:0"><div><b translate="no">${esc(r.en || r.key)}</b> <span class="mini" translate="no">${esc(r.name)}</span></div>
-        <div class="mini" translate="no">${esc(r.desc)}</div>
+        <div class="mini"><input type="text" data-ingf="desc" data-i="${i}" value="${esc(r.desc)}" style="width:100%" title="คำอธิบายรูปที่ให้ AI สร้าง (ภาษาอังกฤษ) — แก้ได้ เช่น two whole gooseberries แล้วกด ↻ สร้างใหม่"></div>
         <div class="mini">แสดงที่วินาที <input type="number" step="0.1" min="0" style="width:68px" data-ingf="t0" data-i="${i}" value="${r.t0.toFixed(1)}"> ถึง <input type="number" step="0.1" min="0" style="width:68px" data-ingf="t1" data-i="${i}" value="${r.t1.toFixed(1)}"></div>
         ${r.err ? `<div class="mini" style="color:#ff8a8a">${esc(r.err)}</div>` : ''}</div>
       <div style="display:flex;flex-direction:column;gap:6px"><button data-ing="redo" data-i="${i}" ${r.state === 'busy' ? 'disabled' : ''}>↻ สร้างใหม่</button><button data-ing="own" data-i="${i}" ${r.state === 'busy' ? 'disabled' : ''}>⬆ ใช้ PNG ของฉัน</button></div></div>`;
